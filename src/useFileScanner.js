@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { scanFiles } from './scan.js';
 import { validateFile } from './validate.js';
 
+
 /**
  * React Hook to handle file input change, validate and scan files.
  * @returns {{ results: Array<{ file: File, content: string }>, errors: Array<{ file: File, error: string }>, onChange: function }}
