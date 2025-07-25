@@ -1,0 +1,23 @@
+{
+  "name": "local-file-scanner",
+  "version": "0.1.0",
+  "description": "Prototipo di scanner di file lato cliente",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.9.5"
+  },
+  "dependencies": {
+    "file-type": "^21.0.0",
+    "libyara-wasm": "^1.2.1",
+    "yara": "npm:@automattic/yara@^2.6.0-beta.2"
+  }
+}
