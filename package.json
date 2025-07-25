@@ -2,18 +2,21 @@
   "name": "local-file-scanner",
   "version": "0.1.0",
   "description": "Prototipo di scanner di file lato cliente",
-  "main": "dist/index.js",
-  "module": "dist/browser-bundle.esm.js", 
-  "types": "dist/index.d.ts",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
+  "types": "dist/types/index.d.ts",
   "type": "module",
-  "browser": "dist/browser-bundle.esm.js",
+  "browser": {
+    "yara": false,
+    "util": false
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build"
   },
-  "files": [
-    "dist/**/*"
-  ],
   "license": "MIT",
   "devDependencies": {
     "@babel/core": "^7.28.0",
@@ -23,6 +26,9 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
+    "@types/react": "^19.1.8",
+    "@types/react-dom": "^19.1.6",
+    "react": "^19.1.0",
     "typescript": "^4.9.5"
   },
   "dependencies": {
