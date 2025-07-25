@@ -3,14 +3,10 @@
   "version": "0.1.0",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/index.js",
+  "module": "dist/browser-bundle.esm.js", 
   "types": "dist/index.d.ts",
   "type": "module",
-  "browser": {
-    "util": false,
-    "fs": false,
-    "path": false,
-    "yara": false
-  },
+  "browser": "dist/browser-bundle.esm.js",
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build"
@@ -22,9 +18,11 @@
   "devDependencies": {
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
+    "@babel/preset-typescript": "^7.27.1",
     "@rollup/plugin-babel": "^6.0.4",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
     "typescript": "^4.9.5"
   },
   "dependencies": {
