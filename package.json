@@ -1,9 +1,9 @@
 {
   "name": "local-file-scanner",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Prototipo di scanner di file lato cliente",
-  "main": "dist/index.cjs.js",
-  "module": "dist/index.esm.js",
+  "main": "dist/local-file-scanner.cjs.js",
+  "module": "dist/local-file-scanner.esm.js",
   "types": "dist/types/index.d.ts",
   "type": "module",
   "browser": {
@@ -28,7 +28,10 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "react": "^19.1.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "rollup": "^4.x",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
     "typescript": "^4.9.5"
   },
   "dependencies": {
@@ -36,5 +39,9 @@
     "libyara-wasm": "^1.2.1",
     "rollup": "^4.45.1",
     "yara": "npm:@automattic/yara@^2.6.0-beta.2"
+  },
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
   }
 }
