@@ -1,7 +1,7 @@
 <p align="center">
-  <a href="https://github.com/SonoTommy/pompelmi" target="_blank" rel="noopener noreferrer">
+  <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
     <img
-      src="./assets/logo.svg"
+      src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg"
       alt="pompelmi"
       width="120"
       height="120"
@@ -24,7 +24,7 @@
   <a href="https://www.npmjs.com/package/pompelmi">
     <img alt="downloads" src="https://img.shields.io/npm/dw/pompelmi">
   </a>
-  <a href="https://github.com/SonoTommy/pompelmi/blob/main/LICENSE">
+  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
     <img alt="license" src="https://img.shields.io/npm/l/pompelmi">
   </a>
   <img alt="node" src="https://img.shields.io/node/v/pompelmi">
