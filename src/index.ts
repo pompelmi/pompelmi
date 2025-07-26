@@ -1,45 +1,13 @@
-import { createYaraScannerFromRules } from './yara/index';
-import type { YaraMatch as YaraMatchT } from './yara/index';
-import { promises as fs } from 'node:fs';
+// src/index.ts — Browser / React entry point per local-file-scanner
 
-// src/index.ts
-// Browser / React entry point for local-file-scanner
-
-// Re-export the core scanning function
+// Re-export API browser
 export { scanFiles } from './scan';
-
-// Re-export the file validation function
 export { validateFile } from './validate';
-
-// Re-export the React hook for easy integration
 export { useFileScanner } from './useFileScanner';
 
-export interface YaraMatch {
-  rule: string;
-  tags?: string[];
-}
+// (Se hai aggiunto la funzione con YARA lato browser)
+export { scanFilesWithYara } from './scan'; // <-- adatta il path se diverso
 
-export interface ScanOptions {
-  // ...le tue opzioni esistenti...
-  enableYara?: boolean;     // default: false
-  yaraRules?: string;       // sorgente regole in chiaro (es. `rule R { strings: ... }`)
-}
-
-export interface FileEntry {
-  // ...campi esistenti (path, absPath, isDir, ecc.)...
-  yara?: {
-    matches: YaraMatch[];
-  };
-}
-
-export interface ScanOptions {
-  // ...esistenti...
-  enableYara?: boolean;
-  yaraRules?: string;      // regole in stringa
-  yaraRulesPath?: string;  // NUOVO: percorso a file .yar
-}
-
-export interface FileEntry {
-  // ...esistenti...
-  yara?: { matches: import('./yara/index').YaraMatch[] };
-}
+// Re-export dei TIPI (nessuna ridichiarazione locale)
+export type { YaraMatch } from './yara/index';
+export type { NodeScanOptions, NodeFileEntry } from './node/scanDir'; // opzionale

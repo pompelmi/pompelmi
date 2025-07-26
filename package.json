@@ -10,9 +10,6 @@
     "yara": false,
     "util": false
   },
-  "files": [
-    "dist"
-  ],
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build",
@@ -50,5 +47,14 @@
   },
   "optionalDependencies": {
     "@litko/yara-x": "^0.2.1"
-  }
+  },
+   "exports": {
+    ".": {
+      "import": "./dist/local-file-scanner.esm.js",
+      "require": "./dist/local-file-scanner.cjs.js"
+    }
+  },
+  "files": [
+    "dist/"
+  ]
 }

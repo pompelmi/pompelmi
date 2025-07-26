@@ -1,25 +1,33 @@
 // rollup.config.js
-import peerDepsExternal from 'rollup-plugin-peer-deps-external';
-import resolve           from '@rollup/plugin-node-resolve';
-import commonjs          from '@rollup/plugin-commonjs';
-import typescript        from '@rollup/plugin-typescript';
-import babel             from '@rollup/plugin-babel';
+import resolve from '@rollup/plugin-node-resolve';
+import commonjs from '@rollup/plugin-commonjs';
+import typescript from '@rollup/plugin-typescript';
+
+const NATIVE_EXTERNAL = [
+  /^@litko\/yara-x(?:$|\/)/,
+  /\.node(\?|$)/,
+];
 
 export default {
   input: 'src/index.ts',
+  output: [
+    {
+      file: 'dist/local-file-scanner.esm.js',
+      format: 'esm',
+      sourcemap: true,
+      inlineDynamicImports: true,   // 👈 aggiungi questo
+    },
+    {
+      file: 'dist/local-file-scanner.cjs.js',
+      format: 'cjs',
+      sourcemap: true,
+      inlineDynamicImports: true,   // 👈 e anche qui
+    },
+  ],
+  external: (id) => NATIVE_EXTERNAL.some((re) => re.test(id)),
   plugins: [
-    peerDepsExternal(),                // ← auto-externalizes react & react-dom
-    resolve({ browser: true }),
+    resolve({ preferBuiltins: true }),
     commonjs(),
     typescript({ tsconfig: './tsconfig.json' }),
-    babel({
-      extensions: ['.js','.jsx','.ts','.tsx'],
-      babelHelpers: 'bundled',
-      exclude: 'node_modules/**'
-    }),
-  ],
-  output: [
-    { file: 'dist/local-file-scanner.esm.js', format: 'esm' },
-    { file: 'dist/local-file-scanner.cjs.js', format: 'cjs', exports: 'named' },
   ],
 };

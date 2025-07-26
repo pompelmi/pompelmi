@@ -5,23 +5,24 @@ export interface YaraMatch {
 
 export interface YaraCompiled {
   scan(data: Uint8Array): Promise<YaraMatch[]>;
+  scanFile?: (filePath: string) => Promise<YaraMatch[]>; // Node-only (optional)
+  scanFileAsync?: (filePath: string) => Promise<YaraMatch[]>; // Node-only (optional)
 }
 
 export interface YaraEngine {
   compile(rulesSource: string): Promise<YaraCompiled>;
+  compileFile?: (rulesPath: string) => Promise<YaraCompiled>; // Node-only (optional)
 }
 
 // Factory: sceglie l'engine a runtime (Node o Browser)
 // (Per ora i moduli chiamati lanceranno "non implementato")
 export async function createYaraEngine(): Promise<YaraEngine> {
   const isNode = typeof process !== 'undefined' && !!(process as any).versions?.node;
-  if (isNode) {
-    const { createNodeEngine } = await import('./node');
-    return createNodeEngine() as unknown as YaraEngine;
-  } else {
-    const { createBrowserEngine } = await import('./browser');
-    return createBrowserEngine() as unknown as YaraEngine;
-  }
+  const target = isNode ? 'node' : 'browser';
+  const mod: any = await import(`./${target}`);
+  return isNode
+    ? (mod.createNodeEngine() as YaraEngine)
+    : (mod.createBrowserEngine() as YaraEngine);
 }
 
 export async function createYaraScannerFromRules(rulesSource: string) {
@@ -29,16 +30,6 @@ export async function createYaraScannerFromRules(rulesSource: string) {
   return engine.compile(rulesSource);
 }
 
-// aggiungi la possibilità di scansionare file (Node-only)
-export interface YaraCompiled {
-  scan(data: Uint8Array): Promise<YaraMatch[]>;
-  scanFile?: (filePath: string) => Promise<YaraMatch[]>; // Node-only
-}
-
-export interface YaraEngine {
-  compile(rulesSource: string): Promise<YaraCompiled>;
-  compileFile?: (rulesPath: string) => Promise<YaraCompiled>; // Node-only
-}
 
 export async function createYaraScannerFromFile(rulesPath: string): Promise<YaraCompiled> {
   const engine = await createYaraEngine();
@@ -47,3 +38,5 @@ export async function createYaraScannerFromFile(rulesPath: string): Promise<Yara
   }
   return engine.compileFile(rulesPath);
 }
+
+export { createRemoteEngine } from './remote';
