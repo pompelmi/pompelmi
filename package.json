@@ -16,7 +16,8 @@
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build",
-    "yara:node:smoke": "node scripts/yara-node-smoke.mjs"
+    "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
+    "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts"
   },
   "license": "MIT",
   "devDependencies": {
@@ -33,6 +34,7 @@
     "react-dom": "^18.0.0",
     "rollup": "^4.x",
     "rollup-plugin-peer-deps-external": "^2.2.4",
+    "tsx": "^4.20.3",
     "typescript": "^4.9.5"
   },
   "dependencies": {
