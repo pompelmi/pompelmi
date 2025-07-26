@@ -1,5 +1,59 @@
 'use strict';
 
+async function createRemoteEngine(opts) {
+    const { endpoint, headers = {}, rulesField = 'rules', fileField = 'file', mode = 'multipart', } = opts;
+    const engine = {
+        async compile(rulesSource) {
+            return {
+                async scan(data) {
+                    const fetchFn = globalThis.fetch;
+                    if (!fetchFn)
+                        throw new Error('[remote-yara] fetch non disponibile in questo ambiente');
+                    let res;
+                    if (mode === 'multipart') {
+                        const FormDataCtor = globalThis.FormData;
+                        const BlobCtor = globalThis.Blob;
+                        if (!FormDataCtor || !BlobCtor) {
+                            throw new Error('[remote-yara] FormData/Blob non disponibili (usa json-base64 oppure esegui in browser)');
+                        }
+                        const form = new FormDataCtor();
+                        form.set(rulesField, new BlobCtor([rulesSource], { type: 'text/plain' }), 'rules.yar');
+                        form.set(fileField, new BlobCtor([data], { type: 'application/octet-stream' }), 'sample.bin');
+                        res = await fetchFn(endpoint, { method: 'POST', body: form, headers });
+                    }
+                    else {
+                        const b64 = base64FromBytes(data);
+                        res = await fetchFn(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...headers },
+                            body: JSON.stringify({ [rulesField]: rulesSource, [fileField]: b64 }),
+                        });
+                    }
+                    if (!res.ok) {
+                        throw new Error(`[remote-yara] HTTP ${res.status} ${res.statusText}`);
+                    }
+                    const json = await res.json().catch(() => null);
+                    const arr = Array.isArray(json) ? json : (json?.matches ?? []);
+                    return (arr ?? []).map((m) => ({
+                        rule: m.rule ?? m.ruleIdentifier ?? 'unknown',
+                        tags: m.tags ?? [],
+                    }));
+                },
+            };
+        },
+    };
+    return engine;
+}
+// Helpers
+function base64FromBytes(bytes) {
+    // usa btoa se disponibile (browser); altrimenti fallback manuale
+    const btoaFn = globalThis.btoa;
+    let bin = '';
+    for (let i = 0; i < bytes.byteLength; i++)
+        bin += String.fromCharCode(bytes[i]);
+    return btoaFn ? btoaFn(bin) : Buffer.from(bin, 'binary').toString('base64');
+}
+
 // Factory: sceglie l'engine a runtime (Node o Browser)
 // (Per ora i moduli chiamati lanceranno "non implementato")
 async function createYaraEngine() {
@@ -2907,7 +2961,31 @@ function useFileScanner() {
     return { results, errors, onChange };
 }
 
+// src/scan/remote.ts
+/**
+ * Scansiona una lista di File nel browser usando il motore remoto via HTTP.
+ * Non richiede WASM né dipendenze native sul client.
+ */
+async function scanFilesWithRemoteYara(files, rulesSource, remote) {
+    const engine = await createRemoteEngine(remote);
+    const compiled = await engine.compile(rulesSource);
+    const results = [];
+    for (const file of files) {
+        try {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const matches = await compiled.scan(bytes);
+            results.push({ file, matches });
+        }
+        catch (err) {
+            console.warn('[remote-yara] scan error for', file.name, err);
+            results.push({ file, matches: [], error: String(err?.message ?? err) });
+        }
+    }
+    return results;
+}
+
 exports.scanFiles = scanFiles;
+exports.scanFilesWithRemoteYara = scanFilesWithRemoteYara;
 exports.scanFilesWithYara = scanFilesWithYara;
 exports.useFileScanner = useFileScanner;
 exports.validateFile = validateFile;

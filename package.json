@@ -14,7 +14,8 @@
     "build": "rollup -c",
     "prepublishOnly": "npm run build",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
-    "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts"
+    "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
+    "dev:remote": "tsx examples/remote-yara-server.ts"
   },
   "license": "MIT",
   "devDependencies": {
@@ -25,8 +26,14 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "rollup": "^4.x",
@@ -48,7 +55,7 @@
   "optionalDependencies": {
     "@litko/yara-x": "^0.2.1"
   },
-   "exports": {
+  "exports": {
     ".": {
       "import": "./dist/local-file-scanner.esm.js",
       "require": "./dist/local-file-scanner.cjs.js"

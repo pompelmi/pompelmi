@@ -11,3 +11,4 @@ export { scanFilesWithYara } from './scan'; // <-- adatta il path se diverso
 // Re-export dei TIPI (nessuna ridichiarazione locale)
 export type { YaraMatch } from './yara/index';
 export type { NodeScanOptions, NodeFileEntry } from './node/scanDir'; // opzionale
+export { scanFilesWithRemoteYara } from './scan/remote';

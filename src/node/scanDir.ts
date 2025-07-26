@@ -2,6 +2,7 @@
 import { promises as fs } from 'node:fs';
 import { createReadStream } from 'node:fs';
 import { resolve, join, extname } from 'node:path';
+import { Buffer } from 'node:buffer';
 
 import {
   createYaraScannerFromRules,
@@ -20,6 +21,8 @@ export interface NodeScanOptions {
   yaraPreferBuffer?: boolean; // forza il percorso buffer (attiva il sampling)
 }
 
+export type NodeYaraVerdict = 'malicious' | 'suspicious' | 'clean';
+
 export interface NodeYaraResult {
   matches: YaraMatch[];
   status: 'scanned' | 'skipped' | 'error';
@@ -27,6 +30,8 @@ export interface NodeYaraResult {
   reason?: 'max-size' | 'filtered-ext' | 'not-enabled' | 'engine-missing' | 'error';
   /** come abbiamo scansionato quando status = 'scanned' */
   mode?: 'async' | 'file' | 'buffer' | 'buffer-sampled';
+  /** verdetto derivato dai match (solo quando status='scanned') */
+  verdict?: NodeYaraVerdict;
 }
 
 export interface NodeFileEntry {
@@ -43,21 +48,68 @@ async function readFirstBytes(absPath: string, max: number): Promise<Uint8Array>
     let bytes = 0;
     const highWaterMark = Math.min(max, 64 * 1024); // blocchi piccoli per fermarci presto
     const stream = createReadStream(absPath, { highWaterMark });
-    stream.on('data', (chunk: Buffer) => {
+    stream.on('data', (chunk: Buffer | string) => {
+      const buf = typeof chunk === 'string' ? Buffer.from(chunk) : chunk;
       const needed = max - bytes;
-      if (chunk.length > needed) {
-        chunks.push(chunk.subarray(0, needed));
+      if (buf.length > needed) {
+        chunks.push(buf.subarray(0, needed));
         bytes += needed;
         stream.destroy(); // abbiamo letto abbastanza
       } else {
-        chunks.push(chunk);
-        bytes += chunk.length;
+        chunks.push(buf);
+        bytes += buf.length;
         if (bytes >= max) stream.destroy();
       }
     });
     stream.on('close', () => resolve(Buffer.concat(chunks, bytes)));
     stream.on('error', reject);
   });
+}
+
+function computeVerdict(matches: YaraMatch[]): NodeYaraVerdict {
+  if (!matches || matches.length === 0) return 'clean';
+
+  // set di tag comuni
+  const MAL_TAGS = new Set([
+    'malware', 'malicious', 'trojan', 'ransomware', 'worm', 'spyware',
+    'rootkit', 'keylogger', 'backdoor', 'botnet',
+  ]);
+  const SUS_TAGS = new Set([
+    'suspicious', 'heuristic', 'heur', 'pup', 'grayware', 'riskware', 'adware',
+  ]);
+
+  const MAL_NAME_HINTS = ['trojan', 'ransom', 'ransomware', 'malware', 'worm', 'spy', 'rootkit', 'keylog', 'backdoor', 'botnet'];
+  const SUS_NAME_HINTS = ['heur', 'suspicious', 'pup', 'gray', 'adware', 'risk'];
+
+  let anyMal = false;
+  let anySus = false;
+
+  for (const m of matches) {
+    const name = (m.rule ?? '').toLowerCase();
+    const tags = (m.tags ?? []).map(t => String(t).toLowerCase());
+
+    const hasHighSeverity = tags.some(t =>
+      t === 'severity:high' ||
+      t === 'sev:high' ||
+      t.includes('severity=high') ||
+      t.includes('critical')
+    );
+
+    const hasMalTag = tags.some(t => MAL_TAGS.has(t));
+    const hasSusTag = tags.some(t => SUS_TAGS.has(t));
+
+    const nameLooksMal = MAL_NAME_HINTS.some(k => name.includes(k));
+    const nameLooksSus = SUS_NAME_HINTS.some(k => name.includes(k));
+
+    if (hasHighSeverity || hasMalTag || nameLooksMal) anyMal = true;
+    else if (hasSusTag || nameLooksSus) anySus = true;
+
+    if (anyMal) break;
+  }
+
+  if (anyMal) return 'malicious';
+  if (anySus) return 'suspicious';
+  return 'suspicious'; // match presenti ma senza indicatori forti: conservativo
 }
 
 /** Scansiona una directory in modo ricorsivo, emettendo le entry e (opzionale) i match YARA. */
@@ -147,7 +199,7 @@ export async function* scanDir(
               matches = await yaraScanner.scan(data);
             }
 
-            entry.yara = { matches, status: 'scanned', mode };
+            entry.yara = { matches, status: 'scanned', mode, verdict: computeVerdict(matches) };
           } catch (err) {
             console.warn(`[yara] errore scansione ${absPath}:`, err);
             entry.yara = { matches: [], status: 'error', reason: 'error' };

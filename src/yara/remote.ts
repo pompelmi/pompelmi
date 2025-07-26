@@ -2,31 +2,14 @@
 import type { YaraEngine, YaraCompiled, YaraMatch } from './index';
 
 export interface RemoteEngineOptions {
-  /** Endpoint HTTP POST che esegue la scansione YARA lato server */
-  endpoint: string;
-  /** Header extra (es. Authorization) */
-  headers?: Record<string, string>;
-  /**
-   * Nome del campo per le regole nel payload.
-   * Server-side, il campo corrispondente dovrà essere letto come stringa.
-   */
-  rulesField?: string; // default: "rules"
-  /**
-   * Nome del campo per i bytes del file nel payload.
-   * Se il server accetta multipart/form-data, usare "file".
-   */
-  fileField?: string;  // default: "file"
-  /**
-   * Payload mode: "multipart" (default) o "json-base64".
-   * Scegli in base a come implementeremo l'endpoint Node.
-   */
-  mode?: 'multipart' | 'json-base64';
+  endpoint: string;                 // es. '/api/yara/scan'
+  headers?: Record<string, string>; // es. Authorization
+  rulesField?: string;              // default: 'rules'
+  fileField?: string;               // default: 'file'
+  mode?: 'multipart' | 'json-base64'; // default: 'multipart'
+  rulesAsBase64?: boolean; // se true e mode='json-base64', invia 'rulesB64'
 }
 
-/**
- * Engine YARA remoto: compila “logicamente” le regole e delega la scan al server via HTTP.
- * In browser NON richiede binari, brew/apt o WASM.
- */
 export async function createRemoteEngine(opts: RemoteEngineOptions): Promise<YaraEngine> {
   const {
     endpoint,
@@ -34,45 +17,53 @@ export async function createRemoteEngine(opts: RemoteEngineOptions): Promise<Yar
     rulesField = 'rules',
     fileField = 'file',
     mode = 'multipart',
+    rulesAsBase64 = false,
   } = opts;
 
   const engine: YaraEngine = {
     async compile(rulesSource: string): Promise<YaraCompiled> {
-      // Manteniamo in memoria le regole da inviare a ogni scan
       return {
         async scan(data: Uint8Array): Promise<YaraMatch[]> {
+          const fetchFn = (globalThis as any).fetch as typeof fetch | undefined;
+          if (!fetchFn) throw new Error('[remote-yara] fetch non disponibile in questo ambiente');
+
           let res: Response;
 
           if (mode === 'multipart') {
-            const form = new FormData();
-            form.set(rulesField, new Blob([rulesSource], { type: 'text/plain' }), 'rules.yar');
-            form.set(fileField, new Blob([data], { type: 'application/octet-stream' }), 'sample.bin');
+            const FormDataCtor = (globalThis as any).FormData;
+            const BlobCtor = (globalThis as any).Blob;
+            if (!FormDataCtor || !BlobCtor) {
+              throw new Error('[remote-yara] FormData/Blob non disponibili (usa json-base64 oppure esegui in browser)');
+            }
+            const form = new FormDataCtor();
+            form.set(rulesField, new BlobCtor([rulesSource], { type: 'text/plain' }), 'rules.yar');
+            form.set(fileField, new BlobCtor([data], { type: 'application/octet-stream' }), 'sample.bin');
 
-            res = await fetch(endpoint, {
-              method: 'POST',
-              body: form,
-              headers, // attenzione: non impostare Content-Type manualmente in multipart
-            });
+            res = await fetchFn(endpoint, { method: 'POST', body: form as any, headers });
           } else {
-            // json-base64 (comodo per endpoint serverless)
             const b64 = base64FromBytes(data);
-            res = await fetch(endpoint, {
+            const payload: any = { [fileField]: b64 };
+            if (rulesAsBase64) {
+              payload['rulesB64'] = base64FromString(rulesSource);
+            } else {
+              payload[rulesField] = rulesSource;
+            }
+            res = await fetchFn(endpoint, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json', ...headers },
-              body: JSON.stringify({ [rulesField]: rulesSource, [fileField]: b64 }),
+              body: JSON.stringify(payload),
             });
           }
 
           if (!res.ok) {
             throw new Error(`[remote-yara] HTTP ${res.status} ${res.statusText}`);
           }
-          const json = await res.json();
-          // normalizza in { rule, tags[] }
+          const json = await res.json().catch(() => null);
           const arr = Array.isArray(json) ? json : (json?.matches ?? []);
-          return arr.map((m: any) => ({
+          return (arr ?? []).map((m: any) => ({
             rule: m.rule ?? m.ruleIdentifier ?? 'unknown',
             tags: m.tags ?? [],
-          }));
+          })) as YaraMatch[];
         },
       };
     },
@@ -81,10 +72,16 @@ export async function createRemoteEngine(opts: RemoteEngineOptions): Promise<Yar
   return engine;
 }
 
-// Utils
+// Helpers
 function base64FromBytes(bytes: Uint8Array): string {
+  // usa btoa se disponibile (browser); altrimenti fallback manuale
+  const btoaFn = (globalThis as any).btoa as ((s: string) => string) | undefined;
   let bin = '';
   for (let i = 0; i < bytes.byteLength; i++) bin += String.fromCharCode(bytes[i]);
-  // btoa è disponibile in browser
-  return btoa(bin);
+  return btoaFn ? btoaFn(bin) : Buffer.from(bin, 'binary').toString('base64');
+}
+
+function base64FromString(s: string): string {
+  const btoaFn = (globalThis as any).btoa as ((s: string) => string) | undefined;
+  return btoaFn ? btoaFn(s) : Buffer.from(s, 'utf8').toString('base64');
 }

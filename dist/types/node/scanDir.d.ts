@@ -9,6 +9,7 @@ export interface NodeScanOptions {
     yaraSampleBytes?: number;
     yaraPreferBuffer?: boolean;
 }
+export type NodeYaraVerdict = 'malicious' | 'suspicious' | 'clean';
 export interface NodeYaraResult {
     matches: YaraMatch[];
     status: 'scanned' | 'skipped' | 'error';
@@ -16,6 +17,8 @@ export interface NodeYaraResult {
     reason?: 'max-size' | 'filtered-ext' | 'not-enabled' | 'engine-missing' | 'error';
     /** come abbiamo scansionato quando status = 'scanned' */
     mode?: 'async' | 'file' | 'buffer' | 'buffer-sampled';
+    /** verdetto derivato dai match (solo quando status='scanned') */
+    verdict?: NodeYaraVerdict;
 }
 export interface NodeFileEntry {
     path: string;
