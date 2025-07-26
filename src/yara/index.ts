@@ -23,3 +23,27 @@ export async function createYaraEngine(): Promise<YaraEngine> {
     return createBrowserEngine() as unknown as YaraEngine;
   }
 }
+
+export async function createYaraScannerFromRules(rulesSource: string) {
+  const engine = await createYaraEngine();
+  return engine.compile(rulesSource);
+}
+
+// aggiungi la possibilità di scansionare file (Node-only)
+export interface YaraCompiled {
+  scan(data: Uint8Array): Promise<YaraMatch[]>;
+  scanFile?: (filePath: string) => Promise<YaraMatch[]>; // Node-only
+}
+
+export interface YaraEngine {
+  compile(rulesSource: string): Promise<YaraCompiled>;
+  compileFile?: (rulesPath: string) => Promise<YaraCompiled>; // Node-only
+}
+
+export async function createYaraScannerFromFile(rulesPath: string): Promise<YaraCompiled> {
+  const engine = await createYaraEngine();
+  if (!engine.compileFile) {
+    throw new Error('YARA compileFile non disponibile in questo runtime (browser).');
+  }
+  return engine.compileFile(rulesPath);
+}
