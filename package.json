@@ -38,10 +38,14 @@
     "file-type": "^21.0.0",
     "libyara-wasm": "^1.2.1",
     "rollup": "^4.45.1",
+    "wasm-feature-detect": "^1.8.0",
     "yara": "npm:@automattic/yara@^2.6.0-beta.2"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "optionalDependencies": {
+    "@litko/yara-x": "^0.2.1"
   }
 }
