@@ -1,8 +1,14 @@
 <p align="center">
   <a href="https://github.com/SonoTommy/pompelmi" target="_blank" rel="noopener noreferrer">
-    <img src="./assets/logo.svg" alt="pompelmi" width="120" height="120">
+    <img
+      src="./assets/logo.svg"
+      alt="pompelmi"
+      width="120"
+      height="120"
+    />
   </a>
 </p>
+
 
 <h1 align="center">pompelmi</h1>
 
