@@ -1,7 +1,7 @@
 'use strict';
 
 async function createRemoteEngine(opts) {
-    const { endpoint, headers = {}, rulesField = 'rules', fileField = 'file', mode = 'multipart', } = opts;
+    const { endpoint, headers = {}, rulesField = 'rules', fileField = 'file', mode = 'multipart', rulesAsBase64 = false, } = opts;
     const engine = {
         async compile(rulesSource) {
             return {
@@ -23,10 +23,17 @@ async function createRemoteEngine(opts) {
                     }
                     else {
                         const b64 = base64FromBytes(data);
+                        const payload = { [fileField]: b64 };
+                        if (rulesAsBase64) {
+                            payload['rulesB64'] = base64FromString(rulesSource);
+                        }
+                        else {
+                            payload[rulesField] = rulesSource;
+                        }
                         res = await fetchFn(endpoint, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json', ...headers },
-                            body: JSON.stringify({ [rulesField]: rulesSource, [fileField]: b64 }),
+                            body: JSON.stringify(payload),
                         });
                     }
                     if (!res.ok) {
@@ -52,6 +59,10 @@ function base64FromBytes(bytes) {
     for (let i = 0; i < bytes.byteLength; i++)
         bin += String.fromCharCode(bytes[i]);
     return btoaFn ? btoaFn(bin) : Buffer.from(bin, 'binary').toString('base64');
+}
+function base64FromString(s) {
+    const btoaFn = globalThis.btoa;
+    return btoaFn ? btoaFn(s) : Buffer.from(s, 'utf8').toString('base64');
 }
 
 // Factory: sceglie l'engine a runtime (Node o Browser)

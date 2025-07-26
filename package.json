@@ -1,6 +1,6 @@
 {
   "name": "local-file-scanner",
-  "version": "0.1.1",
+  "version": "0.2.0-alpha.0",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/local-file-scanner.cjs.js",
   "module": "dist/local-file-scanner.esm.js",
