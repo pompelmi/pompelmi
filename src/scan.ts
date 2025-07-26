@@ -1,4 +1,4 @@
-import { createYaraEngine } from './yara/index'; // oppure './yara/index' / 'local-file-scanner/yara'
+import { createYaraEngine } from './yara/index'; // oppure './yara/index' / 'pompelmi/yara'
 import type { YaraMatch } from './yara/index';
 /**
  * Reads an array of File objects via FileReader and returns their text.

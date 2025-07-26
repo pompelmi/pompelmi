@@ -1,4 +1,4 @@
-// src/index.ts — Browser / React entry point per local-file-scanner
+// src/index.ts — Browser / React entry point per pompelmi
 
 // Re-export API browser
 export { scanFiles } from './scan';

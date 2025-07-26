@@ -2994,4 +2994,4 @@ async function scanFilesWithRemoteYara(files, rulesSource, remote) {
 }
 
 export { scanFiles, scanFilesWithRemoteYara, scanFilesWithYara, useFileScanner, validateFile };
-//# sourceMappingURL=local-file-scanner.esm.js.map
+//# sourceMappingURL=pompelmi.esm.js.map

@@ -1,10 +1,10 @@
 <p align="center">
-  <a href="https://github.com/SonoTommy/local-file-scanner" target="_blank" rel="noopener noreferrer">
-    <img src="./assets/logo.svg" alt="local-file-scanner" width="120" height="120">
+  <a href="https://github.com/SonoTommy/pompelmi" target="_blank" rel="noopener noreferrer">
+    <img src="./assets/logo.svg" alt="pompelmi" width="120" height="120">
   </a>
 </p>
 
-<h1 align="center">local-file-scanner</h1>
+<h1 align="center">pompelmi</h1>
 
 <p align="center">
   Light-weight file scanner with optional <strong>YARA</strong> integration.<br/>
@@ -12,16 +12,16 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/local-file-scanner">
-    <img alt="npm" src="https://img.shields.io/npm/v/local-file-scanner?label=local-file-scanner">
+  <a href="https://www.npmjs.com/package/pompelmi">
+    <img alt="npm" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi">
   </a>
-  <a href="https://www.npmjs.com/package/local-file-scanner">
-    <img alt="downloads" src="https://img.shields.io/npm/dw/local-file-scanner">
+  <a href="https://www.npmjs.com/package/pompelmi">
+    <img alt="downloads" src="https://img.shields.io/npm/dw/pompelmi">
   </a>
-  <a href="https://github.com/SonoTommy/local-file-scanner/blob/main/LICENSE">
-    <img alt="license" src="https://img.shields.io/npm/l/local-file-scanner">
+  <a href="https://github.com/SonoTommy/pompelmi/blob/main/LICENSE">
+    <img alt="license" src="https://img.shields.io/npm/l/pompelmi">
   </a>
-  <img alt="node" src="https://img.shields.io/node/v/local-file-scanner">
+  <img alt="node" src="https://img.shields.io/node/v/pompelmi">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="status" src="https://img.shields.io/badge/channel-alpha-orange">
 </p>
@@ -60,7 +60,7 @@
 
 ```bash
 # library
-npm i local-file-scanner
+npm i pompelmi
 
 # (dev) scripts / server example might use these
 npm i -D tsx express multer cors
@@ -75,7 +75,7 @@ npm i -D tsx express multer cors
 ### Node.js (scan a folder with YARA)
 
 ```ts
-import { scanDir } from 'local-file-scanner';
+import { scanDir } from 'pompelmi';
 import { resolve } from 'node:path';
 
 const opts = {
@@ -96,7 +96,7 @@ for await (const entry of scanDir('./some-folder', opts)) {
 ### Browser (HTTP remote engine, no WASM)
 
 ```ts
-import { createRemoteEngine } from 'local-file-scanner';
+import { createRemoteEngine } from 'pompelmi';
 
 const RULES = `
 rule demo_contains_virus_literal {
@@ -219,7 +219,7 @@ type RemoteEngineOptions = {
 import express from 'express';
 import multer from 'multer';
 import cors from 'cors';
-import { createYaraScannerFromRules } from 'local-file-scanner'; // or from './src/yara/index' in dev
+import { createYaraScannerFromRules } from 'pompelmi'; // or from './src/yara/index' in dev
 
 const app = express();
 const upload = multer();
@@ -355,4 +355,4 @@ npm publish --tag next
 
 ## License
 
-[MIT](./LICENSE) © 2025-present local-file-scanner contributors
+[MIT](./LICENSE) © 2025-present pompelmi contributors

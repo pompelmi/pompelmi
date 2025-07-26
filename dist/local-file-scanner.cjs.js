@@ -3000,4 +3000,4 @@ exports.scanFilesWithRemoteYara = scanFilesWithRemoteYara;
 exports.scanFilesWithYara = scanFilesWithYara;
 exports.useFileScanner = useFileScanner;
 exports.validateFile = validateFile;
-//# sourceMappingURL=local-file-scanner.cjs.js.map
+//# sourceMappingURL=pompelmi.cjs.js.map

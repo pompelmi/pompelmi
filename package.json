@@ -1,9 +1,9 @@
 {
-  "name": "local-file-scanner",
+  "name": "pompelmi",
   "version": "0.2.0-alpha.0",
   "description": "Prototipo di scanner di file lato cliente",
-  "main": "dist/local-file-scanner.cjs.js",
-  "module": "dist/local-file-scanner.esm.js",
+  "main": "dist/pompelmi.cjs.js",
+  "module": "dist/pompelmi.esm.js",
   "types": "dist/types/index.d.ts",
   "type": "module",
   "browser": {
@@ -57,8 +57,8 @@
   },
   "exports": {
     ".": {
-      "import": "./dist/local-file-scanner.esm.js",
-      "require": "./dist/local-file-scanner.cjs.js"
+      "import": "./dist/pompelmi.esm.js",
+      "require": "./dist/pompelmi.cjs.js"
     }
   },
   "files": [

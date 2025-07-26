@@ -12,13 +12,13 @@ export default {
   input: 'src/index.ts',
   output: [
     {
-      file: 'dist/local-file-scanner.esm.js',
+      file: 'dist/pompelmi.esm.js',
       format: 'esm',
       sourcemap: true,
       inlineDynamicImports: true,   // 👈 aggiungi questo
     },
     {
-      file: 'dist/local-file-scanner.cjs.js',
+      file: 'dist/pompelmi.cjs.js',
       format: 'cjs',
       sourcemap: true,
       inlineDynamicImports: true,   // 👈 e anche qui
