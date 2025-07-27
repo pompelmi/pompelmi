@@ -49,5 +49,5 @@
   "engines": {
     "node": ">=18.17"
   },
-  "private": false
+  "private": true
 }

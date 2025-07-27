@@ -37,7 +37,7 @@
     "unzipper": "^0.12.3"
   },
   "license": "MIT",
-  "private": false,
+  "private": true,
   "publishConfig": {
     "access": "public"
   },

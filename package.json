@@ -96,7 +96,7 @@
     "example": "examples"
   },
   "author": "",
-  "private": false,
+  "private": true,
   "workspaces": [
     "packages/*"
   ]
