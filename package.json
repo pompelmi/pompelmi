@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.2.0-alpha.1",
+  "version": "0.2.0-alpha.2",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -63,5 +63,31 @@
   },
   "files": [
     "dist/"
+  ],
+  "keywords": [
+    "security",
+    "cybersecurity",
+    "malware",
+    "threat-detection",
+    "security-scanner",
+    "file-scanner",
+    "file-scanning",
+    "file",
+    "files",
+    "filesystem",
+    "directory",
+    "node",
+    "nodejs",
+    "javascript",
+    "typescript",
+    "browser",
+    "web",
+    "api",
+    "http",
+    "express",
+    "backend",
+    "server",
+    "rest",
+    "devsecops"
   ]
 }

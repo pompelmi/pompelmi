@@ -33,8 +33,8 @@
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
   <a href="#install">Install</a> •
+  <a href="#features">Features</a> •
   <a href="#quickstart">Quickstart</a> •
   <a href="#api">API</a> •
   <a href="#browser-remote-yara">Browser (Remote YARA)</a> •
@@ -45,6 +45,21 @@
 </p>
 
 ---
+
+## Install
+
+```bash
+# library
+npm i pompelmi
+
+# (dev) scripts / server example might use these
+npm i -D tsx express multer cors
+```
+
+> The Node YARA engine uses native binaries via platform packages (pulled automatically by dependencies). **No brew / apt** required for consumers.
+
+---
+
 
 ## Features
 
@@ -62,19 +77,7 @@
 
 ---
 
-## Install
 
-```bash
-# library
-npm i pompelmi
-
-# (dev) scripts / server example might use these
-npm i -D tsx express multer cors
-```
-
-> The Node YARA engine uses native binaries via platform packages (pulled automatically by dependencies). **No brew / apt** required for consumers.
-
----
 
 ## Quickstart
 
