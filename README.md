@@ -280,19 +280,22 @@ The adapters share the same behavior and defaults:
 
 ## Architecture & UML
 
+> **Note:** Diagrams are embedded as images via mermaid.ink so they render on GitHub, npm, and other Markdown viewers. The Mermaid source is included below each image.
+> **Tip:** To avoid parser issues across renderers, labels use quotes inside node shapes (e.g., `A["text"]`, `C{"text"}`) when they include parentheses, slashes, or other symbols.
+
 ### Upload scanning flow
 
 ```mermaid
 flowchart TD
-  A[Client uploads file(s)] --> B[Web App Route]
-  B --> C{Pre-filters<br/>(ext, size, MIME)}
-  C -- fail --> X[HTTP 4xx]
-  C -- pass --> D{Is ZIP?}
-  D -- yes --> E[Iterate entries<br/>(limits & scan)]
-  E --> F{Verdict?}
-  D -- no --> F{Scan bytes}
-  F -- malicious/suspicious --> Y[HTTP 422 blocked]
-  F -- clean --> Z[HTTP 200 ok + results]
+  A["Client uploads file(s)"] --> B["Web App Route"]
+  B --> C{"Pre-filters<br/>(ext, size, MIME)"}
+  C -- fail --> X["HTTP 4xx"]
+  C -- pass --> D{"Is ZIP?"}
+  D -- yes --> E["Iterate entries<br/>(limits & scan)"]
+  E --> F{"Verdict?"}
+  D -- no --> F{"Scan bytes"}
+  F -- malicious/suspicious --> Y["HTTP 422 blocked"]
+  F -- clean --> Z["HTTP 200 ok + results"]
 ```
 
 ### Sequence (App ↔ pompelmi ↔ YARA)
@@ -319,17 +322,17 @@ sequenceDiagram
 ### Components (monorepo)
 
 ```mermaid
-graph LR
+flowchart LR
   subgraph Repo
-    core[pompelmi (core)]
-    express[@pompelmi/express-middleware]
-    koa[@pompelmi/koa-middleware]
-    next[@pompelmi/next-upload]
-    fastify[(fastify-plugin · planned)]
-    nest[(nestjs · planned)]
-    remix[(remix · planned)]
-    hapi[(hapi-plugin · planned)]
-    svelte[(sveltekit · planned)]
+    core["pompelmi (core)"]
+    express["@pompelmi/express-middleware"]
+    koa["@pompelmi/koa-middleware"]
+    next["@pompelmi/next-upload"]
+    fastify(("fastify-plugin · planned"))
+    nest(("nestjs · planned"))
+    remix(("remix · planned"))
+    hapi(("hapi-plugin · planned"))
+    svelte(("sveltekit · planned"))
   end
   core --> express
   core --> koa
