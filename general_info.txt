@@ -1,0 +1,15 @@
+sappi che se vuoi mostrare su readme un img svg senza sfondo basta che modifichi
+
+<path fill="#fff" opacity="1.000000" stroke="none" 
+
+con 
+
+<path fill="none" opacity="1.000000" stroke="none" 
+
+
+git add . && git commit -m "*" && git push
+
+npm publish
+
+
+yarn publish --non-interactive                                                                                                                      

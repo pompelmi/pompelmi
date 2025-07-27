@@ -1,3 +1,36 @@
+# dependencies & package manager store
 node_modules/
-package-lock.json
-general_info.txt
+.pnpm-store/
+
+# build outputs / caches
+**/dist/
+**/build/
+.next/
+out/
+coverage/
+.vite/
+.turbo/
+.cache/
+.parcel-cache/
+.temp/
+tmp/
+
+# system/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# env (pesanti/sensibili)
+.env
+.env.local
+.env.*.local
+
+# archives
+*.tgz

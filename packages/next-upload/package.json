@@ -1,0 +1,38 @@
+{
+  "name": "@pompelmi/next-upload",
+  "version": "0.3.0",
+  "description": "Next.js (App Router) upload handler with pompelmi (YARA), MIME sniffing, ZIP anti-bomb, and size/extension policies.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup --clean",
+    "dev": "tsup --watch --dts --format esm,cjs",
+    "demo": "node tests/demo-server.mjs"
+  },
+  "peerDependencies": {
+    "pompelmi": "^0.2.0-alpha"
+  },
+  "dependencies": {
+    "file-type": "^18.7.0",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0"
+  },
+  "license": "MIT"
+}

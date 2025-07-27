@@ -1,0 +1,38 @@
+{
+  "name": "@pompelmi/fastify-plugin",
+  "version": "0.3.0",
+  "description": "Fastify upload scanning plugin for pompelmi (YARA) with MIME sniffing and ZIP limits.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean",
+    "dev": "tsup src/index.ts --watch --dts --format esm,cjs",
+    "demo": "node packages/fastify-plugin/tests/demo-server.mjs"
+  },
+  "peerDependencies": {
+    "fastify": "^4.0.0",
+    "@fastify/multipart": "^7.0.0",
+    "pompelmi": "^0.2.0-alpha"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0",
+    "fastify": "^4.28.0",
+    "@fastify/multipart": "^7.7.3",
+    "file-type": "^18.7.0",
+    "unzipper": "^0.12.3"
+  },
+  "license": "MIT"
+}

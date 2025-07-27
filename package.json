@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.2.0-alpha.2",
+  "version": "0.3.0",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -28,9 +28,11 @@
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "@types/koa": "^2.15.0",
     "@types/multer": "^2.0.0",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
+    "@types/unzipper": "^0.10.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "multer": "^2.0.2",
@@ -89,5 +91,13 @@
     "server",
     "rest",
     "devsecops"
+  ],
+  "directories": {
+    "example": "examples"
+  },
+  "author": "",
+  "private": "true",
+  "workspaces": [
+    "packages/*"
   ]
 }

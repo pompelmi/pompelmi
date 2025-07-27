@@ -1,0 +1,45 @@
+{
+  "name": "@pompelmi/koa-middleware",
+  "version": "0.3.0",
+  "description": "Koa middleware to scan uploads with pompelmi (YARA), MIME sniffing and ZIP anti-bomb.",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsup --clean",
+    "dev": "tsup --watch --dts --format esm,cjs",
+    "demo": "node tests/demo-server.mjs"
+  },
+  "peerDependencies": {
+    "@koa/multer": "^3.0.2",
+    "@koa/router": "^12.0.0",
+    "koa": "^2.15.0 || ^3.0.0",
+    "pompelmi": "^0.2.0-alpha"
+  },
+  "dependencies": {
+    "file-type": "^18.7.0",
+    "multer": "^1.4.5-lts.1",
+    "unzipper": "^0.12.3"
+  },
+  "devDependencies": {
+    "@koa/multer": "^3.1.0",
+    "@koa/router": "^12.0.2",
+    "@types/node": "^20.11.0",
+    "koa": "^2.16.1",
+    "tsup": "^8.0.0",
+    "typescript": "^5.5.0"
+  },
+  "license": "MIT"
+}
