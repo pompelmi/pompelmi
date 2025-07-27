@@ -42,5 +42,12 @@
   "dependencies": {
     "file-type": "^18.7.0",
     "unzipper": "^0.12.3"
+  },
+  true: "false",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.17"
   }
 }
