@@ -336,7 +336,7 @@ sequenceDiagram
 
 ### Components (monorepo)
 <p align="center">
-  <img alt="Monorepo components diagram" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbG1pL2tvYS1taWRkbGV3YXJlXCJdXG4gICAgbmV4dFtcIkBwb21wZWxtaS9uZXh0LXVwbG9hZFwiXVxuICAgIGZhc3RpZnkoKFwiZmFzdGlmeS1wbHVnaW4gwrcgcGxhbm5lZFwiKSlcbiAgICBuZXN0KChcIm5lc3RqcyDCtyBwbGFubmVkXCIpKVxuICAgIHJlbWl4KChcInJlbWl4IMK3IHBsYW5uZWRcIikpXG4gICAgaGFwaSgoXCJoYXBpLXBsdWdpbiDCtyBwbGFubmVkXCIpKVxuICAgIHN2ZWx0ZSgoXCJzdmVsdGVraXQgwrcgcGxhbm5lZFwiKSlcbiAgZW5kXG4gIGNvcmUgLS0+IGV4cHJlc3NcbiAgY29yZSAtLT4ga29hXG4gIGNvcmUgLS0+IG5leHRcbiAgY29yZSAtLi0+IGZhc3RpZnlcbiAgY29yZSAtLi0+IG5lc3RcbiAgY29yZSAtLi0+IHJlbWl4XG4gIGNvcmUgLS4tPiBoYXBpXG4gIGNvcmUgLS4tPiBzdmVsdGUiLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white" />
+  <img alt="Monorepo components diagram" width="1100" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbG1pL2tvYS1taWRkbGV3YXJlXCJdXG4gICAgbmV4dFtcIkBwb21wZWxtaS9uZXh0LXVwbG9hZFwiXVxuICAgIGZhc3RpZnkoKFwiZmFzdGlmeS1wbHVnaW4gwrcgcGxhbm5lZFwiKSlcbiAgICBuZXN0KChcIm5lc3RqcyDCtyBwbGFubmVkXCIpKVxuICAgIHJlbWl4KChcInJlbWl4IMK3IHBsYW5uZWRcIikpXG4gICAgaGFwaSgoXCJoYXBpLXBsdWdpbiDCtyBwbGFubmVkXCIpKVxuICAgIHN2ZWx0ZSgoXCJzdmVsdGVraXQgwrcgcGxhbm5lZFwiKSlcbiAgZW5kXG4gIGNvcmUgLS0+IGV4cHJlc3NcbiAgY29yZSAtLT4ga29hXG4gIGNvcmUgLS0+IG5leHRcbiAgY29yZSAtLi0+IGZhc3RpZnlcbiAgY29yZSAtLi0+IG5lc3RcbiAgY29yZSAtLi0+IHJlbWl4XG4gIGNvcmUgLS4tPiBoYXBpXG4gIGNvcmUgLS4tPiBzdmVsdGUiLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white&width=1400&scale=2" />
 </p>
 
 <details>
@@ -455,12 +455,12 @@ PRs and issues are welcome!
 
 ## Versioning
 
-Channel: **`0.3.3`**  
-Expect minor API changes before a stable `0.3.3`.
+Channel: **`0.3.4`**  
+Expect minor API changes before a stable `0.3.4`.
 
 Suggested publish:
 ```bash
-npm version 0.3.3
+npm version 0.3.4
 npm publish --tag next
 ```
 
