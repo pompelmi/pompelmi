@@ -42,11 +42,11 @@
     "typescript": "^5.5.0"
   },
   "license": "MIT",
-  true: "false",
   "publishConfig": {
     "access": "public"
   },
   "engines": {
     "node": ">=18.17"
-  }
+  },
+  "private": false
 }

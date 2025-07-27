@@ -13,7 +13,9 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --clean",
@@ -34,5 +36,12 @@
     "file-type": "^18.7.0",
     "unzipper": "^0.12.3"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "private": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18.17"
+  }
 }
