@@ -36,6 +36,8 @@
   <img alt="ESLint" src="https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white" />
   <img alt="Prettier" src="https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white" />
 </p>
+
+
 -->
 
 <p align="center">
@@ -43,7 +45,7 @@
     <img alt="npm" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi">
   </a>
   <a href="https://www.npmjs.com/package/pompelmi">
-    <img alt="downloads" src="https://img.shields.io/npm/dw/pompelmi?label=downloads">
+    <img alt="downloads" src="https://img.shields.io/npm/d18m/pompelmi?label=downloads">
   </a>
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
     <img alt="license" src="https://img.shields.io/npm/l/pompelmi">
