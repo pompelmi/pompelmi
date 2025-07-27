@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",

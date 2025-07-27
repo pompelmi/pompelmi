@@ -283,7 +283,14 @@ The adapters share the same behavior and defaults:
 > **Note:** Diagrams are embedded as images via mermaid.ink so they render on GitHub, npm, and other Markdown viewers. The Mermaid source is included below each image.
 > **Tip:** To avoid parser issues across renderers, labels use quotes inside node shapes (e.g., `A["text"]`, `C{"text"}`) when they include parentheses, slashes, or other symbols.
 
+
 ### Upload scanning flow
+<p align="center">
+  <img alt="Upload scanning flow diagram" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBURFxuICBBW1wiQ2xpZW50IHVwbG9hZHMgZmlsZShzKVwiXSAtLT4gQltcIldlYiBBcHAgUm91dGVcIl1cbiAgQiAtLT4gQ3tcIlByZS1maWx0ZXJzPGJyLz4oZXh0LCBzaXplLCBNSU1FKVwifVxuICBDIC0tIGZhaWwgLS0+IFhbXCJIVFRQIDR4eFwiXVxuICBDIC0tIHBhc3MgLS0+IER7XCJJcyBaSVA/XCJ9XG4gIEQgLS0geWVzIC0tPiBFW1wiSXRlcmF0ZSBlbnRyaWVzPGJyLz4obGltaXRzICYgc2NhbilcIl1cbiAgRSAtLT4gRntcIlZlcmRpY3Q/XCJ9XG4gIEQgLS0gbm8gLS0+IEZ7XCJTY2FuIGJ5dGVzXCJ9XG4gIEYgLS0gbWFsaWNpb3VzL3N1c3BpY2lvdXMgLS0+IFlbXCJIVFRQIDQyMiBibG9ja2VkXCJdXG4gIEYgLS0gY2xlYW4gLS0+IFpbXCJIVFRQIDIwMCBvayArIHJlc3VsdHNcIl0iLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white" />
+</p>
+
+<details>
+<summary>Mermaid source</summary>
 
 ```mermaid
 flowchart TD
@@ -297,8 +304,15 @@ flowchart TD
   F -- malicious/suspicious --> Y["HTTP 422 blocked"]
   F -- clean --> Z["HTTP 200 ok + results"]
 ```
+</details>
 
 ### Sequence (App ↔ pompelmi ↔ YARA)
+<p align="center">
+  <img alt="App ↔ pompelmi ↔ YARA sequence diagram" src="https://mermaid.ink/img/eyJjb2RlIjogInNlcXVlbmNlRGlhZ3JhbVxuICBwYXJ0aWNpcGFudCBVIGFzIFVzZXJcbiAgcGFydGljaXBhbnQgQSBhcyBBcHAgUm91dGUgKC91cGxvYWQpXG4gIHBhcnRpY2lwYW50IFAgYXMgcG9tcGVsbWkgKGFkYXB0ZXIpXG4gIHBhcnRpY2lwYW50IFkgYXMgWUFSQSBlbmdpbmVcblxuICBVLT4+QTogUE9TVCBtdWx0aXBhcnQvZm9ybS1kYXRhXG4gIEEtPj5QOiBndWFyZChmaWxlcywgcG9saWNpZXMpXG4gIFAtPj5QOiBNSU1FIHNuaWZmICsgc2l6ZSArIGV4dCBjaGVja3NcbiAgYWx0IFpJUCBhcmNoaXZlXG4gICAgUC0+PlA6IHVucGFjayBlbnRyaWVzIHdpdGggbGltaXRzXG4gIGVuZFxuICBQLT4+WTogc2NhbihieXRlcylcbiAgWS0tPj5QOiBtYXRjaGVzW11cbiAgUC0tPj5BOiB2ZXJkaWN0IChjbGVhbi9zdXNwaWNpb3VzL21hbGljaW91cylcbiAgQS0tPj5VOiAyMDAgb3IgNHh4LzQyMiB3aXRoIHJlYXNvbiIsICJtZXJtYWlkIjogeyJ0aGVtZSI6ICJkZWZhdWx0In19?bgColor=white" />
+</p>
+
+<details>
+<summary>Mermaid source</summary>
 
 ```mermaid
 sequenceDiagram
@@ -318,8 +332,15 @@ sequenceDiagram
   P-->>A: verdict (clean/suspicious/malicious)
   A-->>U: 200 or 4xx/422 with reason
 ```
+</details>
 
 ### Components (monorepo)
+<p align="center">
+  <img alt="Monorepo components diagram" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbG1pL2tvYS1taWRkbGV3YXJlXCJdXG4gICAgbmV4dFtcIkBwb21wZWxtaS9uZXh0LXVwbG9hZFwiXVxuICAgIGZhc3RpZnkoKFwiZmFzdGlmeS1wbHVnaW4gwrcgcGxhbm5lZFwiKSlcbiAgICBuZXN0KChcIm5lc3RqcyDCtyBwbGFubmVkXCIpKVxuICAgIHJlbWl4KChcInJlbWl4IMK3IHBsYW5uZWRcIikpXG4gICAgaGFwaSgoXCJoYXBpLXBsdWdpbiDCtyBwbGFubmVkXCIpKVxuICAgIHN2ZWx0ZSgoXCJzdmVsdGVraXQgwrcgcGxhbm5lZFwiKSlcbiAgZW5kXG4gIGNvcmUgLS0+IGV4cHJlc3NcbiAgY29yZSAtLT4ga29hXG4gIGNvcmUgLS0+IG5leHRcbiAgY29yZSAtLi0+IGZhc3RpZnlcbiAgY29yZSAtLi0+IG5lc3RcbiAgY29yZSAtLi0+IHJlbWl4XG4gIGNvcmUgLS4tPiBoYXBpXG4gIGNvcmUgLS4tPiBzdmVsdGUiLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white" />
+</p>
+
+<details>
+<summary>Mermaid source</summary>
 
 ```mermaid
 flowchart LR
@@ -343,6 +364,7 @@ flowchart LR
   core -.-> hapi
   core -.-> svelte
 ```
+</details>
 
 ---
 
@@ -433,12 +455,12 @@ PRs and issues are welcome!
 
 ## Versioning
 
-Channel: **`0.2.0‑alpha.x`**  
-Expect minor API changes before a stable `0.2.0`.
+Channel: **`0.3.3`**  
+Expect minor API changes before a stable `0.3.3`.
 
 Suggested publish:
 ```bash
-npm version 0.2.0-alpha.0
+npm version 0.3.3
 npm publish --tag next
 ```
 
