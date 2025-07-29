@@ -286,7 +286,7 @@ The adapters share the same behavior and defaults:
 
 ### Upload scanning flow
 <p align="center">
-  <img alt="Upload scanning flow diagram" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBURFxuICBBW1wiQ2xpZW50IHVwbG9hZHMgZmlsZShzKVwiXSAtLT4gQltcIldlYiBBcHAgUm91dGVcIl1cbiAgQiAtLT4gQ3tcIlByZS1maWx0ZXJzPGJyLz4oZXh0LCBzaXplLCBNSU1FKVwifVxuICBDIC0tIGZhaWwgLS0+IFhbXCJIVFRQIDR4eFwiXVxuICBDIC0tIHBhc3MgLS0+IER7XCJJcyBaSVA/XCJ9XG4gIEQgLS0geWVzIC0tPiBFW1wiSXRlcmF0ZSBlbnRyaWVzPGJyLz4obGltaXRzICYgc2NhbilcIl1cbiAgRSAtLT4gRntcIlZlcmRpY3Q/XCJ9XG4gIEQgLS0gbm8gLS0+IEZ7XCJTY2FuIGJ5dGVzXCJ9XG4gIEYgLS0gbWFsaWNpb3VzL3N1c3BpY2lvdXMgLS0+IFlbXCJIVFRQIDQyMiBibG9ja2VkXCJdXG4gIEYgLS0gY2xlYW4gLS0+IFpbXCJIVFRQIDIwMCBvayArIHJlc3VsdHNcIl0iLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white" />
+  <img alt="Upload scanning flow diagram" src="https://mermaid.ink/svg/eyJjb2RlIjogImZsb3djaGFydCBURFxuICBBW1wiQ2xpZW50IHVwbG9hZHMgZmlsZShzKVwiXSAtLT4gQltcIldlYiBBcHAgUm91dGVcIl1cbiAgQiAtLT4gQ3tcIlByZS1maWx0ZXJzPGJyPihleHQsIHNpemUsIE1JTUUpXCJ9XG4gIEMgLS0gZmFpbCAtLT4gWFtcIkhUVFAgNHh4XCJdXG4gIEMgLS0gcGFzcyAtLT4gRHtcIklzIFpJUD9cIn1cbiAgRCAtLSB5ZXMgLS0+IEVbXCJJdGVyYXRlIGVudHJpZXM8YnI+KGxpbWl0cyAmIHNjYW4pXCJdXG4gIEUgLS0+IEZ7XCJWZXJkaWN0P1wifVxuICBEIC0tIG5vIC0tPiBGe1wiU2NhbiBieXRlc1wifVxuICBGIC0tIG1hbGljaW91cy9zdXNwaWNpb3VzIC0tPiBZW1wiSFRUUCA0MjIgYmxvY2tlZFwiXVxuICBGIC0tIGNsZWFuIC0tPiBaW1wiSFRUUCAyMDAgb2sgKyByZXN1bHRzXCJdIiwgIm1lcm1haWQiOiB7InRoZW1lIjogImRlZmF1bHQifX0=?bgColor=white" />
 </p>
 
 <details>
@@ -455,12 +455,12 @@ PRs and issues are welcome!
 
 ## Versioning
 
-Channel: **`0.3.4`**  
-Expect minor API changes before a stable `0.3.4`.
+Channel: **`0.3.5`**  
+Expect minor API changes before a stable `0.3.5`.
 
 Suggested publish:
 ```bash
-npm version 0.3.4
+npm version 0.3.5
 npm publish --tag next
 ```
 

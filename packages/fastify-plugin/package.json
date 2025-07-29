@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/fastify-plugin",
-  "version": "0.3.4",
+  "version": "0.3.5",
   "description": "Fastify upload scanning plugin for pompelmi (YARA) with MIME sniffing and ZIP limits.",
   "type": "module",
   "main": "dist/index.cjs",
