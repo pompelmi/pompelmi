@@ -455,12 +455,12 @@ PRs and issues are welcome!
 
 ## Versioning
 
-Channel: **`0.3.5`**  
-Expect minor API changes before a stable `0.3.5`.
+Channel: **`0.3.6`**  
+Expect minor API changes before a stable `0.3.6`.
 
 Suggested publish:
 ```bash
-npm version 0.3.5
+npm version 0.3.6
 npm publish --tag next
 ```
 
