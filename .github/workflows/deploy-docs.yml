@@ -1,13 +1,14 @@
-name: Deploy Documentation
-
-permissions:
-  contents: write
-  pages: write
+# .github/workflows/deploy-docs.yml
+name: Deploy Hugo Documentation
 
 on:
   push:
     branches:
-      - main  # Change if your default branch is different
+      - main    # o il tuo branch di default
+
+permissions:
+  contents: read
+  pages: write
 
 jobs:
   build-and-deploy:
@@ -18,8 +19,6 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true
-          persist-credentials: true
-          fetch-depth: 0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
@@ -27,11 +26,10 @@ jobs:
           hugo-version: 'latest'
 
       - name: Build site
-        run: hugo -s docs -D -d public
+        run: hugo -s docs -D --minify --gc -d public
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: public
+          publish_dir: ./public
