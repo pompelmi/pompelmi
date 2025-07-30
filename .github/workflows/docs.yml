@@ -1,4 +1,5 @@
-name: Deploy Docs
+name: Deploy Documentation
+
 permissions:
   contents: write
   pages: write
@@ -6,7 +7,7 @@ permissions:
 on:
   push:
     branches:
-      - main    # o sostituisci con il branch da cui vuoi deployare
+      - main  # Change if your default branch is different
 
 jobs:
   build-and-deploy:
@@ -16,7 +17,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
-          submodules: true    # per clonare anche themes/relearn
+          submodules: true
           persist-credentials: true
           fetch-depth: 0
 
@@ -26,12 +27,11 @@ jobs:
           hugo-version: 'latest'
 
       - name: Build site
-        working-directory: docs
-        run: hugo -D -d public
+        run: hugo -s docs -D -d public
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: docs/public
+          publish_dir: public
