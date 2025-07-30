@@ -1,4 +1,3 @@
-
 name: Deploy Docs
 permissions:
   contents: write
@@ -27,7 +26,8 @@ jobs:
           hugo-version: 'latest'
 
       - name: Build site
-        run: hugo -s docs -D -d docs/public
+        working-directory: docs
+        run: hugo -D -d public
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
