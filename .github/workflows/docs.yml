@@ -27,9 +27,7 @@ jobs:
           hugo-version: 'latest'
 
       - name: Build site
-        run: |
-          cd docs
-          hugo -D
+        run: hugo -s docs -D -d docs/public
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
