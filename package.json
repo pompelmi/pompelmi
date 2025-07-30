@@ -15,7 +15,10 @@
     "prepublishOnly": "npm run build",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
     "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
-    "dev:remote": "tsx examples/remote-yara-server.ts"
+    "dev:remote": "tsx examples/remote-yara-server.ts",
+    "docs:build":  "hugo -s docs -D -d docs",
+    "predocs:deploy": "npm run docs:build",
+    "docs:deploy": "gh-pages -d docs -b gh-pages"
   },
   "license": "MIT",
   "devDependencies": {
@@ -35,6 +38,7 @@
     "@types/unzipper": "^0.10.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",
+    "gh-pages": "^6.3.0",
     "multer": "^2.0.2",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
