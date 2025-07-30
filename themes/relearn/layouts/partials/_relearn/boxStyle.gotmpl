@@ -1,0 +1,59 @@
+{{- $style := lower .style }}
+{{- $set := "" }}
+{{- range site.Params.boxStyle }}
+	{{- if eq (lower .identifier) $style }}
+		{{- $title := or .title (.i18n | T) }}
+		{{- $set = dict "style" $style "title" $title "icon" .icon }}
+		{{- break }}
+	{{- end }}
+{{- end }}
+{{- if not $set }}
+	{{- range (slice
+		(dict "identifier" "caution"   "icon" "hand")
+		(dict "identifier" "important" "icon" "bolt")
+		(dict "identifier" "info"      "icon" "info-circle")
+		(dict "identifier" "note"      "icon" "exclamation-circle")
+		(dict "identifier" "tip"       "icon" "lightbulb")
+		(dict "identifier" "warning"   "icon" "exclamation-triangle")
+	) }}
+		{{- if eq .identifier $style }}
+			{{- $title := .identifier | T }}
+			{{- $set = dict "style" $style "title" $title "icon" .icon }}
+			{{- break }}
+		{{- end }}
+	{{- end }}
+{{- end }}
+{{- if not $set }}
+	{{- range (slice
+		(dict "identifier" "primary")
+		(dict "identifier" "secondary")
+		(dict "identifier" "accent")
+		(dict "identifier" "blue")
+		(dict "identifier" "cyan")
+		(dict "identifier" "green")
+		(dict "identifier" "grey")
+		(dict "identifier" "magenta")
+		(dict "identifier" "orange")
+		(dict "identifier" "red")
+		(dict "identifier" "default")
+		(dict "identifier" "transparent")
+		(dict "identifier" "code")
+		(dict "identifier" "filled")
+		(dict "identifier" "initial")
+	) }}
+		{{- if eq .identifier $style }}
+			{{- $set = dict "style" $style "title" "" "icon" "" }}
+			{{- break }}
+		{{- end }}
+	{{- end }}
+{{- end }}
+{{- if not $set }}
+	{{- $set = dict "style" "" "title" "" "icon" "" }}
+{{- end }}
+{{- if .title }}
+	{{- $set = merge $set (dict "title" .title) }}
+{{- end }}
+{{- if .icon }}
+	{{- $set = merge $set (dict "icon" .icon) }}
+{{- end }}
+{{- return $set }}

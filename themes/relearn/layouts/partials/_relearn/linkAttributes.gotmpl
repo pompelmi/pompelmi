@@ -1,0 +1,72 @@
+{{- $attributes := .attributes | default dict }}
+{{- /* target will be boolean false if no user defined value was set and effect default should be applied */}}
+{{- $target := false }}
+{{- $u := urls.Parse .url }}
+{{- if $u.IsAbs }}
+  {{- $attributes = merge $attributes (dict "rel" "external") }}
+  {{- $target = "_blank" }}
+  {{- if isset .page.Site.Params "externallinktarget" }}
+    {{- $target = .page.Site.Params.externalLinkTarget }}
+    {{- if in (slice "false" false 0) $target }}
+      {{- $target = "" }}
+    {{- end }}
+    {{- if in (slice "true" true 1) $target }}
+      {{- $target = "_blank" }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $effects := dict "download" false "target" false }}
+{{- if .page.Site.Params.linkeffects }}
+  {{- $effects = merge $effects .page.Site.Params.linkeffects }}
+{{- end }}
+{{- if .page.Params.linkeffects }}
+  {{- $effects = merge $effects .page.Params.linkeffects }}
+{{- end }}
+{{- $target := .target | default $target }}
+{{- if ne (printf "%T" $target) "bool" }}
+  {{- $effects = merge $effects (dict "target" $target) }}
+{{- end }}
+{{- if $u.RawQuery }}
+  {{- if $u.Query.Has "classes" }}
+    {{- $classes := slice | append (split ($u.Query.Get "classes") ",") }}
+    {{- range $classes }}
+      {{- $k := . }}
+      {{- $v := true }}
+      {{- if strings.HasPrefix $k "no" }}
+        {{- $k := strings.TrimPrefix "no" $k }}
+        {{- $v := false }}
+      {{- end }}
+      {{- $effects = merge $effects (dict $k $v) }}
+    {{- end }}
+  {{- end }}
+  {{- range $k, $v := $effects }}
+    {{- if $u.Query.Has $k }}
+      {{- $paramValue := $u.Query.Get $k }}
+      {{- $newValue := true }}
+      {{- if eq $paramValue "" }}
+        {{- $newValue = true }}
+      {{- else if eq $paramValue "true" }}
+        {{- $newValue = true }}
+      {{- else if eq $paramValue "false" }}
+        {{- $newValue = false }}
+      {{- else }}
+        {{- $newValue = $paramValue }}
+      {{- end }}
+      {{- $effects = merge $effects (dict $k $newValue) }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- $classes := slice }}
+{{- range $k, $v := $effects }}
+  {{- if $v }}
+    {{- if eq (printf "%T" $v) "bool" }}
+	  {{- $classes = $classes | append $k }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if $attributes.class }}{{ $classes = $classes | append (split $attributes.class " ") }}{{ end }}
+{{- $attributes = merge $attributes (dict "class" (delimit $classes " ")) }}
+{{- $attributes = merge $attributes (dict "href" .url) }}
+{{- $attributes = merge $attributes (dict "download" $effects.download) }}
+{{- $attributes = merge $attributes (dict "target" $effects.target) }}
+{{- return $attributes }}

@@ -1,0 +1,41 @@
+{{ $content := .content | .page.RenderString }}
+<div class="list-tree">
+{{- $matches := findRESubmatch `<li>([\s\S]*?)(</li|<ul)` $content }}
+{{- range $matches }}
+  {{- $replacement := "" }}
+  {{- $text := index . 1 }}
+  {{- $rest := index . 2 }}
+  {{- $parts := split $text "|" }}
+
+  {{- if gt (len $parts) 1 }}
+    {{- $name := trim (index $parts 0) " \t\n\r" }}
+    {{- $icon := trim (index $parts 1) " \t\n\r" }}
+    {{- $style := "" }}
+    {{- if ge (len $parts) 3 }}
+      {{- $style = trim (index $parts 2) " \t\n\r" }}
+    {{- end }}
+
+    {{- $isSimpleIcon := eq (len (split $icon " ")) 1 }}
+    {{- $iconClass := $icon }}
+    {{- if $isSimpleIcon }}
+      {{- $iconClass = printf "fa-fw fas fa-%s" $icon }}
+    {{- end }}
+
+    {{- if $style }}
+      {{- $boxStyle := partial "_relearn/boxStyle.gotmpl" (dict "style" $style) }}
+      {{- if $boxStyle.style }}
+        {{- $replacement = printf `<li><i class="%s cstyle %s"></i><span>%s</span>%s` $iconClass $style $name $rest }}
+      {{- else }}
+        {{- $replacement = printf `<li><i class="%s" style="color: %s;"></i><span>%s</span>%s` $iconClass $style $name $rest }}
+      {{- end }}
+    {{- else }}
+      {{- $replacement = printf `<li><i class="%s"></i><span>%s</span>%s` $iconClass $name $rest }}
+    {{- end }}
+  {{- end }}
+
+  {{- if $replacement }}
+    {{- $content = replace $content (index . 0) $replacement }}
+  {{- end }}
+{{- end }}
+{{- $content | safeHTML -}}
+</div>

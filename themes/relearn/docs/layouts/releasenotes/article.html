@@ -1,0 +1,51 @@
+
+<article class="default">
+  <header class="headline">
+    {{- partial "content-header.html" . }}
+  </header>
+{{ partial "heading-pre.html" . }}{{ partial "heading.html" . }}{{ partial "heading-post.html" . }}
+{{- $page := .}}
+{{- $path := replace .Path "introduction/releasenotes" "introduction/changelog" }}
+{{- with or
+  (.GetPage $path)
+  (.GetPage (strings.TrimRight "/" $path))
+}}
+See the {{ partial "shortcodes/link.html" (dict "page" $page "url" .Path "content" "changelog of this version") }} for a detailed list of changes.
+<hr>
+{{- end }}
+
+<ul>
+<li><p>{{ partial "shortcodes/badge.html" (dict
+    "page"    .
+    "color"   "fuchsia"
+    "icon"    "fa-fw fab fa-hackerrank"
+    "title"   " "
+    "content" ($page.Params.minHugoVersion)
+  ) }} Minimum required Hugo version</p></li>
+<li><p>{{ partial "shortcodes/badge.html" (dict
+    "page"    .
+    "style"   "warning"
+    "title"   " "
+    "content" "Breaking"
+  ) }} Change requiring action after upgrade</p></li>
+<li><p>{{ partial "shortcodes/badge.html" (dict
+    "page"    .
+    "style"   "note"
+    "title"   " "
+    "content" "Change"
+  ) }} Change of behavior, may require action</p></li>
+<li><p>{{ partial "shortcodes/badge.html" (dict
+    "page"    .
+    "style"   "info"
+    "icon"    "plus-circle"
+    "title"   " "
+    "content" "New"
+  ) }} New behavior, often introducing new options</p></li>
+</ul>
+<hr>
+
+{{ partial "article-content.html" . }}
+  <footer class="footline">
+    {{- partial "content-footer.html" . }}
+  </footer>
+</article>

@@ -1,0 +1,73 @@
+{{- $page := .page }}
+{{- if and (not $page) .context }}
+  {{- $page = .context }}
+  {{- $filepath := "[virtual file]" }}{{ with and $page $page.File $page.File.Filename }}{{ $filepath = . }}{{ end }}
+  {{- warnf "%q: DEPRECATED parameter 'context' for shortcode 'resources' found, use 'page' instead; see https://mcshelby.github.io/hugo-theme-relearn/introduction/releasenotes/5/#5-18-0" $filepath }}
+{{- end }}
+{{- $color := .color | default "" }}
+{{- $style := .style | default "default" }}
+{{- if and (not $color) (eq (len $color) 0) }}
+  {{- $style = .style | default "transparent" }}
+{{- end }}
+{{- $boxStyle := partial "_relearn/boxStyle.gotmpl" (dict "style" $style "title" .title "icon" .icon) }}
+{{- if and (not $boxStyle.style) (not $color) }}
+  {{- $color = $style }}
+  {{- $style = "" }}
+{{- end }}
+{{- $title := trim ($boxStyle.title | default ("Attachments-label" | T)) " " }}
+{{- $icon := trim ($boxStyle.icon | default "paperclip") " " }}
+{{- if and $icon (not (findRE ".*?\\bfa-\\w.*?" $icon)) }}
+  {{- $icon = printf "fa-fw fas fa-%s" $icon }}
+{{- end }}
+{{- $expanded := .expanded | default "" }}
+{{- if eq (printf "%T" $expanded) "string" }}
+  {{- if ne (trim $expanded " ") "" }}
+    {{- $expanded = (eq $expanded "true") }}
+  {{- end }}
+{{- end }}
+{{- $sort := .sort | default "asc" }}
+{{- $pattern := .pattern | default "" }}
+{{- if eq $page.BundleType "" }}
+  {{- $filepath := "[virtual file]" }}{{ with and $page $page.File $page.File.Filename }}{{ $filepath = . }}{{ end }}
+  {{- warnf "%q: UNSUPPORTED usage of 'resources' shortcode found, use a page bundle instead; see https://mcshelby.github.io/hugo-theme-relearn/shortcodes/resources" $filepath }}
+{{- end }}
+{{- $content := partial "inline/resource-list" (dict
+  "page"     $page
+  "sort"     $sort
+  "pattern"  $pattern
+) }}
+{{- partial "shortcodes/notice.html" (dict
+  "page"     $page
+  "class"    "attachments"
+  "containerstyle" "ul"
+  "containerclass" (slice "attachments-files")
+  "color"    $color
+  "content"  $content
+  "expanded" $expanded
+  "icon"     $icon
+  "style"    $style
+  "title"    $title
+) }}
+
+{{- define "partials/inline/resource-list" }}
+  {{- $sort := .sort }}
+  {{- $pattern := .pattern }}
+  {{- with .page }}
+    {{- range sort .Resources "Name" $sort }}
+      {{- if findRE $pattern .Name }}
+        {{- $size := len .Content }}
+        {{- $unit := "Byte-symbol" }}
+        {{- if ge $size 1024 }}
+          {{- $size = div $size 1024 }}
+          {{- $unit = "Kilobyte-symbol" }}
+        {{- end }}
+        {{- if ge $size 1024 }}
+          {{- $size = div $size 1024 }}
+          {{- $unit = "Megabyte-symbol" }}
+        {{- end }}
+        {{- $unitsymbol := $unit | T }}
+<li><a href="{{ .RelPermalink }}">{{.Name}}</a> ({{$size}} {{$unitsymbol}})</li>
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}

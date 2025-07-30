@@ -1,0 +1,22 @@
+{{- $page := .page }}
+{{- if and (not $page) .context }}
+  {{- $page = .context }}
+  {{- $filepath := "[virtual file]" }}{{ with and $page $page.File $page.File.Filename }}{{ $filepath = . }}{{ end }}
+  {{- warnf "%q: DEPRECATED parameter 'context' for shortcode 'icon' found, use 'page' instead; see https://mcshelby.github.io/hugo-theme-relearn/introduction/releasenotes/5/#5-18-0" $filepath }}
+{{- end }}
+{{- $color := .color | default "" }}
+{{- $style := .style | default "" }}
+{{- $boxStyle := partial "_relearn/boxStyle.gotmpl" (dict "style" $style "icon" .icon) }}
+{{- if and (not $boxStyle.style) (not $color) }}
+  {{- $color = $style }}
+  {{- $style = "" }}
+{{- end }}
+{{- $icon := trim ($boxStyle.icon) " " }}
+{{- if and $icon (not (findRE ".*?\\bfa-\\w.*?" $icon)) }}
+  {{- $icon = printf "fa-fw fas fa-%s" $icon }}
+{{- end }}
+{{- with $page }}
+  {{- if $icon -}}
+<i class="{{ $icon }}{{ with $style }} cstyle {{ . }}{{ end }}"{{ with $color }} style="color: {{ . }};"{{ end }}></i>
+  {{- end }}
+{{- end }}

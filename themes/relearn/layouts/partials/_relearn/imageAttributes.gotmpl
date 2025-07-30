@@ -1,0 +1,79 @@
+{{- $attributes := .attributes | default dict }}
+{{- $height := "auto" }}
+{{- $width := "auto" }}
+{{- $effects := dict "border" false "dataurl" false "inlinecontent" false "lazy" true "lightbox" true "shadow" false }}
+{{- if .page.Site.Params.imageeffects }}
+  {{- $effects = merge $effects .page.Site.Params.imageeffects }}
+{{- end }}
+{{- if .page.Params.imageEffects }}
+  {{- $effects = merge $effects .page.Params.imageEffects }}
+{{- end }}
+{{- $u := urls.Parse .url }}
+{{- if $u.RawQuery }}
+  {{- if $u.Query.Has "classes" }}
+    {{- $classes := slice | append (split ($u.Query.Get "classes") ",") }}
+    {{- range $classes }}
+      {{- $k := . }}
+      {{- $v := true }}
+      {{- if strings.HasPrefix $k "no" }}
+        {{- $k := strings.TrimPrefix "no" $k }}
+        {{- $v := false }}
+      {{- end }}
+      {{- $effects = merge $effects (dict $k $v) }}
+    {{- end }}
+  {{- end }}
+  {{- if $u.Query.Has "featherlight" }}
+    {{- $filepath := "[virtual file]" }}{{ with and .page .page.File .page.File.Filename }}{{ $filepath = . }}{{ end }}
+    {{- warnf "%q: DEPRECATED usage of 'featherlight' image CSS class found, use 'lightbox' instead; see https://mcshelby.github.io/hugo-theme-relearn/introduction/releasenotes/5/#5-11-0" $filepath }}
+    {{- $effects = merge $effects (dict "lightbox" (ne ($u.Query.Get "featherlight") "false")) }}
+  {{- end }}
+  {{- range $k, $v := $effects }}
+    {{- if $u.Query.Has $k }}
+      {{- $effects = merge $effects (dict $k (ne ($u.Query.Get $k) "false")) }}
+    {{- end }}
+  {{- end }}
+  {{- range $k, $v := $effects }}
+    {{- if $u.Query.Has $k }}
+      {{- $paramValue := $u.Query.Get $k }}
+      {{- $newValue := true }}
+      {{- if eq $paramValue "" }}
+        {{- $newValue = true }}
+      {{- else if eq $paramValue "true" }}
+        {{- $newValue = true }}
+      {{- else if eq $paramValue "false" }}
+        {{- $newValue = false }}
+      {{- else }}
+        {{- $newValue = $paramValue }}
+      {{- end }}
+      {{- $effects = merge $effects (dict $k $newValue) }}
+    {{- end }}
+  {{- end }}
+  {{- with $u.Query.Get "height" }}
+    {{- $height = . }}
+  {{- end }}
+  {{- with $u.Query.Get "width" }}
+    {{- $width = . }}
+  {{- end }}
+{{- end }}
+{{- $classes := slice }}
+{{- range $k, $v := $effects }}
+  {{- if $v }}
+    {{- if eq (printf "%T" $v) "bool" }}
+	  {{- $classes = $classes | append $k }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+{{- if and .linkObject $effects.inlinecontent (eq .linkObject.MediaType.Type "image/svg+xml") }}
+  {{- $content := .linkObject.Content | replaceRE `(?s)^\s*<\?.*?\?>\s*` "" }}
+  {{- $attributes = merge $attributes (dict "content" $content) }}
+{{- else if and .linkObject $effects.dataurl }}
+  {{- $src := printf "data:%s;base64,%s" .linkObject.MediaType.Type (.linkObject.Content | base64Encode) }}
+  {{- $attributes = merge $attributes (dict "src" $src) }}
+{{- else }}
+  {{- $attributes = merge $attributes (dict "src" .url) }}
+  {{- if $effects.lazy }}{{ $attributes = merge $attributes (dict "loading" "lazy") }}{{ end }}
+{{- end }}
+{{- if $attributes.class }}{{ $classes = $classes | append (split $attributes.class " ") }}{{ end }}
+{{- $attributes = merge $attributes (dict "class" (delimit $classes " ")) }}
+{{- $attributes = merge $attributes (dict "style" (printf " height: %s; width: %s;%s" $height $width (index $attributes "style" | default ""))) }}
+{{- return $attributes }}

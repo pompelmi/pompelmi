@@ -1,0 +1,23 @@
+{{- $summary := (.Get "summary") | default (T "Details") }}
+{{- $open := false }}
+{{- if in (slice "false" false 0) (.Get "open") }}
+    {{- $open = false }}
+{{- else if in (slice "true" true 1) (.Get "open")}}
+    {{- $open = true }}
+{{- end }}
+{{- $params := dict }}
+{{- with (.Get "class") }}
+  {{- $params = $params | merge (dict "class" .) }}
+{{- end }}
+{{- with (.Get "title") }}
+  {{- $params = $params | merge (dict "title" .) }}
+{{- end }}
+{{- partial "shortcodes/notice.html" (dict
+  "page"     .Page
+  "content"  .Inner
+  "expanded" $open
+  "groupid"  (.Get "name")
+  "params"   $params
+  "style"    "transparent"
+  "title"    $summary
+) }}
