@@ -1,4 +1,8 @@
+
 name: Deploy Docs
+permissions:
+  contents: write
+  pages: write
 
 on:
   push:
@@ -14,7 +18,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: true    # per clonare anche themes/relearn
-          persist-credentials: true
+          persist-credentials: false
+          fetch-depth: 0
 
       - name: Setup Hugo
         uses: peaceiris/actions-hugo@v2
@@ -22,7 +27,7 @@ jobs:
           hugo-version: 'latest'
 
       - name: Build site
-        run: hugo -s docs -d public
+        run: hugo -s docs -d docs/public
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
