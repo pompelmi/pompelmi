@@ -1,4 +1,9 @@
-name: “CodeQL Security Scan”
+name: CodeQL Security Scan
+
+# must be at the top-level
+permissions:
+  contents: read        # so we can check out your code
+  security-events: write  # so we can upload SARIF results
 
 on:
   push:
@@ -8,20 +13,19 @@ on:
 
 jobs:
   analyze:
-    name: “🔍 CodeQL Analysis”
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Check out code
         uses: actions/checkout@v3
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          # scan JavaScript + TypeScript
           languages: javascript, typescript
+          token: ${{ secrets.PAT_TOKEN }}
 
-      - name: Install dependencies & build
+      - name: Build
         run: |
           npm ci
           npm run build
