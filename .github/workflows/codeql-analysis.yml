@@ -23,7 +23,7 @@ jobs:
         uses: github/codeql-action/init@v3
         with:
           languages: javascript, typescript
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build
         run: |
