@@ -24,6 +24,11 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
 
+      - name: Ensure repository field in package.json matches repo
+        run: |
+          npm pkg set repository.type=git
+          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
+
       - name: Bump version automatically
         run: |
           CURRENT_VERSION=$(node -p "require('./package.json').version")
