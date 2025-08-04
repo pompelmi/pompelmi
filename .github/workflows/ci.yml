@@ -37,9 +37,8 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Install Vitest globally
-        run: pnpm add -g vitest@latest
-
+      - name: Add Vitest devDependency
+        run: pnpm add -D vitest@latest @vitest/coverage-v8
 
       - name: Run tests
         run: pnpm exec vitest run --run --passWithNoTests
