@@ -2,12 +2,12 @@ name: Publish to npm (with provenance)
 
 on:
   push:
-    tags: ['v*.*.*']          # pubblica solo quando pusci un tag vX.Y.Z
+    branches: ['**']          # pubblica su ogni push in qualsiasi branch
 
-permissions:                 # autorizzazioni minime necessarie
+permissions:                 
   contents: read
-  id-token: write            # firma OIDC → sigstore
-  packages: write            # pubblicare su npm
+  id-token: write            
+  packages: write            
 
 jobs:
   publish:
@@ -24,9 +24,16 @@ jobs:
       - run: npm ci
       - run: npm run build --if-present
 
+      - name: Bump version automatically
+        run: |
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          NEW_VERSION="$CURRENT_VERSION-$(date +%s)"
+          npm version $NEW_VERSION --no-git-tag-version
+          echo "New version: $NEW_VERSION"
+
       - name: Publish with provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_CONFIG_PROVENANCE: 'true'   # alternativa al flag CLI  [oai_citation:1‡docs.npmjs.com](https://docs.npmjs.com/generating-provenance-statements/?utm_source=chatgpt.com)
+          NPM_CONFIG_PROVENANCE: 'true'
         run: |
           npm publish --provenance --access public
