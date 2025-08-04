@@ -1,0 +1,32 @@
+name: Publish to npm (with provenance)
+
+on:
+  push:
+    tags: ['v*.*.*']          # pubblica solo quando pusci un tag vX.Y.Z
+
+permissions:                 # autorizzazioni minime necessarie
+  contents: read
+  id-token: write            # firma OIDC → sigstore
+  packages: write            # pubblicare su npm
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: npm ci
+      - run: npm run build --if-present
+
+      - name: Publish with provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'   # alternativa al flag CLI  [oai_citation:1‡docs.npmjs.com](https://docs.npmjs.com/generating-provenance-statements/?utm_source=chatgpt.com)
+        run: |
+          npm publish --provenance --access public
