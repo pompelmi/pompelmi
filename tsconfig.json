@@ -1,14 +1,16 @@
 {
   "compilerOptions": {
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "jsx": "react-jsx",
     "skipLibCheck": true,
     "target": "ES2020",
-    "module": "ESNext",
+    "module": "nodenext",
     "declaration": true,
     "declarationDir": "dist/types",
     "outDir": "dist",
-    "strict": true
+    "strict": true,
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true,
   },
   "include": ["src"]
 }

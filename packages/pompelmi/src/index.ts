@@ -1,6 +1,10 @@
 export type YaraMatch = { rule: string; tags?: string[]; meta?: Record<string, unknown> };
 export interface PompelmiScanner { scan(bytes: Uint8Array): Promise<YaraMatch[]>; }
 
+export * from './scan.js';
+export { isMalware } from './isMalware.js';
+
+
 /**
  * Optional YARA: this placeholder throws until the YARA engine package is provided.
  * For now, pass a `scanner` object to adapters instead of `rules`.
@@ -18,4 +22,7 @@ export async function createRemoteEngine(_opts?: Record<string, unknown>) {
   };
 }
 
-export const version = "0.3.6";
+export const version = "0.4.0";
+
+
+

@@ -53,6 +53,8 @@
   <img alt="node" src="https://img.shields.io/node/v/pompelmi">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="status" src="https://img.shields.io/badge/channel-alpha-orange">
+  <img alt="coverage" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?branch=main&label=coverage&style=flat-square" />
+
 </p>
 
 ## Installation
@@ -455,12 +457,12 @@ PRs and issues are welcome!
 
 ## Versioning
 
-Channel: **`0.3.6`**  
-Expect minor API changes before a stable `0.3.6`.
+Channel: **`0.4.0`**  
+Expect minor API changes before a stable `0.4.0`.
 
 Suggested publish:
 ```bash
-npm version 0.3.6
+npm version 0.4.0
 npm publish --tag next
 ```
 
