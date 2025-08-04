@@ -1,34 +1,49 @@
 name: CodeQL Security Scan
 
-# must be at the top-level
+# Minimal permissions for Code Scanning
 permissions:
-  contents: read        # so we can check out your code
-  security-events: write  # so we can upload SARIF results
+  contents: read          # to check out the code
+  security-events: write  # to upload SARIF results
 
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
+  schedule:
+    # Weekly scan every Monday at 02:00 UTC
+    - cron: '0 2 * * 1'
 
 jobs:
   analyze:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Check out code
+      - name: Checkout repository
         uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: javascript, typescript
+          languages: javascript
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build
-        run: |
-          npm ci
-          npm run build
+      - name: Build project
+        run: pnpm run build
 
       - name: Perform CodeQL analysis
         uses: github/codeql-action/analyze@v3
