@@ -34,11 +34,11 @@ jobs:
           run_install: false
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
-
       - name: Add Vitest devDependency
         run: pnpm add -Dw vitest@latest @vitest/coverage-v8
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
 
       - name: Run tests
         run: pnpm exec vitest run --run --passWithNoTests
