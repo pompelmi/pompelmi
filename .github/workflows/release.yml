@@ -59,15 +59,17 @@ jobs:
           NAME="${{ steps.pkg.outputs.name }}"
           VER="${{ steps.pkg.outputs.version }}"
           LIST=$(npm view "$NAME" versions --json || echo '[]')
-          EXISTS=$(echo "$LIST" | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8')||'[]');const v=process.env.VER;process.stdout.write(Array.isArray(d)&&d.includes(v)?'true':'false')")
+          # Use Node with CLI arg so we don't rely on env export
+          EXISTS=$(echo "$LIST" | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8')||'[]');const v=process.argv[1];process.stdout.write(Array.isArray(d)&&d.includes(v)?'true':'false')" "$VER")
           echo "exists=$EXISTS" >> $GITHUB_OUTPUT
           if [ "$EXISTS" = "true" ]; then
             echo "should_publish=false" >> $GITHUB_OUTPUT
           else
             echo "should_publish=true" >> $GITHUB_OUTPUT
           fi
-          echo "Versions on npm: $LIST"
-          echo "Will publish? $([ "$EXISTS" = "true" ] && echo no || echo yes)"
+          echo "package: $NAME"
+          echo "requested version: $VER"
+          echo "exists on npm: $EXISTS"
 
       - name: Install deps
         if: steps.decision.outputs.should_publish == 'true'
