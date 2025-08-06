@@ -114,4 +114,17 @@ jobs:
           else
             echo "latest already points to $VER"
           fi
+      - name: Remove npm "next" dist-tag if present
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          CUR_NEXT=$(npm view "$NAME" dist-tags.next 2>/dev/null || echo "")
+          if [ -n "$CUR_NEXT" ]; then
+            echo "Removing next tag (was: $CUR_NEXT)"
+            npm dist-tag rm "$NAME" next
+          else
+            echo "No next tag to remove"
+          fi
           
