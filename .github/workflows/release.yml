@@ -97,3 +97,20 @@ jobs:
         run: |
           npm publish --provenance --access public --ignore-scripts --tag latest
           echo "Published ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}"
+
+      - name: Ensure npm "latest" tag points to package.json version
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          VER="${{ steps.pkg.outputs.version }}"
+          TAGS=$(npm view "$NAME" dist-tags --json || echo '{}')
+          LATEST=$(echo "$TAGS" | node -e "const fs=require('fs');const t=JSON.parse(fs.readFileSync(0,'utf8')||'{}');process.stdout.write(t.latest||'')")
+          echo "current latest: $LATEST"
+          if [ "$LATEST" != "$VER" ]; then
+            echo "Retagging: setting latest -> $VER"
+            npm dist-tag add "$NAME@$VER" latest
+          else
+            echo "latest already points to $VER"
+          fi
