@@ -1,9 +1,13 @@
-name: Publish to npm (only if version changed)
+name: npm publish (exact x.y.z only, if not already on registry)
 
 on:
   push:
-    branches: ['**']
+    branches: [ main ]
   workflow_dispatch:
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -13,19 +17,15 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Ensure repository field in package.json matches repo
-        run: |
-          npm pkg set repository.type=git
-          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
 
       - name: Read package name and version
         id: pkg
@@ -33,22 +33,36 @@ jobs:
           echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
-      - name: Read published version on npm
-        id: npm
+      - name: Sanity check version (must be x.y.z with no suffix)
+        id: checkver
         run: |
-          PUBLISHED=$(npm view "${{ steps.pkg.outputs.name }}" version || echo "none")
-          echo "published_version=$PUBLISHED" >> $GITHUB_OUTPUT
+          VER="${{ steps.pkg.outputs.version }}"
+          if ! echo "$VER" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::package.json version must be x.y.z (no pre-release/build metadata). Found: $VER"
+            exit 1
+          fi
+
+      - name: List versions on npm
+        id: list
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          npm view "$NAME" versions --json || true
 
       - name: Decide whether to publish
         id: decision
         run: |
-          if [ "${{ steps.npm.outputs.published_version }}" = "none" ]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.pkg.outputs.version }}" = "${{ steps.npm.outputs.published_version }}" ]; then
+          NAME="${{ steps.pkg.outputs.name }}"
+          VER="${{ steps.pkg.outputs.version }}"
+          LIST=$(npm view "$NAME" versions --json || echo '[]')
+          EXISTS=$(echo "$LIST" | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8')||'[]');const v=process.env.VER;process.stdout.write(Array.isArray(d)&&d.includes(v)?'true':'false')")
+          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
+          if [ "$EXISTS" = "true" ]; then
             echo "should_publish=false" >> $GITHUB_OUTPUT
           else
             echo "should_publish=true" >> $GITHUB_OUTPUT
           fi
+          echo "Versions on npm: $LIST"
+          echo "Will publish? $([ "$EXISTS" = "true" ] && echo no || echo yes)"
 
       - name: Install deps
         if: steps.decision.outputs.should_publish == 'true'
@@ -58,9 +72,21 @@ jobs:
         if: steps.decision.outputs.should_publish == 'true'
         run: npm run build --if-present
 
-      - name: Publish with provenance
+      - name: Ensure version unchanged after build
+        if: steps.decision.outputs.should_publish == 'true'
+        run: |
+          BEFORE="${{ steps.pkg.outputs.version }}"
+          AFTER=$(node -p "require('./package.json').version")
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "::error::package.json version changed during build from $BEFORE to $AFTER"
+            exit 1
+          fi
+
+      - name: Publish to npm (ignore lifecycle scripts)
         if: steps.decision.outputs.should_publish == 'true'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
-        run: npm publish --provenance --access public
+        run: |
+          npm publish --provenance --access public --ignore-scripts --tag latest
+          echo "Published ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}"

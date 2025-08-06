@@ -41,10 +41,10 @@
 -->
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pompelmi">
+  <a href="https://github.com/pompelmi/pompelmi">
     <img alt="npm" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi">
   </a>
-  <a href="https://www.npmjs.com/package/pompelmi">
+  <a href="https://github.com/pompelmi/pompelmi">
     <img alt="downloads" src="https://img.shields.io/npm/d18m/pompelmi?label=downloads">
   </a>
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
@@ -143,7 +143,7 @@ This is a monorepo. The following packages are included:
 
 | Package | NPM | Description |
 | --- | --- | --- |
-| **`pompelmi`** | <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi?label=pompelmi" alt="npm"/></a> | Core scanning library (Node + Remote Engine for browsers). |
+| **`pompelmi`** | <a href="https://github.com/pompelmi/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi?label=pompelmi" alt="npm"/></a> | Core scanning library (Node + Remote Engine for browsers). |
 | **`@pompelmi/express-middleware`** | *(alpha)* | Express middleware that scans uploads and enforces policies. |
 | **`@pompelmi/koa-middleware`** | *(alpha)* | Koa middleware compatible with `@koa/multer`/`koa-body`. |
 | **`@pompelmi/next-upload`** | *(alpha)* | Next.js (App Router) `POST` handler factory for `/api/upload`. |
