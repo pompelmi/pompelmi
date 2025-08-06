@@ -27,6 +27,11 @@ jobs:
           node-version: 20
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Ensure repository field matches this repo (required for provenance)
+        run: |
+          npm pkg set repository.type=git
+          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
+
       - name: Read package name and version
         id: pkg
         run: |
