@@ -1,0 +1,123 @@
+name: Release from package.json
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # necessario per creare tag e Release
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  PKG_JSON_PATH: package.json   # cambia qui se vuoi leggere da un altro package
+  TAG_PREFIX: v                 # es: v1.2.3
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # servono i tag
+
+      - name: Read version from package.json
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./${PKG_JSON_PATH}').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          # semplice validazione semver (accetta anche prerelease tipo 1.2.3-beta.1)
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.].+)?$ ]]; then
+            echo "Invalid semver in $PKG_JSON_PATH: $VERSION"
+            exit 1
+          fi
+
+      - name: Decide tag & prerelease flag
+        id: meta
+        run: |
+          TAG="${TAG_PREFIX}${{ steps.pkg.outputs.version }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "${{ steps.pkg.outputs.version }}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if tag already exists
+        id: check
+        run: |
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/${{ steps.meta.outputs.tag }}"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop (tag already exists)
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.meta.outputs.tag }} exists. Skipping."
+
+      - name: Setup Node
+        if: steps.check.outputs.exists == 'false'
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm   # se passi a pnpm: cache: 'pnpm'
+
+      # Se usi pnpm:
+      # - uses: pnpm/action-setup@v4
+      #   if: steps.check.outputs.exists == 'false'
+      #   with: { version: 9 }
+
+      - name: Install deps
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          npm ci
+          # pnpm install --frozen-lockfile
+
+      - name: Build (opzionale)
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          npm run build --if-present
+          # monorepo con pnpm: pnpm -r build
+
+      - name: Package asset (opzionale)
+        id: pkgasset
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          if [ -d dist ]; then
+            tar -czf pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz dist
+            echo "asset=pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push git tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.meta.outputs.tag }}" -m "Release ${{ steps.pkg.outputs.version }}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Create GitHub Release (auto notes)
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXTRA=""
+          if [ "${{ steps.meta.outputs.prerelease }}" = "true" ]; then
+            EXTRA="$EXTRA --prerelease"
+          fi
+
+          if [ -n "${{ steps.pkgasset.outputs.asset }}" ]; then
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA \
+              "${{ steps.pkgasset.outputs.asset }}"
+          else
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA
+          fi
