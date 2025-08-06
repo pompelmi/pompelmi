@@ -114,3 +114,4 @@ jobs:
           else
             echo "latest already points to $VER"
           fi
+          
