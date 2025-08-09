@@ -1,0 +1,306 @@
+name: CI / CodeQL / Release / Publish
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - '@pompelmi/*@*'     # es: @pompelmi/ui-react@0.1.0 -> publish package selezionata
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Permessi minimi a livello workflow; i job aggiungono ciò che serve
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-release-publish
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '20'
+  PNPM_VERSION: '9'
+
+jobs:
+  # -------------------------------
+  # 1) CodeQL (security scan)
+  # -------------------------------
+  codeql:
+    name: CodeQL Security Scan
+    permissions:
+      contents: read          # checkout
+      security-events: write  # upload SARIF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          if [ ! -f pnpm-workspace.yaml ]; then
+            printf "packages:\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          fi
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: corepack enable
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        run: |
+          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
+            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+            mkdir -p dist-tarballs
+            pnpm -F @pompelmi/ui-react build
+            pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
+            ls -la dist-tarballs
+          else
+            echo "No dist-tarballs reference found; skipping pack"
+          fi
+
+      - name: Install (pnpm)
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+
+      - name: Build (light)
+        run: pnpm -r build --if-present
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@v3
+
+  # -------------------------------
+  # 2) CI Build (web + packages)
+  # -------------------------------
+  build:
+    name: Build & Test
+    needs: [codeql]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          if [ ! -f pnpm-workspace.yaml ]; then
+            printf "packages:\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - run: corepack enable
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        run: |
+          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
+            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+            mkdir -p dist-tarballs
+            pnpm -F @pompelmi/ui-react build
+            pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
+            ls -la dist-tarballs
+          else
+            echo "No dist-tarballs reference found; skipping pack"
+          fi
+
+      - name: Install (pnpm)
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build all packages
+        run: pnpm -r build
+
+      - name: Build website
+        run: pnpm --filter ./website build
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: website/dist
+
+  # -------------------------------
+  # 3) Release da package.json (crea tag + GitHub Release)
+  # -------------------------------
+  release:
+    name: Release from package.json
+    needs: [build]
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # creare tag e Release
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Read version from package.json
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.].+)?$ ]]; then
+            echo "Invalid semver in package.json: $VERSION"
+            exit 1
+          fi
+
+      - name: Decide tag & prerelease flag
+        id: meta
+        run: |
+          TAG="v${{ steps.pkg.outputs.version }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "${{ steps.pkg.outputs.version }}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if tag exists
+        id: check
+        run: |
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/${{ steps.meta.outputs.tag }}"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop (tag already exists)
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.meta.outputs.tag }} exists. Skipping."
+
+      - name: Create and push git tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.meta.outputs.tag }}" -m "Release ${{ steps.pkg.outputs.version }}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Build asset (optional)
+        id: pkgasset
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          if [ -d dist ]; then
+            tar -czf "pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz" dist
+            echo "asset=pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release (auto notes)
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXTRA=""
+          if [ "${{ steps.meta.outputs.prerelease }}" = "true" ]; then
+            EXTRA="$EXTRA --prerelease"
+          fi
+          if [ -n "${{ steps.pkgasset.outputs.asset }}" ]; then
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA \
+              "${{ steps.pkgasset.outputs.asset }}"
+          else
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA
+          fi
+
+  # -------------------------------
+  # 4) Publish package su npm (trigger: tag @pompelmi/*@x.y.z)
+  # -------------------------------
+  publish:
+    name: npm publish (tag-driven)
+    if: startsWith(github.ref, 'refs/tags/@pompelmi/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+      - run: corepack enable
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install deps (pnpm, monorepo-friendly)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build all
+        run: pnpm -r build
+
+      - name: Derive package from tag and publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          TAG="${GITHUB_REF_NAME}"           # es: @pompelmi/ui-react@0.1.0
+          PKG="${TAG%@*}"                    # @pompelmi/ui-react
+          VER="${TAG##*@}"                   # 0.1.0
+          echo "Publishing $PKG@$VER"
+          pnpm --filter "$PKG" publish --access public --no-git-checks
+
+      - name: Ensure "latest" tag points to version (scoped only)
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          PKG="${TAG%@*}"
+          VER="${TAG##*@}"
+          if [[ "$PKG" == @pompelmi/* ]]; then
+            CUR=$(npm view "$PKG" dist-tags.latest 2>/dev/null || echo "")
+            echo "current latest: $CUR"
+            if [ "$CUR" != "$VER" ]; then
+              echo "Retagging: setting latest -> $VER"
+              npm dist-tag add "$PKG@$VER" latest || echo "Skip retag (no perms?)"
+            else
+              echo "latest already points to $VER"
+            fi
+          else
+            echo "Skipping retag for unscoped package"
+          fi
+
+  # -------------------------------
+  # 5) Deploy GitHub Pages dal build (opzionale, se Pages è attivo)
+  # -------------------------------
+  deploy-pages:
+    name: Deploy GitHub Pages
+    needs: [build]
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
