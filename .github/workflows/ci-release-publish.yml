@@ -19,7 +19,6 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  PNPM_VERSION: '9'
 
 jobs:
   # -------------------------------
@@ -44,7 +43,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
           standalone: true
 
       - name: Setup Node
@@ -63,7 +61,12 @@ jobs:
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             echo "pnpm not found, installing fallback..."
-            npm i -g pnpm@${{ env.PNPM_VERSION }}
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              npm i -g "pnpm@$VER"
+            else
+              npm i -g pnpm
+            fi
           fi
           pnpm --version
 
@@ -114,7 +117,6 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
           standalone: true
 
       - uses: actions/setup-node@v4
@@ -132,7 +134,12 @@ jobs:
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             echo "pnpm not found, installing fallback..."
-            npm i -g pnpm@${{ env.PNPM_VERSION }}
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              npm i -g "pnpm@$VER"
+            else
+              npm i -g pnpm
+            fi
           fi
           pnpm --version
 
@@ -267,7 +274,6 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: ${{ env.PNPM_VERSION }}
           standalone: true
 
       - name: Setup Node
@@ -287,7 +293,12 @@ jobs:
         run: |
           if ! command -v pnpm >/dev/null 2>&1; then
             echo "pnpm not found, installing fallback..."
-            npm i -g pnpm@${{ env.PNPM_VERSION }}
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              npm i -g "pnpm@$VER"
+            else
+              npm i -g pnpm
+            fi
           fi
           pnpm --version
 
