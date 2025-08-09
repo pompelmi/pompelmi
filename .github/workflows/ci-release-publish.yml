@@ -41,20 +41,23 @@ jobs:
             printf "packages:\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
           fi
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           standalone: true
 
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
       - name: PNPM version
         run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
 
       - name: Fallback install pnpm if missing
         run: |
@@ -109,18 +112,21 @@ jobs:
             printf "packages:\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
           fi
 
-      - uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
-
       - uses: pnpm/action-setup@v4
         with:
           version: ${{ env.PNPM_VERSION }}
           standalone: true
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
       - name: PNPM version
         run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
 
       - name: Fallback install pnpm if missing
         run: |
@@ -258,6 +264,12 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          standalone: true
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -265,14 +277,11 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: pnpm
 
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: ${{ env.PNPM_VERSION }}
-          standalone: true
-
       - name: PNPM version
         run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
 
       - name: Fallback install pnpm if missing
         run: |
