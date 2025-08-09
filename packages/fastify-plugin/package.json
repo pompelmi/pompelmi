@@ -18,7 +18,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup src/index.ts --dts --format esm,cjs --clean",
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean --external unzipper,@aws-sdk/client-s3",
     "dev": "tsup src/index.ts --watch --dts --format esm,cjs",
     "demo": "node packages/fastify-plugin/tests/demo-server.mjs"
   },

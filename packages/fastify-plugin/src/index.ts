@@ -1,6 +1,6 @@
 import type { FastifyRequest, FastifyReply, preHandlerHookHandler } from 'fastify';
 import { fileTypeFromBuffer } from 'file-type';
-import path from 'node:path';
+import * as path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { performance } from 'node:perf_hooks';
 

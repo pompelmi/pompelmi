@@ -97,7 +97,11 @@ jobs:
           languages: javascript
 
       - name: Build (light)
-        run: pnpm -r --filter "!@pompelmi/core" --if-present run build
+        run: |
+          pnpm -r \
+            --filter '!./examples/*' \
+            --filter '!@pompelmi/core' \
+            --if-present run build
 
       - name: Analyze
         uses: github/codeql-action/analyze@v3
@@ -171,7 +175,11 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build all packages
-        run: pnpm -r --filter "!@pompelmi/core" --if-present run build
+        run: |
+          pnpm -r \
+            --filter '!./examples/*' \
+            --filter '!@pompelmi/core' \
+            --if-present run build
 
       - name: Build website
         run: pnpm --filter ./website build
@@ -318,7 +326,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build all
-        run: pnpm -r build
+        run: |
+          pnpm -r \
+            --filter '!./examples/*' \
+            --filter '!@pompelmi/core' \
+            --if-present run build
 
       - name: Derive package from tag and publish
         env:
