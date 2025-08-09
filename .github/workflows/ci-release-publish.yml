@@ -68,6 +68,27 @@ jobs:
           fi
           pnpm --version
 
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          if [ ! -f pnpm-workspace.yaml ]; then
+            printf "packages:\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          fi
+
+      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        run: |
+          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
+            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+            mkdir -p dist-tarballs
+            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
+            pnpm -F @pompelmi/ui-react build
+            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            echo "Created tarball: $TARBALL"
+            mv "packages/ui-react/$TARBALL" dist-tarballs/
+            ls -la dist-tarballs
+          else
+            echo "No dist-tarballs reference found; skipping pack"
+          fi
+
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
