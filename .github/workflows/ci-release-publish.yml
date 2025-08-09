@@ -79,7 +79,10 @@ jobs:
             # ensure dev deps like rimraf/tsup are available for this package
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
+            # 'pnpm pack' does not support recursive/filter; run it in the package dir
+            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            echo "Created tarball: $TARBALL"
+            mv "packages/ui-react/$TARBALL" dist-tarballs/
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
@@ -155,7 +158,10 @@ jobs:
             # ensure dev deps like rimraf/tsup are available for this package
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
+            # 'pnpm pack' does not support recursive/filter; run it in the package dir
+            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            echo "Created tarball: $TARBALL"
+            mv "packages/ui-react/$TARBALL" dist-tarballs/
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
