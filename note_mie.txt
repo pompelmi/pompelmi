@@ -16,3 +16,13 @@ pnpm --filter ./website build && {                                              
 } || echo "❌ Build failed, skipped deploy"
 
 
+
+
+
+╰─ # push esplicito                                                                                                                                      ─╯
+git push origin main
+
+# e imposta l’upstream corretto per le prossime volte
+git branch --set-upstream-to=origin/main main
+# oppure in un colpo solo:
+# git push --set-upstream origin main
