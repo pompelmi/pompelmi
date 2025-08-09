@@ -1,9 +1,0 @@
-baseURL = "https://pompelmi.github.io/pompelmi/"
-languageCode = "it-it"
-title = "Pompelmi"
-theme = "relearn"
-
-[params]
-  mainSections  = ["docs"]
-  github_repo   = "https://github.com/pompelmi/pompelmi"
-  github_branch = "gh-pages"
