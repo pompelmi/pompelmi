@@ -70,20 +70,23 @@ jobs:
           fi
           pnpm --version
 
+
+      - name: Install (pnpm)
+        run: pnpm install --no-frozen-lockfile
+
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
             echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
+            # ensure dev deps like rimraf/tsup are available
+            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
             pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
           fi
-
-      - name: Install (pnpm)
-        run: pnpm install --no-frozen-lockfile
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -143,20 +146,23 @@ jobs:
           fi
           pnpm --version
 
+
+      - name: Install (pnpm)
+        run: pnpm install --no-frozen-lockfile
+
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
             echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
+            # ensure dev deps like rimraf/tsup are available
+            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
             pnpm -F @pompelmi/ui-react pack --pack-destination dist-tarballs
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
           fi
-
-      - name: Install (pnpm)
-        run: pnpm install --no-frozen-lockfile
 
       - name: Build all packages
         run: pnpm -r build
