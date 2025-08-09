@@ -3,8 +3,6 @@ name: CI / CodeQL / Release / Publish
 on:
   push:
     branches: [ main ]
-    tags:
-      - '@pompelmi/*@*'     # es: @pompelmi/ui-react@0.1.0 -> publish package selezionata
   pull_request:
     branches: [ main ]
   workflow_dispatch:
@@ -70,16 +68,13 @@ jobs:
           fi
           pnpm --version
 
-
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
             echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
-            # ensure dev deps like rimraf/tsup are available for this package
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            # 'pnpm pack' does not support recursive/filter; run it in the package dir
             TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
             echo "Created tarball: $TARBALL"
             mv "packages/ui-react/$TARBALL" dist-tarballs/
@@ -153,16 +148,13 @@ jobs:
           fi
           pnpm --version
 
-
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
             echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
-            # ensure dev deps like rimraf/tsup are available for this package
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            # 'pnpm pack' does not support recursive/filter; run it in the package dir
             TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
             echo "Created tarball: $TARBALL"
             mv "packages/ui-react/$TARBALL" dist-tarballs/
@@ -276,11 +268,12 @@ jobs:
           fi
 
   # -------------------------------
-  # 4) Publish package su npm (trigger: tag @pompelmi/*@x.y.z)
+  # 4) Publish workspaces to npm (skips only if that version already exists)
   # -------------------------------
-  publish:
-    name: npm publish (tag-driven)
-    if: startsWith(github.ref, 'refs/tags/@pompelmi/')
+  publish-workspaces:
+    name: npm publish (only if version not on npm)
+    needs: [build]
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -322,50 +315,84 @@ jobs:
           fi
           pnpm --version
 
-      - name: Install deps (pnpm, monorepo-friendly)
+      - name: Install deps (pnpm)
         run: pnpm install --frozen-lockfile
 
-      - name: Build all
+      - name: Build publishable workspaces
         run: |
           pnpm -r \
+            --filter '@pompelmi/*' \
             --filter '!./examples/*' \
-            --filter '!@pompelmi/core' \
             --if-present run build
 
-      - name: Derive package from tag and publish
+      - name: Publish only if version not on npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
+        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"           # es: @pompelmi/ui-react@0.1.0
-          PKG="${TAG%@*}"                    # @pompelmi/ui-react
-          VER="${TAG##*@}"                   # 0.1.0
-          echo "Publishing $PKG@$VER"
-          pnpm --filter "$PKG" publish --access public --no-git-checks
+          set -euo pipefail
+          echo "Scanning publishable workspaces…"
+          # Produce lines: name|version|dir
+          mapfile -t ROWS < <(node -e "
+            const fs=require('fs'), path=require('path');
+            const root='packages';
+            if(!fs.existsSync(root)) process.exit(0);
+            for(const d of fs.readdirSync(root)){
+              const p=path.join(root,d,'package.json');
+              if(!fs.existsSync(p)) continue;
+              const j=JSON.parse(fs.readFileSync(p,'utf8'));
+              if(!j.name||!j.version) continue;
+              if(!j.name.startsWith('@pompelmi/')) continue;
+              if(j.private) continue;
+              console.log(`${j.name}|${j.version}|${path.dirname(p)}`);
+            }
+          ")
 
-      - name: Ensure "latest" tag points to version (scoped only)
+          for row in "${ROWS[@]}"; do
+            IFS='|' read -r NAME VER DIR <<< "$row"
+            echo "• $NAME@$VER"
+            EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+            if [ "$EXISTS" = "$VER" ]; then
+              echo "  → already on npm, skip"
+              continue
+            fi
+            echo "  → publishing…"
+            pnpm --filter "$NAME" publish --access public --no-git-checks --provenance
+          done
+
+      - name: Ensure dist-tag "latest" points to version
         if: always()
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME}"
-          PKG="${TAG%@*}"
-          VER="${TAG##*@}"
-          if [[ "$PKG" == @pompelmi/* ]]; then
-            CUR=$(npm view "$PKG" dist-tags.latest 2>/dev/null || echo "")
-            echo "current latest: $CUR"
+          set -euo pipefail
+          while IFS='|' read -r NAME VER; do
+            [ -z "$NAME" ] && continue
+            CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
             if [ "$CUR" != "$VER" ]; then
-              echo "Retagging: setting latest -> $VER"
-              npm dist-tag add "$PKG@$VER" latest || echo "Skip retag (no perms?)"
+              echo "Retagging latest -> $VER for $NAME"
+              npm dist-tag add "$NAME@$VER" latest || true
             else
-              echo "latest already points to $VER"
+              echo "$NAME latest already $VER"
             fi
-          else
-            echo "Skipping retag for unscoped package"
-          fi
+          done < <(node -e "
+            const fs=require('fs'), path=require('path');
+            const root='packages';
+            if(!fs.existsSync(root)) process.exit(0);
+            for(const d of fs.readdirSync(root)){
+              const p=path.join(root,d,'package.json');
+              if(!fs.existsSync(p)) continue;
+              const j=JSON.parse(fs.readFileSync(p,'utf8'));
+              if(j.name&&j.version&&j.name.startsWith('@pompelmi/')&&!j.private){
+                console.log(j.name+'|'+j.version);
+              }
+            }
+          ")
 
   # -------------------------------
-  # 5) Deploy GitHub Pages dal build (opzionale, se Pages è attivo)
+  # 5) Deploy GitHub Pages (se Pages è attivo)
   # -------------------------------
   deploy-pages:
     name: Deploy GitHub Pages
