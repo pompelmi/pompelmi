@@ -56,6 +56,14 @@ jobs:
       - name: PNPM version
         run: pnpm --version
 
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            npm i -g pnpm@${{ env.PNPM_VERSION }}
+          fi
+          pnpm --version
+
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
@@ -113,6 +121,14 @@ jobs:
 
       - name: PNPM version
         run: pnpm --version
+
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            npm i -g pnpm@${{ env.PNPM_VERSION }}
+          fi
+          pnpm --version
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
@@ -257,6 +273,14 @@ jobs:
 
       - name: PNPM version
         run: pnpm --version
+
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            npm i -g pnpm@${{ env.PNPM_VERSION }}
+          fi
+          pnpm --version
 
       - name: Install deps (pnpm, monorepo-friendly)
         run: pnpm install --frozen-lockfile
