@@ -1,0 +1,18 @@
+prima
+
+
+pnpm -F @pompelmi/ui-react build
+pnpm --filter ./website build
+
+
+per fare il deploy del sito pages github
+
+pnpm --filter ./website build && {                                                                                                                    ─╯
+  git fetch origin
+  git worktree add -B gh-pages gh-pages origin/gh-pages
+  rsync -av --delete --exclude ".git" website/dist/ gh-pages/
+  (cd gh-pages && touch .nojekyll && git add -A && git commit -m "docs: publish website" && git push)
+  git worktree remove gh-pages
+} || echo "❌ Build failed, skipped deploy"
+
+

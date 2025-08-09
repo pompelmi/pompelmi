@@ -1,0 +1,142 @@
+---
+import DemoUpload from '../components/DemoUpload';
+import '../styles/global.css';
+const BASE = 'https://pompelmi.github.io/pompelmi';
+const TITLE = 'Pompelmi — File upload malware scanning for Node.js';
+const DESC =
+  'Ready-made React/Next.js upload UI and Node middlewares to scan files for malware. CLEAN/MALICIOUS verdicts, size & MIME guards, optional YARA.';
+const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.png
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESC} />
+    <link rel="canonical" href={BASE + '/'} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="index,follow" />
+
+    <!-- Open Graph / Twitter -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={BASE + '/'} />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESC} />
+    <meta property="og:image" content={OG_IMAGE} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={TITLE} />
+    <meta name="twitter:description" content={DESC} />
+    <meta name="twitter:image" content={OG_IMAGE} />
+    <link rel="icon" href="/pompelmi/favicon.svg" />
+
+    <!-- Structured data: Organization + SoftwareApplication + FAQ -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "Pompelmi",
+            "url": "https://github.com/pompelmi/pompelmi",
+            "sameAs": [
+              "https://github.com/pompelmi/pompelmi"
+            ]
+          },
+          {
+            "@type": "SoftwareApplication",
+            "name": "Pompelmi",
+            "applicationCategory": "SecurityApplication",
+            "operatingSystem": "Cross-platform",
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "url": "https://pompelmi.github.io/pompelmi/"
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "What is Pompelmi?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A minimal toolkit for scanning user file uploads in web apps. It ships a React/Next UI, Node middlewares, and clear CLEAN/MALICIOUS verdicts."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How do I test that scanning works?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Upload a clean JPG (CLEAN) and the standard EICAR test file (MALICIOUS). The homepage demo and the Getting started guide show both."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does Pompelmi store my files?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "By default, the UI posts to your own scan engine endpoint. Storage, retention, and telemetry are under your control server-side."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
+  </head>
+
+  <body class="antialiased">
+    <header class="mx-auto max-w-5xl px-4 py-10">
+      <h1 class="text-4xl font-bold tracking-tight">Pompelmi</h1>
+      <p class="mt-3 text-gray-600 max-w-2xl">
+        {DESC}
+      </p>
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <a
+          href="https://github.com/pompelmi/pompelmi"
+          class="inline-flex items-center rounded-md bg-black px-4 py-2 text-white text-sm font-medium"
+          aria-label="Star Pompelmi on GitHub"
+        >
+          ⭐ Star on GitHub
+        </a>
+        <a
+          href="/pompelmi/getting-started/"
+          class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-medium"
+        >
+          Read the docs
+        </a>
+        <a
+          href="/pompelmi/reference/ui-react/"
+          class="inline-flex items-center rounded-md bg-gray-100 px-4 py-2 text-sm font-medium"
+        >
+          UI API
+        </a>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 pb-16">
+      <section class="border-t pt-8">
+        <h2 class="text-2xl font-semibold">Live demo</h2>
+        <p class="text-sm text-gray-600 mb-4">
+          Clean JPG → <strong>CLEAN</strong>. EICAR → <strong>MALICIOUS</strong>.
+        </p>
+        <DemoUpload client:load />
+      </section>
+
+      <section class="mt-12 grid gap-6 md:grid-cols-3">
+        <a href="/pompelmi/how-to/nextjs/" class="rounded-xl border p-4 hover:bg-gray-50">
+          <h3 class="font-medium">Next.js</h3>
+          <p class="text-sm text-gray-600">Add scanning to a Next app.</p>
+        </a>
+        <a href="/pompelmi/how-to/express/" class="rounded-xl border p-4 hover:bg-gray-50">
+          <h3 class="font-medium">Express</h3>
+          <p class="text-sm text-gray-600">Protect uploads in an API route.</p>
+        </a>
+        <a href="/pompelmi/reference/ui-react/" class="rounded-xl border p-4 hover:bg-gray-50">
+          <h3 class="font-medium">@pompelmi/ui-react</h3>
+          <p class="text-sm text-gray-600">Props, events, examples.</p>
+        </a>
+      </section>
+    </main>
+  </body>
+</html>
