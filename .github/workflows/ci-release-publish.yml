@@ -362,6 +362,7 @@ jobs:
         run: |
           pnpm -r \
             --filter '@pompelmi/*' \
+            --filter '!@pompelmi/core' \
             --filter '!./examples/*' \
             --if-present run build
 
@@ -383,6 +384,7 @@ jobs:
               if(!fs.existsSync(p)) continue;
               const j=JSON.parse(fs.readFileSync(p,'utf8'));
               if(!j.name||!j.version) continue;
+              if(j.name === '@pompelmi/core') continue;
               if(!j.name.startsWith('@pompelmi/')) continue;
               if(j.private) continue;
               console.log(`${j.name}|${j.version}|${path.dirname(p)}`);
@@ -391,6 +393,10 @@ jobs:
 
           for row in "${ROWS[@]}"; do
             IFS='|' read -r NAME VER DIR <<< "$row"
+            if [ "$NAME" = "@pompelmi/core" ]; then
+              echo "  → skipping @pompelmi/core (not published by this job)"
+              continue
+            fi
             echo "• $NAME@$VER"
             EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
             if [ "$EXISTS" = "$VER" ]; then
@@ -426,6 +432,7 @@ jobs:
               if(!fs.existsSync(p)) continue;
               const j=JSON.parse(fs.readFileSync(p,'utf8'));
               if(j.name&&j.version&&j.name.startsWith('@pompelmi/')&&!j.private){
+                if(j.name === '@pompelmi/core') continue;
                 console.log(j.name+'|'+j.version);
               }
             }
