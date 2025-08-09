@@ -415,6 +415,84 @@ jobs:
           ")
 
   # -------------------------------
+  # 4b) Publish root package (pompelmi) to npm
+  #     Skips ONLY if that exact version already exists on npm
+  # -------------------------------
+  publish-root:
+    name: npm publish root (pompelmi)
+    needs: [build]
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          standalone: true
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+          cache: pnpm
+
+      - name: Read root package name & version
+        id: rootpkg
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Decide publish (skip only if exact version exists)
+        id: rootdecision
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          VER="${{ steps.rootpkg.outputs.version }}"
+          EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+          if [ "$EXISTS" = "$VER" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version already on npm: $NAME@$VER — skipping publish"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version not on npm: $NAME@$VER — will publish"
+          fi
+
+      - name: Publish root to npm
+        if: steps.rootdecision.outputs.exists == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          # Publish without running lifecycle scripts to avoid build-time cross-deps
+          npm publish --provenance --access public --ignore-scripts
+          echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }}"
+
+      - name: Ensure "latest" tag matches root version
+        if: steps.rootdecision.outputs.exists == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          VER="${{ steps.rootpkg.outputs.version }}"
+          CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+          if [ "$CUR" != "$VER" ]; then
+            echo "Retagging latest -> $VER for $NAME"
+            npm dist-tag add "$NAME@$VER" latest || true
+          else
+            echo "$NAME latest already $VER"
+          fi
+
+  # -------------------------------
   # 5) Deploy GitHub Pages (se Pages è attivo)
   # -------------------------------
   deploy-pages:
