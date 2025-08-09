@@ -303,6 +303,13 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: pnpm
 
+      - name: Ensure repository field in workspaces (for provenance)
+        run: |
+          pnpm -r --filter '@pompelmi/*' --filter '!./examples/*' exec bash -lc '
+            npm pkg set repository.type=git
+            npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
+          '
+
       - name: PNPM version
         run: pnpm --version
 
@@ -323,6 +330,7 @@ jobs:
           pnpm --version
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        id: pack
         run: |
           set -e
           if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
@@ -334,12 +342,21 @@ jobs:
             echo "Created tarball: $TARBALL"
             mv "packages/ui-react/$TARBALL" dist-tarballs/
             ls -la dist-tarballs
+            echo "packed=true" >> "$GITHUB_OUTPUT"
           else
             echo "No dist-tarballs reference found; skipping pack"
+            echo "packed=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Install deps (pnpm)
-        run: pnpm install --frozen-lockfile
+        run: |
+          if [ "${{ steps.pack.outputs.packed }}" = "true" ]; then
+            echo "Tarball packed → prune + install without frozen lockfile"
+            pnpm store prune || true
+            pnpm install --no-frozen-lockfile
+          else
+            pnpm install --frozen-lockfile
+          fi
 
       - name: Build publishable workspaces
         run: |
@@ -443,6 +460,11 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
           cache: pnpm
+
+      - name: Ensure repository field matches this repo (for provenance)
+        run: |
+          npm pkg set repository.type=git
+          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
 
       - name: Read root package name & version
         id: rootpkg
