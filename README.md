@@ -1,166 +1,74 @@
 <p align="center">
   <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
-    <img
-      src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg"
-      alt="pompelmi"
-      width="360"
-      height="280"
-    />
+    <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" height="280" />
   </a>
 </p>
-
 
 <h1 align="center">pompelmi</h1>
 
-<p align="center">
-  Lightweight file upload scanner with optional <strong>YARA</strong> rules.<br/>
-  Works out‑of‑the‑box on <strong>Node.js</strong>; supports <strong>browser</strong> via a simple HTTP “remote engine”.
-</p>
-
-<!--
-<p align="center">
-  <img alt="Node.js" src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" />
-  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
-  <img alt="Express" src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" />
-  <img alt="Koa" src="https://img.shields.io/badge/Koa-33333D?style=for-the-badge&logo=nodedotjs&logoColor=white" />
-  <img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
-  <img alt="Fastify (planned)" src="https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white" />
-  <img alt="NestJS (planned)" src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" />
-  <img alt="Remix (planned)" src="https://img.shields.io/badge/Remix-000000?style=for-the-badge&logo=remix&logoColor=white" />
-  <img alt="SvelteKit (planned)" src="https://img.shields.io/badge/SvelteKit-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" />
-</p>
+<p align="center"><strong>Fast file‑upload malware scanning for Node.js</strong> — with optional <strong>YARA</strong>, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.</p>
 
 <p align="center">
-  <img alt="pnpm" src="https://img.shields.io/badge/pnpm-222222?style=for-the-badge&logo=pnpm&logoColor=white" />
-  <img alt="npm" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" />
-  <img alt="Vitest" src="https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" />
-  <img alt="ESLint" src="https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white" />
-  <img alt="Prettier" src="https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white" />
-</p>
-
-
--->
-
-<p align="center">
-  <a href="https://github.com/pompelmi/pompelmi">
-    <img alt="npm" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi">
-  </a>
-  <a href="https://github.com/pompelmi/pompelmi">
-    <img alt="downloads" src="https://img.shields.io/npm/d18m/pompelmi?label=downloads">
-  </a>
-  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
-    <img alt="license" src="https://img.shields.io/npm/l/pompelmi">
-  </a>
-  <img alt="node" src="https://img.shields.io/node/v/pompelmi">
+  <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi&color=0a7ea4"></a>
+  <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi?label=downloads&color=6E9F18"></a>
+  <img alt="node engines" src="https://img.shields.io/node/v/pompelmi?label=node">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
-  <img alt="status" src="https://img.shields.io/badge/channel-alpha-orange">
-  <img alt="coverage" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?branch=main&label=coverage&style=flat-square" />
-
+  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi"></a>
+  <a href="https://github.com/pompelmi/pompelmi/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social"></a>
+  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI / Release / Publish" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI%20%2F%20Release%20%2F%20Publish"></a>
+  <a href="https://github.com/pompelmi/pompelmi/issues"><img alt="open issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi"></a>
+  <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
 </p>
+
+<p align="center">
+  <a href="https://pompelmi.github.io/pompelmi/">Documentation</a> ·
+  <a href="#installation">Install</a> ·
+  <a href="#quickstart">Quickstart</a> ·
+  <a href="#adapters">Adapters</a> ·
+  <a href="#diagrams">Diagrams</a> ·
+  <a href="#configuration">Config</a> ·
+  <a href="#quick-test-eicar">Quick test</a> ·
+  <a href="#security-notes">Security</a> ·
+  <a href="#packages">Packages</a> ·
+  <a href="#faq">FAQ</a>
+</p>
+
+---
 
 ## Installation
 
 ```bash
 # core library
 npm i pompelmi
-
-# typical dev deps used in examples (optional)
-npm i -D tsx express multer cors
+# or
+pnpm add pompelmi
 ```
-
-<p align="center">
-  <a href="#why-pompelmi">Why</a> •
-  <a href="#installation">Installation</a> •
-  <a href="#technologies--tools">Technologies & Tools</a> •
-  <a href="#features">Features</a> •
-  <a href="#packages">Packages</a> •
-  <a href="#quickstart">Quickstart</a> •
-  <a href="#framework-adapters">Framework Adapters</a> •
-  <a href="#architecture--uml">Architecture & UML</a> •
-  <a href="#api-overview">API</a> •
-  <a href="#security--disclaimer">Security</a> •
-  <a href="#license">License</a>
-</p>
-
----
-
-## Technologies & Tools
-
-| Technology | Badge | Link | Description |
-| --- | --- | --- | --- |
-| Node.js | <img alt="Node.js" src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=node.js&logoColor=white" /> | [nodejs.org](https://nodejs.org/) | Runtime used by all adapters and the core engine. |
-| TypeScript | <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /> | [typescriptlang.org](https://www.typescriptlang.org/) | Typed development and bundled type definitions. |
-| Express | <img alt="Express" src="https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white" /> | [expressjs.com](https://expressjs.com/) | Middleware adapter `@pompelmi/express-middleware`. |
-| Koa | <img alt="Koa" src="https://img.shields.io/badge/Koa-33333D?style=for-the-badge&logo=nodedotjs&logoColor=white" /> | [koajs.com](https://koajs.com/) | Middleware adapter `@pompelmi/koa-middleware`. |
-| Next.js | <img alt="Next.js" src="https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" /> | [nextjs.org](https://nextjs.org/) | App Router upload handler `@pompelmi/next-upload`. |
-| Fastify *(planned)* | <img alt="Fastify" src="https://img.shields.io/badge/Fastify-000000?style=for-the-badge&logo=fastify&logoColor=white" /> | [fastify.dev](https://fastify.dev/) | Planned plugin with identical policies and ZIP handling. |
-| NestJS *(planned)* | <img alt="NestJS" src="https://img.shields.io/badge/NestJS-E0234E?style=for-the-badge&logo=nestjs&logoColor=white" /> | [nestjs.com](https://nestjs.com/) | Planned interceptor/guard for file uploads. |
-| Remix *(planned)* | <img alt="Remix" src="https://img.shields.io/badge/Remix-000000?style=for-the-badge&logo=remix&logoColor=white" /> | [remix.run](https://remix.run/) | Planned helpers to scan `FormData` in actions/loaders. |
-| SvelteKit *(planned)* | <img alt="SvelteKit" src="https://img.shields.io/badge/SvelteKit-FF3E00?style=for-the-badge&logo=svelte&logoColor=white" /> | [kit.svelte.dev](https://kit.svelte.dev/) | Planned utilities for `+server.ts` and actions. |
-| pnpm | <img alt="pnpm" src="https://img.shields.io/badge/pnpm-222222?style=for-the-badge&logo=pnpm&logoColor=white" /> | [pnpm.io](https://pnpm.io/) | Monorepo/workspace package manager. |
-| npm | <img alt="npm" src="https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white" /> | [npmjs.com](https://www.npmjs.com/) | Registry and install scripts. |
-| Vitest | <img alt="Vitest" src="https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white" /> | [vitest.dev](https://vitest.dev/) | Test runner for future E2E and unit tests. |
-| ESLint | <img alt="ESLint" src="https://img.shields.io/badge/ESLint-4B32C3?style=for-the-badge&logo=eslint&logoColor=white" /> | [eslint.org](https://eslint.org/) | Linting. |
-| Prettier | <img alt="Prettier" src="https://img.shields.io/badge/Prettier-F7B93E?style=for-the-badge&logo=prettier&logoColor=white" /> | [prettier.io](https://prettier.io/) | Code formatting. |
-| YARA | <img alt="YARA" src="https://img.shields.io/badge/YARA-2F855A?style=for-the-badge" /> | [virustotal.github.io/yara](https://virustotal.github.io/yara/) | Optional rule engine for advanced detections. |
-| file-type | <img alt="file-type" src="https://img.shields.io/badge/file--type-24292E?style=for-the-badge" /> | [sindresorhus/file-type](https://github.com/sindresorhus/file-type) | MIME sniffing (magic bytes) on buffers. |
-| unzipper | <img alt="unzipper" src="https://img.shields.io/badge/unzipper-24292E?style=for-the-badge" /> | [ZJONSSON/node-unzipper](https://github.com/ZJONSSON/node-unzipper) | ZIP processing with anti‑bomb limits and nested scan. |
-| Multer | <img alt="Multer" src="https://img.shields.io/badge/Multer-000000?style=for-the-badge" /> | [expressjs/multer](https://github.com/expressjs/multer) | In‑memory file buffers for Express/Koa demos. |
-
----
 
 ## Why pompelmi?
 
-- **Stop risky uploads**: quickly tells you if a file looks **clean**, **suspicious**, or **malicious**—and blocks it when needed.
-- **Easy to adopt**: drop‑in middlewares/handlers for popular frameworks (Express, Koa, Next.js, more coming).
-- **YARA when you need it**: plug your YARA rules for advanced detections, or start with a simple matcher.
-- **Real file checks**: extension whitelist, **MIME sniffing with fallback**, file size caps, and ZIP inspection with anti‑bomb limits.
-- **Local & private**: scans run in your app process. No cloud calls required.
-- **Typed and tiny**: TypeScript types included, ESM & CJS builds.
+- **Block risky uploads at the edge** — mark files as <em>clean</em>, <em>suspicious</em>, or <em>malicious</em> and stop them early.
+- **YARA when you need it** — plug in your rules; start simple and iterate.
+- **Real checks** — extension allow‑list, MIME sniffing (magic bytes), file size caps, and **ZIP** traversal with anti‑bomb limits.
+- **No cloud required** — scans run in‑process. Keep bytes private.
+- **DX first** — TypeScript types, ESM/CJS builds, minimal API.
+
+> Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning
 
 ---
 
-## Features
 
-- **Node-first scanning** with optional **YARA** engine (native binaries are auto‑pulled by platform packages; no brew/apt for consumers).
-- **ZIP aware**: inspects archive contents with limits on entries, per‑entry size, total uncompressed size, and nesting depth.
-- **Policy filters**:
-  - allowed extensions
-  - allowed MIME types (with extension fallback)
-  - max file size per upload
-- **Clear responses**:
-  - success (200) with scan results
-  - 4xx for policy violations (415/413)
-  - 422 when verdict is suspicious/malicious
-  - 503 on fail‑closed errors
-- **Observability**: structured `onScanEvent` callbacks (start/end/blocked/errors/archive_*).
-- **Browser support** via a **Remote Engine** (HTTP endpoint) that compiles rules and runs scans for you.
 
----
+Optional dev deps used in examples:
 
-## Packages
-
-This is a monorepo. The following packages are included:
-
-| Package | NPM | Description |
-| --- | --- | --- |
-| **`pompelmi`** | <a href="https://github.com/pompelmi/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi?label=pompelmi" alt="npm"/></a> | Core scanning library (Node + Remote Engine for browsers). |
-| **`@pompelmi/express-middleware`** | *(alpha)* | Express middleware that scans uploads and enforces policies. |
-| **`@pompelmi/koa-middleware`** | *(alpha)* | Koa middleware compatible with `@koa/multer`/`koa-body`. |
-| **`@pompelmi/next-upload`** | *(alpha)* | Next.js (App Router) `POST` handler factory for `/api/upload`. |
-| **(Planned)** `@pompelmi/fastify-plugin` | — | Fastify plugin with the same policies and ZIP support. |
-| **(Planned)** `@pompelmi/nestjs` | — | NestJS Guard/Interceptor module for uploads. |
-| **(Planned)** `@pompelmi/remix` | — | Remix helpers to scan `FormData` in actions/loaders. |
-| **(Planned)** `@pompelmi/hapi-plugin` | — | Hapi plugin with `onPreHandler`. |
-| **(Planned)** `@pompelmi/sveltekit` | — | SvelteKit utilities for `+server.ts` and actions. |
-
-> Status: **alpha** — expect minor API refinements before a stable `0.2.0`.
+```bash
+npm i -D tsx express multer @koa/router @koa/multer koa next
+```
 
 ---
 
 ## Quickstart
 
-### Express (middleware)
+### Express
 
 ```ts
 import express from 'express';
@@ -170,7 +78,6 @@ import { createUploadGuard } from '@pompelmi/express-middleware';
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-// Simple demo scanner (replace with YARA rules in production)
 const SimpleEicarScanner = {
   async scan(bytes: Uint8Array) {
     const text = Buffer.from(bytes).toString('utf8');
@@ -192,15 +99,13 @@ app.post(
     failClosed: true,
     onScanEvent: (ev) => console.log('[scan]', ev)
   }),
-  (req, res) => {
-    res.json({ ok: true, scan: (req as any).pompelmi ?? null });
-  }
+  (req, res) => res.json({ ok: true, scan: (req as any).pompelmi ?? null })
 );
 
-app.listen(3000, () => console.log('demo on http://localhost:3000'));
+app.listen(3000, () => console.log('http://localhost:3000'));
 ```
 
-### Koa (middleware)
+### Koa
 
 ```ts
 import Koa from 'koa';
@@ -212,7 +117,9 @@ const app = new Koa();
 const router = new Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-const SimpleEicarScanner = { /* same as above */ };
+const SimpleEicarScanner = { async scan(b: Uint8Array){
+  return Buffer.from(b).toString('utf8').includes('EICAR') ? [{ rule: 'eicar_test' }] : [];
+}};
 
 router.post(
   '/upload',
@@ -231,7 +138,7 @@ router.post(
 );
 
 app.use(router.routes()).use(router.allowedMethods());
-app.listen(3003, () => console.log('demo on http://localhost:3003'));
+app.listen(3003, () => console.log('http://localhost:3003'));
 ```
 
 ### Next.js (App Router)
@@ -240,10 +147,12 @@ app.listen(3003, () => console.log('demo on http://localhost:3003'));
 // app/api/upload/route.ts
 import { createNextUploadHandler } from '@pompelmi/next-upload';
 
-export const runtime = 'nodejs';          // Next: Node runtime (not Edge)
-export const dynamic = 'force-dynamic';   // optional: avoid route cache
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-const SimpleEicarScanner = { /* same as above */ };
+const SimpleEicarScanner = { async scan(b: Uint8Array){
+  return Buffer.from(b).toString('utf8').includes('EICAR') ? [{ rule: 'eicar_test' }] : [];
+}};
 
 export const POST = createNextUploadHandler({
   scanner: SimpleEicarScanner,
@@ -259,33 +168,24 @@ export const POST = createNextUploadHandler({
 
 ---
 
-## Framework Adapters
+## Adapters
 
-The adapters share the same behavior and defaults:
+Use the adapter that matches your web framework. All adapters share the same policy options and scanning contract.
 
-- **Extension whitelist**
-- **MIME sniffing with extension fallback**
-- **Max file size**
-- **ZIP scanning** (entry count / per‑entry size / total uncompressed / depth)
-- **Timeout & concurrency** controls
-- **Fail‑closed** and **report‑only** modes
-- **Structured events** via `onScanEvent`
-
-**HTTP status codes**
-
-- `200` — accepted, includes `{ scan: { results: [...] } }`
-- `415` — `extension_not_allowed`, `mime_mismatch`, or `mime_not_allowed`
-- `413` — `file_too_large`
-- `422` — `blocked` with `verdict: suspicious|malicious`
-- `503` — `scanner_init_error` / `scan_error` (when `failClosed: true`)
+| Framework | Package | Status |
+| --- | --- | --- |
+| Express | `@pompelmi/express-middleware` | alpha |
+| Koa | `@pompelmi/koa-middleware` | alpha |
+| Next.js (App Router) | `@pompelmi/next-upload` | alpha |
+| Fastify | fastify plugin — planned |
+| NestJS | nestjs — planned |
+| Remix | remix — planned |
+| hapi | hapi plugin — planned |
+| SvelteKit | sveltekit — planned |
 
 ---
 
-## Architecture & UML
-
-> **Note:** Diagrams are embedded as images via mermaid.ink so they render on GitHub, npm, and other Markdown viewers. The Mermaid source is included below each image.
-> **Tip:** To avoid parser issues across renderers, labels use quotes inside node shapes (e.g., `A["text"]`, `C{"text"}`) when they include parentheses, slashes, or other symbols.
-
+## Diagrams
 
 ### Upload scanning flow
 <p align="center">
@@ -369,102 +269,115 @@ flowchart LR
 ```
 </details>
 
+## Packages
+
+| Package | NPM | Description |
+| --- | --- | --- |
+| **`pompelmi`** | <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi?label=pompelmi" alt="npm"/></a> | Core scanner (Node + Remote Engine for browsers). |
+| **`@pompelmi/express-middleware`** | *(alpha)* | Express middleware to scan uploads & enforce policies. |
+| **`@pompelmi/koa-middleware`** | *(alpha)* | Koa middleware compatible with `@koa/multer`/`koa-body`. |
+| **`@pompelmi/next-upload`** | *(alpha)* | Next.js App Router `POST` handler factory. |
+
+> Status: **alpha** — small API refinements may happen before a stable milestone.
+
 ---
 
-## API Overview
+## Configuration
 
-### Core (Node)
+All adapters accept a common set of options:
 
-```ts
-import { scanDir } from 'pompelmi';
-import { resolve } from 'node:path';
+| Option | Type (TS) | Purpose |
+| --- | --- | --- |
+| `scanner` | `{ scan(bytes: Uint8Array): Promise<Match[]> }` | Your scanning engine. Return `[]` when clean; non‑empty to flag. |
+| `includeExtensions` | `string[]` | Allow‑list of file extensions. Evaluated case‑insensitively. |
+| `allowedMimeTypes` | `string[]` | Allow‑list of MIME types after magic‑byte sniffing. |
+| `maxFileSizeBytes` | `number` | Per‑file size cap. Oversize files are rejected early. |
+| `timeoutMs` | `number` | Per‑file scan timeout; guards against stuck scanners. |
+| `concurrency` | `number` | How many files to scan in parallel. |
+| `failClosed` | `boolean` | If `true`, errors/timeouts block the upload. |
+| `onScanEvent` | `(event: unknown) => void` | Optional telemetry hook for logging/metrics. |
 
-const opts = {
-  enableYara: true,
-  yaraRulesPath: resolve(process.cwd(), 'rules/demo.yar'),
-  includeExtensions: ['.txt', '.bin'],
-  maxFileSizeBytes: 10 * 1024 * 1024,
-  yaraAsync: true,
-};
+**Common recipes**
 
-for await (const entry of scanDir('./some-folder', opts)) {
-  console.log(entry.path, entry.yara?.verdict);
-}
-```
-
-**NodeScanOptions**
+Allow only images up to 5 MB:
 
 ```ts
-type NodeScanOptions = {
-  enableYara?: boolean;
-  yaraRules?: string;
-  yaraRulesPath?: string;
-  includeExtensions?: string[];
-  maxFileSizeBytes?: number;
-  yaraAsync?: boolean;
-  yaraPreferBuffer?: boolean;
-  yaraSampleBytes?: number;
-};
-```
-
-### Browser (Remote Engine)
-
-```ts
-import { createRemoteEngine } from 'pompelmi';
-
-const RULES = `
-rule demo_contains_virus_literal {
-  strings: $a = "virus" ascii nocase
-  condition: $a
-}`;
-
-async function scanFileInBrowser(file: File) {
-  const engine = await createRemoteEngine({
-    endpoint: 'http://localhost:8787/api/yara/scan',
-    mode: 'json-base64',
-    rulesAsBase64: true,
-  });
-  const compiled = await engine.compile(RULES);
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  const matches = await compiled.scan(bytes);
-  console.log('REMOTE MATCHES:', matches);
-}
+includeExtensions: ['png','jpg','jpeg','webp'],
+allowedMimeTypes: ['image/png','image/jpeg','image/webp'],
+maxFileSizeBytes: 5 * 1024 * 1024,
+failClosed: true,
 ```
 
 ---
 
-## Security & Disclaimer
+## Quick test (EICAR)
 
-- The library **reads** bytes; it does not execute files.
-- YARA detections depend on the **rules you supply**. Expect false positives/negatives.
-- Always run scanning in a controlled environment with appropriate security controls.
-- ZIP scanning enforces limits (entries, per‑entry size, total uncompressed, nesting) to reduce archive‑bomb risk.
+Use the Express/Koa/Next examples above, then send the standard EICAR test file to verify that blocking works end‑to‑end.
+
+**1) Generate the EICAR file (safe test string)**
+
+Linux:
+
+```bash
+echo 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo=' | base64 -d > eicar.txt
+```
+
+macOS:
+
+```bash
+echo 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo=' | base64 -D > eicar.txt
+```
+
+**2) Send it to your endpoint**
+
+Express (default from the Quickstart):
+
+```bash
+curl -F "file=@eicar.txt;type=text/plain" http://localhost:3000/upload -i
+```
+
+You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean files return **200 OK**. Pre‑filter failures (size/ext/MIME) should return a **4xx**. Adapt these conventions to your app as needed.
+
+---
+
+## Security notes
+
+- The library **reads** bytes; it never executes files.
+- YARA detections depend on the **rules you provide**; expect some false positives/negatives.
+- ZIP scanning applies limits (entries, per‑entry size, total uncompressed, nesting) to reduce archive‑bomb risk.
+- Prefer running scans in a **dedicated process/container** for defense‑in‑depth.
+
+---
+
+## Star history
+
+[![Star History Chart](https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date)](https://star-history.com/#pompelmi/pompelmi&Date)
+
+---
+
+## FAQ
+
+**Do I need YARA?**  
+No. `scanner` is pluggable. The examples use a minimal scanner for clarity; you can call out to a YARA engine or any other detector you prefer.
+
+**Where do the results live?**  
+In the examples, the guard attaches scan data to the request context (e.g. `req.pompelmi` in Express, `ctx.pompelmi` in Koa). In Next.js, include the results in your JSON response as you see fit.
+
+**Why 422 for blocked files?**  
+Using **422** to signal a policy violation keeps it distinct from transport errors; it’s a common pattern. Use the codes that best match your API guidelines.
+
+**Are ZIP bombs handled?**  
+Archives are traversed with limits to reduce archive‑bomb risk. Keep your size limits conservative and prefer `failClosed: true` in production.
 
 ---
 
 ## Contributing
 
-PRs and issues are welcome!
+PRs and issues welcome! Start with:
 
-- Run build & smoke tests:
-  ```bash
-  npm run build
-  npm run yara:int:smoke
-  ```
-- Keep commits focused and well described.
-- For new features, please add or adjust tests.
-
----
-
-## Versioning
-
-Channel: **`0.5.0`**  
-Expect minor API changes before a stable `0.5.0`.
-
-Suggested publish:
 ```bash
-npm version 0.5.0
-npm publish --tag next
+pnpm -r build
+pnpm -r lint
 ```
 
 ---
