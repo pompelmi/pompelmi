@@ -96,10 +96,11 @@ jobs:
 
       - name: Build (light)
         run: |
-          # Build nothing from @pompelmi/* during CodeQL; static analysis doesn't need it
+          # Skip all internal pkgs and the website during CodeQL
           pnpm -r \
-            --filter '!./examples/*' \
             --filter '!@pompelmi/*' \
+            --filter '!./examples/*' \
+            --filter '!./website' \
             --if-present run build
 
       - name: Analyze
