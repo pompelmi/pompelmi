@@ -79,39 +79,15 @@ jobs:
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
-      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
-        run: |
-          set -euo pipefail
-          # Find explicit dist-tarballs references to @pompelmi/ui-react in examples/ and website/
-          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
-          if [ ${#REFS[@]} -gt 0 ]; then
-            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
-            mkdir -p dist-tarballs
-            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
-            pnpm -F @pompelmi/ui-react build
-            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
-            # Handle absolute or relative path returned by pnpm pack
-            if [ -f "$PROD_PATH" ]; then
-              :
-            else
-              PROD_PATH="packages/ui-react/$PROD_PATH"
-            fi
-            PROD_BASE="$(basename "$PROD_PATH")"
-            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
-            # Create copies with the exact filenames referenced by package.json, if different
-            for ref in "${REFS[@]}"; do
-              TARGET_BASE="$(basename "$ref")"
-              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
-                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
-              fi
-            done
-            ls -la dist-tarballs
-          else
-            echo "No dist-tarballs reference found; skipping pack"
-          fi
 
       - name: Install (pnpm)
-        run: pnpm install --no-frozen-lockfile
+        run: |
+          set -euo pipefail
+          # For CodeQL we don't need examples/website/UI tarball; install minimal deps only
+          pnpm install --no-frozen-lockfile \
+            --filter '!./examples/*' \
+            --filter '!./website' \
+            --filter '!@pompelmi/ui-react'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -120,9 +96,10 @@ jobs:
 
       - name: Build (light)
         run: |
+          # Build nothing from @pompelmi/* during CodeQL; static analysis doesn't need it
           pnpm -r \
             --filter '!./examples/*' \
-            --filter '!@pompelmi/core' \
+            --filter '!@pompelmi/*' \
             --if-present run build
 
       - name: Analyze
