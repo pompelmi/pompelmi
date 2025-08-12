@@ -183,7 +183,9 @@ jobs:
           fi
 
       - name: Install (pnpm)
-        run: pnpm install --no-frozen-lockfile
+        run: |
+          pnpm store prune || true
+          pnpm install --no-frozen-lockfile --link-workspace-packages
 
       - name: Build all packages
         run: |
@@ -374,13 +376,13 @@ jobs:
 
       - name: Install deps (pnpm)
         run: |
+          # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked
+          # and allow lockfile updates since CI bumps versions on-the-fly
           if [ "${{ steps.pack.outputs.packed }}" = "true" ]; then
-            echo "Tarball packed → prune + install without frozen lockfile"
+            echo "Tarball packed → prune + install (unfrozen)"
             pnpm store prune || true
-            pnpm install --no-frozen-lockfile
-          else
-            pnpm install --frozen-lockfile
           fi
+          pnpm install --no-frozen-lockfile --link-workspace-packages
 
       - name: Build publishable workspaces
         run: |
