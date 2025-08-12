@@ -320,10 +320,27 @@ jobs:
 
       - name: Ensure repository field in workspaces (for provenance)
         run: |
-          pnpm -r --filter '@pompelmi/*' --filter '!./examples/*' exec bash -lc '
-            npm pkg set repository.type=git
-            npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
-          '
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            const repo = process.env.GITHUB_REPOSITORY || '';
+            const root = 'packages';
+            if (!fs.existsSync(root)) process.exit(0);
+            for (const d of fs.readdirSync(root)) {
+              const pkgPath = path.join(root, d, 'package.json');
+              if (!fs.existsSync(pkgPath)) continue;
+              let raw = '';
+              try { raw = fs.readFileSync(pkgPath, 'utf8'); } catch { continue; }
+              if (!raw.trim()) { console.warn('Skipping empty package.json:', pkgPath); continue; }
+              let j;
+              try { j = JSON.parse(raw); } catch { console.warn('Skipping invalid JSON:', pkgPath); continue; }
+              if (!j.name || !j.name.startsWith('@pompelmi/')) continue;
+              if (j.private) continue;
+              j.repository = { type: 'git', url: `https://github.com/${repo}` };
+              fs.writeFileSync(pkgPath, JSON.stringify(j, null, 2) + '\\n');
+              console.log('Updated repository for', j.name);
+            }
+          "
 
       - name: PNPM version
         run: pnpm --version

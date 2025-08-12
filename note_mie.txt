@@ -26,3 +26,23 @@ git push origin main
 git branch --set-upstream-to=origin/main main
 # oppure in un colpo solo:
 # git push --set-upstream origin main
+
+
+
+
+
+
+
+
+ # 1) Point website to the local workspace package (no tarball)                                                                                      ─╯
+npm --workspace ./website pkg set dependencies["@pompelmi/ui-react"]="workspace:*"
+
+# 2) Do the same for the example that used the tarball
+npm --workspace ./examples/next-demo pkg set dependencies["@pompelmi/ui-react"]="workspace:*"
+
+# 3) Install (links workspaces) and build
+pnpm install --no-frozen-lockfile --link-workspace-packages
+pnpm -r --filter '!./examples/*' --filter '!@pompelmi/core' --if-present run build
+pnpm --filter ./website build
+
+git add . && git commit -m "*" git push -u origin main
