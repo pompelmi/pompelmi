@@ -17,6 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
+  ROOT_VERSION: '0.6.0'
 
 jobs:
   # -------------------------------
@@ -37,32 +38,8 @@ jobs:
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
           printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
-          # Align root version to the highest requested by workspaces that depend on 'pompelmi'
-          WANT=$(node -e "
-            const fs=require('fs'), path=require('path');
-            const root='packages';
-            let want='';
-            if(fs.existsSync(root)){
-              for(const d of fs.readdirSync(root)){
-                const p=path.join(root,d,'package.json');
-                if(!fs.existsSync(p)) continue;
-                const j=JSON.parse(fs.readFileSync(p,'utf8'));
-                const req=(j.dependencies&&j.dependencies.pompelmi)||(j.peerDependencies&&j.peerDependencies.pompelmi);
-                if(req){
-                  const m=(req+'').match(/(\\d+\\.\\d+\\.\\d+)/);
-                  if(m){ want=m[1]; break; }
-                }
-              }
-            }
-            if(want) process.stdout.write(want);
-          ")
-          if [ -n "${WANT:-}" ]; then
-            CUR=$(node -p "require('./package.json').version")
-            if [ "$CUR" != "$WANT" ]; then
-              echo "Setting root pompelmi version to $WANT (was $CUR)"
-              npm pkg set version="$WANT"
-            fi
-          fi
+          # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
+          npm pkg set version="${ROOT_VERSION}"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -99,32 +76,8 @@ jobs:
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
           printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
-          # Align root version to the highest requested by workspaces that depend on 'pompelmi'
-          WANT=$(node -e "
-            const fs=require('fs'), path=require('path');
-            const root='packages';
-            let want='';
-            if(fs.existsSync(root)){
-              for(const d of fs.readdirSync(root)){
-                const p=path.join(root,d,'package.json');
-                if(!fs.existsSync(p)) continue;
-                const j=JSON.parse(fs.readFileSync(p,'utf8'));
-                const req=(j.dependencies&&j.dependencies.pompelmi)||(j.peerDependencies&&j.peerDependencies.pompelmi);
-                if(req){
-                  const m=(req+'').match(/(\\d+\\.\\d+\\.\\d+)/);
-                  if(m){ want=m[1]; break; }
-                }
-              }
-            }
-            if(want) process.stdout.write(want);
-          ")
-          if [ -n "${WANT:-}" ]; then
-            CUR=$(node -p "require('./package.json').version")
-            if [ "$CUR" != "$WANT" ]; then
-              echo "Setting root pompelmi version to $WANT (was $CUR)"
-              npm pkg set version="$WANT"
-            fi
-          fi
+          # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
+          npm pkg set version="${ROOT_VERSION}"
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
@@ -193,32 +146,8 @@ jobs:
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
           printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
-          # Align root version to the highest requested by workspaces that depend on 'pompelmi'
-          WANT=$(node -e "
-            const fs=require('fs'), path=require('path');
-            const root='packages';
-            let want='';
-            if(fs.existsSync(root)){
-              for(const d of fs.readdirSync(root)){
-                const p=path.join(root,d,'package.json');
-                if(!fs.existsSync(p)) continue;
-                const j=JSON.parse(fs.readFileSync(p,'utf8'));
-                const req=(j.dependencies&&j.dependencies.pompelmi)||(j.peerDependencies&&j.peerDependencies.pompelmi);
-                if(req){
-                  const m=(req+'').match(/(\\d+\\.\\d+\\.\\d+)/);
-                  if(m){ want=m[1]; break; }
-                }
-              }
-            }
-            if(want) process.stdout.write(want);
-          ")
-          if [ -n "${WANT:-}" ]; then
-            CUR=$(node -p "require('./package.json').version")
-            if [ "$CUR" != "$WANT" ]; then
-              echo "Setting root pompelmi version to $WANT (was $CUR)"
-              npm pkg set version="$WANT"
-            fi
-          fi
+          # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
+          npm pkg set version="${ROOT_VERSION}"
 
       - uses: pnpm/action-setup@v4
         with:
