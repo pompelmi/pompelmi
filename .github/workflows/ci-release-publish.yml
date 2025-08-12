@@ -319,28 +319,36 @@ jobs:
           cache: pnpm
 
       - name: Ensure repository field in workspaces (for provenance)
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          node -e "
-            const fs = require('fs');
-            const path = require('path');
-            const repo = process.env.GITHUB_REPOSITORY || '';
-            const root = 'packages';
-            if (!fs.existsSync(root)) process.exit(0);
-            for (const d of fs.readdirSync(root)) {
-              const pkgPath = path.join(root, d, 'package.json');
-              if (!fs.existsSync(pkgPath)) continue;
-              let raw = '';
-              try { raw = fs.readFileSync(pkgPath, 'utf8'); } catch { continue; }
-              if (!raw.trim()) { console.warn('Skipping empty package.json:', pkgPath); continue; }
-              let j;
-              try { j = JSON.parse(raw); } catch { console.warn('Skipping invalid JSON:', pkgPath); continue; }
-              if (!j.name || !j.name.startsWith('@pompelmi/')) continue;
-              if (j.private) continue;
-              j.repository = { type: 'git', url: `https://github.com/${repo}` };
-              fs.writeFileSync(pkgPath, JSON.stringify(j, null, 2) + '\\n');
-              console.log('Updated repository for', j.name);
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const repoUrl = process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : '');
+          if (!repoUrl) {
+            console.warn('REPO_URL not set; will skip repository injection.');
+          }
+          const root = 'packages';
+          if (!fs.existsSync(root)) process.exit(0);
+          for (const d of fs.readdirSync(root)) {
+            const pkgPath = path.join(root, d, 'package.json');
+            if (!fs.existsSync(pkgPath)) continue;
+            let raw = fs.readFileSync(pkgPath, 'utf8');
+            if (!raw.trim()) { console.warn('Skipping empty package.json:', pkgPath); continue; }
+            let j;
+            try { j = JSON.parse(raw); } catch { console.warn('Skipping invalid JSON:', pkgPath); continue; }
+            if (!j.name || !j.name.startsWith('@pompelmi/')) continue;
+            if (j.private) continue;
+            if (repoUrl) {
+              j.repository = { type: 'git', url: repoUrl };
+            } else if (!j.repository) {
+              j.repository = { type: 'git', url: 'https://github.com/pompelmi/pompelmi' };
             }
-          "
+            fs.writeFileSync(pkgPath, JSON.stringify(j, null, 2) + '\n');
+            console.log('Updated repository for', j.name);
+          }
+          NODE
 
       - name: PNPM version
         run: pnpm --version
@@ -513,9 +521,17 @@ jobs:
           cache: pnpm
 
       - name: Ensure repository field matches this repo (for provenance)
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
-          npm pkg set repository.type=git
-          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
+          node <<'NODE'
+          const fs = require('fs');
+          const repoUrl = process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : '');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          pkg.repository = { type: 'git', url: repoUrl || 'https://github.com/pompelmi/pompelmi' };
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('Set root repository to', pkg.repository.url);
+          NODE
 
       - name: Read root package name & version
         id: rootpkg
