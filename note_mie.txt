@@ -5,7 +5,7 @@ pnpm -F @pompelmi/ui-react build
 pnpm --filter ./website build
 
 
-per fare il deploy del sito pages github
+# per fare il deploy del sito pages github
 
 pnpm --filter ./website build && {                                                                                                                    ─╯
   git fetch origin

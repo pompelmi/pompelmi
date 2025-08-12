@@ -2,10 +2,10 @@
 import DemoUpload from '../components/DemoUpload';
 import '../styles/global.css';
 const BASE = 'https://pompelmi.github.io/pompelmi';
-const TITLE = 'Pompelmi — File upload malware scanning for Node.js';
+const TITLE = 'Pompelmi — File upload malware scanning for Node.js (Express, Koa, Next.js) + YARA';
 const DESC =
-  'Ready-made React/Next.js upload UI and Node middlewares to scan files for malware. CLEAN/MALICIOUS verdicts, size & MIME guards, optional YARA.';
-const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.png
+  'Scan and block malicious file uploads in Node.js. Drop-in adapters for Express, Koa, and Next.js. ZIP deep-inspection, MIME & size policies, optional YARA rules.';
+const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (keep under ~200 KB)
 ---
 
 <html lang="en">
@@ -16,6 +16,16 @@ const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.
     <link rel="canonical" href={BASE + '/'} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="index,follow" />
+    <meta name="keywords" content="Node.js, Express, Koa, Next.js, file upload, malware scanning, YARA, ZIP bomb, MIME type, security, middleware" />
+    <meta name="author" content="Pompelmi" />
+    <meta name="theme-color" content="#000000" />
+    <link rel="alternate" hreflang="en" href={BASE + '/'} />
+    <link rel="alternate" hreflang="x-default" href={BASE + '/'} />
+    <meta property="og:site_name" content="Pompelmi" />
+    <meta property="og:locale" content="en_US" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Pompelmi — Node.js file upload malware scanning" />
 
     <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
@@ -28,6 +38,8 @@ const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.
     <meta name="twitter:description" content={DESC} />
     <meta name="twitter:image" content={OG_IMAGE} />
     <link rel="icon" href="/pompelmi/favicon.svg" />
+
+    <script defer data-domain="pompelmi.github.io" src="https://plausible.io/js/script.js"></script>
 
     <!-- Structured data: Organization + SoftwareApplication + FAQ -->
     <script type="application/ld+json">
@@ -43,38 +55,52 @@ const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.
             ]
           },
           {
-            "@type": "SoftwareApplication",
+            "@type": "SoftwareSourceCode",
             "name": "Pompelmi",
-            "applicationCategory": "SecurityApplication",
-            "operatingSystem": "Cross-platform",
-            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
-            "url": "https://pompelmi.github.io/pompelmi/"
+            "description": "Scan and block malicious file uploads in Node.js. Drop-in adapters for Express, Koa, and Next.js. ZIP deep-inspection, MIME & size policies, optional YARA rules.",
+            "programmingLanguage": ["TypeScript", "JavaScript"],
+            "runtimePlatform": "Node.js",
+            "codeRepository": "https://github.com/pompelmi/pompelmi",
+            "license": "https://opensource.org/licenses/MIT",
+            "keywords": [
+              "node.js",
+              "express",
+              "koa",
+              "next.js",
+              "file upload",
+              "malware scanning",
+              "yara",
+              "zip bomb",
+              "mime type",
+              "security",
+              "middleware"
+            ]
           },
           {
             "@type": "FAQPage",
             "mainEntity": [
               {
                 "@type": "Question",
-                "name": "What is Pompelmi?",
+                "name": "Does Pompelmi support YARA rules?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "A minimal toolkit for scanning user file uploads in web apps. It ships a React/Next UI, Node middlewares, and clear CLEAN/MALICIOUS verdicts."
+                  "text": "Yes. You can plug in your own YARA rules for advanced detections alongside built-in policies."
                 }
               },
               {
                 "@type": "Question",
-                "name": "How do I test that scanning works?",
+                "name": "Can it inspect ZIP archives and prevent ZIP bombs?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Upload a clean JPG (CLEAN) and the standard EICAR test file (MALICIOUS). The homepage demo and the Getting started guide show both."
+                  "text": "Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth."
                 }
               },
               {
                 "@type": "Question",
-                "name": "Does Pompelmi store my files?",
+                "name": "Which frameworks are supported?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "By default, the UI posts to your own scan engine endpoint. Storage, retention, and telemetry are under your control server-side."
+                  "text": "Express and Koa middleware, a Next.js App Router handler, and more adapters planned."
                 }
               }
             ]
@@ -86,16 +112,18 @@ const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.
 
   <body class="antialiased">
     <header class="mx-auto max-w-5xl px-4 py-10">
-      <h1 class="text-4xl font-bold tracking-tight">Pompelmi</h1>
+      <h1 class="text-4xl font-bold tracking-tight">Scan & block malicious file uploads in Node.js</h1>
       <p class="mt-3 text-gray-600 max-w-2xl">
         {DESC}
       </p>
 
       <div class="mt-5 flex flex-wrap items-center gap-3">
         <a
-          href="https://github.com/pompelmi/pompelmi"
+          href="https://github.com/pompelmi/pompelmi?utm_source=site&utm_medium=header_cta&utm_campaign=stars"
           class="inline-flex items-center rounded-md bg-black px-4 py-2 text-white text-sm font-medium"
           aria-label="Star Pompelmi on GitHub"
+          rel="noopener noreferrer"
+          target="_blank"
         >
           ⭐ Star on GitHub
         </a>
@@ -136,6 +164,23 @@ const OG_IMAGE = `${BASE}/og.png`; // add a 1200x630 image at website/public/og.
           <h3 class="font-medium">@pompelmi/ui-react</h3>
           <p class="text-sm text-gray-600">Props, events, examples.</p>
         </a>
+      </section>
+      <section class="mt-12 border-t pt-8" aria-labelledby="faq-heading">
+        <h2 id="faq-heading" class="text-2xl font-semibold">FAQ</h2>
+        <div class="mt-4 space-y-4">
+          <details>
+            <summary class="font-medium">Does Pompelmi support YARA rules?</summary>
+            <p class="text-sm text-gray-600 mt-2">Yes. You can plug in your own YARA rules for advanced detections alongside built-in policies.</p>
+          </details>
+          <details>
+            <summary class="font-medium">Can it inspect ZIP archives and prevent ZIP bombs?</summary>
+            <p class="text-sm text-gray-600 mt-2">Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth.</p>
+          </details>
+          <details>
+            <summary class="font-medium">Which frameworks are supported?</summary>
+            <p class="text-sm text-gray-600 mt-2">Express and Koa middleware, a Next.js App Router handler, and more adapters planned.</p>
+          </details>
+        </div>
       </section>
     </main>
   </body>
