@@ -83,11 +83,11 @@ jobs:
       - name: Install (pnpm)
         run: |
           set -euo pipefail
-          # For CodeQL we don't need examples/website/UI tarball; install minimal deps only
-          pnpm install --no-frozen-lockfile \
+          # CodeQL doesn't need to install @pompelmi/* packages or examples/website.
+          pnpm install --no-frozen-lockfile --link-workspace-packages \
+            --filter '!@pompelmi/*' \
             --filter '!./examples/*' \
-            --filter '!./website' \
-            --filter '!@pompelmi/ui-react'
+            --filter '!./website'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
