@@ -76,15 +76,30 @@ jobs:
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
-          set -e
-          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
-            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+          set -euo pipefail
+          # Find explicit dist-tarballs references to @pompelmi/ui-react in examples/ and website/
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
+          if [ ${#REFS[@]} -gt 0 ]; then
+            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
-            echo "Created tarball: $TARBALL"
-            mv "packages/ui-react/$TARBALL" dist-tarballs/
+            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            # Handle absolute or relative path returned by pnpm pack
+            if [ -f "$PROD_PATH" ]; then
+              :
+            else
+              PROD_PATH="packages/ui-react/$PROD_PATH"
+            fi
+            PROD_BASE="$(basename "$PROD_PATH")"
+            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
+            # Create copies with the exact filenames referenced by package.json, if different
+            for ref in "${REFS[@]}"; do
+              TARGET_BASE="$(basename "$ref")"
+              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
+                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
+              fi
+            done
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
@@ -157,14 +172,27 @@ jobs:
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
-          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
-            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+          set -euo pipefail
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
+          if [ ${#REFS[@]} -gt 0 ]; then
+            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
-            echo "Created tarball: $TARBALL"
-            mv "packages/ui-react/$TARBALL" dist-tarballs/
+            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            if [ -f "$PROD_PATH" ]; then
+              :
+            else
+              PROD_PATH="packages/ui-react/$PROD_PATH"
+            fi
+            PROD_BASE="$(basename "$PROD_PATH")"
+            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
+            for ref in "${REFS[@]}"; do
+              TARGET_BASE="$(basename "$ref")"
+              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
+                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
+              fi
+            done
             ls -la dist-tarballs
           else
             echo "No dist-tarballs reference found; skipping pack"
@@ -332,15 +360,27 @@ jobs:
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         id: pack
         run: |
-          set -e
-          if grep -R "dist-tarballs" -n examples/ website/ 2>/dev/null | grep -q "@pompelmi/ui-react"; then
-            echo "Detected dist-tarballs reference -> packing @pompelmi/ui-react"
+          set -euo pipefail
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
+          if [ ${#REFS[@]} -gt 0 ]; then
+            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
             pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
             pnpm -F @pompelmi/ui-react build
-            TARBALL=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
-            echo "Created tarball: $TARBALL"
-            mv "packages/ui-react/$TARBALL" dist-tarballs/
+            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            if [ -f "$PROD_PATH" ]; then
+              :
+            else
+              PROD_PATH="packages/ui-react/$PROD_PATH"
+            fi
+            PROD_BASE="$(basename "$PROD_PATH")"
+            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
+            for ref in "${REFS[@]}"; do
+              TARGET_BASE="$(basename "$ref")"
+              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
+                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
+              fi
+            done
             ls -la dist-tarballs
             echo "packed=true" >> "$GITHUB_OUTPUT"
           else

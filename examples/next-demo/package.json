@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@pompelmi/ui-react": "file:../../dist-tarballs/pompelmi-ui-react-0.1.0.tgz",
+    "@pompelmi/ui-react": "workspace:*",
     "next": "15.4.6",
     "react": "19.1.0",
     "react-dom": "19.1.0"
