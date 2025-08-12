@@ -104,8 +104,8 @@ importers:
   examples/next-demo:
     dependencies:
       '@pompelmi/ui-react':
-        specifier: file:../../dist-tarballs/pompelmi-ui-react-0.1.0.tgz
-        version: file:dist-tarballs/pompelmi-ui-react-0.1.0.tgz(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+        specifier: workspace:*
+        version: link:../../packages/ui-react
       next:
         specifier: 15.4.6
         version: 15.4.6(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
@@ -144,8 +144,8 @@ importers:
         specifier: ^18.7.0
         version: 18.7.0
       pompelmi:
-        specifier: ^0.2.0-alpha
-        version: 0.2.0-alpha.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.6.0
+        version: link:../..
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -212,8 +212,8 @@ importers:
         specifier: ^1.4.5-lts.1
         version: 1.4.5-lts.2
       pompelmi:
-        specifier: ^0.2.0-alpha
-        version: 0.2.0-alpha.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.6.0
+        version: link:../..
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -243,8 +243,8 @@ importers:
         specifier: ^18.7.0
         version: 18.7.0
       pompelmi:
-        specifier: ^0.2.0-alpha
-        version: 0.2.0-alpha.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.6.0
+        version: link:../..
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -1984,8 +1984,11 @@ packages:
   '@shikijs/vscode-textmate@10.0.2':
     resolution: {integrity: sha512-83yeghZ2xxin3Nj8z1NMd/NCuca+gsYXswywDy5bHvwlWL8tpTQmzGeUuHd9FC3E/SBEMvzJRwWEOz5gGes9Qg==}
 
-  '@swc/helpers@0.6.05':
+  '@swc/helpers@0.5.15':
     resolution: {integrity: sha512-JQ5TuMi45Owi4/BIMAJBoSQoOJu12oOk/gADqlcUL9JEdHB8vyjUSsxqeNXnmXHjYKMi2WcYtezGEEhqUI/E2g==}
+
+  '@swc/helpers@0.5.17':
+    resolution: {integrity: sha512-5IKx/Y13RsYd+sauPb2x+U/xZikHjolzfuDgTAl/Tdf3Q8rslRvC19NKDLgAJQ6wsqADk10ntlv08nPFw/gO/A==}
 
   '@tokenizer/inflate@0.2.7':
     resolution: {integrity: sha512-MADQgmZT1eKjp06jpI2yozxaU9uVs4GzzgSL+uEq7bVcJ9V1ZXQkeGNql1fsSI0gMy1vhvNTNbUqrx+pZfJVmg==}
@@ -6836,11 +6839,6 @@ snapshots:
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
-  '@pompelmi/ui-react@file:dist-tarballs/pompelmi-ui-react-0.1.0.tgz(react-dom@19.1.0(react@19.1.0))(react@19.1.0)':
-    dependencies:
-      react: 19.1.0
-      react-dom: 19.1.0(react@19.1.0)
-
   '@pompelmi/ui-react@file:dist-tarballs/pompelmi-ui-react-0.1.0.tgz(react-dom@19.1.1(react@19.1.1))(react@19.1.1)':
     dependencies:
       react: 19.1.1
@@ -6991,7 +6989,11 @@ snapshots:
 
   '@shikijs/vscode-textmate@10.0.2': {}
 
-  '@swc/helpers@0.6.05':
+  '@swc/helpers@0.5.15':
+    dependencies:
+      tslib: 2.8.1
+
+  '@swc/helpers@0.5.17':
     dependencies:
       tslib: 2.8.1
 
@@ -8313,7 +8315,7 @@ snapshots:
 
   fontkit@2.0.4:
     dependencies:
-      '@swc/helpers': 0.6.05
+      '@swc/helpers': 0.5.17
       brotli: 1.3.3
       clone: 2.1.2
       dfa: 1.2.0
@@ -9594,7 +9596,7 @@ snapshots:
   next@15.4.6(@babel/core@7.28.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0):
     dependencies:
       '@next/env': 15.4.6
-      '@swc/helpers': 0.6.05
+      '@swc/helpers': 0.5.15
       caniuse-lite: 1.0.30001733
       postcss: 8.4.31
       react: 19.1.0
