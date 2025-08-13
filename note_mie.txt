@@ -19,7 +19,7 @@ pnpm --filter ./website build && {                                              
 
 
 
-╰─ # push esplicito                                                                                                                                      ─╯
+# push esplicito                                                                                                                                      ─╯
 git push origin main
 
 # e imposta l’upstream corretto per le prossime volte
@@ -46,3 +46,11 @@ pnpm -r --filter '!./examples/*' --filter '!@pompelmi/core' --if-present run bui
 pnpm --filter ./website build
 
 git add . && git commit -m "*" git push -u origin main
+
+
+pnpm -w add -D @astrojs/starlight @astrojs/mdx @astrojs/tailwind @astrojs/sitemap    
+
+
+pnpm -F @pompelmi/ui-react build
+pnpm --filter ./website build                                                               ─╯
+pnpm -F website dev   # oppure build

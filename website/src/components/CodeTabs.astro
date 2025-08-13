@@ -1,0 +1,98 @@
+---
+const tabs = [
+  {
+    id:'express', label:'Express', code:`import express from 'express'
+import multer from 'multer'
+import { createUploadGuard } from '@pompelmi/express-middleware'
+
+const app = express()
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
+
+const SimpleEicarScanner = {
+  async scan(b){ return Buffer.from(b).toString('utf8').includes('EICAR') ? [{rule:'eicar_test'}] : [] }
+}
+
+app.post('/upload',
+  upload.any(),
+  createUploadGuard({
+    scanner: SimpleEicarScanner,
+    includeExtensions:['txt','png','jpg','jpeg','pdf','zip'],
+    allowedMimeTypes:['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
+    maxFileSizeBytes: 20 * 1024 * 1024, timeoutMs: 5000, concurrency: 4, failClosed: true
+  }),
+  (req,res)=> res.json({ ok:true, scan: req.pompelmi ?? null })
+)
+app.listen(3000)`,
+  },
+  {
+    id:'koa', label:'Koa', code:`import Koa from 'koa'
+import Router from '@koa/router'
+import multer from '@koa/multer'
+import { createKoaUploadGuard } from '@pompelmi/koa-middleware'
+
+const app = new Koa(); const r = new Router();
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } })
+
+const SimpleEicarScanner = {
+  async scan(b){ return Buffer.from(b).toString('utf8').includes('EICAR') ? [{rule:'eicar_test'}] : [] }
+}
+
+r.post('/upload',
+  upload.any(),
+  createKoaUploadGuard({
+    scanner: SimpleEicarScanner,
+    includeExtensions:['txt','png','jpg','jpeg','pdf','zip'],
+    allowedMimeTypes:['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
+    maxFileSizeBytes: 20 * 1024 * 1024, timeoutMs:5000, concurrency:4, failClosed:true
+  }),
+  (ctx)=>{ctx.body={ ok:true, scan: ctx.pompelmi ?? null }}
+)
+app.use(r.routes()).use(r.allowedMethods()); app.listen(3003)`,
+  },
+  {
+    id:'next', label:'Next.js (App Router)', code:`// app/api/upload/route.ts
+import { createNextUploadHandler } from '@pompelmi/next-upload'
+
+export const POST = createNextUploadHandler({
+  scanner: { async scan(bytes){ return [] } }, // plug your scanner here
+  includeExtensions:['png','jpg','jpeg','pdf','zip'],
+  allowedMimeTypes:['image/png','image/jpeg','application/pdf','application/zip'],
+  maxFileSizeBytes: 10 * 1024 * 1024, timeoutMs:5000, concurrency:2, failClosed:true
+})`,
+  },
+];
+
+function copyJS(expr: string): string { return `navigator.clipboard.writeText(${JSON.stringify(expr)})`; }
+let current = tabs[0].id;
+---
+<div class="tabs" data-active={current}>
+  <div class="tabbar">
+    {tabs.map(t => <button class={['tab', current===t.id && 'active'].filter(Boolean).join(' ')}
+      onclick={`this.closest('.tabs').setAttribute('data-active','${t.id}')`}>{t.label}</button>)}
+  </div>
+
+  {tabs.map(t =>
+    <pre class="code" data-id={t.id}><code>{t.code}</code></pre>
+  )}
+
+  <div class="actions">
+    <button class="btn" onclick={copyJS('pnpm add pompelmi')}>Install</button>
+    <button class="btn" onclick={`const id=this.closest('.tabs').getAttribute('data-active'); const tab=[...this.closest('.tabs').querySelectorAll('.code')].find(e=>e.dataset.id===id); navigator.clipboard.writeText(tab.innerText);`}>Copy code</button>
+  </div>
+</div>
+
+<style>
+.tabbar{display:flex;gap:.5rem;margin:.25rem 0 .75rem}
+.tab{padding:.45rem .7rem;border:1px solid #e5e7eb;border-radius:.6rem;background:#fff;cursor:pointer}
+.tab.active{background:#111827;color:#fff;border-color:#111827}
+.code{display:none;max-width:100%;overflow:auto;border:1px solid #eee;border-radius:.7rem;padding:1rem;background:#0b0b0b;color:#e5e7eb}
+.tabs[data-active="express"] .code[data-id="express"],
+.tabs[data-active="koa"] .code[data-id="koa"],
+.tabs[data-active="next"] .code[data-id="next"] {display:block}
+.actions{display:flex;gap:.5rem;margin:.75rem 0}
+.btn{border:1px solid #e5e7eb;border-radius:.6rem;padding:.45rem .7rem;background:#fff;cursor:pointer}
+@media (prefers-color-scheme: dark){
+  .tab{background:#0b0b0b;border-color:#222;color:#e5e7eb}
+  .btn{background:#0b0b0b;border-color:#222}
+}
+</style>

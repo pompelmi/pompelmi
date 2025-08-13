@@ -1,7 +1,29 @@
 ---
 title: Pompelmi
-description: File upload malware scanning for Node.js apps with React/Next UI and Node middlewares.
+description: File upload malware scanning for Node.js (Express/Koa/Next.js) with ZIP deep-inspection, MIME/size guards & optional YARA.
 ---
+
+import CodeTabs from "../../components/CodeTabs.astro";
+
+<p align="center">
+  <img
+    src="og.png"
+    alt="Pompelmi overview"
+    width="1200"
+    height="630"
+    loading="eager"
+    decoding="async"
+    style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,.08)"
+  />
+</p>
+
+# Scan & block malicious file uploads in Node.js
+
+<script type="module" is:inline>
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: prefersDark ? 'dark' : 'default' });
+</script>
 
 <div align="center">
 
@@ -12,49 +34,18 @@ description: File upload malware scanning for Node.js apps with React/Next UI an
 
 </div>
 
-Pompelmi adds safe, fast malware scanning to your file uploads.
-
-- **UI:** ready-made upload button & dropzone for React/Next.js.  
-- **Server:** Express/Koa middlewares, Next.js API route helper.  
-- **Safety:** size & MIME guards, optional YARA rules, clear verdicts.
-
-**Try the live demo** on the homepage: drag a clean JPG → **CLEAN**; try EICAR → **MALICIOUS**.
-
-### Quick start
-- Tutorial: **[Getting started](./tutorials/getting-started/)** (5 minutes)
-- How-to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[Koa](./how-to/koa/)**  
-- Reference: **[@pompelmi/ui-react API](./reference/ui-react/)**  
-- Explanations: **[Architecture & threat model](./explanations/architecture/)**
-
-> Badges are powered by Shields.io and update automatically.
----
-title: Pompelmi
-description: Secure, fast file‑upload malware scanning for Node.js apps — with a polished React/Next.js UI and lightweight server middlewares.
----
-
-<div align="center">
-
-[![GitHub Stars](https://img.shields.io/github/stars/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/stargazers)
-[![Open Issues](https://img.shields.io/github/issues/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/issues)
-[![License](https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/blob/main/LICENSE)
-[![Pages Deploy](https://img.shields.io/github/deployments/pompelmi/pompelmi/github-pages?label=github%20pages&style=for-the-badge)](https://github.com/pompelmi/pompelmi/deployments)
-
-<br/>
-
-<strong>Secure file uploads, zero drama.</strong><br/>
-<span>Drop‑in UI for React/Next.js · Dead‑simple Node middlewares.</span>
-
-</div>
-
----
 
 Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
 
 - **UI** — Ready‑made upload button & dropzone for **React/Next.js**.
-- **Server** — Lightweight middlewares for **Express** (and Koa/Next API helpers).
+- **Server** — Lightweight middlewares for **Express/Koa** and helpers for **Next.js API routes**.
 - **Safety** — Size & MIME guards, optional **YARA** rules, and clear **CLEAN / SUSPICIOUS / MALICIOUS** verdicts.
 
 > 🧪 **Live demo:** on the homepage drag a clean JPG → **CLEAN**; try the **EICAR** test string → **MALICIOUS**.
+
+## Quickstart
+
+<CodeTabs />
 
 ## Highlights
 
@@ -66,7 +57,7 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
 
 ## Quick links
 
-- Tutorial: **[Getting started](./tutorials/getting-started/)** (≈5 min)
+- Tutorial: **[Getting started](./tutorials/getting-started/)** (≈ 5 min)
 - How‑to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[Koa](./how-to/koa/)**
 - Reference: **[@pompelmi/ui-react](./reference/ui-react/)**
 - Deep dive: **[Architecture & threat model](./explanations/architecture/)**
@@ -79,6 +70,46 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
 
 > 💡 **Tip:** Testing locally? Use the standard **EICAR** test file. It’s safe and widely used to verify malware scanners.
 
----
+## Stars trend
+
+<p align="center">
+  <img alt="Star history" src="https://starchart.cc/pompelmi/pompelmi.svg" width="640" height="320" />
+</p>
 
 <sub>Badges are powered by Shields.io and update automatically.</sub>
+
+<!-- JSON-LD: SoftwareApplication -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"Pompelmi",
+  "applicationCategory":"DeveloperApplication",
+  "operatingSystem":"Linux, macOS, Windows",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "softwareVersion":"0.6.0-dev.1",
+  "url":"https://pompelmi.github.io/pompelmi/",
+  "downloadUrl":"https://www.npmjs.com/package/pompelmi",
+  "author":{"@type":"Organization","name":"Pompelmi"}
+}
+</script>
+
+<!-- JSON-LD: FAQPage (align with your actual FAQ content if you add one here) -->
+<script type="application/ld+json">
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {
+      "@type":"Question",
+      "name":"Does Pompelmi support YARA rules?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules; use built-in policies alongside."}
+    },
+    {
+      "@type":"Question",
+      "name":"Can it inspect ZIP archives and prevent ZIP bombs?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth."}
+    }
+  ]
+}
+</script>

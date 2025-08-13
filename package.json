@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.6.0",
+  "version": "0.6.0-dev.1",
   "description": "Prototipo di scanner di file lato cliente",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -22,6 +22,10 @@
   },
   "license": "MIT",
   "devDependencies": {
+    "@astrojs/mdx": "^4.3.3",
+    "@astrojs/sitemap": "^3.4.2",
+    "@astrojs/starlight": "^0.35.2",
+    "@astrojs/tailwind": "^6.0.2",
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
     "@babel/preset-typescript": "^7.27.1",

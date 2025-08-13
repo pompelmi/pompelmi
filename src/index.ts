@@ -7,6 +7,9 @@ export { useFileScanner } from './useFileScanner';
 
 // (Se hai aggiunto la funzione con YARA lato browser)
 export { scanFilesWithYara } from './scan'; // <-- adatta il path se diverso
+// Nuova API: heuristics (magic bytes, SVG/script, JPEG trailer) + YARA opzionale
+export { scanFilesWithHeuristicsAndYara, prefilterBrowser } from './scan';
+export type { BrowserPolicy, PrefilterResult } from './scan';
 
 // Re-export dei TIPI (nessuna ridichiarazione locale)
 export type { YaraMatch } from './yara/index';

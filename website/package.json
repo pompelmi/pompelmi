@@ -10,7 +10,6 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@astrojs/starlight": "^0.35.2",
     "@pompelmi/ui-react": "file:../dist-tarballs/pompelmi-ui-react-0.1.0.tgz",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
@@ -19,10 +18,13 @@
   "devDependencies": {
     "@astrojs/react": "^4.3.0",
     "@astrojs/sitemap": "^3.4.2",
+    "@astrojs/starlight": "^0.35.2",
     "@astrojs/tailwind": "^6.0.2",
     "astro": "^5.12.9",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
-    "tailwindcss": "^3.4.17"
+    "rehype-mermaid": "^3.0.0",
+    "tailwindcss": "^3.4.17",
+    "unist-util-visit": "^5.0.0"
   }
 }
