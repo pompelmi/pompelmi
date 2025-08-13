@@ -10,7 +10,7 @@
     "astro": "astro"
   },
   "dependencies": {
-    "@pompelmi/ui-react": "file:../dist-tarballs/pompelmi-ui-react-0.1.0.tgz",
+    "@pompelmi/ui-react": "workspace:*",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sharp": "^0.34.2"
