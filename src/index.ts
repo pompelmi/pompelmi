@@ -18,3 +18,4 @@ export { scanFilesWithRemoteYara } from './scan/remote';
 
 export * from './types';
 export { mapMatchesToVerdict } from './verdict';
+
