@@ -18,7 +18,7 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup --clean",
+    "build": "tsup --clean --dts --format esm,cjs",
     "dev": "tsup --watch --dts --format esm,cjs",
     "demo": "node tests/demo-server.mjs"
   },
@@ -26,7 +26,7 @@
     "@koa/multer": "^3.0.2",
     "@koa/router": "^12.0.0",
     "koa": "^2.15.0 || ^3.0.0",
-    "pompelmi": "^0.7.0-dev.3"
+    "pompelmi": ">=0.7.0-0"
   },
   "dependencies": {
     "file-type": "^18.7.0",
@@ -39,7 +39,8 @@
     "@types/node": "^20.11.0",
     "koa": "^2.16.1",
     "tsup": "^8.0.0",
-    "typescript": "^5.5.0"
+    "typescript": "^5.5.0",
+    "pompelmi": "workspace:*"
   },
   "license": "MIT",
   "publishConfig": {

@@ -25,7 +25,7 @@
   "peerDependencies": {
     "fastify": "^4.0.0",
     "@fastify/multipart": "^7.0.0",
-    "pompelmi": "^0.2.0-alpha"
+    "pompelmi": ">=0.7.0-0"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -34,7 +34,8 @@
     "fastify": "^4.28.0",
     "@fastify/multipart": "^7.7.3",
     "file-type": "^18.7.0",
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.3",
+    "pompelmi": "workspace:*"
   },
   "license": "MIT",
   "private": false,
