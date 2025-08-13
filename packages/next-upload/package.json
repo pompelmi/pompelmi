@@ -18,12 +18,12 @@
   ],
   "sideEffects": false,
   "scripts": {
-    "build": "tsup --clean",
+    "build": "tsup --clean --dts --format esm,cjs",
     "dev": "tsup --watch --dts --format esm,cjs",
     "demo": "node tests/demo-server.mjs"
   },
   "peerDependencies": {
-    "pompelmi": "^0.7.0-dev.3"
+    "pompelmi": ">=0.7.0-0"
   },
   "dependencies": {
     "file-type": "^18.7.0",
@@ -31,6 +31,7 @@
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
+    "pompelmi": "workspace:*",
     "tsup": "^8.0.0",
     "typescript": "^5.5.0"
   },
