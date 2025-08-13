@@ -19,20 +19,27 @@ import CodeTabs from "../../components/CodeTabs.astro";
 
 # Scan & block malicious file uploads in Node.js
 
-<script type="module" is:inline>
+<script type="module" is:inline>{`
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: prefersDark ? 'dark' : 'default' });
-</script>
+`}</script>
 
-<div align="center">
 
-[![GitHub Stars](https://img.shields.io/github/stars/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/stargazers)
-[![Open Issues](https://img.shields.io/github/issues/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/issues)
-[![License](https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge)](https://github.com/pompelmi/pompelmi/blob/main/LICENSE)
-[![Pages Deploy](https://img.shields.io/github/deployments/pompelmi/pompelmi/github-pages?label=github%20pages&style=for-the-badge)](https://github.com/pompelmi/pompelmi/deployments)
-
-</div>
+<p align="center">
+  <a href="https://github.com/pompelmi/pompelmi/stargazers">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/issues">
+    <img alt="Open Issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/deployments">
+    <img alt="GitHub Pages" src="https://img.shields.io/github/deployments/pompelmi/pompelmi/github-pages?label=github%20pages&style=for-the-badge" />
+  </a>
+</p>
 
 
 Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
@@ -78,8 +85,8 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
 
 <sub>Badges are powered by Shields.io and update automatically.</sub>
 
-<!-- JSON-LD: SoftwareApplication -->
-<script type="application/ld+json">
+{/* JSON-LD: SoftwareApplication */}
+<script type="application/ld+json">{`
 {
   "@context":"https://schema.org",
   "@type":"SoftwareApplication",
@@ -92,10 +99,10 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
   "downloadUrl":"https://www.npmjs.com/package/pompelmi",
   "author":{"@type":"Organization","name":"Pompelmi"}
 }
-</script>
+`}</script>
 
-<!-- JSON-LD: FAQPage (align with your actual FAQ content if you add one here) -->
-<script type="application/ld+json">
+{/* JSON-LD: FAQPage (align with your actual FAQ content if you add one here) */}
+<script type="application/ld+json">{`
 {
   "@context":"https://schema.org",
   "@type":"FAQPage",
@@ -112,4 +119,4 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
     }
   ]
 }
-</script>
+`}</script>

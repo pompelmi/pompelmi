@@ -76,6 +76,72 @@ async function createYaraEngine() {
         : mod.createBrowserEngine();
 }
 
+function sniffMagicBytes(bytes) {
+    const s = (sig) => {
+        const arr = typeof sig === 'string' ? new TextEncoder().encode(sig) : new Uint8Array(sig);
+        if (bytes.length < arr.length)
+            return false;
+        for (let i = 0; i < arr.length; i++)
+            if (bytes[i] !== arr[i])
+                return false;
+        return true;
+    };
+    if (s([0x50, 0x4B, 0x03, 0x04]) || s([0x50, 0x4B, 0x05, 0x06]) || s([0x50, 0x4B, 0x07, 0x08]))
+        return { mime: 'application/zip', extHint: 'zip' };
+    if (s([0x25, 0x50, 0x44, 0x46, 0x2D]))
+        return { mime: 'application/pdf', extHint: 'pdf' };
+    if (s([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
+        return { mime: 'image/png', extHint: 'png' };
+    if (s([0xFF, 0xD8, 0xFF]))
+        return { mime: 'image/jpeg', extHint: 'jpg' };
+    if (s('GIF87a') || s('GIF89a'))
+        return { mime: 'image/gif', extHint: 'gif' };
+    if (s('<?xml') || s('<svg'))
+        return { mime: 'image/svg+xml', extHint: 'svg' };
+    if (s([0x4D, 0x5A]))
+        return { mime: 'application/vnd.microsoft.portable-executable', extHint: 'exe' };
+    if (s([0x7F, 0x45, 0x4C, 0x46]))
+        return { mime: 'application/x-elf', extHint: 'elf' };
+    return null;
+}
+function hasSuspiciousJpegTrailer(bytes, maxTrailer = 1000000) {
+    for (let i = bytes.length - 2; i >= 2; i--) {
+        if (bytes[i] === 0xFF && bytes[i + 1] === 0xD9) {
+            const trailer = bytes.length - (i + 2);
+            return trailer > maxTrailer;
+        }
+    }
+    return false;
+}
+function prefilterBrowser(bytes, filename, policy) {
+    const reasons = [];
+    const ext = (filename.split('.').pop() || '').toLowerCase();
+    if (policy.maxFileSizeBytes && bytes.byteLength > policy.maxFileSizeBytes) {
+        reasons.push(`size_exceeded:${bytes.byteLength}`);
+    }
+    if (policy.includeExtensions && policy.includeExtensions.length && !policy.includeExtensions.includes(ext)) {
+        reasons.push(`ext_denied:${ext}`);
+    }
+    const s = sniffMagicBytes(bytes);
+    if (!s)
+        reasons.push('mime_unknown');
+    if (s?.mime && policy.allowedMimeTypes && policy.allowedMimeTypes.length && !policy.allowedMimeTypes.includes(s.mime)) {
+        reasons.push(`mime_denied:${s.mime}`);
+    }
+    if (s?.extHint && ext && s.extHint !== ext) {
+        reasons.push(`ext_mismatch:${ext}->${s.extHint}`);
+    }
+    if (s?.mime === 'image/jpeg' && hasSuspiciousJpegTrailer(bytes))
+        reasons.push('jpeg_trailer_payload');
+    if (s?.mime === 'image/svg+xml' && policy.denyScriptableSvg !== false) {
+        const text = new TextDecoder().decode(bytes).toLowerCase();
+        if (text.includes('<script') || text.includes('onload=') || text.includes('href="javascript:')) {
+            reasons.push('svg_script');
+        }
+    }
+    const severity = reasons.length ? 'suspicious' : 'clean';
+    return { severity, reasons, mime: s?.mime };
+}
 /**
  * Reads an array of File objects via FileReader and returns their text.
  */
@@ -121,6 +187,37 @@ async function scanFilesWithYara(files, rulesSource) {
         results.push({ file, content, yara: { matches } });
     }
     return results;
+}
+/**
+ * Scan files with fast browser heuristics + optional YARA.
+ * Returns content, prefilter verdict, and YARA matches.
+ */
+async function scanFilesWithHeuristicsAndYara(files, rulesSource, policy) {
+    let compiled;
+    try {
+        const engine = await createYaraEngine();
+        compiled = await engine.compile(rulesSource);
+    }
+    catch (e) {
+        console.warn('[yara] non disponibile o regole non compilate:', e);
+    }
+    const out = [];
+    for (const file of files) {
+        const [content, bytes] = await Promise.all([file.text(), file.arrayBuffer().then(b => new Uint8Array(b))]);
+        const prefilter = prefilterBrowser(bytes, file.name, policy);
+        let matches = [];
+        if (compiled) {
+            try {
+                // Optional short-circuit: only run YARA if needed. For now, we always run it if available.
+                matches = await compiled.scan(bytes);
+            }
+            catch (e) {
+                console.warn(`[yara] errore scansione ${file.name}:`, e);
+            }
+        }
+        out.push({ file, content, prefilter, yara: { matches } });
+    }
+    return out;
 }
 
 /**
@@ -2995,7 +3092,20 @@ async function scanFilesWithRemoteYara(files, rulesSource, remote) {
     return results;
 }
 
+function mapMatchesToVerdict(matches = []) {
+    if (!matches.length)
+        return 'clean';
+    const malHints = ['trojan', 'ransom', 'worm', 'spy', 'rootkit', 'keylog', 'botnet'];
+    const tagSet = new Set(matches.flatMap(m => (m.tags ?? []).map(t => t.toLowerCase())));
+    const nameHit = (r) => malHints.some(h => r.toLowerCase().includes(h));
+    const isMal = matches.some(m => nameHit(m.rule)) || tagSet.has('malware') || tagSet.has('critical');
+    return isMal ? 'malicious' : 'suspicious';
+}
+
+exports.mapMatchesToVerdict = mapMatchesToVerdict;
+exports.prefilterBrowser = prefilterBrowser;
 exports.scanFiles = scanFiles;
+exports.scanFilesWithHeuristicsAndYara = scanFilesWithHeuristicsAndYara;
 exports.scanFilesWithRemoteYara = scanFilesWithRemoteYara;
 exports.scanFilesWithYara = scanFilesWithYara;
 exports.useFileScanner = useFileScanner;
