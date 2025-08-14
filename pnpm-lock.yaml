@@ -156,8 +156,8 @@ importers:
         specifier: ^18.7.0
         version: 18.7.0
       pompelmi:
-        specifier: ^0.7.0
-        version: 0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.7.1
+        version: 0.7.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -224,8 +224,8 @@ importers:
         specifier: ^1.4.5-lts.1
         version: 1.4.5-lts.2
       pompelmi:
-        specifier: ^0.7.0
-        version: 0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.7.1
+        version: 0.7.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -255,8 +255,8 @@ importers:
         specifier: ^18.7.0
         version: 18.7.0
       pompelmi:
-        specifier: ^0.7.0
-        version: 0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: ^0.7.1
+        version: 0.7.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       unzipper:
         specifier: ^0.12.3
         version: 0.12.3
@@ -3426,7 +3426,7 @@ packages:
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
-    engines: {node: ^8.16.0 || ^10.7.0 || >=11.0.0}
+    engines: {node: ^8.16.0 || ^10.7.1 || >=11.0.0}
     os: [darwin]
 
   function-bind@1.1.2:
@@ -4587,7 +4587,7 @@ packages:
       react: ^18.0.0 || ^19.0.0
       react-dom: ^18.0.0 || ^19.0.0
 
-  pompelmi@0.7.0:
+  pompelmi@0.7.1:
     resolution: {integrity: sha512-awdeVKKS4GY9zZ5kPMAX/z9J/oqItqNwr/2MyXsuGhHphsuykiyDjLYZg8z0CvJddEaWke1V0S/uo6NarxzNdA==}
     peerDependencies:
       react: ^18.0.0 || ^19.0.0
@@ -4671,7 +4671,7 @@ packages:
 
   process@0.11.10:
     resolution: {integrity: sha512-cdGef/drWFoydD1JsMzuFf8100nZl+GT+yacc2bEced5f9Rjk4z+WtFUTBu9PhOi9j/jfmBPu0mMEY4wIdAF8A==}
-    engines: {node: '>= 0.7.0'}
+    engines: {node: '>= 0.7.1'}
 
   prompts@2.4.2:
     resolution: {integrity: sha512-NxNv/kLguCA7p3jE8oL2aEBsrJWgAakBpgmgK6lpPWV+WuOmY6r2/zbAVnP+T8bQlA0nzHXSJSJW0Hq7ylaD2Q==}
@@ -10990,7 +10990,7 @@ snapshots:
       - encoding
       - supports-color
 
-  pompelmi@0.7.0(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+  pompelmi@0.7.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
       file-type: 21.0.0
       libyara-wasm: 1.2.1
