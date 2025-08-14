@@ -2,6 +2,8 @@
   <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
     <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" height="280" />
   </a>
+  <br/>
+  <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
 </p>
 
 <h1 align="center">pompelmi</h1>
