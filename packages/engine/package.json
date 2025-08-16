@@ -13,8 +13,15 @@
       "require": "./dist/index.cjs"
     }
   },
-  "files": ["dist", "result.schema.json", "README.md"],
-  "publishConfig": { "access": "public", "tag": "dev" },
+  "files": [
+    "dist",
+    "result.schema.json",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public",
+    "tag": "dev"
+  },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsx watch src/index.ts",
@@ -23,7 +30,7 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
-    "@fastify/multipart": "^7.8.0",
+    "@fastify/multipart": "^9.0.3",
     "fastify": "^4.28.1",
     "zod": "^3.23.8"
   },
@@ -34,5 +41,7 @@
     "typescript": "^5.6.2",
     "zod-to-json-schema": "^3.23.5"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=18"
+  }
 }
