@@ -4,6 +4,7 @@ import cors from "@fastify/cors";
 import { cfg, allowedMime } from "./config";
 import { type ScanResult, resultJsonSchema } from "./schema";
 import { hashAndDetect } from "./scanner/builtin";
+import { sniffMimeFromStream } from "./utils/sniff";
 
 // Esportiamo lo schema JSON per lo script "schema:json"
 export { resultJsonSchema } from "./schema";
@@ -30,8 +31,9 @@ async function main() {
       return reply.status(400).send({ error: "no_file" });
     }
 
-    const mime = file.mimetype || "application/octet-stream";
-    if (!allowedMime.has(mime)) {
+    // Magic-bytes sniffing (server-side)
+    const detected = await sniffMimeFromStream(file.file);
+    if (!allowedMime.has(detected)) {
       const payload: ScanResult = {
         result: {
           verdict: cfg.failClosed ? "suspicious" : "clean",
@@ -40,7 +42,7 @@ async function main() {
           bytes: 0,
           elapsedMs: 0
         },
-        reason: "mime_disallowed",
+        reason: "magic_mime_disallowed",
         error: null
       };
       return reply.status(415).send(payload);
