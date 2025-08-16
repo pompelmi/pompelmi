@@ -1,0 +1,85 @@
+---
+title: Engine HTTP API
+description: Reference for the @pompelmi/engine HTTP endpoints and response schema.
+---
+
+## Overview
+
+`@pompelmi/engine` is a small HTTP service that scans uploaded files (streaming) and returns a normalized JSON result.
+
+- **Health**: `GET /healthz` → `{ ok: true, version: "..." }`
+- **Scan**: `POST /scan` (multipart form field name: `file`)
+
+### Environment (server)
+
+- `PORT` (default: 8787)
+- `HOST` (default: 0.0.0.0)
+- `CORS_ORIGIN` (default: `*`)
+- `MAX_BYTES` (default: 26214400)
+- `ALLOW_MIME` (CSV allowlist)
+- `TIMEOUT_MS` (default: 10000)
+- `FAIL_CLOSED` (`true` | `false`, default: `true`)
+
+---
+
+## Health check
+
+```bash
+curl -s http://localhost:8787/healthz
+```
+
+---
+
+## Scan: request
+
+Send a single `file` field as `multipart/form-data`:
+
+```bash
+curl -s -F "file=@/path/to/file.ext" http://localhost:8787/scan
+```
+
+Node (fetch):
+```ts
+const form = new FormData();
+form.append("file", new Blob([myUint8Array]), "upload.bin");
+const res = await fetch("http://localhost:8787/scan", { method: "POST", body: form });
+const json = await res.json();
+console.log(res.status, json);
+```
+
+---
+
+## Scan: response schema
+
+```json
+{
+  "result": {
+    "verdict": "clean | suspicious | malicious",
+    "matches": [
+      { "rule": "string", "source": "builtin | yara | clamav", "severity": "low | med | high", "meta": { "any": "json" } }
+    ],
+    "sha256": "hex",
+    "bytes": 12345,
+    "elapsedMs": 12
+  },
+  "reason": "string | undefined",
+  "error": "string | null"
+}
+```
+
+### Status codes
+
+- `200` — Clean
+- `422` — Suspicious or malicious (easy to block upstream)
+- `415` — Unsupported type / policy violation  
+  - `reason: "magic_mime_disallowed"` when magic-bytes MIME isn’t in the allowlist
+- `400` — Bad request (e.g., no file)
+- `500` — Engine error
+
+---
+
+## Security & policy
+
+- **Magic-bytes MIME sniffing**: server checks real signatures, not only client metadata.
+- **Fail closed** (`FAIL_CLOSED=true`): unknown types become non-clean.
+- **Streaming**: hashing & detection are streaming, not buffering the whole file.

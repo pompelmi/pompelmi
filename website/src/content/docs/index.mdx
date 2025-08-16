@@ -94,7 +94,7 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
   "applicationCategory":"DeveloperApplication",
   "operatingSystem":"Linux, macOS, Windows",
   "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
-  "softwareVersion":"0.8.0-dev.7",
+  "softwareVersion":"0.8.0",
   "url":"https://pompelmi.github.io/pompelmi/",
   "downloadUrl":"https://www.npmjs.com/package/pompelmi",
   "author":{"@type":"Organization","name":"Pompelmi"}
@@ -120,3 +120,15 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
   ]
 }
 `}</script>
+---
+
+## What’s new (0.8.0 dev)
+
+- **Reference scan engine**: `@pompelmi/engine` with streaming hashing and builtin EICAR detection.
+- **Magic-bytes MIME sniffing**: server validates real file signatures.
+- **Docker image on GHCR**: run it anywhere and connect the UI with `engineUrl`.
+
+**Start here:**  
+- Reference → **Engine HTTP API**  
+- How-to → **Run the engine via Docker (GHCR)**  
+- Guides → **Connect the UI to the Engine**

@@ -1,0 +1,25 @@
+---
+title: Connect the UI to the Engine
+description: Point the pompelmi UI components to your running engine.
+---
+
+This guide shows how to connect a running `@pompelmi/engine` to the UI components.
+
+## Quick start
+
+```tsx
+import { UploadDropzone } from "@pompelmi/ui-react";
+
+export default function Demo() {
+  return (
+    <UploadDropzone
+      engineUrl="http://localhost:8787/scan"
+      onResult={(r) => console.log("scan result", r)}
+      onError={(e) => console.error(e)}
+    />
+  );
+}
+```
+
+- Ensure your engine CORS allows your origin (`CORS_ORIGIN`).
+- For multi-file uploads, handle per-file callbacks and aggregate results in your app state.
