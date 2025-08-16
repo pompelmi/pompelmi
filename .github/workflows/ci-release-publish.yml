@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.6'
+  ROOT_VERSION: '0.8.7'
 
 jobs:
   # -------------------------------
@@ -654,26 +654,64 @@ jobs:
           echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
 
-      - name: Skip if version already on GitHub Packages
-        id: check_gpr
+      - name: Ensure repository field matches this repo (git+https) for GPR
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const repoUrl = (process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : 'https://github.com/pompelmi/pompelmi')).replace(/^https:\/\//,'git+https://');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          pkg.repository = { type: 'git', url: repoUrl };
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('Set root repository to', pkg.repository.url);
+          NODE
+
+      - name: Decide publish (GPR) — check via GitHub API (PAT fallback)
+        id: check_gpr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGES_PAT: ${{ secrets.PACKAGES_PAT }}
+        run: |
+          set -euo pipefail
+          ORG="${{ github.repository_owner }}"
           NAME="${{ steps.rootpkg_gpr.outputs.name }}"
           VER="${{ steps.rootpkg_gpr.outputs.version }}"
-          EXISTS=$(npm view "$NAME@$VER" version --registry=https://npm.pkg.github.com 2>/dev/null || true)
-          if [ "$EXISTS" = "$VER" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-            echo "$NAME@$VER già presente su GitHub Packages, salto la publish"
+          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
+          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          # Prefer PAT with read:org + write:packages
+          if [ -n "${PACKAGES_PAT:-}" ]; then
+            export GH_TOKEN="$PACKAGES_PAT"
+            echo "Using PACKAGES_PAT for GitHub API."
           else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "$NAME@$VER non presente su GitHub Packages, pubblico"
+            export GH_TOKEN="$GITHUB_TOKEN"
+            echo "Using GITHUB_TOKEN for GitHub API."
           fi
+          EXISTS=false
+          if gh api -X GET -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC" >/dev/null 2>&1; then
+            if gh api -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC/versions?per_page=100" --jq '.[].name' | grep -Fxq "$VER"; then
+              EXISTS=true
+            fi
+          fi
+          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
+          echo "exists=$EXISTS"
 
       - name: Publish to GitHub Packages
         if: steps.check_gpr.outputs.exists == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npm publish --access public --ignore-scripts --registry=https://npm.pkg.github.com
+          set +e
+          OUT=$(npm publish --access public --ignore-scripts --registry=https://npm.pkg.github.com 2>&1)
+          CODE=$?
+          echo "$OUT"
+          if [ $CODE -ne 0 ]; then
+            if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+              echo "Version already exists on GPR, treating as success."
+              exit 0
+            fi
+            exit $CODE
+          fi
           echo "Published ${{ steps.rootpkg_gpr.outputs.name }}@${{ steps.rootpkg_gpr.outputs.version }} to GitHub Packages"
 
       - name: Make GPR package public (retry + PAT fallback)
