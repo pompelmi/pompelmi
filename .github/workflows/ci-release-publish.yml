@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.5'
+  ROOT_VERSION: '0.8.6'
 
 jobs:
   # -------------------------------
@@ -41,11 +41,11 @@ jobs:
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
-      - name: Apply pnpm override for regjsgen (CI hotfix)
+      - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
-          node -p "require('./package.json').pnpm.overrides"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -77,11 +77,11 @@ jobs:
           fi
           pnpm --version
 
-      - name: Apply pnpm override for regjsgen (CI hotfix)
+      - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
-          node -p "require('./package.json').pnpm.overrides"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
       - name: Ensure pnpm-workspace.yaml
         run: |
@@ -167,11 +167,11 @@ jobs:
           fi
           pnpm --version
 
-      - name: Apply pnpm override for regjsgen (CI hotfix)
+      - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
-          node -p "require('./package.json').pnpm.overrides"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
@@ -392,11 +392,11 @@ jobs:
           fi
           pnpm --version
 
-      - name: Apply pnpm override for regjsgen (CI hotfix)
+      - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
-          node -p "require('./package.json').pnpm.overrides"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         id: pack
