@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.8.0-dev.6",
+  "version": "0.8.1-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -13,6 +13,11 @@
       "require": "./dist/index.cjs"
     }
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/engine"
+} ,
   "files": [
     "dist",
     "result.schema.json",

@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -10,6 +10,11 @@
     "yara": false,
     "util": false
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/engine"
+} ,
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build",
