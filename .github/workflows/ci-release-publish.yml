@@ -676,19 +676,50 @@ jobs:
           npm publish --access public --ignore-scripts --registry=https://npm.pkg.github.com
           echo "Published ${{ steps.rootpkg_gpr.outputs.name }}@${{ steps.rootpkg_gpr.outputs.version }} to GitHub Packages"
 
-      - name: Make GPR package public
+      - name: Make GPR package public (retry + PAT fallback)
         if: steps.check_gpr.outputs.exists == 'false'
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGES_PAT: ${{ secrets.PACKAGES_PAT }}
         run: |
+          set -euo pipefail
           ORG="${{ github.repository_owner }}"
+          NAME="${{ steps.rootpkg_gpr.outputs.name }}"
           # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
-          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "${{ steps.rootpkg_gpr.outputs.name }}")
-          echo "Setting visibility=public for $PKG_ENC in org $ORG"
-          gh api -X PATCH \
-            -H "Accept: application/vnd.github+json" \
-            "/orgs/$ORG/packages/npm/$PKG_ENC/visibility" \
-            -f visibility=public
+          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          
+          # Prefer a Personal Access Token with read:org + write:packages (recommended for org-level package ops).
+          # Fallback to the workflow's GITHUB_TOKEN if no PAT is provided.
+          if [ -n "${PACKAGES_PAT:-}" ]; then
+            export GH_TOKEN="$PACKAGES_PAT"
+            echo "Using PACKAGES_PAT for GitHub API."
+          else
+            export GH_TOKEN="$GITHUB_TOKEN"
+            echo "Using GITHUB_TOKEN for GitHub API."
+          fi
+          
+          echo "Ensuring package exists in API before changing visibility…"
+          # Wait up to ~90s for package indexing after publish
+          for i in $(seq 1 18); do
+            if gh api -X GET -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC" >/dev/null 2>&1; then
+              echo "Package visible to API (attempt $i)."
+              break
+            fi
+            echo "Package not visible yet (attempt $i)…"
+            sleep 5
+          done
+          
+          echo "Setting visibility=public for $NAME in org $ORG"
+          if ! gh api -X PATCH \
+                -H "Accept: application/vnd.github+json" \
+                "/orgs/$ORG/packages/npm/$PKG_ENC/visibility" \
+                -f visibility=public; then
+            echo "::warning::Failed to set package visibility to public. Possible causes:"
+            echo "::warning::- Org policy disallows Public packages (Org Settings → Packages)."
+            echo "::warning::- Token lacks scopes (need read:org + write:packages)."
+            echo "::warning::- Package not yet indexed (race condition)."
+          fi
 
   # -------------------------------
   # 5) Deploy GitHub Pages (se Pages è attivo)
