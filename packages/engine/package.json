@@ -1,0 +1,38 @@
+{
+  "name": "@pompelmi/engine",
+  "version": "0.8.0-dev.4",
+  "private": false,
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "result.schema.json", "README.md"],
+  "publishConfig": { "access": "public", "tag": "dev" },
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.cjs",
+    "schema:json": "node --input-type=module -e \"import('./dist/index.mjs').then(m=>console.log(JSON.stringify(m.resultJsonSchema, null, 2)))\" > result.schema.json"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.0.0",
+    "@fastify/multipart": "^7.8.0",
+    "fastify": "^4.28.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "tsup": "^8.0.2",
+    "tsx": "^4.15.7",
+    "typescript": "^5.6.2",
+    "zod-to-json-schema": "^3.23.5"
+  },
+  "engines": { "node": ">=18" }
+}
