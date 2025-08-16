@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.2'
+  ROOT_VERSION: '0.8.3'
 
 jobs:
   # -------------------------------
@@ -675,6 +675,20 @@ jobs:
         run: |
           npm publish --access public --ignore-scripts --registry=https://npm.pkg.github.com
           echo "Published ${{ steps.rootpkg_gpr.outputs.name }}@${{ steps.rootpkg_gpr.outputs.version }} to GitHub Packages"
+
+      - name: Make GPR package public
+        if: steps.check_gpr.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ORG="${{ github.repository_owner }}"
+          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
+          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "${{ steps.rootpkg_gpr.outputs.name }}")
+          echo "Setting visibility=public for $PKG_ENC in org $ORG"
+          gh api -X PATCH \
+            -H "Accept: application/vnd.github+json" \
+            "/orgs/$ORG/packages/npm/$PKG_ENC/visibility" \
+            -f visibility=public
 
   # -------------------------------
   # 5) Deploy GitHub Pages (se Pages è attivo)
