@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.0-dev.6'
+  ROOT_VERSION: '0.8.0-dev.7'
 
 jobs:
   # -------------------------------
