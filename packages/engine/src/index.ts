@@ -23,7 +23,7 @@ async function main() {
     limits: { fileSize: cfg.maxBytes, files: 1 }
   });
 
-  app.get("/healthz", async () => ({ ok: true, version: "0.8.8-dev.6" }));
+  app.get("/healthz", async () => ({ ok: true, version: "0.8.9-dev.6" }));
 
   app.post("/scan", async (req, reply) => {
     const file = await req.file();
