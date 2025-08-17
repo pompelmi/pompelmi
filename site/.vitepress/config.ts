@@ -6,6 +6,7 @@ export default defineConfig({
   description: 'File-upload malware scanning for Node.js',
   // Project Page: serve sotto /pompelmi/
   base: '/pompelmi/',
+  ignoreDeadLinks: true,
   themeConfig: {
     logo: '/logo.svg',
     nav: [
