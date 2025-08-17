@@ -213,6 +213,11 @@ jobs:
             --filter '!@pompelmi/core' \
             --if-present run build
 
+      - name: Ensure Vitest (workspace)
+        run: |
+          # Make sure the test runner exists even if not declared in every pkg
+          pnpm -w add -D vitest @vitest/coverage-v8
+
       - name: Test (generate coverage)
         run: |
           # Try common coverage scripts across workspaces
