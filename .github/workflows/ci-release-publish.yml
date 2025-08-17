@@ -127,6 +127,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
@@ -266,10 +268,10 @@ jobs:
           fi
 
       - name: Upload coverage to Codecov (with token)
-        if: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ env.CODECOV_TOKEN != '' }}
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+          token: ${{ env.CODECOV_TOKEN }}
           slug: pompelmi/pompelmi
           files: '**/coverage/lcov.info,**/coverage/**/lcov.info'
           flags: unittests
@@ -278,7 +280,7 @@ jobs:
           verbose: true
 
       - name: Upload coverage to Codecov (public, no token)
-        if: ${{ secrets.CODECOV_TOKEN == '' }}
+        if: ${{ env.CODECOV_TOKEN == '' }}
         uses: codecov/codecov-action@v5
         with:
           slug: pompelmi/pompelmi
