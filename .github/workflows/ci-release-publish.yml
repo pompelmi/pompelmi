@@ -136,7 +136,7 @@ jobs:
         run: |
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
-          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
