@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.7'
+  ROOT_VERSION: '0.8.8'
 
 jobs:
   # -------------------------------
@@ -212,6 +212,25 @@ jobs:
             --filter '!./examples/*' \
             --filter '!@pompelmi/core' \
             --if-present run build
+
+      - name: Test (generate coverage)
+        run: |
+          # Try common coverage scripts across workspaces
+          # If you already have a specific command, replace these with it
+          pnpm -r --if-present test:coverage
+          pnpm -r --if-present test -- --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          # Set in repo settings: Settings → Secrets and variables → Actions → New repository secret
+          # Name: CODECOV_TOKEN, Value: (from https://app.codecov.io/github/pompelmi/pompelmi/new)
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: '**/coverage/lcov.info,**/coverage/**/lcov.info'
+          flags: unittests
+          name: codecov-umbrella
+          fail_ci_if_error: false
+          verbose: true
 
       - name: Build website
         run: pnpm --filter ./website build

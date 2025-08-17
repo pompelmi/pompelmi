@@ -5,7 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 overrides:
-  regjsgen: 0.8.7
+  regjsgen: 0.8.8
 
 importers:
 
@@ -2649,7 +2649,7 @@ packages:
 
   escape-string-regexp@1.0.5:
     resolution: {integrity: sha512-vbRorB5FUQWvla16U8R/qgaFIya2qGzwDrNmCZuYKrbdSUMG6I1ZCGQRefkRVhuOkIGVne7BQ35DSfo1qvJqFg==}
-    engines: {node: '>=0.8.7'}
+    engines: {node: '>=0.8.8'}
 
   escape-string-regexp@5.0.0:
     resolution: {integrity: sha512-/veY75JbMK4j1yjvuUxuVsiS/hr/4iHs9FTT6cgTexxdE0Ly/glccBAkloH/DofkjRbZU3bnoj38mOmhkZ0lHw==}
@@ -2778,7 +2778,7 @@ packages:
       picomatch:
         optional: true
 
-  fflate@0.8.7:
+  fflate@0.8.8:
     resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
 
   file-type@18.7.0:
@@ -4163,7 +4163,7 @@ packages:
     resolution: {integrity: sha512-H66BPQMrv+V16t8xtmq+UC0CBpiTBA60V8ibS1QVReIp8T1z8hwFxqcGzm9K6lgsN7sB5edVH8a+ze6Fqm4weA==}
     engines: {node: '>=4'}
 
-  regjsgen@0.8.7:
+  regjsgen@0.8.8:
     resolution: {integrity: sha512-RvwtGe3d7LvWiDQXeQw8p5asZUmfU1G/l6WbUXeHta7Y2PEIvBTwH6E2EfmYUK8pxcxEdEmaomqyp0vZZ7C+3Q==}
 
   regjsparser@0.12.0:
@@ -4337,7 +4337,7 @@ packages:
 
   send@0.19.0:
     resolution: {integrity: sha512-dW41u5VfLXu8SJh5bwRmyYUbAoSB3c9uQh6L8h/KtsFREPWpbX1lrljJo186Jc4nmci/sGUZ9a0a0J2zgfq2hw==}
-    engines: {node: '>= 0.8.7'}
+    engines: {node: '>= 0.8.8'}
 
   send@1.2.0:
     resolution: {integrity: sha512-uaW0WwXKpL9blXE2o0bRhoL2EGXIrZxQ2ZQ4mgcfoBxdFmQold+qWsD2jLrfZ0trjKL6vOw0j//eAwcALFjKSw==}
@@ -4345,7 +4345,7 @@ packages:
 
   serve-static@1.16.2:
     resolution: {integrity: sha512-VqpjJZKadQB/PEbEwvFdO43Ax5dFBZ2UECszz8bQ7pi7wt//PWe1P6MN7eCnjsatYtBT6EuiClbjSWP2WrIoTw==}
-    engines: {node: '>= 0.8.7'}
+    engines: {node: '>= 0.8.8'}
 
   serve-static@2.2.0:
     resolution: {integrity: sha512-61g9pCh0Vnh7IutZjtLGGpTA355+OPn2TyDv/6ivP2h/AdAVX9azsoxmg2/M6nZeQZNYBEwIcsne1mJd9oQItQ==}
@@ -4431,7 +4431,7 @@ packages:
     resolution: {integrity: sha512-i5uvt8C3ikiWeNZSVZNWcfZPItFQOsYTUAOkcUPGd8DqDy1uOUikjt5dG+uRlwyvR108Fb9DOd4GvXfT0N2/uQ==}
     engines: {node: '>= 12'}
 
-  source-map@0.8.7-beta.0:
+  source-map@0.8.8-beta.0:
     resolution: {integrity: sha512-2ymg6oRBpebeZi9UUNsgQ89bhx01TcTkmNTGnNO88imTmbSgy4nfujrgVEFKWpMTEGA11EDkTt7mqObTPdigIA==}
     engines: {node: '>= 8'}
     deprecated: The work that was done in this beta branch won't be included in future versions
@@ -6660,7 +6660,7 @@ snapshots:
   '@tokenizer/inflate@0.2.7':
     dependencies:
       debug: 4.4.1
-      fflate: 0.8.7
+      fflate: 0.8.8
       token-types: 6.0.4
     transitivePeerDependencies:
       - supports-color
@@ -7917,7 +7917,7 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.3
 
-  fflate@0.8.7: {}
+  fflate@0.8.8: {}
 
   file-type@18.7.0:
     dependencies:
@@ -9741,12 +9741,12 @@ snapshots:
     dependencies:
       regenerate: 1.4.2
       regenerate-unicode-properties: 10.2.0
-      regjsgen: 0.8.7
+      regjsgen: 0.8.8
       regjsparser: 0.12.0
       unicode-match-property-ecmascript: 2.0.0
       unicode-match-property-value-ecmascript: 2.2.0
 
-  regjsgen@0.8.7: {}
+  regjsgen@0.8.8: {}
 
   regjsparser@0.12.0:
     dependencies:
@@ -10152,7 +10152,7 @@ snapshots:
 
   source-map@0.7.6: {}
 
-  source-map@0.8.7-beta.0:
+  source-map@0.8.8-beta.0:
     dependencies:
       whatwg-url: 7.1.0
 
@@ -10395,7 +10395,7 @@ snapshots:
       postcss-load-config: 4.0.2(postcss@8.5.6)
       resolve-from: 5.0.0
       rollup: 4.46.2
-      source-map: 0.8.7-beta.0
+      source-map: 0.8.8-beta.0
       sucrase: 3.35.0
       tree-kill: 1.2.2
     optionalDependencies:
@@ -10419,7 +10419,7 @@ snapshots:
       postcss-load-config: 6.0.1(jiti@2.5.1)(postcss@8.5.6)(tsx@4.20.3)(yaml@2.8.1)
       resolve-from: 5.0.0
       rollup: 4.46.2
-      source-map: 0.8.7-beta.0
+      source-map: 0.8.8-beta.0
       sucrase: 3.35.0
       tinyexec: 0.3.2
       tinyglobby: 0.2.14
