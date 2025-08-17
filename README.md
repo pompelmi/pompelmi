@@ -13,7 +13,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi&color=0a7ea4"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi?label=downloads&color=6E9F18"></a>
-  <img alt="node engines" src="https://img.shields.io/node/v/pompelmi?label=node">
+  <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi"></a>
   <a href="https://app.codecov.io/gh/pompelmi/pompelmi"><img alt="coverage" src="https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg"/></a>
