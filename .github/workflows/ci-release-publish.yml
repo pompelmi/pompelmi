@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.8.10'
+  ROOT_VERSION: '0.9.0-dev.8'
 
 jobs:
   # -------------------------------
@@ -37,7 +37,7 @@ jobs:
         run: |
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
-          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
@@ -87,18 +87,17 @@ jobs:
         run: |
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
-          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
 
       - name: Install (pnpm)
         run: |
-          set -euo pipefail
-          # CodeQL doesn't need to install @pompelmi/* packages or examples/website.
           pnpm install --no-frozen-lockfile --link-workspace-packages \
             --filter '!@pompelmi/*' \
             --filter '!./examples/*' \
+            --filter '!./site' \
             --filter '!./website'
 
       - name: Initialize CodeQL
@@ -108,10 +107,10 @@ jobs:
 
       - name: Build (light)
         run: |
-          # Skip all internal pkgs and the website during CodeQL
           pnpm -r \
             --filter '!@pompelmi/*' \
             --filter '!./examples/*' \
+            --filter '!./site' \
             --filter '!./website' \
             --if-present run build
 
@@ -137,13 +136,15 @@ jobs:
         run: |
           set -euo pipefail
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
-          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'website'\n" > pnpm-workspace.yaml
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
           npm pkg set version="${ROOT_VERSION}"
 
       - uses: pnpm/action-setup@v4
         with:
           standalone: true
+
+
 
       - uses: actions/setup-node@v4
         with:
@@ -178,7 +179,7 @@ jobs:
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
           set -euo pipefail
-          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples site website 2>/dev/null | sort -u || true)
           if [ ${#REFS[@]} -gt 0 ]; then
             echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
@@ -290,13 +291,13 @@ jobs:
           fail_ci_if_error: false
           verbose: true
 
-      - name: Build website
-        run: pnpm --filter ./website build
+      - name: Build site
+        run: pnpm -C site build
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: website/dist
+          path: site/.vitepress/dist
 
   # -------------------------------
   # 3) Release da package.json (crea tag + GitHub Release)
@@ -479,7 +480,7 @@ jobs:
         id: pack
         run: |
           set -euo pipefail
-          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples website 2>/dev/null | sort -u || true)
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples site website 2>/dev/null | sort -u || true)
           if [ ${#REFS[@]} -gt 0 ]; then
             echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
             mkdir -p dist-tarballs
