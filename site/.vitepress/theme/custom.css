@@ -1,31 +1,30 @@
-/* Pompelmi custom styles (updated glow: higher & blue) */
+/* Pompelmi custom styles */
+/* Palette */
 :root{
-  /* Blue palette (Tailwind-like): 500 + sky accent */
-  --pompelmi-glow: 59, 130, 246;  /* #3b82f6 */
+  --pompelmi-glow: 59, 130, 246; /* #3b82f6 */
   --pompelmi-glow-accent: 14, 165, 233; /* #0ea5e9 */
 }
 
-/* Optional: very subtle blue radial tint behind the hero section */
+/* Subtle blue tint on the hero background */
 .VPHome{
-  background:
-    radial-gradient(60% 40% at 50% -10%,
-      rgba(var(--pompelmi-glow), 0.08),
-      rgba(255,255,255,0) 60%) no-repeat;
+  background: radial-gradient(60% 40% at 50% -10%,
+    rgba(var(--pompelmi-glow), 0.08),
+    rgba(255,255,255,0) 60%) no-repeat;
 }
 
-/* Ensure the hero image container can host absolute children */
+/* Ensure container is positioning context and glow sits behind image */
 .VPHomeHero .image{
   position: relative;
-  z-index: 0;
+  z-index: 0; /* create stacking context */
 }
 
-/* Soft glow UNDER the hero image (moved up & recolored) */
+/* Centered glow behind the fruit/logo image */
 .VPHomeHero .image::after{
   content: "";
   position: absolute;
   left: 50%;
-  top: 50%; /* center vertically relative to the image */
-  transform: translate(-50%, -15%); /* nudge slightly upward so the glow sits behind the fruit */
+  top: 50%;
+  transform: translate(-50%, -15%); /* nudge up so glow peaks from behind */
   width: clamp(180px, 44vw, 420px);
   height: clamp(64px, 12vw, 160px);
   background:
@@ -36,10 +35,13 @@
       rgba(var(--pompelmi-glow), 0.00) 78%);
   filter: blur(18px) saturate(110%);
   pointer-events: none;
-  z-index: -1; /* keep glow behind the image within this stacking context */
+  z-index: -1; /* behind the image */
 }
 
-/* Gentle drop shadow to lift the logo */
+/* Slight drop shadow to lift the logo/image */
 .VPHomeHero .image img{
   filter: drop-shadow(0 10px 28px rgba(0,0,0,.12));
 }
+
+/* --- Demo page helpers --- */
+.page-demo .demo-card{ margin-top: 14px; }

@@ -12,18 +12,25 @@ export default defineConfig({
     nav: [
       { text: 'Docs', link: '/docs/' },
       { text: 'Demo', link: '/demo/' },
-      { text: 'GitHub', link: 'https://github.com/pompelmi/pompelmi' }
+      { text: 'GitHub', link: 'https://github.com/pompelmi/pompelmi' },
     ],
     sidebar: {
       '/docs/': [
         {
           text: 'Guide',
           items: [
-            { text: 'Introduction', link: '/docs/' }
+            { text: 'Introduction', link: '/docs/' },
+            { text: 'Quickstart (Express)', link: '/docs/quickstart-express' },
+            { text: 'Policy', link: '/docs/policy' },
+            { text: 'ZIP Deep-Inspection', link: '/docs/zip-inspection' },
+            { text: 'Adapters Overview', link: '/docs/adapters' }
           ]
         }
       ]
     },
-    socialLinks: [{ icon: 'github', link: 'https://github.com/pompelmi/pompelmi' }]
+    socialLinks: [
+        { icon: 'github', link: 'https://github.com/pompelmi/pompelmi' },
+        { icon: 'npm', link: 'https://www.npmjs.com/package/pompelmi' } 
+    ]
   }
 })

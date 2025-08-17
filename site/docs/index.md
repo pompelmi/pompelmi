@@ -3,12 +3,16 @@ title: Introduction
 outline: deep
 ---
 
-# Pompelmi — Documentation
+# Pompelmi — Introduction
 
-Welcome! This site covers **setup**, framework **adapters** (Express/Koa/Next.js), **policies** (size/MIME/extension), ZIP deep‑inspection, and optional **YARA** integration.
+**Pompelmi** is a file-upload security toolkit for Node.js. It focuses on **malware scanning** and **policy enforcement** before your app ever stores or processes a file.
 
-> Looking for a quick taste?  
-> 👉 **Demo:** [/demo/](/demo/) · **GitHub:** https://github.com/pompelmi/pompelmi
+## Key features
+
+- **ZIP deep‑inspection**: safe archive opening with bomb/traversal guards (configurable).
+- **Policy guards**: extension allowlist, max size caps, and basic MIME sniffing (magic bytes).
+- **DX‑first**: TypeScript types, ESM/CJS builds, framework adapters.
+- **Pluggable**: optional **YARA** integration for signature‑based detection (advanced).
 
 ## Install
 
@@ -18,52 +22,22 @@ pnpm add pompelmi
 # or: yarn add pompelmi
 ```
 
-## What Pompelmi does
+> **Note**  
+> Server‑side scanning runs in Node (on your server / API route). The `/demo` on this site is **client‑side** and only simulates policy checks for illustration.
 
-- **ZIP deep‑inspection** with safe extraction rules (bomb/traversal guards).
-- **Policy guards**: extension allowlist, size limits, basic MIME sniffing (magic bytes).
-- **DX‑first**: TypeScript types, ESM/CJS builds, simple adapters.
+## How these docs are organized
 
-## Quickstart (Express)
+- **Quickstart (Express)** — a minimal, end‑to‑end route example: [/docs/quickstart-express](/docs/quickstart-express)
+- **Policy** — how to build safe allowlists, size caps, MIME sniff and error handling: [/docs/policy](/docs/policy)
+- **ZIP deep‑inspection** — safely handle archives *(coming soon)*
+- **YARA** — optional signature rules *(coming soon)*
+- **Adapters** for Koa / Fastify / Next.js *(coming soon)*
 
-```ts
-// Pseudocode – adjust to your package names/exports.
-import express from 'express'
-import { createScanner, allowExtensions, maxBytes, sniffMime } from 'pompelmi'
+## Production checklist (short)
 
-const app = express()
-
-// Basic file policy
-const policy = {
-  rules: [
-    allowExtensions(['.zip', '.png', '.jpg', '.jpeg', '.pdf']),
-    maxBytes(25 * 1024 * 1024),
-    sniffMime()
-  ]
-}
-
-const scanner = createScanner(policy)
-
-// Example: handle single file upload (multer/busboy/any)
-app.post('/upload', async (req, res) => {
-  // get file stream/buffer from your upload middleware
-  const file = /* ... */
-  const result = await scanner.scan(file)
-  if (!result.ok) {
-    return res.status(400).json({ ok: false, reason: result.reason })
-  }
-  res.json({ ok: true })
-})
-
-app.listen(3000)
-```
-
-> **Note:** The exact API names may differ depending on which Pompelmi package you use (core/engine/adapter). We'll provide adapter‑specific pages next.
-
-## Next steps
-
-- **Express quickstart (end‑to‑end)** — *coming soon*
-- **Koa adapter** — *coming soon*
-- **Next.js API Route adapter** — *coming soon*
-- **YARA integration** — *coming soon*
-- **Policy reference** — *coming soon*
+- Only allow **known‑good** extensions (deny‑by‑default).
+- Enforce **size caps** per file and per request.
+- Reject empty/unknown **MIME** unless purposely allowed.
+- **Scan archives** before extraction and limit depth/entries/ratio.
+- Never trust **client MIME**; verify using magic bytes server‑side.
+- Log and return **clear errors** without leaking internals.

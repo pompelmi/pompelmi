@@ -22,9 +22,9 @@ hero:
       link: https://www.npmjs.com/package/pompelmi
 features:
   - title: ZIP deep-inspection
-    details: Safe extraction, bomb and path traversal guards.
+    details: Bomb/ratio limits, traversal-safe extraction, inner MIME sniff.
   - title: Policy guard
-    details: Extension allowlist, size limits, basic MIME sniff (magic bytes).
-  - title: DX first
-    details: TypeScript, ESM/CJS, drop-in adapters.
+    details: Enforce extension allowlist, size caps, and server-side MIME checks.
+  - title: Framework adapters
+    details: Express, Koa, Fastify, Next.js — TypeScript first.
 ---
