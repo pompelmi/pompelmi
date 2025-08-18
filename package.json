@@ -17,10 +17,12 @@
   },
   "pnpm": {
     "overrides": {
-      "regjsgen": "0.10.0-dev.9",
+      "regjsgen": "0.8.0",
       "fflate": "0.8.2",
       "@tokenizer/inflate>fflate": "0.8.2",
-      "file-type>fflate": "0.8.2"
+      "file-type>fflate": "0.8.2",
+      "regexpu-core>regjsgen": "0.8.0",
+      "@babel/helper-create-regexp-features-plugin>regjsgen": "0.8.0"
     }
   },
   "scripts": {
