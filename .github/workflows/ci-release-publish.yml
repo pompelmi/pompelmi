@@ -43,7 +43,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.10.0-dev.9';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -97,8 +97,7 @@ jobs:
           pnpm install --no-frozen-lockfile --link-workspace-packages \
             --filter '!@pompelmi/*' \
             --filter '!./examples/*' \
-            --filter '!./site' \
-            --filter '!./website'
+            --filter '!./site'
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -111,7 +110,6 @@ jobs:
             --filter '!@pompelmi/*' \
             --filter '!./examples/*' \
             --filter '!./site' \
-            --filter '!./website' \
             --if-present run build
 
       - name: Analyze
@@ -172,9 +170,14 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.10.0-dev.9';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
+
+      - name: Install YARA (for malware scan)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yara
 
       - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
         run: |
@@ -488,7 +491,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
