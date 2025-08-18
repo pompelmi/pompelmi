@@ -7,6 +7,11 @@ export default defineConfig({
   // Project Page: serve sotto /pompelmi/
   base: '/pompelmi/',
   ignoreDeadLinks: true,
+  head: [
+    ['link', { rel: 'icon', type: 'image/svg+xml', href: '/logo.svg' }],
+    ['link', { rel: 'mask-icon', href: '/logo.svg', color: '#0ea5e9' }],
+    ['meta',  { name: 'theme-color', content: '#0ea5e9' }]
+  ],
   themeConfig: {
     logo: '/logo.svg',
     nav: [

@@ -27,6 +27,7 @@
   <a href="https://pompelmi.github.io/pompelmi/">Documentation</a> ·
   <a href="#installation">Install</a> ·
   <a href="#quickstart">Quickstart</a> ·
+  <a href="#github-action">GitHub Action</a> ·
   <a href="#adapters">Adapters</a> ·
   <a href="#diagrams">Diagrams</a> ·
   <a href="#configuration">Config</a> ·
@@ -169,7 +170,51 @@ export const POST = createNextUploadHandler({
 });
 ```
 
----
+----
+
+## GitHub Action
+
+Run **pompelmi** in CI to scan repository files or built artifacts.
+
+**Minimal usage**
+```yaml
+name: Security scan (pompelmi)
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan repository with pompelmi
+        uses: pompelmi/pompelmi/.github/actions/pompelmi-scan@v1
+        with:
+          path: .
+          deep_zip: true
+          fail_on_detect: true
+```
+
+**Scan a single artifact**
+```yaml
+- uses: pompelmi/pompelmi/.github/actions/pompelmi-scan@v1
+  with:
+    artifact: build.zip
+    deep_zip: true
+    fail_on_detect: true
+```
+
+**Inputs**
+| Input | Default | Description |
+| --- | --- | --- |
+| `path` | `.` | Directory to scan. |
+| `artifact` | `""` | Single file/archive to scan. |
+| `yara_rules` | `""` | Glob path to YARA rules (e.g. `rules/*.yar`). |
+| `deep_zip` | `true` | Enable deep nested-archive inspection. |
+| `max_depth` | `3` | Max nested-archive depth. |
+| `fail_on_detect` | `true` | Fail the job if detections occur. |
+
+> The Action lives in this repo at `.github/actions/pompelmi-scan`. When published to the Marketplace, consumers can copy the snippets above as-is.
 
 ## Adapters
 

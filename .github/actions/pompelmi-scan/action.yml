@@ -1,0 +1,72 @@
+name: "pompelmi scan"
+description: "Scan & block malicious file uploads (YARA, deep ZIP) in CI"
+author: "pompelmi"
+branding:
+  icon: shield
+  color: orange
+
+inputs:
+  path:
+    description: "Directory to scan"
+    required: false
+    default: "."
+  artifact:
+    description: "Single file or archive to scan (optional)"
+    required: false
+    default: ""
+  yara_rules:
+    description: "Glob path to YARA rules (optional)"
+    required: false
+    default: ""
+  deep_zip:
+    description: "Enable deep ZIP inspection"
+    required: false
+    default: "true"
+  max_depth:
+    description: "Max nested-archive depth"
+    required: false
+    default: "3"
+  fail_on_detect:
+    description: "Fail workflow if detection occurs"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install pompelmi CLI
+      shell: bash
+      run: |
+        set -euo pipefail
+        # Try scoped first, fallback to unscoped if needed
+        (npm i -g @pompelmi/pompelmi && echo "Installed @pompelmi/pompelmi") || \
+        (npm i -g pompelmi && echo "Installed pompelmi")
+
+    - name: Run scan
+      shell: bash
+      run: |
+        set -euo pipefail
+        FLAGS=()
+        [[ -n "${{ inputs.path }}"       ]] && FLAGS+=(--path "${{ inputs.path }}")
+        [[ -n "${{ inputs.artifact }}"   ]] && FLAGS+=(--artifact "${{ inputs.artifact }}")
+        [[ -n "${{ inputs.yara_rules }}" ]] && FLAGS+=(--yara "${{ inputs.yara_rules }}")
+        [[ "${{ inputs.deep_zip }}" == "true" ]] && FLAGS+=(--deep-zip)
+        [[ -n "${{ inputs.max_depth }}"  ]] && FLAGS+=(--max-depth "${{ inputs.max_depth }}")
+
+        # Prefer scoped CLI if present; fallback to unscoped
+        if command -v pompelmi >/dev/null 2>&1; then
+          CMD="pompelmi"
+        else
+          CMD="npx -y @pompelmi/pompelmi@latest || npx -y pompelmi@latest"
+        fi
+
+        if [[ "${{ inputs.fail_on_detect }}" == "true" ]]; then
+          bash -lc "$CMD scan ${FLAGS[*]}"
+        else
+          bash -lc "$CMD scan ${FLAGS[*]}" || true
+        fi

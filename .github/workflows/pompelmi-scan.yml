@@ -1,0 +1,15 @@
+name: CI - pompelmi scan
+on: [push, pull_request]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan repository with pompelmi
+        uses: pompelmi/pompelmi/.github/actions/pompelmi-scan@v1
+        with:
+          path: .
+          deep_zip: true
+          fail_on_detect: false   # change to true when you’re ready to enforce
