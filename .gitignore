@@ -37,3 +37,6 @@ pnpm-debug.log*
 
 
 esempi_promozione/
+# Block EICAR test artifacts
+EICAR*
+eicar*
