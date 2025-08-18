@@ -8,8 +8,8 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Scan repository with pompelmi
-        uses: pompelmi/pompelmi/.github/actions/pompelmi-scan@v1
+        uses: ./.github/actions/pompelmi-scan
         with:
           path: .
           deep_zip: true
-          fail_on_detect: false   # change to true when you’re ready to enforce
+          fail_on_detect: false
