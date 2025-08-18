@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.9.2'
+  ROOT_VERSION: '0.9.1'
 
 jobs:
   # -------------------------------
@@ -43,7 +43,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -79,7 +79,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -172,7 +172,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -292,8 +292,23 @@ jobs:
           verbose: true
 
 
+      - name: Security scan (pompelmi) — repo root
+        uses: ./.github/actions/pompelmi-scan
+        with:
+          path: "."
+          deep_zip: true
+          fail_on_detect: false
+
       - name: Build site
         run: pnpm -C site build
+
+      - name: Security scan (pompelmi) — site dist
+        if: ${{ hashFiles('site/.vitepress/dist/**') != '' }}
+        uses: ./.github/actions/pompelmi-scan
+        with:
+          path: "site/.vitepress/dist"
+          deep_zip: true
+          fail_on_detect: false
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
