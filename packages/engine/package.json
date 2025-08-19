@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.10.0-dev.6",
+  "version": "0.11.0-dev.10-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
