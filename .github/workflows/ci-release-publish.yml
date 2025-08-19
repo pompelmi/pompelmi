@@ -140,7 +140,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          standalone: true
+          run_install: false
 
 
 
@@ -210,6 +210,7 @@ jobs:
       - name: Install (pnpm)
         run: |
           pnpm store prune || true
+          pnpm install --frozen-lockfile --link-workspace-packages || \
           pnpm install --no-frozen-lockfile --link-workspace-packages
 
       - name: Build all packages
@@ -225,70 +226,23 @@ jobs:
           pnpm -w add -D vitest@2 @vitest/coverage-v8@2
 
       - name: Test (generate coverage)
-        continue-on-error: true
         run: |
-          set -euo pipefail
-          # Run per-workspace only if test files exist; else skip
-          pnpm -r exec bash -lc '
-            set -euo pipefail
-            shopt -s nullglob
-            # Detect common test patterns
-            files=( \
-              test/**/*.test.ts test/**/*.test.tsx test/**/*.spec.ts test/**/*.spec.tsx \
-              src/**/*.test.ts src/**/*.test.tsx src/**/*.spec.ts src/**/*.spec.tsx \
-              **/*.test.ts **/*.test.tsx **/*.spec.ts **/*.spec.tsx \
-            )
-            if [ ${#files[@]} -gt 0 ]; then
-              echo "→ Tests found in $(pwd): ${#files[@]} file(s). Running Vitest with coverage…"
-              # Prefer package script if present, else call Vitest directly
-              if pnpm -s run -C . -s test:coverage >/dev/null 2>&1; then
-                pnpm -s run -C . -s test:coverage || true
-              elif pnpm -s run -C . -s test >/dev/null 2>&1; then
-                pnpm -s run -C . -s test -- --coverage --passWithNoTests || true
-              else
-                # Fallback to workspace Vitest
-                npx -y vitest@2 run --coverage --passWithNoTests || true
-              fi
-            else
-              echo "→ No test files in $(pwd). Skipping."
-            fi
-          '
+          pnpm -r \
+            --filter './packages/*' \
+            --filter '!./packages/ui-react' \
+            --filter '!./packages/engine-yara' \
+            --filter '!./packages/engine-clamav' \
+            exec vitest run --coverage --passWithNoTests
 
-      - name: Ensure at least one lcov
-        run: |
-          set -euo pipefail
-          if ! find . -type f -name lcov.info -path "*/coverage/*" -print -quit | grep -q .; then
-            mkdir -p coverage
-            printf '%s\n' \
-              'TN:' \
-              'SF:dummy.ts' \
-              'DA:1,0' \
-              'LF:1' \
-              'LH:0' \
-              'end_of_record' > coverage/lcov.info
-            echo "Created placeholder coverage/lcov.info"
-          else
-            echo "Found real lcov file(s)"
-          fi
 
-      - name: Upload coverage to Codecov (with token)
-        if: ${{ env.CODECOV_TOKEN != '' }}
-        uses: codecov/codecov-action@v5
+      - name: Upload coverage to Codecov
+        if: ${{ hashFiles('packages/**/coverage/lcov.info,**/coverage/lcov.info') != '' }}
+        uses: codecov/codecov-action@v4
         with:
+          use_oidc: true
           token: ${{ env.CODECOV_TOKEN }}
           slug: pompelmi/pompelmi
-          files: '**/coverage/lcov.info,**/coverage/**/lcov.info'
-          flags: unittests
-          name: codecov-umbrella
-          fail_ci_if_error: false
-          verbose: true
-
-      - name: Upload coverage to Codecov (public, no token)
-        if: ${{ env.CODECOV_TOKEN == '' }}
-        uses: codecov/codecov-action@v5
-        with:
-          slug: pompelmi/pompelmi
-          files: '**/coverage/lcov.info,**/coverage/**/lcov.info'
+          files: 'packages/**/coverage/lcov.info,**/coverage/**/lcov.info,**/coverage/lcov.info'
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false

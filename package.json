@@ -22,7 +22,9 @@
       "@tokenizer/inflate>fflate": "0.8.2",
       "file-type>fflate": "0.8.2",
       "regexpu-core>regjsgen": "0.8.0",
-      "@babel/helper-create-regexp-features-plugin>regjsgen": "0.8.0"
+      "@babel/helper-create-regexp-features-plugin>regjsgen": "0.8.0",
+      "vitest": "2.1.9",
+      "@vitest/coverage-v8": "2.1.9"
     }
   },
   "scripts": {
