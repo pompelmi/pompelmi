@@ -30,7 +30,7 @@
   "peerDependencies": {
     "@fastify/multipart": "^7.0.0",
     "fastify": "^4.0.0",
-    "pompelmi": "^0.2.0-alpha"
+    "pompelmi": "workspace:*"
   },
   "devDependencies": {
     "@fastify/multipart": "^7.7.3",

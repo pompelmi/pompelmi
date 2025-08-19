@@ -195,8 +195,8 @@ importers:
   packages/engine-heuristics:
     dependencies:
       pompelmi:
-        specifier: '*'
-        version: 0.11.13(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: workspace:*
+        version: link:../..
     devDependencies:
       '@types/node':
         specifier: ^24.3.0
@@ -275,8 +275,8 @@ importers:
   packages/fastify-plugin:
     dependencies:
       pompelmi:
-        specifier: ^0.2.0-alpha
-        version: 0.2.0-alpha.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+        specifier: workspace:*
+        version: link:../..
     devDependencies:
       '@fastify/multipart':
         specifier: ^7.7.3
@@ -4682,18 +4682,6 @@ packages:
   points-on-path@0.2.1:
     resolution: {integrity: sha512-25ClnWWuw7JbWZcgqY/gJ4FQWadKxGWk+3kR/7kD0tCaDtPPMj7oHu2ToLaVhfpnHrZzYby2w6tUA0eOIuUg8g==}
 
-  pompelmi@0.11.13:
-    resolution: {integrity: sha512-s/LigEP6z4i7dsmvPJJHUhCb0Lu4NaOvMKEy0Lh6s8TDtCYB50orXaVHec/6sfLCaYU1HmntzJajVwQk6kHz1Q==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-
-  pompelmi@0.2.0-alpha.2:
-    resolution: {integrity: sha512-nTj0EdBXQgjsBYez32c2b2wIEH0sj5yFoBSC75bIawYYolzWqk7qNMOAzl2CDdw36C2JNFgc6Ew+7An/XOLqKw==}
-    peerDependencies:
-      react: ^18.0.0 || ^19.0.0
-      react-dom: ^18.0.0 || ^19.0.0
-
   postcss-import@15.1.0:
     resolution: {integrity: sha512-hpr+J05B2FVYUAXHeK1YyI267J/dDDhMU6B6civm8hSY1jYJnBXxzKDKDswzJmtLHryrjhnDjqqp/49t8FALew==}
     engines: {node: '>=14.0.0'}
@@ -7724,7 +7712,7 @@ snapshots:
 
   '@types/accepts@1.3.7':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/babel__core@7.20.5':
     dependencies:
@@ -7750,11 +7738,11 @@ snapshots:
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/connect@3.4.38':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/content-disposition@0.5.9': {}
 
@@ -7763,11 +7751,11 @@ snapshots:
       '@types/connect': 3.4.38
       '@types/express': 5.0.3
       '@types/keygrip': 1.0.6
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/cors@2.8.19':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/d3-array@3.2.1': {}
 
@@ -7905,7 +7893,7 @@ snapshots:
 
   '@types/express-serve-static-core@5.0.7':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
       '@types/qs': 6.14.0
       '@types/range-parser': 1.2.7
       '@types/send': 0.17.5
@@ -7925,7 +7913,7 @@ snapshots:
 
   '@types/fontkit@2.0.8':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/geojson@7946.0.16': {}
 
@@ -7954,7 +7942,7 @@ snapshots:
       '@types/http-errors': 2.0.5
       '@types/keygrip': 1.0.6
       '@types/koa-compose': 3.2.8
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/mdast@4.0.4':
     dependencies:
@@ -8011,17 +7999,17 @@ snapshots:
 
   '@types/sax@1.2.7':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/send@0.17.5':
     dependencies:
       '@types/mime': 1.3.5
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/serve-static@1.15.8':
     dependencies:
       '@types/http-errors': 2.0.5
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
       '@types/send': 0.17.5
 
   '@types/trusted-types@2.0.7':
@@ -8033,7 +8021,7 @@ snapshots:
 
   '@types/unzipper@0.10.11':
     dependencies:
-      '@types/node': 24.3.0
+      '@types/node': 20.19.11
 
   '@types/yauzl@2.10.3':
     dependencies:
@@ -11167,36 +11155,6 @@ snapshots:
     dependencies:
       path-data-parser: 0.1.0
       points-on-curve: 0.2.0
-
-  pompelmi@0.11.13(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
-    dependencies:
-      file-type: 21.0.0
-      libyara-wasm: 1.2.1
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
-      rollup: 4.46.3
-      wasm-feature-detect: 1.8.0
-      yara: '@automattic/yara@2.6.0-beta.2'
-    optionalDependencies:
-      '@litko/yara-x': 0.2.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
-
-  pompelmi@0.2.0-alpha.2(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
-    dependencies:
-      file-type: 21.0.0
-      libyara-wasm: 1.2.1
-      react: 19.1.1
-      react-dom: 19.1.1(react@19.1.1)
-      rollup: 4.46.3
-      wasm-feature-detect: 1.8.0
-      yara: '@automattic/yara@2.6.0-beta.2'
-    optionalDependencies:
-      '@litko/yara-x': 0.2.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   postcss-import@15.1.0(postcss@8.5.6):
     dependencies:

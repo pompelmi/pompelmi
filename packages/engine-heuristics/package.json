@@ -10,7 +10,7 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean"
   },
   "peerDependencies": {
-    "pompelmi": "*"
+    "pompelmi": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
