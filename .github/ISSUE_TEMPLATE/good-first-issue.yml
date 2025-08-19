@@ -1,0 +1,52 @@
+name: Good first issue
+description: Small, well-scoped task to get started with pompelmi
+labels: ["good first issue", "help wanted"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for contributing! This issue is intentionally small and self-contained.
+  - type: input
+    id: area
+    attributes:
+      label: Area
+      description: Package or area (e.g., docs, website, express-middleware, engine)
+      placeholder: docs / website / express-middleware / engine / examples
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Brief background of the task
+      placeholder: Why this change is needed
+  - type: textarea
+    id: tasks
+    attributes:
+      label: Tasks
+      description: Checklist of steps
+      placeholder: "- [ ] Step 1\n- [ ] Step 2"
+    validations:
+      required: true
+  - type: textarea
+    id: testing
+    attributes:
+      label: How to test
+      description: Commands or steps to validate the change
+      placeholder: |
+        pnpm i
+        pnpm -r build
+        pnpm -r test
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What must be true for this to be considered done
+      placeholder: |
+        - Docs section renders locally
+        - CI passes
+  - type: input
+    id: difficulty
+    attributes:
+      label: Difficulty
+      placeholder: easy
