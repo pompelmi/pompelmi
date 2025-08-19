@@ -36,14 +36,27 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.11';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9
           run_install: false
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for 'process'"
+            fi
+          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -127,6 +140,7 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
+          version: 9
           run_install: false
 
 
@@ -157,9 +171,21 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.11';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for 'process'"
+            fi
+          fi
 
       - name: Install YARA (for malware scan)
         run: |
@@ -391,7 +417,20 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9
           run_install: false
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for 'process'"
+            fi
+          fi
 
 
 
@@ -591,6 +630,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9
           run_install: false
 
       - name: Setup Node
@@ -681,6 +721,7 @@ jobs:
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
         with:
+          version: 9
           run_install: false
 
       - name: Setup Node (GitHub Packages)
