@@ -1,0 +1,11 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+ignore:
+  - "site/**"
+  - "packages/ui-react/**"
+  - "**/dist/**"
+  - "**/*.d.ts"

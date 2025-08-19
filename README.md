@@ -41,13 +41,14 @@
 
 ## Highlights
 
-- **Block risky uploads early** — mark files as <em>clean</em>, <em>suspicious</em>, or <em>malicious</em> and stop them at the edge.
-- **Real checks** — extension allow‑list, MIME sniffing (magic bytes), per‑file size caps, and **deep ZIP** traversal with anti‑bomb limits.
-- **Pluggable scanner** — bring your own engine (e.g. YARA) via a minimal `{ scan(bytes) }` contract.
+- **Block risky uploads early** — classify uploads as _clean_, _suspicious_, or _malicious_ and stop them at the edge.
+- **Real guards** — extension allow‑list, server‑side MIME sniff (magic bytes), per‑file size caps, and **deep ZIP** traversal with anti‑bomb limits.
+- **Built‑in scanners** — drop‑in **CommonHeuristicsScanner** (PDF risky actions, Office macros, PE header) and **Zip‑bomb Guard**; add your own or YARA via a tiny `{ scan(bytes) }` contract.
+- **Compose scanning** — run multiple scanners in parallel or sequentially with timeouts and short‑circuiting via `composeScanners()`.
 - **Zero cloud** — scans run in‑process. Keep bytes private.
 - **DX first** — TypeScript types, ESM/CJS builds, tiny API, adapters for popular web frameworks.
 
-> Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning
+> Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning, ZIP bomb, PDF JavaScript, Office macros
 
 ---
 
@@ -72,28 +73,30 @@ yarn add pompelmi
 
 ## Quick‑start
 
-**At a glance (policy + scanner)**
+**At a glance (policy + scanners)**
 
 ```ts
-// Create a tiny scanner (matches EICAR test string)
-const SimpleEicarScanner = {
-  async scan(bytes: Uint8Array) {
-    const text = Buffer.from(bytes).toString('utf8');
-    return text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE') ? [{ rule: 'eicar_test' }] : [];
-  }
-};
+// Compose built‑in scanners (no EICAR). Optionally add your own/YARA.
+import { CommonHeuristicsScanner, createZipBombGuard, composeScanners } from 'pompelmi';
 
-// Example policy used by all adapters
-const policy = {
-  scanner: SimpleEicarScanner,
-  includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
-  allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
+export const policy = {
+  includeExtensions: ['zip','png','jpg','jpeg','pdf'],
+  allowedMimeTypes: ['application/zip','image/png','image/jpeg','application/pdf','text/plain'],
   maxFileSizeBytes: 20 * 1024 * 1024,
   timeoutMs: 5000,
   concurrency: 4,
   failClosed: true,
   onScanEvent: (ev: unknown) => console.log('[scan]', ev)
 };
+
+export const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard({ maxEntries: 512, maxTotalUncompressedBytes: 100 * 1024 * 1024, maxCompressionRatio: 12 })],
+    ['heuristics', CommonHeuristicsScanner],
+    // ['yara', YourYaraScanner],
+  ],
+  { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500, tagSourceName: true }
+);
 ```
 
 ### Express
@@ -102,11 +105,12 @@ const policy = {
 import express from 'express';
 import multer from 'multer';
 import { createUploadGuard } from '@pompelmi/express-middleware';
+import { policy, scanner } from './security'; // the snippet above
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: policy.maxFileSizeBytes } });
 
-app.post('/upload', upload.any(), createUploadGuard(policy), (req, res) => {
+app.post('/upload', upload.any(), createUploadGuard({ ...policy, scanner }), (req, res) => {
   res.json({ ok: true, scan: (req as any).pompelmi ?? null });
 });
 
@@ -120,12 +124,13 @@ import Koa from 'koa';
 import Router from '@koa/router';
 import multer from '@koa/multer';
 import { createKoaUploadGuard } from '@pompelmi/koa-middleware';
+import { policy, scanner } from './security';
 
 const app = new Koa();
 const router = new Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: policy.maxFileSizeBytes } });
 
-router.post('/upload', upload.any(), createKoaUploadGuard(policy), (ctx) => {
+router.post('/upload', upload.any(), createKoaUploadGuard({ ...policy, scanner }), (ctx) => {
   ctx.body = { ok: true, scan: (ctx as any).pompelmi ?? null };
 });
 
@@ -138,16 +143,12 @@ app.listen(3003, () => console.log('http://localhost:3003'));
 ```ts
 // app/api/upload/route.ts
 import { createNextUploadHandler } from '@pompelmi/next-upload';
+import { policy, scanner } from '@/lib/security';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SimpleEicarScanner = policy.scanner; // reuse the same scanner
-
-export const POST = createNextUploadHandler({
-  ...policy,
-  scanner: SimpleEicarScanner
-});
+export const POST = createNextUploadHandler({ ...policy, scanner });
 ```
 
 ---
@@ -207,7 +208,7 @@ Use the adapter that matches your web framework. All adapters share the same pol
 | Express | `@pompelmi/express-middleware` | alpha |
 | Koa | `@pompelmi/koa-middleware` | alpha |
 | Next.js (App Router) | `@pompelmi/next-upload` | alpha |
-| Fastify | fastify plugin — planned |
+| Fastify | `@pompelmi/fastify-plugin` | alpha |
 | NestJS | nestjs — planned |
 | Remix | remix — planned |
 | hapi | hapi plugin — planned |
@@ -335,6 +336,7 @@ failClosed: true,
 - [ ] **Restrict extensions & MIME** to what your app truly needs.
 - [ ] **Set `failClosed: true` in production** to block on timeouts/errors.
 - [ ] **Handle ZIPs carefully** (enable deep ZIP, keep nesting low, cap entry sizes).
+- [ ] **Compose scanners** with `composeScanners()` and enable `stopOn` to fail fast on early detections.
 - [ ] **Log scan events** (`onScanEvent`) and monitor for spikes.
 - [ ] **Run scans in a separate process/container** for defense‑in‑depth when possible.
 - [ ] **Sanitize file names and paths** if you persist uploads.
@@ -343,30 +345,27 @@ failClosed: true,
 
 ---
 
-## Quick test (EICAR)
+## Quick test (no EICAR)
 
-Use the examples above, then send the standard **EICAR** test file to verify end‑to‑end blocking.
+Use the examples above, then send a **minimal PDF** that contains risky tokens (this triggers the built‑in heuristics).
 
-**1) Generate the EICAR file (safe test string)**
+**1) Create a tiny PDF with risky actions**
 
 Linux:
-
 ```bash
-echo 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo=' | base64 -d > eicar.txt
+printf '%%PDF-1.7\n1 0 obj\n<< /OpenAction 1 0 R /AA << /JavaScript (alert(1)) >> >>\nendobj\n%%EOF\n' > risky.pdf
 ```
 
 macOS:
-
 ```bash
-echo 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URVNULUZJTEUhJEgrSCo=' | base64 -D > eicar.txt
+printf '%%PDF-1.7\n1 0 obj\n<< /OpenAction 1 0 R /AA << /JavaScript (alert(1)) >> >>\nendobj\n%%EOF\n' > risky.pdf
 ```
 
 **2) Send it to your endpoint**
 
 Express (default from the Quick‑start):
-
 ```bash
-curl -F "file=@eicar.txt;type=text/plain" http://localhost:3000/upload -i
+curl -F "file=@risky.pdf;type=application/pdf" http://localhost:3000/upload -i
 ```
 
 You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean files return **200 OK**. Pre‑filter failures (size/ext/MIME) should return a **4xx**. Adapt these conventions to your app as needed.
