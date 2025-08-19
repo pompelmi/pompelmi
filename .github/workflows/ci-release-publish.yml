@@ -261,6 +261,9 @@ jobs:
           deep_zip: true
           fail_on_detect: false
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
       - name: Build site
         run: pnpm -C site build
 
@@ -821,10 +824,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: pages-${{ github.ref }}
+      cancel-in-progress: true
     steps:
       - id: deploy
         uses: actions/deploy-pages@v4
 
+  # -------------------------------
+  # 6) Publish container to GHCR
+  # -------------------------------
   publish-container:
     name: Publish container to GHCR
     needs: [build]
