@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # NIENTE "version:" qui: pnpm/action-setup leggerà packageManager (pnpm@9.12.0)
+      # Usa la versione da "packageManager" nel package.json
       - uses: pnpm/action-setup@v4
         with:
           run_install: false
@@ -25,8 +25,9 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # <<< QUI LA DIFFERENZA: usa "exec" invece di cercare uno script "vitest"
       - name: Run tests with coverage (workspace)
-        run: pnpm -r --filter './packages/*' --filter '!./site' --filter '!./packages/ui-react' vitest run --coverage
+        run: pnpm -r --filter './packages/*' --filter '!./packages/ui-react' exec vitest run --coverage
 
       - name: Upload to Codecov (OIDC, no token)
         if: ${{ hashFiles('packages/**/coverage/lcov.info') != '' }}
