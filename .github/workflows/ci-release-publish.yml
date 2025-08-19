@@ -44,6 +44,17 @@ jobs:
         uses: pnpm/action-setup@v4
         with:
           run_install: false
+      - name: Setup Node (with pnpm cache)
+        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Setup Node (no cache, no lockfile yet)
+        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
       - name: Sanitize lockfile (process override)
         shell: bash
         run: |
@@ -56,12 +67,6 @@ jobs:
               echo "Lockfile looks fine for 'process'"
             fi
           fi
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
 
       - name: PNPM version
         run: pnpm --version
@@ -143,10 +148,17 @@ jobs:
 
 
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node (with pnpm cache)
+        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
+      - name: Setup Node (no cache, no lockfile yet)
+        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
 
       - name: PNPM version
         run: pnpm --version
