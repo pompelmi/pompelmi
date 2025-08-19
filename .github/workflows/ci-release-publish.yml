@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.11.0-dev.12'
+  ROOT_VERSION: '0.11.0-dev.13'
 
 jobs:
   # -------------------------------
@@ -79,7 +79,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.11.0-dev.12';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.11.0-dev.13';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
