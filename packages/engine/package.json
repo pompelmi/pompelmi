@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.11.12-dev.6",
+  "version": "0.11.13-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -31,21 +31,25 @@
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.cjs",
-    "schema:json": "node --input-type=module -e \"import('./dist/index.mjs').then(m=>console.log(JSON.stringify(m.resultJsonSchema, null, 2)))\" > result.schema.json"
+    "schema:json": "node --input-type=module -e \"import('./dist/index.mjs').then(m=>console.log(JSON.stringify(m.resultJsonSchema, null, 2)))\" > result.schema.json",
+    "test": "vitest run"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
     "@fastify/multipart": "^9.0.3",
     "fastify": "^5.0.0",
+    "yauzl": "^3.2.0",
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.19.10",
+    "@types/node": "^20.19.11",
+    "@types/yauzl": "^2.10.3",
     "@vitest/coverage-v8": "2.1.9",
     "tsup": "^8.0.2",
     "tsx": "^4.15.7",
     "typescript": "^5.6.2",
     "vitest": "2.1.9",
+    "yazl": "^3.3.1",
     "zod-to-json-schema": "^3.23.5"
   },
   "engines": {

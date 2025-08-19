@@ -8,6 +8,7 @@ import { sniffMimeFromStream } from "./utils/sniff";
 
 // Esportiamo lo schema JSON per lo script "schema:json"
 export { resultJsonSchema } from "./schema";
+export { zipDeepInspection } from "./scanner/zip-deep";
 
 async function main() {
   const app = Fastify({
@@ -23,7 +24,7 @@ async function main() {
     limits: { fileSize: cfg.maxBytes, files: 1 }
   });
 
-  app.get("/healthz", async () => ({ ok: true, version: "0.11.12-dev.6" }));
+  app.get("/healthz", async () => ({ ok: true, version: "0.11.13-dev.6" }));
 
   app.post("/scan", async (req, reply) => {
     const file = await req.file();

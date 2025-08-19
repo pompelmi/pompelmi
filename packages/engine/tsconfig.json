@@ -8,7 +8,15 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "types": ["node"]
+    "types": [
+      "node",
+      "vitest"
+    ]
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "tests",
+    "vitest.config.ts",
+    "tests/types"
+  ]
 }
