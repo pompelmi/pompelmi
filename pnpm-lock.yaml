@@ -1952,7 +1952,7 @@ packages:
   '@paralleldrive/cuid2@2.2.2':
     resolution: {integrity: sha512-ZOBkgDwEdoYVlSeRbYYXs0S9MejQofiVYoTbKzy/6GQa39/q5tQU2IX46+shYnUkpEl3wc+J6wRlar7r2EK2xA==}
 
-  '@pkgjs/parseargs@0.11.0':
+  '@pkgjs/parseargs@0.11.1':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
 
@@ -7592,7 +7592,7 @@ snapshots:
     dependencies:
       '@noble/hashes': 1.8.0
 
-  '@pkgjs/parseargs@0.11.0':
+  '@pkgjs/parseargs@0.11.1':
     optional: true
 
   '@rolldown/pluginutils@1.0.0-beta.27': {}
@@ -10160,7 +10160,7 @@ snapshots:
     dependencies:
       '@isaacs/cliui': 8.0.2
     optionalDependencies:
-      '@pkgjs/parseargs': 0.11.0
+      '@pkgjs/parseargs': 0.11.1
 
   jiti@1.21.7: {}
 

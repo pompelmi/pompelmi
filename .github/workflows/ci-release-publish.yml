@@ -17,7 +17,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.11.0'
+  ROOT_VERSION: '0.11.1'
 
 jobs:
   # -------------------------------
@@ -79,7 +79,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.11.0';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['@types/cookies']='0.11.1';j.pnpm.overrides.fflate='0.8.2';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -225,6 +225,7 @@ jobs:
           # Pin matching major versions to avoid Vitest/coverage mismatch
           pnpm -w add -D vitest@2 @vitest/coverage-v8@2
 
+
       - name: Test (generate coverage)
         run: |
           pnpm -r \
@@ -233,6 +234,23 @@ jobs:
             --filter '!./packages/engine-yara' \
             --filter '!./packages/engine-clamav' \
             exec vitest run --coverage --passWithNoTests
+
+      - name: Normalize LCOV paths (repo-relative)
+        shell: bash
+        run: |
+          ROOT="$(pwd)"
+          find packages -type f -path '*/coverage/lcov.info' -print0 | while IFS= read -r -d '' f; do
+            pkgdir="$(dirname "$(dirname "$f")")"   # e.g. packages/engine
+            # remove absolute workspace prefix if present
+            sed -i "s|^SF:${ROOT}/|SF:|g" "$f"
+            # if SF path is relative (e.g. SF:src/index.ts or SF:index.ts), prefix with the package dir
+            awk -v P="$pkgdir/" 'BEGIN{OFS=""}
+              /^SF:/ {
+                if ($0 !~ /^SF:\// && $0 !~ /^SF:packages\//) sub(/^SF:/, "SF:" P)
+              }
+              { print }
+            ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
 
 
       - name: Upload coverage to Codecov
