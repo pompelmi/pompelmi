@@ -9,3 +9,4 @@ export type { NodeScanOptions, NodeFileEntry } from './node/scanDir';
 export { scanFilesWithRemoteYara } from './scan/remote';
 export * from './types';
 export { mapMatchesToVerdict } from './verdict';
+export { CommonHeuristicsScanner } from './scanners/common-heuristics';
