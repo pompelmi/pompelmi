@@ -8,7 +8,7 @@
 
 <h1 align="center">pompelmi</h1>
 
-<p align="center"><strong>Fast file‑upload malware scanning for Node.js</strong> — with optional <strong>YARA</strong>, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.</p>
+<p align="center"><strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.</p>
 
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi&color=0a7ea4"></a>
@@ -26,16 +26,28 @@
 <p align="center">
   <a href="https://pompelmi.github.io/pompelmi/">Documentation</a> ·
   <a href="#installation">Install</a> ·
-  <a href="#quickstart">Quickstart</a> ·
+  <a href="#quick-start">Quick‑start</a> ·
   <a href="#github-action">GitHub Action</a> ·
   <a href="#adapters">Adapters</a> ·
   <a href="#diagrams">Diagrams</a> ·
   <a href="#configuration">Config</a> ·
+  <a href="#production-checklist">Production checklist</a> ·
   <a href="#quick-test-eicar">Quick test</a> ·
   <a href="#security-notes">Security</a> ·
-  <a href="#packages">Packages</a> ·
   <a href="#faq">FAQ</a>
 </p>
+
+---
+
+## Highlights
+
+- **Block risky uploads early** — mark files as <em>clean</em>, <em>suspicious</em>, or <em>malicious</em> and stop them at the edge.
+- **Real checks** — extension allow‑list, MIME sniffing (magic bytes), per‑file size caps, and **deep ZIP** traversal with anti‑bomb limits.
+- **Pluggable scanner** — bring your own engine (e.g. YARA) via a minimal `{ scan(bytes) }` contract.
+- **Zero cloud** — scans run in‑process. Keep bytes private.
+- **DX first** — TypeScript types, ESM/CJS builds, tiny API, adapters for popular web frameworks.
+
+> Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning
 
 ---
 
@@ -46,31 +58,43 @@
 npm i pompelmi
 # or
 pnpm add pompelmi
+# or
+yarn add pompelmi
 ```
 
-## Why pompelmi?
-
-- **Block risky uploads at the edge** — mark files as <em>clean</em>, <em>suspicious</em>, or <em>malicious</em> and stop them early.
-- **YARA when you need it** — plug in your rules; start simple and iterate.
-- **Real checks** — extension allow‑list, MIME sniffing (magic bytes), file size caps, and **ZIP** traversal with anti‑bomb limits.
-- **No cloud required** — scans run in‑process. Keep bytes private.
-- **DX first** — TypeScript types, ESM/CJS builds, minimal API.
-
-> Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning
+> Optional dev deps used in the examples:
+>
+> ```bash
+> npm i -D tsx express multer @koa/router @koa/multer koa next
+> ```
 
 ---
 
+## Quick‑start
 
+**At a glance (policy + scanner)**
 
-Optional dev deps used in examples:
+```ts
+// Create a tiny scanner (matches EICAR test string)
+const SimpleEicarScanner = {
+  async scan(bytes: Uint8Array) {
+    const text = Buffer.from(bytes).toString('utf8');
+    return text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE') ? [{ rule: 'eicar_test' }] : [];
+  }
+};
 
-```bash
-npm i -D tsx express multer @koa/router @koa/multer koa next
+// Example policy used by all adapters
+const policy = {
+  scanner: SimpleEicarScanner,
+  includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
+  allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
+  maxFileSizeBytes: 20 * 1024 * 1024,
+  timeoutMs: 5000,
+  concurrency: 4,
+  failClosed: true,
+  onScanEvent: (ev: unknown) => console.log('[scan]', ev)
+};
 ```
-
----
-
-## Quickstart
 
 ### Express
 
@@ -82,29 +106,9 @@ import { createUploadGuard } from '@pompelmi/express-middleware';
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-const SimpleEicarScanner = {
-  async scan(bytes: Uint8Array) {
-    const text = Buffer.from(bytes).toString('utf8');
-    if (text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE')) return [{ rule: 'eicar_test' }];
-    return [];
-  }
-};
-
-app.post(
-  '/upload',
-  upload.any(),
-  createUploadGuard({
-    scanner: SimpleEicarScanner,
-    includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
-    allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
-    maxFileSizeBytes: 20 * 1024 * 1024,
-    timeoutMs: 5000,
-    concurrency: 4,
-    failClosed: true,
-    onScanEvent: (ev) => console.log('[scan]', ev)
-  }),
-  (req, res) => res.json({ ok: true, scan: (req as any).pompelmi ?? null })
-);
+app.post('/upload', upload.any(), createUploadGuard(policy), (req, res) => {
+  res.json({ ok: true, scan: (req as any).pompelmi ?? null });
+});
 
 app.listen(3000, () => console.log('http://localhost:3000'));
 ```
@@ -121,25 +125,9 @@ const app = new Koa();
 const router = new Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
-const SimpleEicarScanner = { async scan(b: Uint8Array){
-  return Buffer.from(b).toString('utf8').includes('EICAR') ? [{ rule: 'eicar_test' }] : [];
-}};
-
-router.post(
-  '/upload',
-  upload.any(),
-  createKoaUploadGuard({
-    scanner: SimpleEicarScanner,
-    includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
-    allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
-    maxFileSizeBytes: 20 * 1024 * 1024,
-    timeoutMs: 5000,
-    concurrency: 4,
-    failClosed: true,
-    onScanEvent: (ev) => console.log('[scan]', ev)
-  }),
-  (ctx) => { ctx.body = { ok: true, scan: (ctx as any).pompelmi ?? null }; }
-);
+router.post('/upload', upload.any(), createKoaUploadGuard(policy), (ctx) => {
+  ctx.body = { ok: true, scan: (ctx as any).pompelmi ?? null };
+});
 
 app.use(router.routes()).use(router.allowedMethods());
 app.listen(3003, () => console.log('http://localhost:3003'));
@@ -154,23 +142,15 @@ import { createNextUploadHandler } from '@pompelmi/next-upload';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-const SimpleEicarScanner = { async scan(b: Uint8Array){
-  return Buffer.from(b).toString('utf8').includes('EICAR') ? [{ rule: 'eicar_test' }] : [];
-}};
+const SimpleEicarScanner = policy.scanner; // reuse the same scanner
 
 export const POST = createNextUploadHandler({
-  scanner: SimpleEicarScanner,
-  includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
-  allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
-  maxFileSizeBytes: 20 * 1024 * 1024,
-  timeoutMs: 5000,
-  concurrency: 4,
-  failClosed: true,
-  onScanEvent: (ev) => console.log('[scan]', ev)
+  ...policy,
+  scanner: SimpleEicarScanner
 });
 ```
 
-----
+---
 
 ## GitHub Action
 
@@ -215,6 +195,8 @@ jobs:
 | `fail_on_detect` | `true` | Fail the job if detections occur. |
 
 > The Action lives in this repo at `.github/actions/pompelmi-scan`. When published to the Marketplace, consumers can copy the snippets above as-is.
+
+---
 
 ## Adapters
 
@@ -287,7 +269,7 @@ sequenceDiagram
 
 ### Components (monorepo)
 <p align="center">
-  <img alt="Monorepo components diagram" width="1100" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbG1pL2tvYS1taWRkbGV3YXJlXCJdXG4gICAgbmV4dFtcIkBwb21wZWxtaS9uZXh0LXVwbG9hZFwiXVxuICAgIGZhc3RpZnkoKFwiZmFzdGlmeS1wbHVnaW4gwrcgcGxhbm5lZFwiKSlcbiAgICBuZXN0KChcIm5lc3RqcyDCtyBwbGFubmVkXCIpKVxuICAgIHJlbWl4KChcInJlbWl4IMK3IHBsYW5uZWRcIikpXG4gICAgaGFwaSgoXCJoYXBpLXBsdWdpbiDCtyBwbGFubmVkXCIpKVxuICAgIHN2ZWx0ZSgoXCJzdmVsdGVraXQgwrcgcGxhbm5lZFwiKSlcbiAgZW5kXG4gIGNvcmUgLS0+IGV4cHJlc3NcbiAgY29yZSAtLT4ga29hXG4gIGNvcmUgLS0+IG5leHRcbiAgY29yZSAtLi0+IGZhc3RpZnlcbiAgY29yZSAtLi0+IG5lc3RcbiAgY29yZSAtLi0+IHJlbWl4XG4gIGNvcmUgLS4tPiBoYXBpXG4gIGNvcmUgLS4tPiBzdmVsdGUiLCAibWVybWFpZCI6IHsidGhlbWUiOiAiZGVmYXVsdCJ9fQ==?bgColor=white&width=1400&scale=2" />
+  <img alt="Monorepo components diagram" width="1100" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbWkv a29hLW1pZGRsZXdhcmVcIl1cbiAgICBuZXh0W1wiQHBvbXBlbG1pL25leHQtdXBsb2FkXCJdXG4gICAgZmFzdGlmeSgoXCJmYXN0aWZ5LXBsdWdpbiD CtyBwbGFubmVkXCIpKVxuICAgIG5lc3QoKFwibmVzdGpzIMK3IHBsYW5uZWRcIikpXG4gICAgcmVtaXgoKFwicmVtaXggwrsgcGxhbm5lZFwiKSlcbiAgICBoYXBpKChcImhhcGktcGx1Z2luIMK3IHBsYW5uZWRcIikpXG4gICAgc3ZlbHRlKChcInN2ZWx0ZWtpdCD CtyBwbGFubmVkXCIpKVxuICBlbmRcbiAgY29yZSAtLT4gZXhwcmVzc1xuICBjb3JlIC0tPiBrb2F cbiAgY29yZSAtLT4gbmV4dFxuICBjb3JlIC0uLT4gZmFzdGlmeVxuICBjb3JlIC0uLT4gbmVzdFxuICBjb3JlIC0uLT4gcmVtaXh cbiAgY29yZSAtLi0+IGhhcGlcbiAgY29yZSAtLi0+IHN2ZWx0ZSIsICJtZXJtYWlkIjogeyJ0aGVtZSI6ICJkZWZhdWx0In19?bgColor=white&width=1400&scale=2" />
 </p>
 
 <details>
@@ -316,17 +298,6 @@ flowchart LR
   core -.-> svelte
 ```
 </details>
-
-## Packages
-
-| Package | NPM | Description |
-| --- | --- | --- |
-| **`pompelmi`** | <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi?label=pompelmi" alt="npm"/></a> | Core scanner (Node + Remote Engine for browsers). |
-| **`@pompelmi/express-middleware`** | *(alpha)* | Express middleware to scan uploads & enforce policies. |
-| **`@pompelmi/koa-middleware`** | *(alpha)* | Koa middleware compatible with `@koa/multer`/`koa-body`. |
-| **`@pompelmi/next-upload`** | *(alpha)* | Next.js App Router `POST` handler factory. |
-
-> Status: **alpha** — small API refinements may happen before a stable milestone.
 
 ---
 
@@ -358,9 +329,23 @@ failClosed: true,
 
 ---
 
+## Production checklist
+
+- [ ] **Limit file size** aggressively (`maxFileSizeBytes`).
+- [ ] **Restrict extensions & MIME** to what your app truly needs.
+- [ ] **Set `failClosed: true` in production** to block on timeouts/errors.
+- [ ] **Handle ZIPs carefully** (enable deep ZIP, keep nesting low, cap entry sizes).
+- [ ] **Log scan events** (`onScanEvent`) and monitor for spikes.
+- [ ] **Run scans in a separate process/container** for defense‑in‑depth when possible.
+- [ ] **Sanitize file names and paths** if you persist uploads.
+- [ ] **Prefer memory storage + post‑processing**; avoid writing untrusted bytes before policy passes.
+- [ ] **Add CI scanning** with the GitHub Action to catch bad files in repos/artifacts.
+
+---
+
 ## Quick test (EICAR)
 
-Use the Express/Koa/Next examples above, then send the standard EICAR test file to verify that blocking works end‑to‑end.
+Use the examples above, then send the standard **EICAR** test file to verify end‑to‑end blocking.
 
 **1) Generate the EICAR file (safe test string)**
 
@@ -378,7 +363,7 @@ echo 'WDVPIVAlQEFQWzRcUFpYNTQoUF4pN0NDKTd9JEVJQ0FSLVNUQU5EQVJELUFOVElWSVJVUy1URV
 
 **2) Send it to your endpoint**
 
-Express (default from the Quickstart):
+Express (default from the Quick‑start):
 
 ```bash
 curl -F "file=@eicar.txt;type=text/plain" http://localhost:3000/upload -i
