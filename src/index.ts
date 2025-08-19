@@ -21,3 +21,5 @@ export { mapMatchesToVerdict } from './verdict';
 
 
 export { CommonHeuristicsScanner } from './scanners/common-heuristics';
+
+export { createZipBombGuard } from './scanners/zip-bomb-guard';
