@@ -1,4 +1,4 @@
-import { type Match, type Scanner } from './compose';
+import { type Match, type Scanner } from '../compose';
 
 export type ZipBombGuardOptions = {
   maxEntries?: number;                 // default 1000
@@ -35,7 +35,8 @@ function isZipLike(buf: Buffer) {
 function lastIndexOfEOCD(buf: Buffer, window: number): number {
   const sig = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
   const start = Math.max(0, buf.length - window);
-  return buf.lastIndexOf(sig, buf.length - 1, start);
+  const idx = buf.lastIndexOf(sig, Math.min(buf.length - sig.length, buf.length - 1));
+  return idx >= start ? idx : -1;
 }
 
 function hasTraversal(name: string): boolean {

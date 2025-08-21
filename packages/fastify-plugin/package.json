@@ -38,7 +38,7 @@
     "@vitest/coverage-v8": "2.1.9",
     "fastify": "^4.28.0",
     "file-type": "^18.7.0",
-    "tsup": "^8.0.0",
+    "tsup": "^8.5.0",
     "typescript": "^5.5.0",
     "unzipper": "^0.12.3",
     "vitest": "2.1.9"
