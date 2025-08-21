@@ -105,3 +105,6 @@ export { ExecutableDetector } from './scanners/executable-detector';
 export { PdfActionScanner } from './scanners/pdf-actions';
 export { SvgActiveContentScanner } from './scanners/svg-active';
 export { PolyglotMagicScanner } from './scanners/polyglot-magic';
+
+// --- Added: ZIP header integrity scanner ---
+export { ZipHeaderIntegrityScanner } from './scanners/zip-header-integrity';
