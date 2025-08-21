@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/ui-react",
-  "version": "0.11.13",
+  "version": "0.12.0-dev.14",
   "description": "UI components for integrating file upload and malware scanning with pompelmi.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",

@@ -24,7 +24,7 @@ async function main() {
     limits: { fileSize: cfg.maxBytes, files: 1 }
   });
 
-  app.get("/healthz", async () => ({ ok: true, version: "0.11.13-dev.6" }));
+  app.get("/healthz", async () => ({ ok: true, version: "0.12.0-dev.14-dev.6" }));
 
   app.post("/scan", async (req, reply) => {
     const file = await req.file();
@@ -99,3 +99,9 @@ main().catch((err) => {
   console.error(err);
   process.exit(1);
 });
+
+// --- Added scanners (safe defaults) ---
+export { ExecutableDetector } from './scanners/executable-detector';
+export { PdfActionScanner } from './scanners/pdf-actions';
+export { SvgActiveContentScanner } from './scanners/svg-active';
+export { PolyglotMagicScanner } from './scanners/polyglot-magic';

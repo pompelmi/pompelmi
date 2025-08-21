@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/next-upload",
-  "version": "0.11.13",
+  "version": "0.12.0-dev.14",
   "description": "Next.js (App Router) upload handler with pompelmi (YARA), MIME sniffing, ZIP anti-bomb, and size/extension policies.",
   "type": "module",
   "main": "dist/index.cjs",
