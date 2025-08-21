@@ -38,7 +38,7 @@
     "@types/node": "^20.19.10",
     "@vitest/coverage-v8": "2.1.9",
     "express": "^4.19.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.2",
     "pompelmi": "workspace:*",
     "supertest": "^7.0.0",
     "tsup": "^8.5.0",
