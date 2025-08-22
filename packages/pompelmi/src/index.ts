@@ -22,7 +22,18 @@ export async function createRemoteEngine(_opts?: Record<string, unknown>) {
   };
 }
 
-export const version = "0.12.0";
+export const version = "0.13.0-dev.16";
 
 
 
+
+
+
+
+
+
+
+export { createProductionScannerFactory } from './presets/production';
+export { createZipTraversalGuard } from './scanners/zipTraversalGuard';
+export { scanTar } from './scanners/tarGuard';
+export { scanPolyglot } from './scanners/polyglotDetector';

@@ -1,6 +1,9 @@
 import { defineConfig } from 'tsup';
 
 export default defineConfig({
+  esbuildOptions(options) {
+    options.resolveExtensions = ['.ts','.tsx','.js','.mjs','.cjs','.json'];
+  },
   entry: ['src/index.ts'],
   dts: true,
   format: ['esm', 'cjs'],
