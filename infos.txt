@@ -1,0 +1,10 @@
+# 1) Build con base = /pompelmi/
+VITEPRESS_BASE=/pompelmi/ pnpm -C site run build
+
+# 2) Copia i file di dist dentro una cartella /pompelmi
+rm -rf /tmp/pompelmi-preview && mkdir -p /tmp/pompelmi-preview/pompelmi
+cp -r site/.vitepress/dist/* /tmp/pompelmi-preview/pompelmi/
+
+# 3) Servi la cartella padre e apri l’URL col prefisso
+npx --yes serve /tmp/pompelmi-preview -p 3000
+# apri:  http://localhost:3000/pompelmi/
