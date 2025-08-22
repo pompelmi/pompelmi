@@ -5,21 +5,21 @@ outline: deep
 
 # Pompelmi — Introduction
 
-**Pompelmi** is a file-upload security toolkit for Node.js. It focuses on **malware scanning** and **policy enforcement** before your app ever stores or processes a file.
+**Pompelmi** is a file‑upload security toolkit for Node.js. It focuses on **malware scanning** and **policy enforcement** before your app ever stores or processes a file.
 
 ## Key features
 
-- **ZIP deep‑inspection**: safe archive opening with bomb/traversal guards (configurable).
-- **Policy guards**: extension allowlist, max size caps, and basic MIME sniffing (magic bytes).
+- **[ZIP deep‑inspection](/docs/zip-inspection)**: safe archive opening with bomb/traversal guards (configurable).
+- **[Policy guards](/docs/policy)**: extension allowlist, size caps, and basic MIME sniffing (magic bytes).
 - **DX‑first**: TypeScript types, ESM/CJS builds, framework adapters.
-- **Pluggable**: optional **YARA** integration for signature‑based detection (advanced).
+- **Pluggable**: optional **YARA** integration for signature‑based detection *(coming soon)*.
 
 ## Install
 
 ```bash
-pnpm add pompelmi
-# or: npm i pompelmi
-# or: yarn add pompelmi
+pnpm add @pompelmi/engine @pompelmi/express-middleware
+# or: npm i @pompelmi/engine @pompelmi/express-middleware
+# or: yarn add @pompelmi/engine @pompelmi/express-middleware
 ```
 
 > **Note**  
@@ -28,10 +28,16 @@ pnpm add pompelmi
 ## How these docs are organized
 
 - **Quickstart (Express)** — a minimal, end‑to‑end route example: [/docs/quickstart-express](/docs/quickstart-express)
-- **Policy** — how to build safe allowlists, size caps, MIME sniff and error handling: [/docs/policy](/docs/policy)
-- **ZIP deep‑inspection** — safely handle archives *(coming soon)*
-- **YARA** — optional signature rules *(coming soon)*
+- **Policy** — build safe allowlists, caps, and MIME sniffing: [/docs/policy](/docs/policy)
+- **Scanning** — scanners you can compose:
+  - [/docs/scan/executable-detector](/docs/scan/executable-detector)
+  - [/docs/scan/pdf-actions](/docs/scan/pdf-actions)
+  - [/docs/scan/svg-active-content](/docs/scan/svg-active-content)
+  - [/docs/scan/polyglot-magic](/docs/scan/polyglot-magic)
+  - Compose multiple: [/docs/compose-scanners](/docs/compose-scanners)
+- **ZIP deep‑inspection** — safely handle archives: [/docs/zip-inspection](/docs/zip-inspection)
 - **Adapters** for Koa / Fastify / Next.js *(coming soon)*
+- **YARA** — optional signature rules *(coming soon)*
 
 ## Production checklist (short)
 
