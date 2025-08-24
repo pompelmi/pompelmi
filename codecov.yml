@@ -3,6 +3,10 @@ codecov:
 coverage:
   status:
     project:
+      core:
+        flags: core
+        target: 90%
+        threshold: 2%
       default:
         target: 90%
         threshold: 2%

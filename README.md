@@ -16,7 +16,7 @@
   <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi"></a>
-  <a href="https://app.codecov.io/gh/pompelmi/pompelmi"><img alt="coverage (core)" src="https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage%20(core)&cacheSeconds=300"/></a>
+  <a href="https://app.codecov.io/gh/pompelmi/pompelmi"><img alt="coverage (core)" src="https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage+%28core%29&flag=core&cacheSeconds=60)&cacheSeconds=300"/></a>
   <a href="https://github.com/pompelmi/pompelmi/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI / Release / Publish" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI%20%2F%20Release%20%2F%20Publish"></a>
   <a href="https://github.com/pompelmi/pompelmi/issues"><img alt="open issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi"></a>
@@ -417,7 +417,7 @@ The badge tracks the **core library** (`src/**`). Adapters and engines are repor
 If you integrate Codecov in CI, upload `coverage/lcov.info` and you can use this Shields badge (cached 5 minutes):
 
 ```md
-[![codecov](https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage%20(core)&cacheSeconds=300)](https://codecov.io/gh/pompelmi/pompelmi)
+[![codecov](https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage+%28core%29&flag=core&cacheSeconds=60)&cacheSeconds=300)](https://codecov.io/gh/pompelmi/pompelmi)
 ```
 
 ## Contributing
