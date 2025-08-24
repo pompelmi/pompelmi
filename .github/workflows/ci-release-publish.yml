@@ -275,17 +275,16 @@ jobs:
 
 
       - name: Upload coverage to Codecov
-        if: ${{ hashFiles('**/coverage/lcov.info') != '' }}
-        uses: codecov/codecov-action@v4
+        if: ${{ always() && hashFiles('**/coverage/lcov.info') != '' }}
+        uses: codecov/codecov-action@v5
         with:
           use_oidc: true
-          slug: pompelmi/pompelmi
           files: |
             coverage/lcov.info
             packages/**/coverage/lcov.info
           disable_search: true
-          flags: unittests
-          name: codecov-umbrella
+          flags: core
+          name: codecov-core
           fail_ci_if_error: false
           verbose: true
 
