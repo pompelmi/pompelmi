@@ -251,17 +251,15 @@ jobs:
 
       - name: Test (generate coverage)
         run: |
-          pnpm -r \
-            --filter './packages/*' \
-            --filter '!./packages/ui-react' \
-            --filter '!./packages/engine-yara' \
-            --filter '!./packages/engine-clamav' \
-            exec vitest run --coverage --passWithNoTests
+          # Run Vitest once at workspace root; vitest.config.ts already scans tests in packages/**
+          pnpm vitest run --coverage --passWithNoTests
 
       - name: Normalize LCOV paths (repo-relative)
         shell: bash
         run: |
           ROOT="$(pwd)"
+          # normalize root coverage file if present
+          [ -f coverage/lcov.info ] && sed -i "s|^SF:${ROOT}/|SF:|g" coverage/lcov.info
           find packages -type f -path '*/coverage/lcov.info' -print0 | while IFS= read -r -d '' f; do
             pkgdir="$(dirname "$(dirname "$f")")"   # e.g. packages/engine
             # remove absolute workspace prefix if present
@@ -282,7 +280,9 @@ jobs:
         with:
           use_oidc: true
           slug: pompelmi/pompelmi
-          files: '**/coverage/lcov.info'
+          files: |
+            coverage/lcov.info
+            packages/**/coverage/lcov.info
           disable_search: true
           flags: unittests
           name: codecov-umbrella
