@@ -16,7 +16,7 @@
   <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi"></a>
-  <a href="https://app.codecov.io/gh/pompelmi/pompelmi"><img alt="coverage (core)" src="https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage+%28core%29&flag=core&cacheSeconds=60)&cacheSeconds=300"/></a>
+    <a href="https://app.codecov.io/gh/pompelmi/pompelmi"><img alt="coverage (core)" src="https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&flag=core&label=coverage%20(core)&cacheSeconds=300"/></a>
   <a href="https://github.com/pompelmi/pompelmi/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI / Release / Publish" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI%20%2F%20Release%20%2F%20Publish"></a>
   <a href="https://github.com/pompelmi/pompelmi/issues"><img alt="open issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi"></a>
@@ -39,6 +39,16 @@
 </p>
 
 ---
+
+## Overview
+
+**pompelmi** scans untrusted file uploads **before** they hit disk. A tiny, TypeScript-first toolkit for Node.js with composable scanners, deep ZIP inspection, and optional signature engines.
+
+- **Private by design** — no outbound calls; bytes never leave your process
+- **Composable scanners** — mix heuristics + signatures; set `stopOn` and timeouts
+- **ZIP hardening** — traversal/bomb guards, polyglot & macro hints
+- **Drop-in adapters** — Express, Koa, Fastify, Next.js
+- **Typed & tiny** — modern TS, minimal surface
 
 ## Highlights
 
@@ -220,10 +230,18 @@ Use the adapter that matches your web framework. All adapters share the same pol
 ## Diagrams
 
 ### Upload scanning flow
-<p align="center">
-  <img alt="Upload scanning flow diagram" src="https://mermaid.ink/svg/eyJjb2RlIjogImZsb3djaGFydCBURFxuICBBW1wiQ2xpZW50IHVwbG9hZHMgZmlsZShzKVwiXSAtLT4gQltcIldlYiBBcHAgUm91dGVcIl1cbiAgQiAtLT4gQ3tcIlByZS1maWx0ZXJzPGJyPihleHQsIHNpemUsIE1JTUUpXCJ9XG4gIEMgLS0gZmFpbCAtLT4gWFtcIkhUVFAgNHh4XCJdXG4gIEMgLS0gcGFzcyAtLT4gRHtcIklzIFpJUD9cIn1cbiAgRCAtLSB5ZXMgLS0+IEVbXCJJdGVyYXRlIGVudHJpZXM8YnI+KGxpbWl0cyAmIHNjYW4pXCJdXG4gIEUgLS0+IEZ7XCJWZXJkaWN0P1wifVxuICBEIC0tIG5vIC0tPiBGe1wiU2NhbiBieXRlc1wifVxuICBGIC0tIG1hbGljaW91cy9zdXNwaWNpb3VzIC0tPiBZW1wiSFRUUCA0MjIgYmxvY2tlZFwiXVxuICBGIC0tIGNsZWFuIC0tPiBaW1wiSFRUUCAyMDAgb2sgKyByZXN1bHRzXCJdIiwgIm1lcm1haWQiOiB7InRoZW1lIjogImRlZmF1bHQifX0=?bgColor=white" />
-</p>
-
+```mermaid
+flowchart TD
+  A["Client uploads file(s)"] --> B["Web App Route"]
+  B --> C{"Pre-filters<br/>(ext, size, MIME)"}
+  C -- fail --> X["HTTP 4xx"]
+  C -- pass --> D{"Is ZIP?"}
+  D -- yes --> E["Iterate entries<br/>(limits & scan)"]
+  E --> F{"Verdict?"}
+  D -- no --> F{"Scan bytes"}
+  F -- malicious/suspicious --> Y["HTTP 422 blocked"]
+  F -- clean --> Z["HTTP 200 ok + results"]
+```
 <details>
 <summary>Mermaid source</summary>
 
@@ -242,10 +260,24 @@ flowchart TD
 </details>
 
 ### Sequence (App ↔ pompelmi ↔ YARA)
-<p align="center">
-  <img alt="App ↔ pompelmi ↔ YARA sequence diagram" src="https://mermaid.ink/img/eyJjb2RlIjogInNlcXVlbmNlRGlhZ3JhbVxuICBwYXJ0aWNpcGFudCBVIGFzIFVzZXJcbiAgcGFydGljaXBhbnQgQSBhcyBBcHAgUm91dGUgKC91cGxvYWQpXG4gIHBhcnRpY2lwYW50IFAgYXMgcG9tcGVsbWkgKGFkYXB0ZXIpXG4gIHBhcnRpY2lwYW50IFkgYXMgWUFSQSBlbmdpbmVcblxuICBVLT4+QTogUE9TVCBtdWx0aXBhcnQvZm9ybS1kYXRhXG4gIEEtPj5QOiBndWFyZChmaWxlcywgcG9saWNpZXMpXG4gIFAtPj5QOiBNSU1FIHNuaWZmICsgc2l6ZSArIGV4dCBjaGVja3NcbiAgYWx0IFpJUCBhcmNoaXZlXG4gICAgUC0+PlA6IHVucGFjayBlbnRyaWVzIHdpdGggbGltaXRzXG4gIGVuZFxuICBQLT4+WTogc2NhbihieXRlcylcbiAgWS0tPj5QOiBtYXRjaGVzW11cbiAgUC0tPj5BOiB2ZXJkaWN0IChjbGVhbi9zdXNwaWNpb3VzL21hbGljaW91cylcbiAgQS0tPj5VOiAyMDAgb3IgNHh4LzQyMiB3aXRoIHJlYXNvbiIsICJtZXJtYWlkIjogeyJ0aGVtZSI6ICJkZWZhdWx0In19?bgColor=white" />
-</p>
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant A as App Route (/upload)
+  participant P as pompelmi (adapter)
+  participant Y as YARA engine
 
+  U->>A: POST multipart/form-data
+  A->>P: guard(files, policies)
+  P->>P: MIME sniff + size + ext checks
+  alt ZIP archive
+    P->>P: unpack entries with limits
+  end
+  P->>Y: scan(bytes)
+  Y-->>P: matches[]
+  P-->>A: verdict (clean/suspicious/malicious)
+  A-->>U: 200 or 4xx/422 with reason
+```
 <details>
 <summary>Mermaid source</summary>
 
@@ -270,10 +302,28 @@ sequenceDiagram
 </details>
 
 ### Components (monorepo)
-<p align="center">
-  <img alt="Monorepo components diagram" width="1100" src="https://mermaid.ink/img/eyJjb2RlIjogImZsb3djaGFydCBMUlxuICBzdWJncmFwaCBSZXBvXG4gICAgY29yZVtcInBvbXBlbG1pIChjb3JlKVwiXVxuICAgIGV4cHJlc3NbXCJAcG9tcGVsbWkvZXhwcmVzcy1taWRkbGV3YXJlXCJdXG4gICAga29hW1wiQHBvbXBlbWkv a29hLW1pZGRsZXdhcmVcIl1cbiAgICBuZXh0W1wiQHBvbXBlbG1pL25leHQtdXBsb2FkXCJdXG4gICAgZmFzdGlmeSgoXCJmYXN0aWZ5LXBsdWdpbiD CtyBwbGFubmVkXCIpKVxuICAgIG5lc3QoKFwibmVzdGpzIMK3IHBsYW5uZWRcIikpXG4gICAgcmVtaXgoKFwicmVtaXggwrsgcGxhbm5lZFwiKSlcbiAgICBoYXBpKChcImhhcGktcGx1Z2luIMK3IHBsYW5uZWRcIikpXG4gICAgc3ZlbHRlKChcInN2ZWx0ZWtpdCD CtyBwbGFubmVkXCIpKVxuICBlbmRcbiAgY29yZSAtLT4gZXhwcmVzc1xuICBjb3JlIC0tPiBrb2F cbiAgY29yZSAtLT4gbmV4dFxuICBjb3JlIC0uLT4gZmFzdGlmeVxuICBjb3JlIC0uLT4gbmVzdFxuICBjb3JlIC0uLT4gcmVtaXh cbiAgY29yZSAtLi0+IGhhcGlcbiAgY29yZSAtLi0+IHN2ZWx0ZSIsICJtZXJtYWlkIjogeyJ0aGVtZSI6ICJkZWZhdWx0In19?bgColor=white&width=1400&scale=2" />
-</p>
-
+```mermaid
+flowchart LR
+  subgraph Repo
+    core["pompelmi (core)"]
+    express["@pompelmi/express-middleware"]
+    koa["@pompelmi/koa-middleware"]
+    next["@pompelmi/next-upload"]
+    fastify(("fastify-plugin · planned"))
+    nest(("nestjs · planned"))
+    remix(("remix · planned"))
+    hapi(("hapi-plugin · planned"))
+    svelte(("sveltekit · planned"))
+  end
+  core --> express
+  core --> koa
+  core --> next
+  core -.-> fastify
+  core -.-> nest
+  core -.-> remix
+  core -.-> hapi
+  core -.-> svelte
+```
 <details>
 <summary>Mermaid source</summary>
 
