@@ -292,9 +292,7 @@ jobs:
         uses: codecov/codecov-action@v5
         with:
           use_oidc: true
-          files: |
-            coverage/lcov.info
-            packages/**/coverage/lcov.info
+          files: coverage/lcov.info,packages/**/coverage/lcov.info
           disable_search: true
           flags: core
           name: codecov-core
