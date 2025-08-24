@@ -273,6 +273,19 @@ jobs:
             ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
           done
 
+      - name: Verify LCOV presence (debug)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Root coverage dir:" && ls -lah coverage || true
+          if [ ! -s coverage/lcov.info ]; then
+            echo "::error::coverage/lcov.info is missing or empty"
+            exit 1
+          fi
+          echo "LCOV lines: $(wc -l < coverage/lcov.info)"
+          echo "--- LCOV head ---" && head -n 20 coverage/lcov.info || true
+          echo "--- LCOV tail ---" && tail -n 20 coverage/lcov.info || true
+
 
       - name: Upload coverage to Codecov
         if: ${{ always() && hashFiles('**/coverage/lcov.info') != '' }}
@@ -285,7 +298,7 @@ jobs:
           disable_search: true
           flags: core
           name: codecov-core
-          fail_ci_if_error: false
+          fail_ci_if_error: true
           verbose: true
 
 

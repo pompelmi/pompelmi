@@ -467,7 +467,7 @@ The badge tracks the **core library** (`src/**`). Adapters and engines are repor
 If you integrate Codecov in CI, upload `coverage/lcov.info` and you can use this Shields badge (cached 5 minutes):
 
 ```md
-[![codecov](https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage+%28core%29&flag=core&cacheSeconds=60)&cacheSeconds=300)](https://codecov.io/gh/pompelmi/pompelmi)
+[![codecov](https://img.shields.io/codecov/c/github/pompelmi/pompelmi?branch=main&label=coverage%20(core)&flag=core&cacheSeconds=300)](https://codecov.io/gh/pompelmi/pompelmi)
 ```
 
 ## Contributing
