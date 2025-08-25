@@ -33,7 +33,7 @@
     "pompelmi": "workspace:*"
   },
   "devDependencies": {
-    "@fastify/multipart": "^7.7.3",
+    "@fastify/multipart": "^9.0.3",
     "@types/node": "^20.19.10",
     "@vitest/coverage-v8": "2.1.9",
     "fastify": "^4.28.0",
