@@ -97,12 +97,88 @@ jobs:
           npm pkg set version="${ROOT_VERSION}"
 
 
-      - name: Install (pnpm)
+      - name: Configure npm & pnpm for fewer 429s
         run: |
-          pnpm install --no-frozen-lockfile --link-workspace-packages \
-            --filter '!@pompelmi/*' \
-            --filter '!./examples/*' \
-            --filter '!./site'
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages \
+              --filter '!@pompelmi/*' \
+              --filter '!./examples/*' \
+              --filter '!./site' 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
@@ -230,11 +306,85 @@ jobs:
             echo "No dist-tarballs reference found; skipping pack"
           fi
 
-      - name: Install (pnpm)
+      - name: Configure npm & pnpm for fewer 429s
         run: |
-          pnpm store prune || true
-          pnpm install --frozen-lockfile --link-workspace-packages || \
-          pnpm install --no-frozen-lockfile --link-workspace-packages
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
 
       - name: Build all packages
         run: |
@@ -542,15 +692,85 @@ jobs:
             echo "packed=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Install deps (pnpm)
+      - name: Configure npm & pnpm for fewer 429s
         run: |
-          # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked
-          # and allow lockfile updates since CI bumps versions on-the-fly
-          if [ "${{ steps.pack.outputs.packed }}" = "true" ]; then
-            echo "Tarball packed → prune + install (unfrozen)"
-            pnpm store prune || true
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install deps (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
           fi
-          pnpm install --no-frozen-lockfile --link-workspace-packages
 
       - name: Build publishable workspaces
         run: |
