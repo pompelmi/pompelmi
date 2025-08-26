@@ -8,3 +8,12 @@ cp -r site/.vitepress/dist/* /tmp/pompelmi-preview/pompelmi/
 # 3) Servi la cartella padre e apri l’URL col prefisso
 npx --yes serve /tmp/pompelmi-preview -p 3000
 # apri:  http://localhost:3000/pompelmi/
+
+
+
+
+
+
+
+rm -f pnpm-lock.yaml
+pnpm install --no-frozen-lockfile --link-workspace-packages
