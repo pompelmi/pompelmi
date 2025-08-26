@@ -2525,7 +2525,7 @@ packages:
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
 
-  babel-plugin-polyfill-corejs3@0.13.0:
+  babel-plugin-polyfill-corejs3@0.13.1:
     resolution: {integrity: sha512-U+GNwMdSFgzVmfhNm8GJUX88AadB3uo9KpJqS3FaqNIPKgySuvMb+bHPsOmmuWyIcuqZj/pzt1RUIUZns4y2+A==}
     peerDependencies:
       '@babel/core': ^7.4.0 || ^8.0.0-0 <8.0.0
@@ -3516,7 +3516,7 @@ packages:
 
   glob-parent@6.0.2:
     resolution: {integrity: sha512-XxwI8EOhVQgWp6iDL+3b0r86f4d6AX6zSU55HfB4ydCEuXLXc5FcYeOu+nnGftS4TEju/11rt4KJPTMgbfmv4A==}
-    engines: {node: '>=10.13.0'}
+    engines: {node: '>=10.13.1'}
 
   glob@10.4.5:
     resolution: {integrity: sha512-7Bv8RF0k6xjo7d4A/PxYLbUCfb6c+Vpd2/mB2yRDlew7Jb5hEXiCD9ibfO7wpk8i4sevK6DFny9h7EYbM3/sHg==}
@@ -6581,7 +6581,7 @@ snapshots:
       '@babel/plugin-transform-unicode-sets-regex': 7.27.1(@babel/core@7.28.3)
       '@babel/preset-modules': 0.1.6-no-external-plugins(@babel/core@7.28.3)
       babel-plugin-polyfill-corejs2: 0.4.14(@babel/core@7.28.3)
-      babel-plugin-polyfill-corejs3: 0.13.0(@babel/core@7.28.3)
+      babel-plugin-polyfill-corejs3: 0.13.1(@babel/core@7.28.3)
       babel-plugin-polyfill-regenerator: 0.6.5(@babel/core@7.28.3)
       core-js-compat: 3.45.0
       semver: 6.3.1
@@ -8102,7 +8102,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  babel-plugin-polyfill-corejs3@0.13.0(@babel/core@7.28.3):
+  babel-plugin-polyfill-corejs3@0.13.1(@babel/core@7.28.3):
     dependencies:
       '@babel/core': 7.28.3
       '@babel/helper-define-polyfill-provider': 0.6.5(@babel/core@7.28.3)
