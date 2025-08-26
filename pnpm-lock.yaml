@@ -14,6 +14,7 @@ overrides:
   '@babel/helper-create-regexp-features-plugin>regjsgen': 0.8.0
   vitest: 2.1.9
   '@vitest/coverage-v8': 2.1.9
+  babel-plugin-polyfill-corejs3: 0.13.0
 
 importers:
 
@@ -337,8 +338,8 @@ importers:
         version: 0.12.3
     devDependencies:
       '@koa/multer':
-        specifier: ^3.1.0
-        version: 3.1.0(multer@1.4.5-lts.2)
+        specifier: ^4.0.0
+        version: 4.0.0(koa@2.16.2)(multer@1.4.5-lts.2)
       '@koa/router':
         specifier: ^12.0.2
         version: 12.0.2
@@ -1762,10 +1763,11 @@ packages:
   '@jridgewell/trace-mapping@0.3.30':
     resolution: {integrity: sha512-GQ7Nw5G2lTu/BtHTKfXhKHok2WGetd4XYcVKGx00SjAk8GMwgJM3zr6zORiPGuOE+/vkc90KtTosSSvaCjKb2Q==}
 
-  '@koa/multer@3.1.0':
-    resolution: {integrity: sha512-ETf4OLpOew9XE9lyU+5HIqk3TCmdGAw9pUXgxzrlYip+PkxLGoU4meiVTxiW4B6lxdBNijb3DFQ7M2woLcDL1g==}
-    engines: {node: '>= 14'}
+  '@koa/multer@4.0.0':
+    resolution: {integrity: sha512-BY6hys3WVX1yL/gcfKWu94z1fJ6ayG1DEEw/s82DnulkaTbumwjF6XqSfNLKFcs8lnJb2QfMJ4DyK4bmF1NDZw==}
+    engines: {node: '>= 18'}
     peerDependencies:
+      koa: '>=2'
       multer: '*'
 
   '@koa/router@12.0.2':
@@ -7157,8 +7159,9 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@koa/multer@3.1.0(multer@1.4.5-lts.2)':
+  '@koa/multer@4.0.0(koa@2.16.2)(multer@1.4.5-lts.2)':
     dependencies:
+      koa: 2.16.2
       multer: 1.4.5-lts.2
 
   '@koa/router@12.0.2':
@@ -7830,6 +7833,14 @@ snapshots:
       '@vitest/utils': 2.1.9
       chai: 5.3.1
       tinyrainbow: 1.2.0
+
+  '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@20.19.11))':
+    dependencies:
+      '@vitest/spy': 2.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.17
+    optionalDependencies:
+      vite: 5.4.19(@types/node@20.19.11)
 
   '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@24.3.0))':
     dependencies:
@@ -11954,7 +11965,7 @@ snapshots:
   vitest@2.1.9(@types/node@20.19.11):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@24.3.0))
+      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@20.19.11))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9
