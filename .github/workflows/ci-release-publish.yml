@@ -14,7 +14,7 @@ permissions:
 
 concurrency:
   group: ci-release-publish
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   NODE_VERSION: '20'
@@ -55,21 +55,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Use consistent pnpm store dir
-        run: pnpm config set store-dir ~/.pnpm-store
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-
-
-      - name: Prefetch deps (pnpm fetch)
-        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
-        run: pnpm fetch
       - name: Sanitize lockfile (process override)
         shell: bash
         run: |
@@ -144,7 +129,7 @@ jobs:
 
           run_install() {
             echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
-            pnpm install --no-frozen-lockfile --link-workspace-packages --prefer-offline \
+            pnpm install --no-frozen-lockfile --link-workspace-packages \
               --filter '!@pompelmi/*' \
               --filter '!./examples/*' \
               --filter '!./site' 2>&1 | tee install.log
@@ -216,21 +201,16 @@ jobs:
   # -------------------------------
   build:
     name: Build & Test
+    needs: [codeql]
     runs-on: ubuntu-latest
+    outputs:
+      site_changed: ${{ steps.changes.outputs.site }}
     permissions:
       contents: read
       id-token: write
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-
-      - name: Detect changed paths
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            site:
-              - 'site/**'
 
       - name: Ensure pnpm-workspace.yaml
         run: |
@@ -257,21 +237,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-
-      - name: Use consistent pnpm store dir
-        run: pnpm config set store-dir ~/.pnpm-store
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-
-
-      - name: Prefetch deps (pnpm fetch)
-        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
-        run: pnpm fetch
 
       - name: PNPM version
         run: pnpm --version
@@ -375,7 +340,7 @@ jobs:
 
           run_install() {
             echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
-            pnpm install --no-frozen-lockfile --link-workspace-packages --prefer-offline 2>&1 | tee install.log
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
           }
 
           configure_pnpm_base
@@ -423,9 +388,49 @@ jobs:
             exit $STATUS
           fi
 
+      - name: Detect changed paths
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            site:
+              - 'site/**'
+
+      - name: Compute affected workspaces
+        id: ws
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Determine base SHA for diff (PR, push or fallback to first parent)
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-list --max-parents=1 HEAD)
+          fi
+          echo "Base SHA: $BASE"
+          # List changed files between base and HEAD
+          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+          if [ -z "$CHANGED" ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Extract unique package directories under packages/
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILTERS=""
+          for d in "${PKGDIRS[@]}"; do
+            # Use path-based filters; pnpm accepts directory filters
+            FILTERS+=" --filter ./"$d
+          done
+          echo "Using filters: $FILTERS"
+          echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
+
       - name: Build all packages
         run: |
           pnpm -r \
+            ${{ steps.ws.outputs.filters }} \
             --filter '!./examples/*' \
             --filter '!@pompelmi/core' \
             --workspace-concurrency=16 \
@@ -500,11 +505,10 @@ jobs:
         uses: actions/configure-pages@v5
 
       - name: Build site
-        if: steps.changes.outputs.site == 'true'
         run: pnpm -C site build
 
       - name: Security scan (pompelmi) — site dist
-        if: ${{ steps.changes.outputs.site == 'true' && hashFiles('site/.vitepress/dist/**') != '' }}
+        if: ${{ hashFiles('site/.vitepress/dist/**') != '' }}
         uses: ./.github/actions/pompelmi-scan
         with:
           path: "site/.vitepress/dist"
@@ -512,7 +516,6 @@ jobs:
           fail_on_detect: false
 
       - name: Upload Pages artifact
-        if: steps.changes.outputs.site == 'true'
         uses: actions/upload-pages-artifact@v3
         with:
           path: site/.vitepress/dist
@@ -620,10 +623,44 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      - name: Detect changed paths (workspaces)
+        id: changes
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            packages:
+              - 'packages/**'
+
+      - name: Compute affected workspaces
+        id: ws
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [ -z "$BASE" ]; then
+            BASE=$(git rev-list --max-parents=1 HEAD)
+          fi
+          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+          if [ -z "$CHANGED" ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILTERS=""
+          for d in "${PKGDIRS[@]}"; do
+            FILTERS+=" --filter ./"$d
+          done
+          echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -744,21 +781,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Use consistent pnpm store dir
-        run: pnpm config set store-dir ~/.pnpm-store
-
-      - name: Cache pnpm store
-        uses: actions/cache@v4
-        with:
-          path: ~/.pnpm-store
-          key: ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-${{ hashFiles('pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-${{ env.NODE_VERSION }}-
-
-      - name: Prefetch deps (pnpm fetch)
-        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
-        run: pnpm fetch
-
       - name: Install deps (pnpm) — 429-aware retry
         shell: bash
         run: |
@@ -780,7 +802,7 @@ jobs:
 
           run_install() {
             echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
-            pnpm install --no-frozen-lockfile --link-workspace-packages --prefer-offline 2>&1 | tee install.log
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
           }
 
           configure_pnpm_base
@@ -831,6 +853,7 @@ jobs:
       - name: Build publishable workspaces
         run: |
           pnpm -r \
+            ${{ steps.ws.outputs.filters }} \
             --filter '@pompelmi/*' \
             --filter '!@pompelmi/core' \
             --filter '!./examples/*' \
@@ -928,14 +951,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-
-      - name: Detect changed paths
-        id: changes
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            engine:
-              - 'packages/engine/**'
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -1165,7 +1180,7 @@ jobs:
   deploy-pages:
     name: Deploy GitHub Pages
     needs: [build]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' }}
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.build.outputs.site_changed == 'true' }}
     permissions:
       pages: write
       id-token: write
@@ -1202,21 +1217,17 @@ jobs:
 
       - name: Read engine version from package.json
         id: engine
-        if: steps.changes.outputs.engine == 'true'
         shell: bash
         run: |
           node -e "console.log('version=' + require('./packages/engine/package.json').version)" >> "$GITHUB_OUTPUT"
 
       - name: Set up QEMU (optional for multi-arch)
-        if: steps.changes.outputs.engine == 'true'
         uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
-        if: steps.changes.outputs.engine == 'true'
         uses: docker/setup-buildx-action@v3
 
       - name: Login to GHCR
-        if: steps.changes.outputs.engine == 'true'
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
@@ -1224,7 +1235,6 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker metadata (tags & labels)
-        if: steps.changes.outputs.engine == 'true'
         id: meta
         uses: docker/metadata-action@v5
         with:
@@ -1235,7 +1245,6 @@ jobs:
             type=sha
 
       - name: Build & Push image
-        if: steps.changes.outputs.engine == 'true'
         uses: docker/build-push-action@v6
         with:
           context: packages/engine
