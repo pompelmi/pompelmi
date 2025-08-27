@@ -36,7 +36,7 @@
     "@fastify/multipart": "^7.7.3",
     "@types/node": "^20.19.10",
     "@vitest/coverage-v8": "2.1.9",
-    "fastify": "^4.28.0",
+    "fastify": "^5.5.0",
     "file-type": "^18.7.0",
     "tsup": "^8.5.0",
     "typescript": "^5.5.0",
