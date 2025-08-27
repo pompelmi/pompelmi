@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "file-type": "^18.7.0",
-    "multer": "^1.4.5-lts.1",
+    "multer": "^2.0.2",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
@@ -42,7 +42,7 @@
     "pompelmi": "workspace:*",
     "tsup": "^8.5.0",
     "typescript": "^5.5.0",
-    "vitest": "2.1.9"
+    "vitest": "3.2.4"
   },
   "license": "MIT",
   "publishConfig": {
