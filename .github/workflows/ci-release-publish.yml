@@ -516,7 +516,7 @@ jobs:
           fail_on_detect: false
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: site/.vitepress/dist
 
