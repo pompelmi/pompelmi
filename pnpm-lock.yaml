@@ -208,8 +208,8 @@ importers:
   packages/engine:
     dependencies:
       '@fastify/cors':
-        specifier: ^10.0.0
-        version: 10.1.0
+        specifier: ^11.1.0
+        version: 11.1.0
       '@fastify/multipart':
         specifier: ^9.0.3
         version: 9.0.3
@@ -1508,8 +1508,8 @@ packages:
   '@fastify/busboy@3.2.0':
     resolution: {integrity: sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==}
 
-  '@fastify/cors@10.1.0':
-    resolution: {integrity: sha512-MZyBCBJtII60CU9Xme/iE4aEy8G7QpzGR8zkdXZkDFt7ElEMachbE61tfhAG/bvSaULlqlf0huMT12T7iqEmdQ==}
+  '@fastify/cors@11.1.0':
+    resolution: {integrity: sha512-sUw8ed8wP2SouWZTIbA7V2OQtMNpLj2W6qJOYhNdcmINTu6gsxVYXjQiM9mdi8UUDlcoDDJ/W2syPo1WB2QjYA==}
 
   '@fastify/deepmerge@2.0.2':
     resolution: {integrity: sha512-3wuLdX5iiiYeZWP6bQrjqhrcvBIf0NHbQH1Ur1WbHvoiuTYUEItgygea3zs8aHpiitn0lOB8gX20u1qO+FDm7Q==}
@@ -4456,9 +4456,6 @@ packages:
   mlly@1.7.4:
     resolution: {integrity: sha512-qmdSIPC4bDJXgZTCR7XosJiNKySV7O215tsPtDN9iEO/7q/76b/ijtgRu/+epFXSJhijtTCCGp3DWS549P3xKw==}
 
-  mnemonist@0.40.0:
-    resolution: {integrity: sha512-kdd8AFNig2AD5Rkih7EPCXhu/iMvwevQFX/uEiGhZyPZi7fHqOoF4V4kHLpCfysxXMgQ4B52kdPMCwARshKvEg==}
-
   mrmime@2.0.1:
     resolution: {integrity: sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ==}
     engines: {node: '>=10'}
@@ -4590,9 +4587,6 @@ packages:
   object-inspect@1.13.4:
     resolution: {integrity: sha512-W67iLl4J2EXEGTbfeHCffrjDfitvLANg0UlX3wFUUSTx92KXRFegMHUVgSqE+wvhAbi4WqjGg9czysTV2Epbew==}
     engines: {node: '>= 0.4'}
-
-  obliterator@2.0.5:
-    resolution: {integrity: sha512-42CPE9AhahZRsMNslczq0ctAEtqk8Eka26QofnqC346BZdHDySk3LWka23LI7ULIw11NmltpiLagIq8gBozxTw==}
 
   ofetch@1.4.1:
     resolution: {integrity: sha512-QZj2DfGplQAr2oj9KzceK9Hwz6Whxazmn85yYeVuS3u9XTMOGMRx0kO95MQ+vLsj/S/NwBDMMLU5hpxvI6Tklw==}
@@ -7077,10 +7071,10 @@ snapshots:
 
   '@fastify/busboy@3.2.0': {}
 
-  '@fastify/cors@10.1.0':
+  '@fastify/cors@11.1.0':
     dependencies:
       fastify-plugin: 5.0.1
-      mnemonist: 0.40.0
+      toad-cache: 3.7.0
 
   '@fastify/deepmerge@2.0.2': {}
 
@@ -8110,6 +8104,14 @@ snapshots:
       '@vitest/utils': 2.1.9
       chai: 5.3.1
       tinyrainbow: 1.2.0
+
+  '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@20.19.11))':
+    dependencies:
+      '@vitest/spy': 2.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.17
+    optionalDependencies:
+      vite: 5.4.19(@types/node@20.19.11)
 
   '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@24.3.0))':
     dependencies:
@@ -10655,10 +10657,6 @@ snapshots:
       pkg-types: 1.3.1
       ufo: 1.6.1
 
-  mnemonist@0.40.0:
-    dependencies:
-      obliterator: 2.0.5
-
   mrmime@2.0.1: {}
 
   ms@2.0.0: {}
@@ -10779,8 +10777,6 @@ snapshots:
   object-hash@3.0.0: {}
 
   object-inspect@1.13.4: {}
-
-  obliterator@2.0.5: {}
 
   ofetch@1.4.1:
     dependencies:
@@ -12210,7 +12206,7 @@ snapshots:
   vitest@2.1.9(@types/node@20.19.11):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@24.3.0))
+      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@20.19.11))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9
