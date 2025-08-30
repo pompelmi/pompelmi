@@ -220,8 +220,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       zod:
-        specifier: ^3.23.8
-        version: 3.25.76
+        specifier: ^4.1.5
+        version: 4.1.5
     devDependencies:
       '@types/node':
         specifier: ^20.19.11
@@ -249,7 +249,7 @@ importers:
         version: 3.3.1
       zod-to-json-schema:
         specifier: ^3.23.5
-        version: 3.24.6(zod@3.25.76)
+        version: 3.24.6(zod@4.1.5)
 
   packages/engine-clamav:
     dependencies:
@@ -5998,6 +5998,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.1.5:
+    resolution: {integrity: sha512-rcUUZqlLJgBC33IT3PNMgsCq6TzLQEG/Ei/KTCU0PedSWRMAXoOUN+4t/0H+Q8bdnLPdqUYnvboJT0bn/229qg==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -8110,6 +8113,14 @@ snapshots:
       '@vitest/utils': 2.1.9
       chai: 5.3.1
       tinyrainbow: 1.2.0
+
+  '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@20.19.11))':
+    dependencies:
+      '@vitest/spy': 2.1.9
+      estree-walker: 3.0.3
+      magic-string: 0.30.17
+    optionalDependencies:
+      vite: 5.4.19(@types/node@20.19.11)
 
   '@vitest/mocker@2.1.9(vite@5.4.19(@types/node@24.3.0))':
     dependencies:
@@ -12210,7 +12221,7 @@ snapshots:
   vitest@2.1.9(@types/node@20.19.11):
     dependencies:
       '@vitest/expect': 2.1.9
-      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@24.3.0))
+      '@vitest/mocker': 2.1.9(vite@5.4.19(@types/node@20.19.11))
       '@vitest/pretty-format': 2.1.9
       '@vitest/runner': 2.1.9
       '@vitest/snapshot': 2.1.9
@@ -12387,11 +12398,17 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
+  zod-to-json-schema@3.24.6(zod@4.1.5):
+    dependencies:
+      zod: 4.1.5
+
   zod-to-ts@1.2.0(typescript@5.9.2)(zod@3.25.76):
     dependencies:
       typescript: 5.9.2
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.1.5: {}
 
   zwitch@2.0.4: {}
