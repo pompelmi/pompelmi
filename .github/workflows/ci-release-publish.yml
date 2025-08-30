@@ -49,12 +49,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
       - name: Setup Node (no cache, no lockfile yet)
         if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
       - name: Sanitize lockfile (process override)
         shell: bash
         run: |
@@ -180,6 +188,14 @@ jobs:
             exit $STATUS
           fi
 
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
@@ -231,12 +247,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
       - name: Setup Node (no cache, no lockfile yet)
         if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: PNPM version
         run: pnpm --version
@@ -447,6 +471,14 @@ jobs:
         run: |
           # Run Vitest once at workspace root; vitest.config.ts already scans tests in packages/**
           pnpm vitest run --coverage --passWithNoTests
+
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - name: Normalize LCOV paths (repo-relative)
         shell: bash
@@ -665,7 +697,15 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: pnpm
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
       - name: Apply pnpm overrides (CI hotfix)
         run: |
           node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
@@ -861,6 +901,14 @@ jobs:
             --parallel \
             --if-present run build
 
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
       - name: Publish only if version not on npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -962,7 +1010,15 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
-          cache: pnpm
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
 
       - name: Ensure repository field matches this repo (for provenance)
         env:
