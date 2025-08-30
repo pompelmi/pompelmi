@@ -1,5 +1,5 @@
 import type { RequestHandler } from 'express';
-import path from 'node:path';
+import * as path from 'node:path';
 
 type Severity = 'clean' | 'suspicious' | 'malicious';
 

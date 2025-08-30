@@ -6,7 +6,9 @@
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist/**",
+    "README.md",
+    "LICENSE*"
   ],
   "scripts": {
     "build": "rimraf dist && tsup src/index.ts --format esm,cjs --dts"

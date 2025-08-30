@@ -14,7 +14,9 @@
     }
   },
   "files": [
-    "dist"
+    "dist/**",
+    "README.md",
+    "LICENSE*"
   ],
   "sideEffects": false,
   "scripts": {

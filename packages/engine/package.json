@@ -19,9 +19,9 @@
     "directory": "packages/engine"
   },
   "files": [
-    "dist",
-    "result.schema.json",
-    "README.md"
+    "dist/**",
+    "README.md",
+    "LICENSE*"
   ],
   "publishConfig": {
     "access": "public",

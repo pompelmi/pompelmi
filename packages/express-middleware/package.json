@@ -15,7 +15,9 @@
   },
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist/**",
+    "README.md",
+    "LICENSE*"
   ],
   "repository": {
     "type": "git",

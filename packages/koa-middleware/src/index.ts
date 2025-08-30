@@ -1,5 +1,5 @@
 import type { Middleware } from 'koa';
-import path from 'node:path';
+import * as path from 'node:path';
 
 type Severity = 'clean' | 'suspicious' | 'malicious';
 
