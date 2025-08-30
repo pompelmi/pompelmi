@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
@@ -225,7 +225,7 @@ jobs:
       contents: read
       id-token: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Ensure pnpm-workspace.yaml
@@ -563,7 +563,7 @@ jobs:
     permissions:
       contents: write  # creare tag e Release
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Read version from package.json
@@ -652,7 +652,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Detect changed paths (workspaces)
@@ -997,7 +997,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Setup pnpm
@@ -1095,7 +1095,7 @@ jobs:
       packages: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Setup pnpm
@@ -1268,7 +1268,7 @@ jobs:
       IMAGE_NAME: ${{ github.repository_owner }}/pompelmi-engine
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with: { fetch-depth: 0 }
 
       - name: Read engine version from package.json
