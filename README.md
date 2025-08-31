@@ -1,9 +1,13 @@
+
 <p align="center">
+<a href="https://www.producthunt.com/products/pompelmi?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-pompelmi" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light&t=1756653468504" alt="pompelmi - free&#0044;&#0032;open&#0045;source&#0032;file&#0032;scanner | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
   <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
     <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" height="280" />
   </a>
   <br/>
   <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
+  <br/>
+  
 </p>
 
 <h1 align="center">pompelmi</h1>
