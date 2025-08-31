@@ -22,7 +22,7 @@ export async function createRemoteEngine(_opts?: Record<string, unknown>) {
   };
 }
 
-export const version = "0.14.0-dev.24";
+export const version = "0.14.0-dev.25";
 
 
 
