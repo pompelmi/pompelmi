@@ -46,12 +46,12 @@ jobs:
           run_install: false
       - name: Setup Node (with pnpm cache)
         if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup Node (no cache, no lockfile yet)
         if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Restore pnpm store cache
@@ -244,12 +244,12 @@ jobs:
 
       - name: Setup Node (with pnpm cache)
         if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Setup Node (no cache, no lockfile yet)
         if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Restore pnpm store cache
@@ -694,7 +694,7 @@ jobs:
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
       - name: Restore pnpm store cache
@@ -1006,7 +1006,7 @@ jobs:
           run_install: false
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
@@ -1104,7 +1104,7 @@ jobs:
           run_install: false
 
       - name: Setup Node (GitHub Packages)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://npm.pkg.github.com'
