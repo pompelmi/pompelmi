@@ -38,6 +38,7 @@
   <a href="#diagrams">Diagrams</a> ·
   <a href="#configuration">Config</a> ·
   <a href="#production-checklist">Production checklist</a> ·
+  <a href="#yara-getting-started">YARA</a> ·
   <a href="#quick-test-eicar">Quick test</a> ·
   <a href="#security-notes">Security</a> ·
   <a href="#faq">FAQ</a>
@@ -400,6 +401,124 @@ failClosed: true,
 - [ ] **Add CI scanning** with the GitHub Action to catch bad files in repos/artifacts.
 
 ---
+
+## YARA Getting Started
+
+YARA lets you detect suspicious or malicious content using pattern‑matching rules.  
+**pompelmi** treats YARA matches as signals that you can map to your own verdicts  
+(e.g., mark high‑confidence rules as `malicious`, heuristics as `suspicious`).
+
+> **Status:** Optional. You can run without YARA. If you adopt it, keep your rules small, time‑bound, and tuned to your threat model.
+
+### Starter rules
+
+Below are three example rules you can adapt:
+
+`rules/starter/eicar.yar`
+```yar
+rule EICAR_Test_File
+{
+    meta:
+        description = "EICAR antivirus test string (safe)"
+        reference   = "https://www.eicar.org"
+        confidence  = "high"
+        verdict     = "malicious"
+    strings:
+        $eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    condition:
+        $eicar
+}
+```
+
+`rules/starter/pdf_js.yar`
+```yar
+rule PDF_JavaScript_Embedded
+{
+    meta:
+        description = "PDF contains embedded JavaScript (heuristic)"
+        confidence  = "medium"
+        verdict     = "suspicious"
+    strings:
+        $magic = { 25 50 44 46 } // "%PDF"
+        $js1 = "/JavaScript" ascii
+        $js2 = "/JS" ascii
+        $open = "/OpenAction" ascii
+        $aa = "/AA" ascii
+    condition:
+        uint32(0) == 0x25504446 and ( $js1 or $js2 ) and ( $open or $aa )
+}
+```
+
+`rules/starter/office_macros.yar`
+```yar
+rule Office_Macro_Suspicious_Words
+{
+    meta:
+        description = "Heuristic: suspicious VBA macro keywords"
+        confidence  = "medium"
+        verdict     = "suspicious"
+    strings:
+        $s1 = /Auto(Open|Close)/ nocase
+        $s2 = "Document_Open" nocase ascii
+        $s3 = "CreateObject(" nocase ascii
+        $s4 = "WScript.Shell" nocase ascii
+        $s5 = "Shell(" nocase ascii
+        $s6 = "Sub Workbook_Open()" nocase ascii
+    condition:
+        2 of ($s*)
+}
+```
+
+> These are **examples**. Expect some false positives; tune to your app.
+
+### Minimal integration (adapter contract)
+
+If you use a YARA binding (e.g., `@automattic/yara`), wrap it behind the `scanner` contract:
+
+```ts
+// Example YARA scanner adapter (pseudo‑code)
+import * as Y from '@automattic/yara';
+
+// Compile your rules from disk at boot (recommended)
+// const sources = await fs.readFile('rules/starter/*.yar', 'utf8');
+// const compiled = await Y.compile(sources);
+
+export const YourYaraScanner = {
+  async scan(bytes: Uint8Array) {
+    // const matches = await compiled.scan(bytes, { timeout: 1500 });
+    const matches = []; // plug your engine here
+    // Map to the structure your app expects; return [] when clean.
+    return matches.map((m: any) => ({
+      rule: m.rule,
+      meta: m.meta ?? {},
+      tags: m.tags ?? [],
+    }));
+  }
+};
+```
+
+Then include it in your composed scanner:
+
+```ts
+import { composeScanners, CommonHeuristicsScanner } from 'pompelmi';
+// import { YourYaraScanner } from './yara-scanner';
+
+export const scanner = composeScanners(
+  [
+    ['heuristics', CommonHeuristicsScanner],
+    // ['yara', YourYaraScanner],
+  ],
+  { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500, tagSourceName: true }
+);
+```
+
+### Policy suggestion (mapping matches → verdict)
+
+- **malicious**: high‑confidence rules (e.g., `EICAR_Test_File`)
+- **suspicious**: heuristic rules (e.g., PDF JavaScript, macro keywords)
+- **clean**: no matches
+
+Combine YARA with MIME sniffing, ZIP safety limits, and strict size/time caps.
 
 ## Quick test (no EICAR)
 

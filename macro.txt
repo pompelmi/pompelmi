@@ -1,0 +1,2 @@
+Sub Workbook_Open()
+CreateObject("WScript.Shell").Run "calc"
