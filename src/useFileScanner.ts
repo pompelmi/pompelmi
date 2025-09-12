@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import type { ScanReport } from './types';
 import { scanFiles } from './scan';
 import { validateFile } from './validate';
 
@@ -6,9 +7,7 @@ import { validateFile } from './validate';
  * React Hook: handles <input type="file" onChange> with validation + scanning.
  */
 export function useFileScanner() {
-  const [results, setResults] = useState<
-    Array<{ file: File; content: string }>
-  >([]);
+  const [results, setResults] = useState<Array<{ file: File; report: ScanReport }>>([]);
   const [errors, setErrors] = useState<
     Array<{ file: File; error: string }>
   >([]);
@@ -28,7 +27,7 @@ export function useFileScanner() {
       setErrors(bad);
       if (good.length) {
         const scanned = await scanFiles(good);
-        setResults(scanned);
+        setResults(scanned.map((r, i) => ({ file: files[i], report: r })) );
       } else {
         setResults([]);
       }
