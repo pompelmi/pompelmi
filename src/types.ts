@@ -37,7 +37,9 @@ export type Match = {
 
 /** Contratto di uno scanner: restituisce un array di Match (sync o async) */
 export type ScanFn = (input: Uint8Array, ctx?: ScanContext) => Promise<Match[]> | Match[];
+export type ScanFn = (input: Uint8Array, ctx?: ScanContext) => Promise<Match[]> | Match[];
 export type Scanner = ScanFn | { name?: string; scan: ScanFn };
+scan: ScanFn };
 mimeType?: string; size?: number }
 ) => Promise<Match[]> | Match[];
 
