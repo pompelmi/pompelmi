@@ -35,7 +35,7 @@ export type Scanner = ScanFn | { name?: string; scan: ScanFn };
 interface BaseReport {
   verdict: Verdict;
   matches: YaraMatch[];
-  reasons: string[];
+  reasons?: string[];
   file?: FileInfo;
   durationMs?: number;
   error?: string;
