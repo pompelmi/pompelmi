@@ -1,28 +1,27 @@
-/** Tipi condivisi per Pompelmi */
-
-export type Uint8ArrayLike = Uint8Array;
-
-export type Severity = 'low' | 'medium' | 'high' | 'critical';
-
-export type Match = {
-  /** Regola/etichetta che ha prodotto il match (es: 'zip_eocd_not_found') */
-  rule: string;
-  /** Severità del match (non confondere con il verdetto finale) */
-  severity?: Severity;
-  /** Tag opzionali (usati in verdict.ts) */
-  tags?: string[];
-  /** Metadati addizionali */
-  meta?: Record<string, unknown>;
-  /** Origine dello scanner, es: "yara" | "heuristics" | "zip" */
-  source?: string;
-};
-
-export type YaraMatch = Match & {
-  namespace?: string;
-  description?: string;
-};
+/** Shared types for Pompelmi */
 
 export type Verdict = 'clean' | 'suspicious' | 'malicious';
+
+export interface YaraMatch {
+  rule: string;
+  namespace?: string;
+  tags?: string[];
+  meta?: Record<string, unknown>;
+}
+
+export interface Match {
+  rule: string;
+  // usato da zip-bomb-guard ecc. Manteniamo anche 'suspicious' per compat.
+  severity?: 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
+  meta?: Record<string, unknown>;
+}
+
+export interface FileInfo {
+  name?: string;
+  mimeType?: string;
+  size?: number;
+  sha256?: string;
+}
 
 export type ScanContext = {
   filename?: string;
@@ -31,29 +30,22 @@ export type ScanContext = {
 };
 
 export type ScanFn = (input: Uint8Array, ctx?: ScanContext) => Promise<Match[]> | Match[];
-
-/** Uno scanner può essere una funzione o un oggetto con metodo scan(...) */
 export type Scanner = ScanFn | { name?: string; scan: ScanFn };
 
-/** Report aggregato (usato in stream.ts) */
-export type ScanReport = {
-  file?: { name?: string; mimeType?: string; size?: number; sha256?: string };
-  matches: YaraMatch[];
+interface BaseReport {
   verdict: Verdict;
-  ok?: boolean;          // true se verdict === "clean"
+  matches: YaraMatch[];
+  reasons: string[];
+  file?: FileInfo;
   durationMs?: number;
   error?: string;
-};
+  ok: boolean; // true se verdict === 'clean'
+}
 
-  matches: YaraMatch[];
-  verdict: Verdict;
-  ok?: boolean;          // true se verdict === "clean"
-  durationMs?: number;
-  error?: string;
-};
+export interface NormalScanReport extends BaseReport {}
+export interface StreamScanReport extends BaseReport {}
 
-  matches: YaraMatch[];
-  verdict: Verdict;
-  durationMs?: number;
-  error?: string;
-};
+export type ScanReport = NormalScanReport | StreamScanReport;
+
+// alias usato da alcuni guard
+export type Uint8ArrayLike = Uint8Array | ArrayBufferView;
