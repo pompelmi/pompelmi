@@ -3193,7 +3193,8 @@ function isZipLike(buf) {
 function lastIndexOfEOCD(buf, window) {
     const sig = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
     const start = Math.max(0, buf.length - window);
-    return buf.lastIndexOf(sig, buf.length - 1, start);
+    const idx = buf.lastIndexOf(sig, Math.min(buf.length - sig.length, buf.length - 1));
+    return idx >= start ? idx : -1;
 }
 function hasTraversal(name) {
     return name.includes('../') || name.includes('..\\') || name.startsWith('/') || /^[A-Za-z]:/.test(name);
@@ -3210,7 +3211,7 @@ function createZipBombGuard(opts = {}) {
             const eocdPos = lastIndexOfEOCD(buf, cfg.eocdSearchWindow);
             if (eocdPos < 0 || eocdPos + 22 > buf.length) {
                 // ZIP but no EOCD — malformed or polyglot → suspicious
-                matches.push({ rule: 'zip_eocd_not_found', severity: 'suspicious' });
+                matches.push({ rule: 'zip_eocd_not_found', severity: 'medium' });
                 return matches;
             }
             const totalEntries = r16(buf, eocdPos + 10);
@@ -3218,7 +3219,7 @@ function createZipBombGuard(opts = {}) {
             const cdOffset = r32(buf, eocdPos + 16);
             // Bounds check
             if (cdOffset + cdSize > buf.length) {
-                matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'suspicious' });
+                matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'medium' });
                 return matches;
             }
             // Iterate central directory entries
@@ -3244,36 +3245,36 @@ function createZipBombGuard(opts = {}) {
                 sumUnc += uncSize;
                 seen++;
                 if (name.length > cfg.maxEntryNameLength) {
-                    matches.push({ rule: 'zip_entry_name_too_long', severity: 'suspicious', meta: { name, length: name.length } });
+                    matches.push({ rule: 'zip_entry_name_too_long', severity: 'medium', meta: { name, length: name.length } });
                 }
                 if (hasTraversal(name)) {
-                    matches.push({ rule: 'zip_path_traversal_entry', severity: 'suspicious', meta: { name } });
+                    matches.push({ rule: 'zip_path_traversal_entry', severity: 'medium', meta: { name } });
                 }
                 // move to next entry
                 ptr = nameEnd + exLen + cmLen;
             }
             if (seen !== totalEntries) {
                 // central dir truncated/odd, still report what we found
-                matches.push({ rule: 'zip_cd_truncated', severity: 'suspicious', meta: { seen, totalEntries } });
+                matches.push({ rule: 'zip_cd_truncated', severity: 'medium', meta: { seen, totalEntries } });
             }
             // Heuristics thresholds
             if (seen > cfg.maxEntries) {
-                matches.push({ rule: 'zip_too_many_entries', severity: 'suspicious', meta: { seen, limit: cfg.maxEntries } });
+                matches.push({ rule: 'zip_too_many_entries', severity: 'medium', meta: { seen, limit: cfg.maxEntries } });
             }
             if (sumUnc > cfg.maxTotalUncompressedBytes) {
                 matches.push({
                     rule: 'zip_total_uncompressed_too_large',
-                    severity: 'suspicious',
+                    severity: 'medium',
                     meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes }
                 });
             }
             if (sumComp === 0 && sumUnc > 0) {
-                matches.push({ rule: 'zip_suspicious_ratio', severity: 'suspicious', meta: { ratio: Infinity } });
+                matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio: Infinity } });
             }
             else if (sumComp > 0) {
                 const ratio = sumUnc / Math.max(1, sumComp);
                 if (ratio >= cfg.maxCompressionRatio) {
-                    matches.push({ rule: 'zip_suspicious_ratio', severity: 'suspicious', meta: { ratio, limit: cfg.maxCompressionRatio } });
+                    matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio, limit: cfg.maxCompressionRatio } });
                 }
             }
             return matches;
@@ -3281,8 +3282,34 @@ function createZipBombGuard(opts = {}) {
     };
 }
 
+const MB = 1024 * 1024;
+const DEFAULT_POLICY = {
+    includeExtensions: ['zip', 'png', 'jpg', 'jpeg', 'pdf'],
+    allowedMimeTypes: ['application/zip', 'image/png', 'image/jpeg', 'application/pdf', 'text/plain'],
+    maxFileSizeBytes: 20 * MB,
+    timeoutMs: 5000,
+    concurrency: 4,
+    failClosed: true
+};
+function definePolicy(input = {}) {
+    const p = { ...DEFAULT_POLICY, ...input };
+    if (!Array.isArray(p.includeExtensions))
+        throw new TypeError('includeExtensions must be string[]');
+    if (!Array.isArray(p.allowedMimeTypes))
+        throw new TypeError('allowedMimeTypes must be string[]');
+    if (!(Number.isFinite(p.maxFileSizeBytes) && p.maxFileSizeBytes > 0))
+        throw new TypeError('maxFileSizeBytes must be > 0');
+    if (!(Number.isFinite(p.timeoutMs) && p.timeoutMs > 0))
+        throw new TypeError('timeoutMs must be > 0');
+    if (!(Number.isInteger(p.concurrency) && p.concurrency > 0))
+        throw new TypeError('concurrency must be > 0');
+    return p;
+}
+
 exports.CommonHeuristicsScanner = CommonHeuristicsScanner;
+exports.DEFAULT_POLICY = DEFAULT_POLICY;
 exports.createZipBombGuard = createZipBombGuard;
+exports.definePolicy = definePolicy;
 exports.mapMatchesToVerdict = mapMatchesToVerdict;
 exports.prefilterBrowser = prefilterBrowser;
 exports.scanFiles = scanFiles;
