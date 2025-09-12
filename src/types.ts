@@ -38,7 +38,13 @@ export type Uint8ArrayLike = Uint8Array | ArrayBufferView;
 
 /** Report usato nello stream/adapter */
 export type ScanReport = {
-  file?: { name?: string; mimeType?: string; size?: number };
+  file?: { name?: string; mimeType?: string; size?: number; sha256?: string };
+  matches: YaraMatch[];
+  verdict: Verdict;
+  durationMs?: number;
+  error?: string;
+};
+
   matches: YaraMatch[];
   verdict: Verdict;
   durationMs?: number;
