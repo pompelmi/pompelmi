@@ -40,7 +40,7 @@
     "predocs:deploy": "npm run docs:build",
     "docs:deploy": "gh-pages -d docs -b gh-pages",
     "yara:check": "node scripts/yara-quick-check-cli.mjs",
-    "build:core": "pnpm -r --filter './packages/**' build && pnpm --filter pompelmi build"
+    "build:core": "pnpm -r --filter ./packages/engine --filter ./packages/engine-clamav --filter ./packages/engine-heuristics --filter ./packages/engine-yara --filter ./packages/express-middleware --filter ./packages/fastify-plugin --filter ./packages/next-upload build && pnpm --filter ./ build"
   },
   "license": "MIT",
   "devDependencies": {
