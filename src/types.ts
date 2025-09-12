@@ -40,6 +40,13 @@ export type ScanReport = {
   file?: { name?: string; mimeType?: string; size?: number; sha256?: string };
   matches: YaraMatch[];
   verdict: Verdict;
+  ok?: boolean;          // true se verdict === "clean"
+  durationMs?: number;
+  error?: string;
+};
+
+  matches: YaraMatch[];
+  verdict: Verdict;
   durationMs?: number;
   error?: string;
 };
