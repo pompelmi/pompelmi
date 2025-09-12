@@ -40,7 +40,8 @@ interface BaseReport {
   durationMs?: number;
   error?: string;
   ok: boolean; // true se verdict === 'clean'
-}
+
+  truncated?: boolean;}
 
 export interface NormalScanReport extends BaseReport {}
 export interface StreamScanReport extends BaseReport {}
