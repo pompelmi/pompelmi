@@ -1,4 +1,4 @@
-import { type Match, type Scanner } from '../compose';
+import { type Match, type Scanner } from '../types';
 
 export type ZipBombGuardOptions = {
   maxEntries?: number;                 // default 1000

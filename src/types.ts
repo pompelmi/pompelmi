@@ -20,3 +20,20 @@ export type ScanReport = {
   engine?: 'yara' | 'regex' | 'multi';
 };
 export type Uint8ArrayLike = Uint8Array;
+
+
+/** Minimal shape usata internamente dagli scanner */
+export type Match = {
+  id: string;
+  name?: string;
+  source?: string;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
+  meta?: Record<string, unknown>;
+};
+
+
+/** Contratto di uno scanner: restituisce un array di Match (sync o async) */
+export type Scanner = (
+  bytes: Uint8Array,
+  ctx?: { filename?: string; mimeType?: string; size?: number }
+) => Promise<Match[]> | Match[];
