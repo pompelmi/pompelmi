@@ -1,9 +1,6 @@
 export { scanFiles } from './scan';
 export { validateFile } from './validate';
 export { useFileScanner } from './useFileScanner';
-export { scanFilesWithYara } from './scan';
-export { scanFilesWithHeuristicsAndYara, prefilterBrowser } from './scan';
-export type { BrowserPolicy, PrefilterResult } from './scan';
 export type { YaraMatch } from './yara/index';
 export type { NodeScanOptions, NodeFileEntry } from './node/scanDir';
 export { scanFilesWithRemoteYara } from './scan/remote';
@@ -12,3 +9,5 @@ export { mapMatchesToVerdict } from './verdict';
 export { CommonHeuristicsScanner } from './scanners/common-heuristics';
 export { createZipBombGuard } from './scanners/zip-bomb-guard';
 export { definePolicy, DEFAULT_POLICY } from './policy';
+export { createPresetScanner, composeScanners, type PresetName, type PresetOptions } from './presets';
+export { scanBytes, scanFile, type ScanOptions } from './scan';

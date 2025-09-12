@@ -1,219 +1,221 @@
-async function createRemoteEngine(opts) {
-    const { endpoint, headers = {}, rulesField = 'rules', fileField = 'file', mode = 'multipart', rulesAsBase64 = false, } = opts;
-    const engine = {
-        async compile(rulesSource) {
-            return {
-                async scan(data) {
-                    const fetchFn = globalThis.fetch;
-                    if (!fetchFn)
-                        throw new Error('[remote-yara] fetch non disponibile in questo ambiente');
-                    let res;
-                    if (mode === 'multipart') {
-                        const FormDataCtor = globalThis.FormData;
-                        const BlobCtor = globalThis.Blob;
-                        if (!FormDataCtor || !BlobCtor) {
-                            throw new Error('[remote-yara] FormData/Blob non disponibili (usa json-base64 oppure esegui in browser)');
-                        }
-                        const form = new FormDataCtor();
-                        form.set(rulesField, new BlobCtor([rulesSource], { type: 'text/plain' }), 'rules.yar');
-                        form.set(fileField, new BlobCtor([data], { type: 'application/octet-stream' }), 'sample.bin');
-                        res = await fetchFn(endpoint, { method: 'POST', body: form, headers });
-                    }
-                    else {
-                        const b64 = base64FromBytes(data);
-                        const payload = { [fileField]: b64 };
-                        if (rulesAsBase64) {
-                            payload['rulesB64'] = base64FromString(rulesSource);
-                        }
-                        else {
-                            payload[rulesField] = rulesSource;
-                        }
-                        res = await fetchFn(endpoint, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', ...headers },
-                            body: JSON.stringify(payload),
-                        });
-                    }
-                    if (!res.ok) {
-                        throw new Error(`[remote-yara] HTTP ${res.status} ${res.statusText}`);
-                    }
-                    const json = await res.json().catch(() => null);
-                    const arr = Array.isArray(json) ? json : (json?.matches ?? []);
-                    return (arr ?? []).map((m) => ({
-                        rule: m.rule ?? m.ruleIdentifier ?? 'unknown',
-                        tags: m.tags ?? [],
-                    }));
-                },
-            };
-        },
+const SIG_CEN = 0x02014b50;
+const DEFAULTS = {
+    maxEntries: 1000,
+    maxTotalUncompressedBytes: 500 * 1024 * 1024,
+    maxEntryNameLength: 255,
+    maxCompressionRatio: 1000,
+    eocdSearchWindow: 70000,
+};
+function r16(buf, off) {
+    return buf.readUInt16LE(off);
+}
+function r32(buf, off) {
+    return buf.readUInt32LE(off);
+}
+function isZipLike$1(buf) {
+    // local file header at start is common
+    return buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+}
+function lastIndexOfEOCD(buf, window) {
+    const sig = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
+    const start = Math.max(0, buf.length - window);
+    const idx = buf.lastIndexOf(sig, Math.min(buf.length - sig.length, buf.length - 1));
+    return idx >= start ? idx : -1;
+}
+function hasTraversal(name) {
+    return name.includes('../') || name.includes('..\\') || name.startsWith('/') || /^[A-Za-z]:/.test(name);
+}
+function createZipBombGuard(opts = {}) {
+    const cfg = { ...DEFAULTS, ...opts };
+    return {
+        async scan(input) {
+            const buf = Buffer.from(input);
+            const matches = [];
+            if (!isZipLike$1(buf))
+                return matches;
+            // Find EOCD near the end
+            const eocdPos = lastIndexOfEOCD(buf, cfg.eocdSearchWindow);
+            if (eocdPos < 0 || eocdPos + 22 > buf.length) {
+                // ZIP but no EOCD — malformed or polyglot → suspicious
+                matches.push({ rule: 'zip_eocd_not_found', severity: 'medium' });
+                return matches;
+            }
+            const totalEntries = r16(buf, eocdPos + 10);
+            const cdSize = r32(buf, eocdPos + 12);
+            const cdOffset = r32(buf, eocdPos + 16);
+            // Bounds check
+            if (cdOffset + cdSize > buf.length) {
+                matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'medium' });
+                return matches;
+            }
+            // Iterate central directory entries
+            let ptr = cdOffset;
+            let seen = 0;
+            let sumComp = 0;
+            let sumUnc = 0;
+            while (ptr + 46 <= cdOffset + cdSize && seen < totalEntries) {
+                const sig = r32(buf, ptr);
+                if (sig !== SIG_CEN)
+                    break; // stop if structure breaks
+                const compSize = r32(buf, ptr + 20);
+                const uncSize = r32(buf, ptr + 24);
+                const fnLen = r16(buf, ptr + 28);
+                const exLen = r16(buf, ptr + 30);
+                const cmLen = r16(buf, ptr + 32);
+                const nameStart = ptr + 46;
+                const nameEnd = nameStart + fnLen;
+                if (nameEnd > buf.length)
+                    break;
+                const name = buf.toString('utf8', nameStart, nameEnd);
+                sumComp += compSize;
+                sumUnc += uncSize;
+                seen++;
+                if (name.length > cfg.maxEntryNameLength) {
+                    matches.push({ rule: 'zip_entry_name_too_long', severity: 'medium', meta: { name, length: name.length } });
+                }
+                if (hasTraversal(name)) {
+                    matches.push({ rule: 'zip_path_traversal_entry', severity: 'medium', meta: { name } });
+                }
+                // move to next entry
+                ptr = nameEnd + exLen + cmLen;
+            }
+            if (seen !== totalEntries) {
+                // central dir truncated/odd, still report what we found
+                matches.push({ rule: 'zip_cd_truncated', severity: 'medium', meta: { seen, totalEntries } });
+            }
+            // Heuristics thresholds
+            if (seen > cfg.maxEntries) {
+                matches.push({ rule: 'zip_too_many_entries', severity: 'medium', meta: { seen, limit: cfg.maxEntries } });
+            }
+            if (sumUnc > cfg.maxTotalUncompressedBytes) {
+                matches.push({
+                    rule: 'zip_total_uncompressed_too_large',
+                    severity: 'medium',
+                    meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes }
+                });
+            }
+            if (sumComp === 0 && sumUnc > 0) {
+                matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio: Infinity } });
+            }
+            else if (sumComp > 0) {
+                const ratio = sumUnc / Math.max(1, sumComp);
+                if (ratio >= cfg.maxCompressionRatio) {
+                    matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio, limit: cfg.maxCompressionRatio } });
+                }
+            }
+            return matches;
+        }
     };
-    return engine;
-}
-// Helpers
-function base64FromBytes(bytes) {
-    // usa btoa se disponibile (browser); altrimenti fallback manuale
-    const btoaFn = globalThis.btoa;
-    let bin = '';
-    for (let i = 0; i < bytes.byteLength; i++)
-        bin += String.fromCharCode(bytes[i]);
-    return btoaFn ? btoaFn(bin) : Buffer.from(bin, 'binary').toString('base64');
-}
-function base64FromString(s) {
-    const btoaFn = globalThis.btoa;
-    return btoaFn ? btoaFn(s) : Buffer.from(s, 'utf8').toString('base64');
 }
 
-// Factory: sceglie l'engine a runtime (Node o Browser)
-// (Per ora i moduli chiamati lanceranno "non implementato")
-async function createYaraEngine() {
-    const isNode = typeof process !== 'undefined' && !!process.versions?.node;
-    const target = isNode ? 'node' : 'browser';
-    const mod = await import(`./${target}`);
-    return isNode
-        ? mod.createNodeEngine()
-        : mod.createBrowserEngine();
+/** Risolve uno Scanner (fn o oggetto con .scan) in una funzione */
+function asScanFn(s) {
+    return typeof s === 'function' ? s : s.scan;
+}
+/** Composizione sequenziale: concatena tutti i match degli scanner */
+function composeScanners(scanners) {
+    return async (input, ctx) => {
+        const out = [];
+        for (const s of scanners) {
+            const res = await Promise.resolve(asScanFn(s)(input, ctx));
+            if (Array.isArray(res) && res.length)
+                out.push(...res);
+        }
+        return out;
+    };
+}
+/** Ritorna uno ScanFn pronto all'uso, oggi con zip-bomb guard */
+function createPresetScanner(_name = 'zip-basic', _opts = {}) {
+    // Al momento un solo preset "zip-basic"
+    const scanners = [
+        createZipBombGuard(), // usa i default interni
+    ];
+    return composeScanners(scanners);
 }
 
-function sniffMagicBytes(bytes) {
-    const s = (sig) => {
-        const arr = typeof sig === 'string' ? new TextEncoder().encode(sig) : new Uint8Array(sig);
-        if (bytes.length < arr.length)
-            return false;
-        for (let i = 0; i < arr.length; i++)
-            if (bytes[i] !== arr[i])
-                return false;
-        return true;
+/** Mappa veloce estensione -> mime (basic) */
+function guessMimeByExt(name) {
+    if (!name)
+        return;
+    const ext = name.toLowerCase().split('.').pop();
+    switch (ext) {
+        case 'zip': return 'application/zip';
+        case 'png': return 'image/png';
+        case 'jpg':
+        case 'jpeg': return 'image/jpeg';
+        case 'pdf': return 'application/pdf';
+        case 'txt': return 'text/plain';
+        default: return;
+    }
+}
+/** Heuristica semplice per verdetto */
+function computeVerdict(matches) {
+    if (!matches.length)
+        return 'clean';
+    // se la regola contiene 'zip_' lo marchiamo "suspicious"
+    const anyHigh = matches.some(m => (m.tags ?? []).includes('critical') || (m.tags ?? []).includes('high'));
+    return anyHigh ? 'malicious' : 'suspicious';
+}
+/** Converte i Match (heuristics) in YaraMatch-like per uniformare l'output */
+function toYaraMatches(ms) {
+    return ms.map(m => ({
+        rule: m.rule,
+        namespace: 'heuristics',
+        tags: ['heuristics'].concat(m.severity ? [m.severity] : []),
+        meta: m.meta,
+    }));
+}
+/** Scan di bytes (browser/node) usando preset (default: zip-basic) */
+async function scanBytes(input, opts = {}) {
+    const t0 = Date.now();
+    const preset = opts.preset ?? 'zip-basic';
+    const ctx = {
+        ...opts.ctx,
+        mimeType: opts.ctx?.mimeType ?? guessMimeByExt(opts.ctx?.filename),
+        size: opts.ctx?.size ?? input.byteLength,
     };
-    if (s([0x50, 0x4B, 0x03, 0x04]) || s([0x50, 0x4B, 0x05, 0x06]) || s([0x50, 0x4B, 0x07, 0x08]))
-        return { mime: 'application/zip', extHint: 'zip' };
-    if (s([0x25, 0x50, 0x44, 0x46, 0x2D]))
-        return { mime: 'application/pdf', extHint: 'pdf' };
-    if (s([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))
-        return { mime: 'image/png', extHint: 'png' };
-    if (s([0xFF, 0xD8, 0xFF]))
-        return { mime: 'image/jpeg', extHint: 'jpg' };
-    if (s('GIF87a') || s('GIF89a'))
-        return { mime: 'image/gif', extHint: 'gif' };
-    if (s('<?xml') || s('<svg'))
-        return { mime: 'image/svg+xml', extHint: 'svg' };
-    if (s([0x4D, 0x5A]))
-        return { mime: 'application/vnd.microsoft.portable-executable', extHint: 'exe' };
-    if (s([0x7F, 0x45, 0x4C, 0x46]))
-        return { mime: 'application/x-elf', extHint: 'elf' };
-    return null;
+    const scanFn = createPresetScanner(preset);
+    const matchesH = await scanFn(input, ctx);
+    const matches = toYaraMatches(matchesH);
+    const verdict = computeVerdict(matches);
+    const durationMs = Date.now() - t0;
+    return {
+        ok: verdict === 'clean',
+        verdict,
+        matches,
+        reasons: matches.map(m => m.rule),
+        file: { name: ctx.filename, mimeType: ctx.mimeType, size: ctx.size },
+        durationMs,
+        engine: 'heuristics',
+        truncated: false,
+        timedOut: false,
+    };
 }
-function hasSuspiciousJpegTrailer(bytes, maxTrailer = 1000000) {
-    for (let i = bytes.length - 2; i >= 2; i--) {
-        if (bytes[i] === 0xFF && bytes[i + 1] === 0xD9) {
-            const trailer = bytes.length - (i + 2);
-            return trailer > maxTrailer;
-        }
-    }
-    return false;
+/** Scan di un file su disco (Node). Import dinamico per non vincolare il bundle browser. */
+async function scanFile(filePath, opts = {}) {
+    const [{ readFile, stat }, path] = await Promise.all([
+        import('fs/promises'),
+        import('path'),
+    ]);
+    const [buf, st] = await Promise.all([readFile(filePath), stat(filePath)]);
+    const ctx = {
+        filename: path.basename(filePath),
+        mimeType: guessMimeByExt(filePath),
+        size: st.size,
+    };
+    return scanBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength), { ...opts, ctx });
 }
-function prefilterBrowser(bytes, filename, policy) {
-    const reasons = [];
-    const ext = (filename.split('.').pop() || '').toLowerCase();
-    if (policy.maxFileSizeBytes && bytes.byteLength > policy.maxFileSizeBytes) {
-        reasons.push(`size_exceeded:${bytes.byteLength}`);
-    }
-    if (policy.includeExtensions && policy.includeExtensions.length && !policy.includeExtensions.includes(ext)) {
-        reasons.push(`ext_denied:${ext}`);
-    }
-    const s = sniffMagicBytes(bytes);
-    if (!s)
-        reasons.push('mime_unknown');
-    if (s?.mime && policy.allowedMimeTypes && policy.allowedMimeTypes.length && !policy.allowedMimeTypes.includes(s.mime)) {
-        reasons.push(`mime_denied:${s.mime}`);
-    }
-    if (s?.extHint && ext && s.extHint !== ext) {
-        reasons.push(`ext_mismatch:${ext}->${s.extHint}`);
-    }
-    if (s?.mime === 'image/jpeg' && hasSuspiciousJpegTrailer(bytes))
-        reasons.push('jpeg_trailer_payload');
-    if (s?.mime === 'image/svg+xml' && policy.denyScriptableSvg !== false) {
-        const text = new TextDecoder().decode(bytes).toLowerCase();
-        if (text.includes('<script') || text.includes('onload=') || text.includes('href="javascript:')) {
-            reasons.push('svg_script');
-        }
-    }
-    const severity = reasons.length ? 'suspicious' : 'clean';
-    return { severity, reasons, mime: s?.mime };
-}
-/**
- * Reads an array of File objects via FileReader and returns their text.
- */
-async function scanFiles(files) {
-    const readText = (file) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(reader.error);
-        reader.readAsText(file);
-    });
-    const results = [];
-    for (const file of files) {
-        const content = await readText(file);
-        results.push({ file, content });
-    }
-    return results;
-}
-async function scanFilesWithYara(files, rulesSource) {
-    // Prova a creare l'engine YARA (browser). Se non disponibile, prosegui silenziosamente.
-    let compiled;
-    try {
-        const engine = await createYaraEngine(); // in browser userà l'engine WASM (prossimo step)
-        compiled = await engine.compile(rulesSource); // compila UNA sola volta
-    }
-    catch (e) {
-        console.warn('[yara] non disponibile o regole non compilate:', e);
-    }
-    const results = [];
-    for (const file of files) {
-        // 1) contenuto testuale (come nella tua scanFiles)
-        const content = await file.text();
-        // 2) bytes per YARA (meglio dei soli caratteri)
-        let matches = [];
-        if (compiled) {
-            try {
-                const bytes = new Uint8Array(await file.arrayBuffer());
-                matches = await compiled.scan(bytes);
-            }
-            catch (e) {
-                console.warn(`[yara] errore scansione ${file.name}:`, e);
-            }
-        }
-        results.push({ file, content, yara: { matches } });
-    }
-    return results;
-}
-/**
- * Scan files with fast browser heuristics + optional YARA.
- * Returns content, prefilter verdict, and YARA matches.
- */
-async function scanFilesWithHeuristicsAndYara(files, rulesSource, policy) {
-    let compiled;
-    try {
-        const engine = await createYaraEngine();
-        compiled = await engine.compile(rulesSource);
-    }
-    catch (e) {
-        console.warn('[yara] non disponibile o regole non compilate:', e);
-    }
+/** Scan multipli File (browser) usando scanBytes + preset di default */
+async function scanFiles(files, opts = {}) {
+    const list = Array.from(files);
     const out = [];
-    for (const file of files) {
-        const [content, bytes] = await Promise.all([file.text(), file.arrayBuffer().then(b => new Uint8Array(b))]);
-        const prefilter = prefilterBrowser(bytes, file.name, policy);
-        let matches = [];
-        if (compiled) {
-            try {
-                // Optional short-circuit: only run YARA if needed. For now, we always run it if available.
-                matches = await compiled.scan(bytes);
-            }
-            catch (e) {
-                console.warn(`[yara] errore scansione ${file.name}:`, e);
-            }
-        }
-        out.push({ file, content, prefilter, yara: { matches } });
+    for (const f of list) {
+        const buf = new Uint8Array(await f.arrayBuffer());
+        const rep = await scanBytes(buf, {
+            ...opts,
+            ctx: { filename: f.name, mimeType: f.type || guessMimeByExt(f.name), size: f.size },
+        });
+        out.push(rep);
     }
     return out;
 }
@@ -3058,13 +3060,78 @@ function useFileScanner() {
         setErrors(bad);
         if (good.length) {
             const scanned = await scanFiles(good);
-            setResults(scanned);
+            setResults(scanned.map((r, i) => ({ file: good[i], report: r })));
         }
         else {
             setResults([]);
         }
     }, []);
     return { results, errors, onChange };
+}
+
+async function createRemoteEngine(opts) {
+    const { endpoint, headers = {}, rulesField = 'rules', fileField = 'file', mode = 'multipart', rulesAsBase64 = false, } = opts;
+    const engine = {
+        async compile(rulesSource) {
+            return {
+                async scan(data) {
+                    const fetchFn = globalThis.fetch;
+                    if (!fetchFn)
+                        throw new Error('[remote-yara] fetch non disponibile in questo ambiente');
+                    let res;
+                    if (mode === 'multipart') {
+                        const FormDataCtor = globalThis.FormData;
+                        const BlobCtor = globalThis.Blob;
+                        if (!FormDataCtor || !BlobCtor) {
+                            throw new Error('[remote-yara] FormData/Blob non disponibili (usa json-base64 oppure esegui in browser)');
+                        }
+                        const form = new FormDataCtor();
+                        form.set(rulesField, new BlobCtor([rulesSource], { type: 'text/plain' }), 'rules.yar');
+                        form.set(fileField, new BlobCtor([data], { type: 'application/octet-stream' }), 'sample.bin');
+                        res = await fetchFn(endpoint, { method: 'POST', body: form, headers });
+                    }
+                    else {
+                        const b64 = base64FromBytes(data);
+                        const payload = { [fileField]: b64 };
+                        if (rulesAsBase64) {
+                            payload['rulesB64'] = base64FromString(rulesSource);
+                        }
+                        else {
+                            payload[rulesField] = rulesSource;
+                        }
+                        res = await fetchFn(endpoint, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', ...headers },
+                            body: JSON.stringify(payload),
+                        });
+                    }
+                    if (!res.ok) {
+                        throw new Error(`[remote-yara] HTTP ${res.status} ${res.statusText}`);
+                    }
+                    const json = await res.json().catch(() => null);
+                    const arr = Array.isArray(json) ? json : (json?.matches ?? []);
+                    return (arr ?? []).map((m) => ({
+                        rule: m.rule ?? m.ruleIdentifier ?? 'unknown',
+                        tags: m.tags ?? [],
+                    }));
+                },
+            };
+        },
+    };
+    return engine;
+}
+// Helpers
+function base64FromBytes(bytes) {
+    // usa btoa se disponibile (browser); altrimenti fallback manuale
+    const btoaFn = globalThis.btoa;
+    let bin = '';
+    for (let i = 0; i < bytes.byteLength; i++)
+        bin += String.fromCharCode(bytes[i]);
+    return btoaFn ? btoaFn(bin) : Buffer.from(bin, 'binary').toString('base64');
+}
+function base64FromString(s) {
+    const btoaFn = globalThis.btoa;
+    return btoaFn ? btoaFn(s) : Buffer.from(s, 'utf8').toString('base64');
 }
 
 // src/scan/remote.ts
@@ -3121,7 +3188,7 @@ function isOleCfb(buf) {
     const sig = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
     return startsWith(buf, sig);
 }
-function isZipLike$1(buf) {
+function isZipLike(buf) {
     // PK\x03\x04
     return startsWith(buf, [0x50, 0x4b, 0x03, 0x04]);
 }
@@ -3131,7 +3198,7 @@ function isPeExecutable(buf) {
 }
 /** OOXML macro hint via filename token in ZIP container */
 function hasOoxmlMacros(buf) {
-    if (!isZipLike$1(buf))
+    if (!isZipLike(buf))
         return false;
     return hasAsciiToken(buf, 'vbaProject.bin');
 }
@@ -3170,116 +3237,6 @@ const CommonHeuristicsScanner = {
     }
 };
 
-const SIG_CEN = 0x02014b50;
-const DEFAULTS = {
-    maxEntries: 1000,
-    maxTotalUncompressedBytes: 500 * 1024 * 1024,
-    maxEntryNameLength: 255,
-    maxCompressionRatio: 1000,
-    eocdSearchWindow: 70000,
-};
-function r16(buf, off) {
-    return buf.readUInt16LE(off);
-}
-function r32(buf, off) {
-    return buf.readUInt32LE(off);
-}
-function isZipLike(buf) {
-    // local file header at start is common
-    return buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
-}
-function lastIndexOfEOCD(buf, window) {
-    const sig = Buffer.from([0x50, 0x4b, 0x05, 0x06]);
-    const start = Math.max(0, buf.length - window);
-    const idx = buf.lastIndexOf(sig, Math.min(buf.length - sig.length, buf.length - 1));
-    return idx >= start ? idx : -1;
-}
-function hasTraversal(name) {
-    return name.includes('../') || name.includes('..\\') || name.startsWith('/') || /^[A-Za-z]:/.test(name);
-}
-function createZipBombGuard(opts = {}) {
-    const cfg = { ...DEFAULTS, ...opts };
-    return {
-        async scan(input) {
-            const buf = Buffer.from(input);
-            const matches = [];
-            if (!isZipLike(buf))
-                return matches;
-            // Find EOCD near the end
-            const eocdPos = lastIndexOfEOCD(buf, cfg.eocdSearchWindow);
-            if (eocdPos < 0 || eocdPos + 22 > buf.length) {
-                // ZIP but no EOCD — malformed or polyglot → suspicious
-                matches.push({ rule: 'zip_eocd_not_found', severity: 'medium' });
-                return matches;
-            }
-            const totalEntries = r16(buf, eocdPos + 10);
-            const cdSize = r32(buf, eocdPos + 12);
-            const cdOffset = r32(buf, eocdPos + 16);
-            // Bounds check
-            if (cdOffset + cdSize > buf.length) {
-                matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'medium' });
-                return matches;
-            }
-            // Iterate central directory entries
-            let ptr = cdOffset;
-            let seen = 0;
-            let sumComp = 0;
-            let sumUnc = 0;
-            while (ptr + 46 <= cdOffset + cdSize && seen < totalEntries) {
-                const sig = r32(buf, ptr);
-                if (sig !== SIG_CEN)
-                    break; // stop if structure breaks
-                const compSize = r32(buf, ptr + 20);
-                const uncSize = r32(buf, ptr + 24);
-                const fnLen = r16(buf, ptr + 28);
-                const exLen = r16(buf, ptr + 30);
-                const cmLen = r16(buf, ptr + 32);
-                const nameStart = ptr + 46;
-                const nameEnd = nameStart + fnLen;
-                if (nameEnd > buf.length)
-                    break;
-                const name = buf.toString('utf8', nameStart, nameEnd);
-                sumComp += compSize;
-                sumUnc += uncSize;
-                seen++;
-                if (name.length > cfg.maxEntryNameLength) {
-                    matches.push({ rule: 'zip_entry_name_too_long', severity: 'medium', meta: { name, length: name.length } });
-                }
-                if (hasTraversal(name)) {
-                    matches.push({ rule: 'zip_path_traversal_entry', severity: 'medium', meta: { name } });
-                }
-                // move to next entry
-                ptr = nameEnd + exLen + cmLen;
-            }
-            if (seen !== totalEntries) {
-                // central dir truncated/odd, still report what we found
-                matches.push({ rule: 'zip_cd_truncated', severity: 'medium', meta: { seen, totalEntries } });
-            }
-            // Heuristics thresholds
-            if (seen > cfg.maxEntries) {
-                matches.push({ rule: 'zip_too_many_entries', severity: 'medium', meta: { seen, limit: cfg.maxEntries } });
-            }
-            if (sumUnc > cfg.maxTotalUncompressedBytes) {
-                matches.push({
-                    rule: 'zip_total_uncompressed_too_large',
-                    severity: 'medium',
-                    meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes }
-                });
-            }
-            if (sumComp === 0 && sumUnc > 0) {
-                matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio: Infinity } });
-            }
-            else if (sumComp > 0) {
-                const ratio = sumUnc / Math.max(1, sumComp);
-                if (ratio >= cfg.maxCompressionRatio) {
-                    matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio, limit: cfg.maxCompressionRatio } });
-                }
-            }
-            return matches;
-        }
-    };
-}
-
 const MB = 1024 * 1024;
 const DEFAULT_POLICY = {
     includeExtensions: ['zip', 'png', 'jpg', 'jpeg', 'pdf'],
@@ -3304,5 +3261,5 @@ function definePolicy(input = {}) {
     return p;
 }
 
-export { CommonHeuristicsScanner, DEFAULT_POLICY, createZipBombGuard, definePolicy, mapMatchesToVerdict, prefilterBrowser, scanFiles, scanFilesWithHeuristicsAndYara, scanFilesWithRemoteYara, scanFilesWithYara, useFileScanner, validateFile };
+export { CommonHeuristicsScanner, DEFAULT_POLICY, composeScanners, createPresetScanner, createZipBombGuard, definePolicy, mapMatchesToVerdict, scanBytes, scanFile, scanFiles, scanFilesWithRemoteYara, useFileScanner, validateFile };
 //# sourceMappingURL=pompelmi.esm.js.map
