@@ -84,3 +84,21 @@ export async function scanFile(filePath: string, opts: Omit<ScanOptions, 'ctx'> 
   };
   return scanBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength), { ...opts, ctx });
 }
+
+/** Scan multipli File (browser) usando scanBytes + preset di default */
+export async function scanFiles(
+  files: ArrayLike<File>,
+  opts: Omit<ScanOptions, 'ctx'> = {}
+): Promise<ScanReport[]> {
+  const list = Array.from(files as ArrayLike<File>) as File[];
+  const out: ScanReport[] = [];
+  for (const f of list) {
+    const buf = new Uint8Array(await f.arrayBuffer());
+    const rep = await scanBytes(buf, {
+      ...opts,
+      ctx: { filename: f.name, mimeType: f.type || guessMimeByExt(f.name), size: f.size },
+    });
+    out.push(rep);
+  }
+  return out;
+}
