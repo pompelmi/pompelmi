@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.14.0",
+  "version": "0.15.0-dev.27",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -39,7 +39,8 @@
     "docs:build": "hugo -s docs -D -d docs",
     "predocs:deploy": "npm run docs:build",
     "docs:deploy": "gh-pages -d docs -b gh-pages",
-    "yara:check": "node scripts/yara-quick-check-cli.mjs"
+    "yara:check": "node scripts/yara-quick-check-cli.mjs",
+    "build:core": "pnpm -r --filter './packages/**' build && pnpm --filter pompelmi build"
   },
   "license": "MIT",
   "devDependencies": {
