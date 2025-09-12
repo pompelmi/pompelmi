@@ -47,6 +47,13 @@ export type ScanReport = {
 
   matches: YaraMatch[];
   verdict: Verdict;
+  ok?: boolean;          // true se verdict === "clean"
+  durationMs?: number;
+  error?: string;
+};
+
+  matches: YaraMatch[];
+  verdict: Verdict;
   durationMs?: number;
   error?: string;
 };
