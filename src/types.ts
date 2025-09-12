@@ -24,10 +24,13 @@ export type Uint8ArrayLike = Uint8Array;
 
 /** Minimal shape usata internamente dagli scanner */
 export type Match = {
-  id: string;
-  name?: string;
+  /** Nome/rule che ha prodotto il match (es: 'zip_eocd_not_found') */
+  rule: string;
+  /** Origine (opzionale): nome scanner o tag */
   source?: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  /** Severità del match */
+  severity?: 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
+  /** Metadati addizionali */
   meta?: Record<string, unknown>;
 };
 
