@@ -1,32 +1,46 @@
-/** Tipi condivisi per gli scanner */
+/** Severità standard per i match */
+export type Severity = 'low' | 'medium' | 'high' | 'critical';
 
-export type Uint8ArrayLike = Uint8Array;
-
-export type Severity = 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
-
+/** Rilevazione generica prodotta da uno scanner (heuristics, YARA, zip, ecc.) */
 export type Match = {
-  /** Regola/etichetta che ha prodotto il match (es: 'zip_eocd_not_found') */
   rule: string;
-  /** Nome/ID dello scanner o sorgente (opzionale) */
-  source?: string;
-  /** Severità del match */
   severity?: Severity;
-  /** Metadati aggiuntivi (liberi) */
+  tags?: string[];
   meta?: Record<string, unknown>;
+  /** quale motore l'ha prodotta, es: "yara" | "heuristics" | "zip" */
+  source?: string;
 };
 
+/** Rilevazione in stile YARA (estende Match) */
+export type YaraMatch = Match & {
+  namespace?: string;
+  description?: string;
+};
+
+/** Verdettto finale attribuito a file/entry */
+export type Verdict = 'clean' | 'suspicious' | 'malicious';
+
+/** Contesto facoltativo passato agli scanner */
 export type ScanContext = {
   filename?: string;
   mimeType?: string;
   size?: number;
 };
 
-/** Firma della funzione di scansione */
+/** Firma di una funzione di scan */
 export type ScanFn = (input: Uint8Array, ctx?: ScanContext) => Promise<Match[]> | Match[];
 
-/**
- * Uno scanner può essere:
- * - una funzione (ScanFn)
- * - un oggetto con metodo scan(...)
- */
+/** Contratto Scanner: funzione oppure oggetto { scan(...) } */
 export type Scanner = ScanFn | { name?: string; scan: ScanFn };
+
+/** Alias utile in alcuni guard */
+export type Uint8ArrayLike = Uint8Array | ArrayBufferView;
+
+/** Report usato nello stream/adapter */
+export type ScanReport = {
+  file?: { name?: string; mimeType?: string; size?: number };
+  matches: YaraMatch[];
+  verdict: Verdict;
+  durationMs?: number;
+  error?: string;
+};

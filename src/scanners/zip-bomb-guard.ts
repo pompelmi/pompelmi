@@ -57,7 +57,7 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
       const eocdPos = lastIndexOfEOCD(buf, cfg.eocdSearchWindow);
       if (eocdPos < 0 || eocdPos + 22 > buf.length) {
         // ZIP but no EOCD — malformed or polyglot → suspicious
-        matches.push({ rule: 'zip_eocd_not_found', severity: 'suspicious' });
+        matches.push({ rule: 'zip_eocd_not_found', severity: 'medium' });
         return matches;
       }
 
@@ -67,7 +67,7 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
 
       // Bounds check
       if (cdOffset + cdSize > buf.length) {
-        matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'suspicious' });
+        matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'medium' });
         return matches;
       }
 
@@ -98,10 +98,10 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
         seen++;
 
         if (name.length > cfg.maxEntryNameLength) {
-          matches.push({ rule: 'zip_entry_name_too_long', severity: 'suspicious', meta: { name, length: name.length } });
+          matches.push({ rule: 'zip_entry_name_too_long', severity: 'medium', meta: { name, length: name.length } });
         }
         if (hasTraversal(name)) {
-          matches.push({ rule: 'zip_path_traversal_entry', severity: 'suspicious', meta: { name } });
+          matches.push({ rule: 'zip_path_traversal_entry', severity: 'medium', meta: { name } });
         }
 
         // move to next entry
@@ -110,27 +110,27 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
 
       if (seen !== totalEntries) {
         // central dir truncated/odd, still report what we found
-        matches.push({ rule: 'zip_cd_truncated', severity: 'suspicious', meta: { seen, totalEntries } });
+        matches.push({ rule: 'zip_cd_truncated', severity: 'medium', meta: { seen, totalEntries } });
       }
 
       // Heuristics thresholds
       if (seen > cfg.maxEntries) {
-        matches.push({ rule: 'zip_too_many_entries', severity: 'suspicious', meta: { seen, limit: cfg.maxEntries } });
+        matches.push({ rule: 'zip_too_many_entries', severity: 'medium', meta: { seen, limit: cfg.maxEntries } });
       }
       if (sumUnc > cfg.maxTotalUncompressedBytes) {
         matches.push({
           rule: 'zip_total_uncompressed_too_large',
-          severity: 'suspicious',
+          severity: 'medium',
           meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes }
         });
       }
 
       if (sumComp === 0 && sumUnc > 0) {
-        matches.push({ rule: 'zip_suspicious_ratio', severity: 'suspicious', meta: { ratio: Infinity } });
+        matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio: Infinity } });
       } else if (sumComp > 0) {
         const ratio = sumUnc / Math.max(1, sumComp);
         if (ratio >= cfg.maxCompressionRatio) {
-          matches.push({ rule: 'zip_suspicious_ratio', severity: 'suspicious', meta: { ratio, limit: cfg.maxCompressionRatio } });
+          matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio, limit: cfg.maxCompressionRatio } });
         }
       }
 
