@@ -27,7 +27,7 @@ export function useFileScanner() {
       setErrors(bad);
       if (good.length) {
         const scanned = await scanFiles(good);
-        setResults(scanned.map((r, i) => ({ file: files[i], report: r })) );
+        setResults(scanned.map((r, i) => ({ file: good[i], report: r })) );
       } else {
         setResults([]);
       }
