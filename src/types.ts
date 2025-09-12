@@ -1,50 +1,43 @@
-/** Severità standard per i match */
+/** Tipi condivisi per Pompelmi */
+
+export type Uint8ArrayLike = Uint8Array;
+
 export type Severity = 'low' | 'medium' | 'high' | 'critical';
 
-/** Rilevazione generica prodotta da uno scanner (heuristics, YARA, zip, ecc.) */
 export type Match = {
+  /** Regola/etichetta che ha prodotto il match (es: 'zip_eocd_not_found') */
   rule: string;
+  /** Severità del match (non confondere con il verdetto finale) */
   severity?: Severity;
+  /** Tag opzionali (usati in verdict.ts) */
   tags?: string[];
+  /** Metadati addizionali */
   meta?: Record<string, unknown>;
-  /** quale motore l'ha prodotta, es: "yara" | "heuristics" | "zip" */
+  /** Origine dello scanner, es: "yara" | "heuristics" | "zip" */
   source?: string;
 };
 
-/** Rilevazione in stile YARA (estende Match) */
 export type YaraMatch = Match & {
   namespace?: string;
   description?: string;
 };
 
-/** Verdettto finale attribuito a file/entry */
 export type Verdict = 'clean' | 'suspicious' | 'malicious';
 
-/** Contesto facoltativo passato agli scanner */
 export type ScanContext = {
   filename?: string;
   mimeType?: string;
   size?: number;
 };
 
-/** Firma di una funzione di scan */
 export type ScanFn = (input: Uint8Array, ctx?: ScanContext) => Promise<Match[]> | Match[];
 
-/** Contratto Scanner: funzione oppure oggetto { scan(...) } */
+/** Uno scanner può essere una funzione o un oggetto con metodo scan(...) */
 export type Scanner = ScanFn | { name?: string; scan: ScanFn };
 
-/** Alias utile in alcuni guard */
-export type Uint8ArrayLike = Uint8Array | ArrayBufferView;
-
-/** Report usato nello stream/adapter */
+/** Report aggregato (usato in stream.ts) */
 export type ScanReport = {
   file?: { name?: string; mimeType?: string; size?: number; sha256?: string };
-  matches: YaraMatch[];
-  verdict: Verdict;
-  durationMs?: number;
-  error?: string;
-};
-
   matches: YaraMatch[];
   verdict: Verdict;
   durationMs?: number;
