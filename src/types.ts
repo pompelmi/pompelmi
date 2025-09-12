@@ -42,7 +42,8 @@ interface BaseReport {
   ok: boolean; // true se verdict === 'clean'
 
   truncated?: boolean;
-  timedOut?: boolean;}
+  timedOut?: boolean;
+  engine?: string;}
 
 export interface NormalScanReport extends BaseReport {}
 export interface StreamScanReport extends BaseReport {}
