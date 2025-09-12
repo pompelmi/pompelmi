@@ -19,3 +19,4 @@ export type ScanReport = {
   timedOut?: boolean;          // hit timeoutMs
   engine?: 'yara' | 'regex' | 'multi';
 };
+export type Uint8ArrayLike = Uint8Array;
