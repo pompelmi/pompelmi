@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.15.0-dev.28",
+  "version": "0.15.0-dev.29",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "dist/pompelmi.cjs.js",
   "module": "dist/pompelmi.esm.js",
@@ -75,6 +75,7 @@
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "supertest": "^7.0.0",
     "tslib": "^2.8.1",
+    "tsup": "^8",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vitest": "2.1.9",

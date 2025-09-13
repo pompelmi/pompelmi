@@ -1,0 +1,28 @@
+{
+  "name": "@pompelmi/yara",
+  "version": "0.1.0",
+  "description": "YARA scanner adapter for pompelmi (runs the local `yara` CLI against bytes via stdin).",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.cjs",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs",
+    "dev": "tsup src/index.ts --dts --format esm,cjs --watch"
+  },
+  "peerDependencies": {
+    "pompelmi": "*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.2"
+  }
+}

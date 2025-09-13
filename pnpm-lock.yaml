@@ -130,6 +130,9 @@ importers:
       tslib:
         specifier: ^2.8.1
         version: 2.8.1
+      tsup:
+        specifier: ^8
+        version: 8.5.0(jiti@1.21.7)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
       tsx:
         specifier: ^4.20.3
         version: 4.20.4
@@ -142,6 +145,18 @@ importers:
       yazl:
         specifier: ^3.3.1
         version: 3.3.1
+
+  examples/express-minimal:
+    dependencies:
+      express:
+        specifier: ^4.19.2
+        version: 4.21.2
+      multer:
+        specifier: ^1.4.5-lts.1
+        version: 1.4.5-lts.2
+      pompelmi:
+        specifier: file:../../
+        version: file:(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
 
   examples/next-app-router:
     dependencies:
@@ -510,6 +525,19 @@ importers:
       vitest:
         specifier: 2.1.9
         version: 2.1.9(@types/node@24.3.0)
+
+  packages/yara:
+    dependencies:
+      pompelmi:
+        specifier: '*'
+        version: 0.15.0-dev.28(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@1.21.7)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.2
 
   website:
     dependencies:
@@ -3014,6 +3042,10 @@ packages:
   concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
 
+  concat-stream@1.6.2:
+    resolution: {integrity: sha512-27HBghJxjiZtIk3Ycvn/4kbJk/1uZuJFfuPEns6LaEvpvG1f0hTea8lilrouyo9mVc2GWdcEZ8OLoGmSADlrCw==}
+    engines: {'0': node >= 0.8}
+
   concat-stream@2.0.0:
     resolution: {integrity: sha512-MWufYdFw53ccGjCA+Ol7XJYpAlW6/prSMzuPOTRnJGcGzuhLn4Scrz7qf6o8bROZ514ltazcIFJZevcfbo0x7A==}
     engines: {'0': node >= 6.0}
@@ -4469,6 +4501,11 @@ packages:
   ms@2.1.3:
     resolution: {integrity: sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==}
 
+  multer@1.4.5-lts.2:
+    resolution: {integrity: sha512-VzGiVigcG9zUAoCNU+xShztrlr1auZOlurXynNvO9GiWD1/mTBbUljOKY+qMeazBqXgRnjzeEgJI/wyjJUHg9A==}
+    engines: {node: '>= 6.0.0'}
+    deprecated: Multer 1.x is impacted by a number of vulnerabilities, which have been patched in 2.x. You should upgrade to the latest 2.x version.
+
   multer@2.0.2:
     resolution: {integrity: sha512-u7f2xaZ/UG8oLXHvtF/oWTRvT44p9ecwBBqTwgJVq0+4BW1g8OW01TyMEGWBHbyMOYVHXslaut7qEQ1meATXgw==}
     engines: {node: '>= 10.16.0'}
@@ -4767,6 +4804,18 @@ packages:
 
   points-on-path@0.2.1:
     resolution: {integrity: sha512-25ClnWWuw7JbWZcgqY/gJ4FQWadKxGWk+3kR/7kD0tCaDtPPMj7oHu2ToLaVhfpnHrZzYby2w6tUA0eOIuUg8g==}
+
+  pompelmi@0.15.0-dev.28:
+    resolution: {integrity: sha512-h/appsXqNPnGMGyHjpzBK5Gwz3tFzR+Vxqz8SaYB5TvnD5lpz7bflqWYK7Fb8yqbgcUrz/35thr16f8onCAckA==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
+
+  'pompelmi@file:':
+    resolution: {directory: '', type: directory}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
+      react-dom: ^18.0.0 || ^19.0.0
 
   postcss-import@15.1.0:
     resolution: {integrity: sha512-hpr+J05B2FVYUAXHeK1YyI267J/dDDhMU6B6civm8hSY1jYJnBXxzKDKDswzJmtLHryrjhnDjqqp/49t8FALew==}
@@ -8636,6 +8685,13 @@ snapshots:
 
   concat-map@0.0.1: {}
 
+  concat-stream@1.6.2:
+    dependencies:
+      buffer-from: 1.1.2
+      inherits: 2.0.4
+      readable-stream: 2.3.8
+      typedarray: 0.0.6
+
   concat-stream@2.0.0:
     dependencies:
       buffer-from: 1.1.2
@@ -10665,6 +10721,16 @@ snapshots:
 
   ms@2.1.3: {}
 
+  multer@1.4.5-lts.2:
+    dependencies:
+      append-field: 1.0.0
+      busboy: 1.6.0
+      concat-stream: 1.6.2
+      mkdirp: 0.5.6
+      object-assign: 4.1.1
+      type-is: 1.6.18
+      xtend: 4.0.2
+
   multer@2.0.2:
     dependencies:
       append-field: 1.0.0
@@ -10955,6 +11021,36 @@ snapshots:
     dependencies:
       path-data-parser: 0.1.0
       points-on-curve: 0.2.0
+
+  pompelmi@0.15.0-dev.28(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      file-type: 21.0.0
+      libyara-wasm: 1.2.1
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+      rollup: 4.49.0
+      wasm-feature-detect: 1.8.0
+      yara: '@automattic/yara@2.6.0-beta.2'
+    optionalDependencies:
+      '@litko/yara-x': 0.2.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  pompelmi@file:(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      file-type: 21.0.0
+      libyara-wasm: 1.2.1
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+      rollup: 4.49.0
+      wasm-feature-detect: 1.8.0
+      yara: '@automattic/yara@2.6.0-beta.2'
+    optionalDependencies:
+      '@litko/yara-x': 0.2.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
 
   postcss-import@15.1.0(postcss@8.5.6):
     dependencies:
