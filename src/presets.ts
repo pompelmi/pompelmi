@@ -1,34 +1,46 @@
-import { createZipBombGuard } from './scanners/zip-bomb-guard';
-import type { Match, ScanFn, Scanner, ScanContext } from './types';
+/**
+ * Opinionated policy presets to reduce boilerplate.
+ * Spread these into your middleware/handler options.
+ */
 
-/** Risolve uno Scanner (fn o oggetto con .scan) in una funzione */
-function asScanFn(s: Scanner): ScanFn {
-  return typeof s === 'function' ? s : s.scan;
-}
+export type PolicyPreset = {
+  allowedMimeTypes: string[];
+  includeExtensions: string[];
+  maxFileSizeBytes: number;
+  failClosed: boolean;
+};
 
-/** Composizione sequenziale: concatena tutti i match degli scanner */
-export function composeScanners(scanners: Scanner[]): ScanFn {
-  return async (input: Uint8Array, ctx?: ScanContext): Promise<Match[]> => {
-    const out: Match[] = [];
-    for (const s of scanners) {
-      const res = await Promise.resolve(asScanFn(s)(input, ctx));
-      if (Array.isArray(res) && res.length) out.push(...res);
-    }
-    return out;
+const MB = (n: number) => n * 1024 * 1024;
+
+export function balancedPolicy(): PolicyPreset {
+  return {
+    allowedMimeTypes: [
+      "application/zip",
+      "image/png",
+      "image/jpeg",
+      "application/pdf",
+      "text/plain",
+    ],
+    includeExtensions: ["zip", "png", "jpg", "jpeg", "pdf", "txt"],
+    maxFileSizeBytes: MB(20),
+    failClosed: true,
   };
 }
 
-export type PresetName = 'zip-basic';
-export type PresetOptions = {
-  /** Futuri flags (placeholder) */
-  zip?: { /* es: maxEntries?: number; maxCompressionRatio?: number */ };
-};
+export function strictPolicy(): PolicyPreset {
+  return {
+    allowedMimeTypes: ["image/png", "image/jpeg", "application/pdf"],
+    includeExtensions: ["png", "jpg", "jpeg", "pdf"],
+    maxFileSizeBytes: MB(8),
+    failClosed: true,
+  };
+}
 
-/** Ritorna uno ScanFn pronto all'uso, oggi con zip-bomb guard */
-export function createPresetScanner(_name: PresetName = 'zip-basic', _opts: PresetOptions = {}): ScanFn {
-  // Al momento un solo preset "zip-basic"
-  const scanners: Scanner[] = [
-    createZipBombGuard(), // usa i default interni
-  ];
-  return composeScanners(scanners);
+export function imagesOnlyPolicy(): PolicyPreset {
+  return {
+    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif"],
+    includeExtensions: ["png", "jpg", "jpeg", "webp", "gif"],
+    maxFileSizeBytes: MB(10),
+    failClosed: true,
+  };
 }
