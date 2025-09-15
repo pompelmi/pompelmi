@@ -37,7 +37,7 @@ It is **header/content‑based** and does not rely on the file extension.
 
 ### Engine (stand‑alone)
 ```ts
-import { compose, PdfActionScanner } from '@pompelmi/engine'
+import { compose, PdfActionScanner } from 'pompelmi'
 
 export const scan = compose([
   PdfActionScanner(),
@@ -49,7 +49,7 @@ export const scan = compose([
 import express from 'express'
 import multer from 'multer'
 import { createPompelmiMiddleware } from '@pompelmi/express-middleware'
-import { compose, PdfActionScanner } from '@pompelmi/engine'
+import { compose, PdfActionScanner } from 'pompelmi'
 
 const app = express()
 const upload = multer()
@@ -69,7 +69,7 @@ app.post(
 ### Next.js API route (edge/server)
 ```ts
 import type { NextRequest } from 'next/server'
-import { compose, PdfActionScanner } from '@pompelmi/engine'
+import { compose, PdfActionScanner } from 'pompelmi'
 const scan = compose([PdfActionScanner()])
 // …wire scan into your Next upload handler
 ```

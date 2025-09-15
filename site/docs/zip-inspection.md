@@ -56,7 +56,7 @@ Adjust to your application needs (developer uploads vs. customer avatars).
 import {
   compose,
   createZipBombGuard,
-} from '@pompelmi/engine'
+} from 'pompelmi'
 
 const zipGuard = createZipBombGuard({
   maxEntries: 512,
@@ -79,7 +79,7 @@ export const scan = compose([ zipGuard ])
 import express from 'express'
 import multer from 'multer'
 import { createPompelmiMiddleware } from '@pompelmi/express-middleware'
-import { compose, createZipBombGuard } from '@pompelmi/engine'
+import { compose, createZipBombGuard } from 'pompelmi'
 
 const app = express()
 const upload = multer({ storage: multer.memoryStorage() })

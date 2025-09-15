@@ -29,7 +29,7 @@ where native binaries should never appear.
 
 ### Engine (stand‑alone)
 ```ts
-import { compose, ExecutableDetector } from '@pompelmi/engine'
+import { compose, ExecutableDetector } from 'pompelmi'
 
 export const scan = compose([
   ExecutableDetector(),
@@ -41,7 +41,7 @@ export const scan = compose([
 import express from 'express'
 import multer from 'multer'
 import { createPompelmiMiddleware } from '@pompelmi/express-middleware'
-import { compose, ExecutableDetector } from '@pompelmi/engine'
+import { compose, ExecutableDetector } from 'pompelmi'
 
 const app = express()
 const upload = multer()
@@ -59,7 +59,7 @@ app.post(
 ### Next.js API route (edge/server)
 ```ts
 import type { NextRequest } from 'next/server'
-import { compose, ExecutableDetector } from '@pompelmi/engine'
+import { compose, ExecutableDetector } from 'pompelmi'
 // …use your preferred Next upload adapter; pass the composed scan
 const scan = compose([ExecutableDetector()])
 ```

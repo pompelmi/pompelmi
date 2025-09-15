@@ -33,7 +33,7 @@ web pages.
 
 ### Engine (stand‑alone)
 ```ts
-import { compose, SvgActiveContentScanner } from '@pompelmi/engine'
+import { compose, SvgActiveContentScanner } from 'pompelmi'
 
 export const scan = compose([
   SvgActiveContentScanner(),
@@ -45,7 +45,7 @@ export const scan = compose([
 import express from 'express'
 import multer from 'multer'
 import { createPompelmiMiddleware } from '@pompelmi/express-middleware'
-import { compose, SvgActiveContentScanner } from '@pompelmi/engine'
+import { compose, SvgActiveContentScanner } from 'pompelmi'
 
 const app = express()
 const upload = multer()
@@ -65,7 +65,7 @@ app.post(
 ### Next.js API route
 ```ts
 import type { NextRequest } from 'next/server'
-import { compose, SvgActiveContentScanner } from '@pompelmi/engine'
+import { compose, SvgActiveContentScanner } from 'pompelmi'
 const scan = compose([SvgActiveContentScanner()])
 // …wire `scan` into your upload handler
 ```

@@ -17,9 +17,9 @@ outline: deep
 ## Install
 
 ```bash
-pnpm add @pompelmi/engine @pompelmi/express-middleware
-# or: npm i @pompelmi/engine @pompelmi/express-middleware
-# or: yarn add @pompelmi/engine @pompelmi/express-middleware
+pnpm add pompelmi @pompelmi/express-middleware
+# or: npm i pompelmi @pompelmi/express-middleware
+# or: yarn add pompelmi @pompelmi/express-middleware
 ```
 
 > **Note**  

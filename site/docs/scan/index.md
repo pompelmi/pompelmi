@@ -36,7 +36,7 @@ import {
   PdfActionScanner,
   SvgActiveContentScanner,
   PolyglotMagicScanner,
-} from '@pompelmi/engine'
+} from 'pompelmi'
 
 export const scan = compose([
   ExecutableDetector(),

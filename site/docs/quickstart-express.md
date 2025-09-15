@@ -9,16 +9,16 @@ sidebar:
 
 This page shows a minimal route‑level integration with **Express** using:
 - a simple **policy** (size cap via `multer` — see [/docs/policy](/docs/policy) for full allowlists)
-- a **composed scanner** pipeline from `@pompelmi/engine`
+- a **composed scanner** pipeline from `pompelmi`
 
 ## Requirements
 - Node.js ≥ 18
 - Express + an upload middleware (e.g. `multer`)
-- `@pompelmi/engine` + `@pompelmi/express-middleware`
+- `pompelmi` + `@pompelmi/express-middleware`
 
 ```bash
-pnpm add express multer @pompelmi/engine @pompelmi/express-middleware
-# or: npm i express multer @pompelmi/engine @pompelmi/express-middleware
+pnpm add express multer pompelmi @pompelmi/express-middleware
+# or: npm i express multer pompelmi @pompelmi/express-middleware
 ```
 
 ## Basic policy (size cap)
@@ -43,7 +43,7 @@ import {
   SvgActiveContentScanner,
   PolyglotMagicScanner,
   createZipBombGuard,
-} from '@pompelmi/engine'
+} from 'pompelmi'
 import { basicPolicy } from './policy'
 
 const app = express()
