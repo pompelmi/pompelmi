@@ -30,6 +30,30 @@ inputs:
     description: "Fail workflow if detection occurs"
     required: false
     default: "true"
+  cli_version:
+    description: "pompelmi CLI version (e.g. 0.16.3) or 'latest'"
+    required: false
+    default: "latest"
+  output:
+    description: "Where to write the JSON report"
+    required: false
+    default: "pompelmi-report.json"
+  verbose:
+    description: "Enable verbose scanner logs"
+    required: false
+    default: "false"
+  format:
+    description: "Report format (json | summary)"
+    required: false
+    default: "json"
+
+outputs:
+  report_path:
+    description: "Path to the generated report (JSON)"
+    value: ${{ steps.run-scan.outputs.report_path }}
+  detections:
+    description: "Number of detections reported by the scan"
+    value: ${{ steps.run-scan.outputs.detections }}
 
 runs:
   using: "composite"
@@ -39,34 +63,74 @@ runs:
       with:
         node-version: "20"
 
-    - name: Install pompelmi CLI
+    - name: Install pompelmi CLI (scoped → unscoped fallback)
       shell: bash
       run: |
         set -euo pipefail
-        # Try scoped first, fallback to unscoped if needed
-        (npm i -g @pompelmi/pompelmi && echo "Installed @pompelmi/pompelmi") || \
-        (npm i -g pompelmi && echo "Installed pompelmi")
+        VER="${{ inputs.cli_version }}"
+        if [[ "$VER" == "latest" || -z "$VER" ]]; then
+          VTAG="@latest"
+        else
+          VTAG="@${VER}"
+        fi
+        # Try scoped first, then unscoped. If global install fails, we will use npx in the next step.
+        (npm i -g "@pompelmi/pompelmi${VTAG}" && echo "Installed @pompelmi/pompelmi${VTAG}") || \
+        (npm i -g "pompelmi${VTAG}" && echo "Installed pompelmi${VTAG}") || true
 
     - name: Run scan
+      id: run-scan
       shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_ARTIFACT: ${{ inputs.artifact }}
+        INPUT_YARA_RULES: ${{ inputs.yara_rules }}
+        INPUT_DEEP_ZIP: ${{ inputs.deep_zip }}
+        INPUT_MAX_DEPTH: ${{ inputs.max_depth }}
+        INPUT_FAIL_ON_DETECT: ${{ inputs.fail_on_detect }}
+        INPUT_OUTPUT: ${{ inputs.output }}
+        INPUT_VERBOSE: ${{ inputs.verbose }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_CLI_VERSION: ${{ inputs.cli_version }}
       run: |
         set -euo pipefail
-        FLAGS=()
-        [[ -n "${{ inputs.path }}"       ]] && FLAGS+=(--path "${{ inputs.path }}")
-        [[ -n "${{ inputs.artifact }}"   ]] && FLAGS+=(--artifact "${{ inputs.artifact }}")
-        [[ -n "${{ inputs.yara_rules }}" ]] && FLAGS+=(--yara "${{ inputs.yara_rules }}")
-        [[ "${{ inputs.deep_zip }}" == "true" ]] && FLAGS+=(--deep-zip)
-        [[ -n "${{ inputs.max_depth }}"  ]] && FLAGS+=(--max-depth "${{ inputs.max_depth }}")
 
-        # Prefer scoped CLI if present; fallback to unscoped
+        # Build command (prefer globally installed CLI, fallback to npx with version)
         if command -v pompelmi >/dev/null 2>&1; then
-          CMD="pompelmi"
+          RUN_CMD="pompelmi"
         else
-          CMD="npx -y @pompelmi/pompelmi@latest || npx -y pompelmi@latest"
+          VER="$INPUT_CLI_VERSION"
+          if [[ "$VER" == "latest" || -z "$VER" ]]; then
+            VTAG="@latest"
+          else
+            VTAG="@${VER}"
+          fi
+          RUN_CMD="npx --yes @pompelmi/pompelmi${VTAG} || npx --yes pompelmi${VTAG}"
         fi
 
-        if [[ "${{ inputs.fail_on_detect }}" == "true" ]]; then
-          bash -lc "$CMD scan ${FLAGS[*]}"
+        OUT_PATH="${INPUT_OUTPUT:-pompelmi-report.json}"
+
+        FLAGS=()
+        [[ -n "${INPUT_PATH}"       ]] && FLAGS+=(--path "${INPUT_PATH}")
+        [[ -n "${INPUT_ARTIFACT}"   ]] && FLAGS+=(--artifact "${INPUT_ARTIFACT}")
+        [[ -n "${INPUT_YARA_RULES}" ]] && FLAGS+=(--yara "${INPUT_YARA_RULES}")
+        [[ "${INPUT_DEEP_ZIP}" == "true" ]] && FLAGS+=(--deep-zip)
+        [[ -n "${INPUT_MAX_DEPTH}"  ]] && FLAGS+=(--max-depth "${INPUT_MAX_DEPTH}")
+        [[ -n "${INPUT_FORMAT}"     ]] && FLAGS+=(--format "${INPUT_FORMAT}")
+        [[ "${INPUT_VERBOSE}" == "true"   ]] && FLAGS+=(--verbose)
+
+        # Run the scan, capture output to file; respect fail_on_detect
+        if [[ "${INPUT_FAIL_ON_DETECT}" == "true" ]]; then
+          bash -lc "$RUN_CMD scan ${FLAGS[*]}" | tee "$OUT_PATH"
         else
-          bash -lc "$CMD scan ${FLAGS[*]}" || true
+          bash -lc "$RUN_CMD scan ${FLAGS[*]}" | tee "$OUT_PATH" || true
         fi
+
+        # Expose outputs (best-effort for detections count)
+        DETECTIONS=0
+        if command -v jq >/dev/null 2>&1; then
+          DETECTIONS=$(jq -r 
+            '(.summary.detections // .detections // .summary.totalFindings // 0)'
+            "$OUT_PATH" 2>/dev/null || echo 0)
+        fi
+        echo "report_path=$OUT_PATH" >> "$GITHUB_OUTPUT"
+        echo "detections=$DETECTIONS" >> "$GITHUB_OUTPUT"
