@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/express-middleware",
-  "version": "0.15.0-dev.30",
+  "version": "0.15.0-dev.31",
   "description": "Express middleware to scan uploads with pompelmi (YARA).",
   "type": "module",
   "main": "dist/index.cjs",
