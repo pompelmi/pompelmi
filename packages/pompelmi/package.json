@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/core",
-  "version": "0.15.0-dev.31",
+  "version": "0.15.0-dev.32",
   "private": "false",
   "description": "Lightweight file scanning core with optional YARA rules (Node + Remote Engine)",
   "license": "MIT",
