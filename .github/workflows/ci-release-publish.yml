@@ -558,7 +558,11 @@ jobs:
   release:
     name: Release from package.json
     needs: [build]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: write  # creare tag e Release
@@ -644,7 +648,11 @@ jobs:
   publish-workspaces:
     name: npm publish (only if version not on npm)
     needs: [build]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -989,7 +997,11 @@ jobs:
   publish-root:
     name: npm publish root (pompelmi)
     needs: [build]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -1087,7 +1099,11 @@ jobs:
   publish-root-gpr:
     name: npm publish root to GitHub Packages
     needs: [build]
-    if: ${{ github.event_name == 'push' && github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
     permissions:
       contents: read
