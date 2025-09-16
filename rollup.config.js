@@ -18,7 +18,7 @@ export default {
       inlineDynamicImports: true,   // 👈 aggiungi questo
     },
     {
-      file: 'dist/pompelmi.cjs.js',
+      file: 'dist/pompelmi.cjs',
       format: 'cjs',
       sourcemap: true,
       inlineDynamicImports: true,   // 👈 e anche qui

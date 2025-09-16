@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "pompelmi-cli",
+          "informationUri": "https://github.com/pompelmi/pompelmi",
+          "rules": [
+            {
+              "id": "demo_contains_virus_literal",
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            },
+            {
+              "id": "pompelmi_test_marker",
+              "defaultConfiguration": {
+                "level": "note"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "demo_contains_virus_literal",
+          "level": "note",
+          "message": {
+            "text": "Detected demo_contains_virus_literal (undefined) [yara]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../../clean.txt"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "pompelmi_test_marker",
+          "level": "note",
+          "message": {
+            "text": "Detected pompelmi_test_marker (undefined) [yara]"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "../../clean.txt"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

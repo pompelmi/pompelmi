@@ -26,4 +26,4 @@ export { definePolicy, DEFAULT_POLICY } from './policy';
 export { createPresetScanner, composeScanners, type PresetName, type PresetOptions } from './presets';
 
 export { scanBytes, scanFile, type ScanOptions } from './scan';
-export * from ./presets;
+export * from "./presets";
