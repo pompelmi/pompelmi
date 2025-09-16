@@ -18,7 +18,7 @@
     "cli-table3": "^0.6.3",
     "fast-glob": "^3.3.2",
     "picocolors": "^1.0.0",
-    "pompelmi": "^0.15.0-dev.34",
+    "pompelmi": "^0.15.1-dev.34",
     "pretty-bytes": "^6.1.1"
   },
   "devDependencies": {

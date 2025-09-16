@@ -18,9 +18,14 @@
 
 
 <p align="center">
-<video src="assets/video.mp4" width="920" autoplay loop muted playsinline controls></video>
+  <img src="assets/video.gif" alt="pompelmi demo" width="920" />
 <br/>
-<strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.</p>
+<br/>
+<strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.
+</p>
+
+assets/video.mp4
+
 
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=pompelmi&color=0a7ea4"></a>
