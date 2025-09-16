@@ -50,7 +50,7 @@ export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Prom
   };
 
   const scanFn = createPresetScanner(preset);
-  const matchesH = await scanFn(input, ctx);
+  const matchesH = await (typeof (scanFn as any) === "function" ? (scanFn as any) : (scanFn as any).scan)(input, ctx);
   const matches = toYaraMatches(matchesH);
 
   const verdict = computeVerdict(matches);

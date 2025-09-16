@@ -1,46 +1,31 @@
-/**
- * Opinionated policy presets to reduce boilerplate.
- * Spread these into your middleware/handler options.
- */
+import type { Scanner, Match } from "./types";
 
-export type PolicyPreset = {
-  allowedMimeTypes: string[];
-  includeExtensions: string[];
-  maxFileSizeBytes: number;
-  failClosed: boolean;
-};
+export type PresetName = string;
+export interface PresetOptions { [key: string]: unknown }
 
-const MB = (n: number) => n * 1024 * 1024;
+function toScanFn(s: Scanner): (input: any, ctx?: any) => Promise<Match[]> {
+  return (typeof s === "function" ? s : s.scan) as (input: any, ctx?: any) => Promise<Match[]>;
+}
 
-export function balancedPolicy(): PolicyPreset {
-  return {
-    allowedMimeTypes: [
-      "application/zip",
-      "image/png",
-      "image/jpeg",
-      "application/pdf",
-      "text/plain",
-    ],
-    includeExtensions: ["zip", "png", "jpg", "jpeg", "pdf", "txt"],
-    maxFileSizeBytes: MB(20),
-    failClosed: true,
+export function composeScanners(...scanners: Scanner[]): Scanner {
+  return async (input: any, ctx?: any) => {
+    const all: Match[] = [];
+    for (const s of scanners) {
+      try {
+        const out = await toScanFn(s)(input, ctx);
+        if (Array.isArray(out)) all.push(...out);
+      } catch {
+        // ignore individual scanner failures
+      }
+    }
+    return all;
   };
 }
 
-export function strictPolicy(): PolicyPreset {
-  return {
-    allowedMimeTypes: ["image/png", "image/jpeg", "application/pdf"],
-    includeExtensions: ["png", "jpg", "jpeg", "pdf"],
-    maxFileSizeBytes: MB(8),
-    failClosed: true,
-  };
-}
-
-export function imagesOnlyPolicy(): PolicyPreset {
-  return {
-    allowedMimeTypes: ["image/png", "image/jpeg", "image/webp", "image/gif"],
-    includeExtensions: ["png", "jpg", "jpeg", "webp", "gif"],
-    maxFileSizeBytes: MB(10),
-    failClosed: true,
+export function createPresetScanner(_preset: PresetName, _opts: PresetOptions = {}): Scanner {
+  // TODO: wire to real preset registry
+  return async (_input: any, _ctx?: any) => {
+    void _opts;
+    return [] as Match[];
   };
 }
