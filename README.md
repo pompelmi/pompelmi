@@ -1,11 +1,12 @@
+<!-- HERO START -->
 
 <p align="center">
 
 <br/>
-<a href="https://www.producthunt.com/products/pompelmi?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-pompelmi" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light&t=1756653468504" alt="pompelmi - free&#0044;&#0032;open&#0045;source&#0032;file&#0032;scanner | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+<a href="https://www.producthunt.com/products/pompelmi?embed=true&utm_source=badge-pompelmi&utm_medium=badge" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light&t=1756653468504" alt="pompelmi - free&#0044;&#0032;open&#0045;source&#0032;file&#0032;scanner | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
 <br/>
   <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
-    <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" height="280" />
+    <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" />
   </a>
   <br/>
   <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
@@ -18,13 +19,10 @@
 
 
 <p align="center">
-  <img src="assets/video.gif" alt="pompelmi demo" width="920" />
-<br/>
-<br/>
+
 <strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.
 </p>
 
-assets/video.mp4
 
 
 <p align="center">
@@ -51,14 +49,16 @@ assets/video.mp4
   <a href="#configuration">Config</a> ·
   <a href="#production-checklist">Production checklist</a> ·
   <a href="#yara-getting-started">YARA</a> ·
-  <a href="#quick-test-eicar">Quick test</a> ·
+  <a href="#quick-test-no-eicar">Quick test</a> ·
   <a href="#security-notes">Security</a> ·
   <a href="#faq">FAQ</a>
 </p>
 
+<!-- HERO END -->
+
 ---
 
-## Overview
+## 🚀 Overview
 
 **pompelmi** scans untrusted file uploads **before** they hit disk. A tiny, TypeScript-first toolkit for Node.js with composable scanners, deep ZIP inspection, and optional signature engines.
 
@@ -68,7 +68,7 @@ assets/video.mp4
 - **Drop-in adapters** — Express, Koa, Fastify, Next.js
 - **Typed & tiny** — modern TS, minimal surface
 
-## Highlights
+## ✨ Highlights
 
 - **Block risky uploads early** — classify uploads as _clean_, _suspicious_, or _malicious_ and stop them at the edge.
 - **Real guards** — extension allow‑list, server‑side MIME sniff (magic bytes), per‑file size caps, and **deep ZIP** traversal with anti‑bomb limits.
@@ -81,7 +81,7 @@ assets/video.mp4
 
 ---
 
-## Installation
+## 🔧 Installation
 
 ```bash
 # core library
@@ -100,7 +100,7 @@ yarn add pompelmi
 
 ---
 
-## Quick‑start
+## ⚡ Quick‑start
 
 **At a glance (policy + scanners)**
 
@@ -182,7 +182,7 @@ export const POST = createNextUploadHandler({ ...policy, scanner });
 
 ---
 
-## GitHub Action
+## 🤖 GitHub Action
 
 Run **pompelmi** in CI to scan repository files or built artifacts.
 
@@ -228,7 +228,7 @@ jobs:
 
 ---
 
-## Adapters
+## 🧩 Adapters
 
 Use the adapter that matches your web framework. All adapters share the same policy options and scanning contract.
 
@@ -245,7 +245,7 @@ Use the adapter that matches your web framework. All adapters share the same pol
 
 ---
 
-## Diagrams
+## 🗺️ Diagrams
 
 ### Upload scanning flow
 ```mermaid
@@ -371,7 +371,7 @@ flowchart LR
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
 All adapters accept a common set of options:
 
@@ -399,7 +399,7 @@ failClosed: true,
 
 ---
 
-## Production checklist
+## ✅ Production checklist
 
 - [ ] **Limit file size** aggressively (`maxFileSizeBytes`).
 - [ ] **Restrict extensions & MIME** to what your app truly needs.
@@ -414,7 +414,7 @@ failClosed: true,
 
 ---
 
-## YARA Getting Started
+## 🧬 YARA Getting Started
 
 YARA lets you detect suspicious or malicious content using pattern‑matching rules.  
 **pompelmi** treats YARA matches as signals that you can map to your own verdicts  
@@ -532,7 +532,7 @@ export const scanner = composeScanners(
 
 Combine YARA with MIME sniffing, ZIP safety limits, and strict size/time caps.
 
-## Quick test (no EICAR)
+## 🧪 Quick test (no EICAR)
 
 Use the examples above, then send a **minimal PDF** that contains risky tokens (this triggers the built‑in heuristics).
 
@@ -559,7 +559,7 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 
 ---
 
-## Security notes
+## 🔒 Security notes
 
 - The library **reads** bytes; it never executes files.
 - YARA detections depend on the **rules you provide**; expect some false positives/negatives.
@@ -568,13 +568,13 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 
 ---
 
-## Star history
+## ⭐ Star history
 
 [![Star History Chart](https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date)](https://star-history.com/#pompelmi/pompelmi&Date)
 
 ---
 
-## FAQ
+## 💬 FAQ
 
 **Do I need YARA?**  
 No. `scanner` is pluggable. The examples use a minimal scanner for clarity; you can call out to a YARA engine or any other detector you prefer.
@@ -590,7 +590,7 @@ Archives are traversed with limits to reduce archive‑bomb risk. Keep your size
 
 ---
 
-## Tests & Coverage
+## 🧪 Tests & Coverage
 
 Run tests locally with coverage:
 
@@ -606,7 +606,7 @@ If you integrate Codecov in CI, upload `coverage/lcov.info` and you can use this
 [![codecov](https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg?flag=core)](https://codecov.io/gh/pompelmi/pompelmi)
 ```
 
-## Contributing
+## 🤝 Contributing
 
 PRs and issues welcome! Start with:
 
@@ -617,6 +617,8 @@ pnpm -r lint
 
 ---
 
-## License
+<p align="right"><a href="#pompelmi">↑ Back to top</a></p>
+
+## 📜 License
 
 [MIT](./LICENSE) © 2025‑present pompelmi contributors
