@@ -34,7 +34,7 @@
     "pompelmi": "workspace:*"
   },
   "dependencies": {
-    "file-type": "^18.7.0",
+    "file-type": "^21.0.0",
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
