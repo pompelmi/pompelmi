@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/express-middleware",
-  "version": "0.15.2",
+  "version": "0.16.0-dev.35",
   "description": "Express middleware to scan uploads with pompelmi (YARA).",
   "type": "module",
   "main": "dist/index.cjs",
@@ -8,16 +8,18 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "dist/index.d.ts",
+      "import": "dist/index.js",
+      "require": "dist/index.cjs"
     }
   },
   "sideEffects": false,
   "files": [
     "dist/**",
     "README.md",
-    "LICENSE*"
+    "LICENSE*",
+    "dist",
+    "package.json"
   ],
   "repository": {
     "type": "git",
@@ -29,7 +31,11 @@
     "dev": "tsup src/index.ts --watch --dts --format esm,cjs",
     "test": "vitest run",
     "lint": "echo \"(opzionale)\"",
-    "demo": "node tests/demo-server.mjs"
+    "demo": "node tests/demo-server.mjs",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "peerDependencies": {
     "express": "^4.18.0 || ^5.0.0",
@@ -48,10 +54,7 @@
     "vitest": "2.1.9"
   },
   "license": "MIT",
-  "dependencies": {
-    "file-type": "^18.7.0",
-    "unzipper": "^0.12.3"
-  },
+  "dependencies": {},
   "publishConfig": {
     "access": "public"
   },

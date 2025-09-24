@@ -7,7 +7,9 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --clean"
+    "build": "tsup src/index.ts --format esm,cjs --clean",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
   "dependencies": {
     "clamscan": "^2.1.1"
@@ -22,6 +24,22 @@
   "files": [
     "dist/**",
     "README.md",
-    "LICENSE*"
-  ]
+    "LICENSE*",
+    "dist",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "types": "dist/index.d.ts",
+      "import": "dist/index.js",
+      "require": "dist/index.cjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

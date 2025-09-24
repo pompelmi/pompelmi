@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/core",
-  "version": "0.15.2",
+  "version": "0.16.0-dev.35",
   "private": "false",
   "description": "Lightweight file scanning core with optional YARA rules (Node + Remote Engine)",
   "license": "MIT",
@@ -11,7 +11,10 @@
     "node": ">=18.17"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE*",
+    "package.json"
   ],
   "type": "module",
   "main": "dist/index.cjs",
@@ -22,12 +25,21 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
+    },
+    ".": {
+      "types": "dist/index.d.ts",
+      "import": "dist/index.js",
+      "require": "dist/index.cjs"
     }
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --clean",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",
@@ -38,5 +50,6 @@
   },
   "dependencies": {
     "tar-stream": "^3.1.7"
-  }
+  },
+  "sideEffects": false
 }

@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/ui-react",
-  "version": "0.15.2",
+  "version": "0.16.0-dev.35",
   "description": "UI components for integrating file upload and malware scanning with pompelmi.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -8,10 +8,16 @@
   "files": [
     "dist/**",
     "README.md",
-    "LICENSE*"
+    "LICENSE*",
+    "dist",
+    "package.json"
   ],
   "scripts": {
-    "build": "rimraf dist && tsup src/index.ts --format esm,cjs --dts"
+    "build": "rimraf dist && tsup src/index.ts --format esm,cjs --dts",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "peerDependencies": {
     "react": "^18 || ^19",
@@ -35,5 +41,11 @@
     },
     "./package.json": "./package.json"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

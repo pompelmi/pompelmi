@@ -8,7 +8,10 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE*",
+    "package.json"
   ],
   "sideEffects": false,
   "engines": {
@@ -16,7 +19,11 @@
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs",
-    "dev": "tsup src/index.ts --dts --format esm,cjs --watch"
+    "dev": "tsup src/index.ts --dts --format esm,cjs --watch",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "peerDependencies": {
     "pompelmi": "*"
@@ -24,5 +31,15 @@
   "devDependencies": {
     "tsup": "^8.5.0",
     "typescript": "^5.9.2"
+  },
+  "exports": {
+    ".": {
+      "types": "dist/index.d.ts",
+      "import": "dist/index.js",
+      "require": "dist/index.cjs"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

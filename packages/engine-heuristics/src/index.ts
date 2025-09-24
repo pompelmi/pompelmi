@@ -104,4 +104,3 @@ export function composeScanners(scanners: AnyScanner[]): AnyScanner {
 
 // Ready-to-use instantiated scanner
 export const CommonHeuristicsScanner = createHeuristicsScanner();
-export default CommonHeuristicsScanner;

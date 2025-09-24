@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.15.2",
+  "version": "0.16.0-dev.35",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -40,53 +40,48 @@
     "predocs:deploy": "npm run docs:build",
     "docs:deploy": "gh-pages -d docs -b gh-pages",
     "yara:check": "node scripts/yara-quick-check-cli.mjs",
-    "build:core": "pnpm -r --filter \"./packages/**\" build && pnpm -w run build"
+    "build:core": "pnpm -r --filter \"./packages/**\" build && pnpm -w run build",
+    "preview": "npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit",
+    "smoke": "node scripts/smoke.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "repo:doctor": "pnpm install --frozen-lockfile && pnpm -r --if-present build && pnpm -r --if-present test && npm run -s preview || true && node scripts/smoke.mjs && node scripts/e2e.mjs || true",
+    "audit:deps": "depcheck --skip-missing true || true",
+    "audit:code": "knip --reporter compact || true",
+    "audit:exports": "ts-prune -p tsconfig.json || true",
+    "repo:audit": "node scripts/audit.mjs"
   },
   "license": "MIT",
   "devDependencies": {
-    "@astrojs/mdx": "^4.3.3",
-    "@astrojs/sitemap": "^3.4.2",
-    "@astrojs/starlight": "^0.35.2",
-    "@astrojs/tailwind": "^6.0.2",
-    "@babel/core": "^7.28.0",
-    "@babel/preset-env": "^7.28.0",
-    "@babel/preset-typescript": "^7.27.1",
-    "@rollup/plugin-babel": "^6.0.4",
+    "@biomejs/biome": "^2.2.4",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
-    "@types/koa": "^2.15.0",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.8",
-    "@types/react-dom": "^19.1.6",
-    "@types/supertest": "^6.0.3",
     "@types/unzipper": "^0.10.11",
     "@vitest/coverage-v8": "^2",
     "cors": "^2.8.5",
+    "depcheck": "^1.4.7",
     "express": "^5.1.0",
     "gh-pages": "^6.3.0",
+    "knip": "^5.64.0",
     "multer": "^2.0.2",
     "react": "^18.0.0",
-    "react-dom": "^18.0.0",
     "rollup": "^4.x",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "supertest": "^7.0.0",
+    "ts-prune": "^0.10.3",
     "tslib": "^2.8.1",
     "tsup": "^8",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
-    "vitest": "2.1.9",
-    "yazl": "^3.3.1"
+    "vitest": "2.1.9"
   },
   "dependencies": {
-    "file-type": "^21.0.0",
-    "libyara-wasm": "^1.2.1",
-    "rollup": "^4.45.1",
-    "wasm-feature-detect": "^1.8.0",
-    "yara": "npm:@automattic/yara@^2.6.0-beta.2"
+    "rollup": "^4.45.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
@@ -97,13 +92,17 @@
   },
   "exports": {
     ".": {
-      "require": "./dist/pompelmi.cjs",
+      "types": "./dist/index.d.ts",
       "import": "./dist/pompelmi.esm.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/pompelmi.cjs"
     }
   },
   "files": [
-    "dist/"
+    "dist/",
+    "dist",
+    "README.md",
+    "LICENSE*",
+    "package.json"
   ],
   "keywords": [
     "security",
@@ -135,12 +134,16 @@
     "example": "examples"
   },
   "author": "",
-  "private": false,
-  "workspaces": [
-    "packages/*"
-  ],
+  "private": true,
   "packageManager": "pnpm@9.12.0",
   "resolutions": {
     "process": "0.11.10"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

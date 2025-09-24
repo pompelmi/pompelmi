@@ -1,0 +1,41 @@
+{
+  "entry": [
+    "src/index.ts",
+    "src/browser-index.ts",
+    "packages/*/src/index.ts"
+  ],
+  "project": [
+    "src/**/*.ts",
+    "packages/*/src/**/*.ts",
+    "!**/{test,tests}/**",
+    "!examples/**",
+    "!website/**",
+    "!site/**",
+    "!scripts/**",
+    "!**/*.d.ts"
+  ],
+  "ignore": [
+    "**/{test,tests}/**",
+    "examples/**",
+    "scripts/**",
+    "website/**",
+    "site/**",
+    "packages/engine-clamav/src/types.d.ts",
+    "packages/engine-heuristics/src/internal/compose.ts"
+  ],
+  "ignoreDependencies": [
+    "@astrojs/.+",
+    "@babel/.+",
+    "react-dom",
+    "supertest",
+    "rollup-plugin-peer-deps-external",
+    "tsup",
+    "yazl",
+    "@types/react-dom",
+    "@types/supertest",
+    "@types/koa",
+    "@vitest/coverage-v8",
+    "rollup",
+    "@biomejs/biome"
+  ]
+}

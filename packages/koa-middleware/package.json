@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/koa-middleware",
-  "version": "0.15.2",
+  "version": "0.16.0-dev.35",
   "description": "Koa middleware to scan uploads with pompelmi (YARA), MIME sniffing and ZIP anti-bomb.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -8,21 +8,27 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "types": "dist/index.d.ts",
+      "import": "dist/index.js",
+      "require": "dist/index.cjs"
     }
   },
   "files": [
     "dist/**",
     "README.md",
-    "LICENSE*"
+    "LICENSE*",
+    "dist",
+    "package.json"
   ],
   "sideEffects": false,
   "scripts": {
     "build": "tsup --clean --dts --format esm,cjs",
     "dev": "tsup --watch --dts --format esm,cjs",
-    "demo": "node tests/demo-server.mjs"
+    "demo": "node tests/demo-server.mjs",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "peerDependencies": {
     "@koa/multer": "^4.0.0",
@@ -31,10 +37,7 @@
     "pompelmi": "workspace:*",
     "multer": "^2.0.2"
   },
-  "dependencies": {
-    "file-type": "^18.7.0",
-    "unzipper": "^0.12.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@koa/multer": "^4.0.0",
     "@koa/router": "^12.0.2",

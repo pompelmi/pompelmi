@@ -8,15 +8,15 @@
     "pompelmi": "./bin/pompelmi.mjs"
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup --no-external pompelmi",
     "dev": "tsup --watch",
-    "start": "node dist/index.js --help"
+    "start": "node dist/index.js --help",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
   "dependencies": {
     "cac": "^6.7.14",
     "chokidar": "^3.6.0",
-    "cli-table3": "^0.6.3",
-    "fast-glob": "^3.3.2",
     "picocolors": "^1.0.0",
     "pompelmi": "workspace:*",
     "pretty-bytes": "^6.1.1"
@@ -28,6 +28,21 @@
   "type": "module",
   "files": [
     "dist",
-    "bin"
-  ]
+    "bin",
+    "README.md",
+    "LICENSE*",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs"
+    }
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

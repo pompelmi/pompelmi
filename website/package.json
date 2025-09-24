@@ -28,6 +28,18 @@
     "tailwindcss": "^3.4.17",
     "tsup": "8.5.0",
     "unist-util-visit": "^5.0.0",
-    "vitest": "2.1.9"
+    "vitest": "2.1.9",
+    "@astrojs/mdx": "^4.3.3",
+    "@babel/core": "^7.28.0",
+    "@babel/preset-env": "^7.28.0",
+    "@babel/preset-typescript": "^7.27.1",
+    "@rollup/plugin-babel": "^6.0.4",
+    "react-dom": "^18.0.0",
+    "@types/react-dom": "^19.1.6",
+    "rollup-plugin-peer-deps-external": "^2.2.4",
+    "supertest": "^7.0.0",
+    "@types/supertest": "^6.0.3",
+    "@types/koa": "^2.15.0",
+    "yazl": "^3.3.1"
   }
 }

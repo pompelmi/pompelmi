@@ -40,3 +40,9 @@ esempi_promozione/
 # Block EICAR test artifacts
 EICAR*
 eicar*
+# pompelmi hygiene
+.DS_Store
+tmp-*
+tmp-yara-int
+*.log
+coverage/
