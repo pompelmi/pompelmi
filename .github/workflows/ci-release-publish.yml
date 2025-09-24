@@ -226,7 +226,8 @@ jobs:
       id-token: write
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Ensure pnpm-workspace.yaml
         run: |
@@ -568,7 +569,8 @@ jobs:
       contents: write  # creare tag e Release
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Read version from package.json
         id: pkg
@@ -661,7 +663,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Detect changed paths (workspaces)
         id: changes
@@ -1010,7 +1013,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -1050,6 +1054,11 @@ jobs:
         run: |
           echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Read root private flag
+        id: rootpriv
+        run: |
+          PRIV=$(node -p "Boolean(require('./package.json').private)")
+          echo "private=${PRIV}" >> "$GITHUB_OUTPUT"
 
       - name: Decide publish (skip only if exact version exists)
         id: rootdecision
@@ -1066,9 +1075,13 @@ jobs:
             echo "exists=false" >> $GITHUB_OUTPUT
             echo "Version not on npm: $NAME@$VER — will publish"
           fi
+      - name: Stop (root is private)
+        if: steps.rootpriv.outputs.private == 'true'
+        run: |
+          echo 'Root package.json has "private": true — skipping npm publish.'
 
       - name: Publish root to npm
-        if: steps.rootdecision.outputs.exists == 'false'
+        if: steps.rootdecision.outputs.exists == 'false' && steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
@@ -1078,7 +1091,7 @@ jobs:
           echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }}"
 
       - name: Ensure "latest" tag matches root version
-        if: steps.rootdecision.outputs.exists == 'false'
+        if: steps.rootdecision.outputs.exists == 'false' && steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
@@ -1112,7 +1125,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -1140,6 +1154,11 @@ jobs:
         run: |
           echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
           echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Read root private flag
+        id: rootpriv_gpr
+        run: |
+          PRIV=$(node -p "Boolean(require('./package.json').private)")
+          echo "private=${PRIV}" >> "$GITHUB_OUTPUT"
 
       - name: Ensure repository field matches this repo (git+https) for GPR
         env:
@@ -1182,9 +1201,13 @@ jobs:
           fi
           echo "exists=$EXISTS" >> $GITHUB_OUTPUT
           echo "exists=$EXISTS"
+      - name: Stop (root is private) (GPR)
+        if: steps.rootpriv_gpr.outputs.private == 'true'
+        run: |
+          echo 'Root package.json has "private": true — skipping GitHub Packages publish.'
 
       - name: Publish to GitHub Packages
-        if: steps.check_gpr.outputs.exists == 'false'
+        if: steps.check_gpr.outputs.exists == 'false' && steps.rootpriv_gpr.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -1202,7 +1225,7 @@ jobs:
           echo "Published ${{ steps.rootpkg_gpr.outputs.name }}@${{ steps.rootpkg_gpr.outputs.version }} to GitHub Packages"
 
       - name: Make GPR package public (retry + PAT fallback)
-        if: steps.check_gpr.outputs.exists == 'false'
+        if: steps.check_gpr.outputs.exists == 'false' && steps.rootpriv_gpr.outputs.private == 'false'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -1285,7 +1308,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
+        with:
+          fetch-depth: 0
 
       - name: Read engine version from package.json
         id: engine
