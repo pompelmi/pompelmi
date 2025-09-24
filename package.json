@@ -76,12 +76,12 @@
     "ts-prune": "^0.10.3",
     "tslib": "^2.8.1",
     "tsup": "^8",
-    "tsx": "^4.20.3",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "vitest": "2.1.9"
   },
   "dependencies": {
-    "rollup": "^4.45.1"
+    "rollup": "^4.52.2"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
