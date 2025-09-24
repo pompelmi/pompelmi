@@ -40,7 +40,7 @@
     "predocs:deploy": "npm run docs:build",
     "docs:deploy": "gh-pages -d docs -b gh-pages",
     "yara:check": "node scripts/yara-quick-check-cli.mjs",
-    "build:core": "pnpm -r --filter \"./packages/**\" build && pnpm -w run build",
+    "build:core": "pnpm -r --filter '!./examples/*' --if-present build",
     "preview": "npm pack --dry-run",
     "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
     "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit",

@@ -7,5 +7,5 @@ export default defineConfig({
   clean: true,
   outExtension() { return { js: '.mjs' } },
   banner: { js: '#!/usr/bin/env node' },
-  noExternal: ['pretty-bytes'] // evita require() ESM->CJS warning
+  noExternal: ['pompelmi'],
 })
