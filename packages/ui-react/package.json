@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/ui-react",
-  "version": "0.16.0-dev.35",
+  "version": "0.16.0-dev.36",
   "description": "UI components for integrating file upload and malware scanning with pompelmi.",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -10,7 +10,8 @@
     "README.md",
     "LICENSE*",
     "dist",
-    "package.json"
+    "package.json",
+    "CHANGELOG*"
   ],
   "scripts": {
     "build": "rimraf dist && tsup src/index.ts --format esm,cjs --dts",
@@ -34,7 +35,6 @@
   },
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
       "import": "./dist/index.mjs",
       "require": "./dist/index.js",
       "default": "./dist/index.mjs"

@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.16.0-dev.35-dev.6",
+  "version": "0.16.0-dev.36-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -8,7 +8,6 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "dist/index.d.ts",
       "import": "dist/index.mjs",
       "require": "dist/index.cjs"
     }
@@ -23,7 +22,8 @@
     "README.md",
     "LICENSE*",
     "dist",
-    "package.json"
+    "package.json",
+    "CHANGELOG*"
   ],
   "publishConfig": {
     "access": "public",

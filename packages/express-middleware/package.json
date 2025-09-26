@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/express-middleware",
-  "version": "0.16.0-dev.35",
+  "version": "0.16.0-dev.36",
   "description": "Express middleware to scan uploads with pompelmi (YARA).",
   "type": "module",
   "main": "dist/index.cjs",
@@ -8,7 +8,6 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
-      "types": "dist/index.d.ts",
       "import": "dist/index.js",
       "require": "dist/index.cjs"
     }
@@ -19,7 +18,8 @@
     "README.md",
     "LICENSE*",
     "dist",
-    "package.json"
+    "package.json",
+    "CHANGELOG*"
   ],
   "repository": {
     "type": "git",

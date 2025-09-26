@@ -31,7 +31,8 @@
     "bin",
     "README.md",
     "LICENSE*",
-    "package.json"
+    "package.json",
+    "CHANGELOG*"
   ],
   "exports": {
     ".": {
