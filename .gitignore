@@ -46,3 +46,7 @@ tmp-*
 tmp-yara-int
 *.log
 coverage/
+
+# tarballs
+*.tgz
+dist-tarballs/
