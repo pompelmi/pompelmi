@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/koa-middleware",
-  "version": "0.16.0-dev.36",
+  "version": "0.16.0-dev.37",
   "description": "Koa middleware to scan uploads with pompelmi (YARA), MIME sniffing and ZIP anti-bomb.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -58,5 +58,6 @@
   "engines": {
     "node": ">=18.17"
   },
-  "private": false
+  "private": false,
+  "typings": "dist/index.d.ts"
 }

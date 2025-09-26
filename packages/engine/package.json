@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.16.0-dev.36-dev.6",
+  "version": "0.16.0-dev.37-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -61,5 +61,6 @@
   "engines": {
     "node": ">=18"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "typings": "dist/index.d.ts"
 }

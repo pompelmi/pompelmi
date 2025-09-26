@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/core",
-  "version": "0.16.0-dev.36",
+  "version": "0.16.0-dev.37",
   "private": "false",
   "description": "Lightweight file scanning core with optional YARA rules (Node + Remote Engine)",
   "license": "MIT",
@@ -21,11 +21,6 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
-    "'.'": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    },
     ".": {
       "import": "dist/index.js",
       "require": "dist/index.cjs"
@@ -50,5 +45,6 @@
   "dependencies": {
     "tar-stream": "^3.1.7"
   },
-  "sideEffects": false
+  "sideEffects": false,
+  "typings": "dist/index.d.ts"
 }
