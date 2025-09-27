@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.cjs",
   "module": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",
     "preview": "npm pack --dry-run",
@@ -31,9 +31,9 @@
   ],
   "exports": {
     ".": {
-      "import": "dist/index.js",
-      "require": "dist/index.cjs",
-      "default": "./dist/index.js"
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
     }
   },
   "sideEffects": false,
