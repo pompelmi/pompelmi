@@ -50,3 +50,7 @@ coverage/
 # tarballs
 *.tgz
 dist-tarballs/
+
+# tarballs
+*.tgz
+dist-tarballs/
