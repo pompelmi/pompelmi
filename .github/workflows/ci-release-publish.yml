@@ -920,6 +920,10 @@ jobs:
             ~/.pnpm-store
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
+      - name: Validate tarballs (pack-check)
+
+        run: pnpm run pack:strict
+
       - name: Publish only if version not on npm
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -1079,6 +1083,10 @@ jobs:
         if: steps.rootpriv.outputs.private == 'true'
         run: |
           echo 'Root package.json has "private": true — skipping npm publish.'
+
+      - name: Validate root tarball (pack-check)
+
+        run: pnpm run pack:strict
 
       - name: Publish root to npm
         if: steps.rootdecision.outputs.exists == 'false' && steps.rootpriv.outputs.private == 'false'

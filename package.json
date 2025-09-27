@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.16.0-dev.39",
+  "version": "0.16.0-dev.40",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -52,7 +52,8 @@
     "audit:exports": "ts-prune -p tsconfig.json || true",
     "repo:audit": "node scripts/audit.mjs",
     "pack:check": "node scripts/pack-check.mjs",
-    "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run"
+    "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run",
+    "pack:strict": "node scripts/pack-check.mjs --strict"
   },
   "license": "MIT",
   "devDependencies": {
