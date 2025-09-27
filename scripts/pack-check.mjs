@@ -12,6 +12,8 @@ const allowedGlobs = [
   /^LICENSE(\..*)?$/i,
   /^CHANGELOG(\..*)?$/i,
   /^dist\/.*/i
+  /^bin\/.*/i,
+
 ];
 const bannedGlobs = [
   /^src\/.*/i,

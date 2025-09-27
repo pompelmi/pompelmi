@@ -7,7 +7,7 @@
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --clean",
+    "build": "tsup --dts src/index.ts --format esm,cjs --clean",
     "preview": "npm pack --dry-run",
     "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
