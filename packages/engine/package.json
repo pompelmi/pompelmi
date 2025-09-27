@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/engine",
-  "version": "0.16.0-dev.37-dev.6",
+  "version": "0.16.0-dev.38-dev.6",
   "private": false,
   "type": "module",
   "main": "dist/index.cjs",
@@ -27,7 +27,8 @@
   ],
   "publishConfig": {
     "access": "public",
-    "tag": "dev"
+    "tag": "dev",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup src/index.ts --format esm,cjs --dts --clean",

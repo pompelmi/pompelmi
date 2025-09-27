@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/express-middleware",
-  "version": "0.16.0-dev.37",
+  "version": "0.16.0-dev.38",
   "description": "Express middleware to scan uploads with pompelmi (YARA).",
   "type": "module",
   "main": "dist/index.cjs",
@@ -24,7 +24,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/pompelmi/pompelmi.git",
-    "directory": "packages/engine"
+    "directory": "packages/express-middleware"
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --clean --external unzipper,@aws-sdk/client-s3",
@@ -56,7 +56,8 @@
   "license": "MIT",
   "dependencies": {},
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "engines": {
     "node": ">=18.17"

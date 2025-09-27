@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/fastify-plugin",
-  "version": "0.16.0-dev.37",
+  "version": "0.16.0-dev.38",
   "description": "Fastify upload scanning plugin for pompelmi (YARA) with MIME sniffing and ZIP limits.",
   "type": "module",
   "main": "dist/index.cjs",
@@ -24,7 +24,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/pompelmi/pompelmi.git",
-    "directory": "packages/engine"
+    "directory": "packages/fastify-plugin"
   },
   "scripts": {
     "build": "tsup src/index.ts --dts --format esm,cjs --clean --external unzipper,@aws-sdk/client-s3",
@@ -52,7 +52,8 @@
   "license": "MIT",
   "private": false,
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "engines": {
     "node": ">=18.17"

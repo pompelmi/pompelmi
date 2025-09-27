@@ -44,6 +44,12 @@
     "node": ">=18"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi",
+    "directory": "packages/cli"
   }
 }

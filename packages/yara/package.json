@@ -40,7 +40,13 @@
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
-  "typings": "dist/index.d.ts"
+  "typings": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi",
+    "directory": "packages/yara"
+  }
 }
