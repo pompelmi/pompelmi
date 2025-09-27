@@ -81,7 +81,7 @@
     "tsup": "^8",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
-    "vitest": "2.1.9"
+    "vitest": "3.2.4"
   },
   "dependencies": {
     "rollup": "^4.45.1"
