@@ -1,3 +1,4 @@
+/// <reference path="./types.d.ts" />
 import * as os from 'node:os';
 import * as fs from 'node:fs/promises';
 import { randomBytes } from 'node:crypto';
