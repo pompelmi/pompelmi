@@ -20,24 +20,12 @@ importers:
 
   .:
     dependencies:
-      file-type:
-        specifier: ^21.0.0
-        version: 21.0.0
-      libyara-wasm:
-        specifier: ^1.2.1
-        version: 1.2.1
       react-dom:
         specifier: ^18.0.0 || ^19.0.0
         version: 19.1.1(react@18.3.1)
       rollup:
         specifier: ^4.45.1
         version: 4.49.0
-      wasm-feature-detect:
-        specifier: ^1.8.0
-        version: 1.8.0
-      yara:
-        specifier: npm:@automattic/yara@^2.6.0-beta.2
-        version: '@automattic/yara@2.6.0-beta.2'
     optionalDependencies:
       '@litko/yara-x':
         specifier: ^0.2.1
@@ -198,12 +186,6 @@ importers:
       chokidar:
         specifier: ^3.6.0
         version: 3.6.0
-      cli-table3:
-        specifier: ^0.6.3
-        version: 0.6.5
-      fast-glob:
-        specifier: ^3.3.2
-        version: 3.3.3
       picocolors:
         specifier: ^1.0.0
         version: 1.1.1
@@ -236,8 +218,8 @@ importers:
         specifier: ^3.2.0
         version: 3.2.0
       zod:
-        specifier: ^3.23.8
-        version: 3.25.76
+        specifier: ^4.1.11
+        version: 4.1.11
     devDependencies:
       '@types/node':
         specifier: ^20.19.11
@@ -265,7 +247,7 @@ importers:
         version: 3.3.1
       zod-to-json-schema:
         specifier: ^3.23.5
-        version: 3.24.6(zod@3.25.76)
+        version: 3.24.6(zod@4.1.11)
 
   packages/engine-clamav:
     dependencies:
@@ -330,13 +312,6 @@ importers:
         version: 2.1.9(@types/node@24.3.0)
 
   packages/express-middleware:
-    dependencies:
-      file-type:
-        specifier: ^18.7.0
-        version: 18.7.0
-      unzipper:
-        specifier: ^0.12.3
-        version: 0.12.3
     devDependencies:
       '@types/express':
         specifier: ^4.17.21
@@ -404,13 +379,6 @@ importers:
         version: 2.1.9(@types/node@20.19.11)
 
   packages/koa-middleware:
-    dependencies:
-      file-type:
-        specifier: ^18.7.0
-        version: 18.7.0
-      unzipper:
-        specifier: ^0.12.3
-        version: 0.12.3
     devDependencies:
       '@koa/multer':
         specifier: ^4.0.0
@@ -1303,10 +1271,6 @@ packages:
 
   '@chevrotain/utils@11.0.3':
     resolution: {integrity: sha512-YslZMgtJUyuMbZ+aKvfF3x1f5liK4mWNxghFRv7jqRR9C3R3fAOGTTKvxXDa2Y1s9zSbcpuO0cAxDYsc9SrXoQ==}
-
-  '@colors/colors@1.5.0':
-    resolution: {integrity: sha512-ooWCrlZP11i8GImSjTHYHLkvFDP48nS4+204nGb1RiX/WXYHmJA2III9/e2DWVabCESdW7hBAEzHRqUn9OUVvQ==}
-    engines: {node: '>=0.1.90'}
 
   '@ctrl/tinycolor@4.1.0':
     resolution: {integrity: sha512-WyOx8cJQ+FQus4Mm4uPIZA64gbk3Wxh0so5Lcii0aJifqwoVOlfFtorjLE0Hen4OYyHZMXDWqMmaQemBhgxFRQ==}
@@ -3117,10 +3081,6 @@ packages:
   cli-boxes@3.0.0:
     resolution: {integrity: sha512-/lzGpEWL/8PfI0BmBOPRwp0c/wFNX1RdUML3jK/RcSBA9T8mZDdQpqYBKtCFTOfQbwPqWEOpjqW+Fnayc0969g==}
     engines: {node: '>=10'}
-
-  cli-table3@0.6.5:
-    resolution: {integrity: sha512-+W/5efTR7y5HRD7gACw9yQjqMVvEMLBHmboM/kPWam+H+Hmyrgjh6YncVKK122YZkXrLudzTuAukUw9FnMf7IQ==}
-    engines: {node: 10.* || >= 12.*}
 
   client-only@0.0.1:
     resolution: {integrity: sha512-IV3Ou0jSMzZrd3pZ48nLkT9DA7Ag1pnPzaiQhpW7c3RbcqqzvzzVu+L8gfqMp/8IM2MQtSiqaCxrrcfu8I8rMA==}
@@ -6407,6 +6367,9 @@ packages:
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
+  zod@4.1.11:
+    resolution: {integrity: sha512-WPsqwxITS2tzx1bzhIKsEs19ABD5vmCVa4xBo2tq/SrV4RNZtfws1EnCWQXM6yh8bD08a1idvkB5MZSBiZsjwg==}
+
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
 
@@ -7333,9 +7296,6 @@ snapshots:
   '@chevrotain/types@11.0.3': {}
 
   '@chevrotain/utils@11.0.3': {}
-
-  '@colors/colors@1.5.0':
-    optional: true
 
   '@ctrl/tinycolor@4.1.0': {}
 
@@ -9124,12 +9084,6 @@ snapshots:
   clamscan@2.4.0: {}
 
   cli-boxes@3.0.0: {}
-
-  cli-table3@0.6.5:
-    dependencies:
-      string-width: 4.2.3
-    optionalDependencies:
-      '@colors/colors': 1.5.0
 
   client-only@0.0.1: {}
 
@@ -11733,18 +11687,11 @@ snapshots:
 
   pompelmi@file:(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
     dependencies:
-      file-type: 21.0.0
-      libyara-wasm: 1.2.1
       react: 19.1.1
       react-dom: 19.1.1(react@19.1.1)
       rollup: 4.49.0
-      wasm-feature-detect: 1.8.0
-      yara: '@automattic/yara@2.6.0-beta.2'
     optionalDependencies:
       '@litko/yara-x': 0.2.1
-    transitivePeerDependencies:
-      - encoding
-      - supports-color
 
   postcss-import@15.1.0(postcss@8.5.6):
     dependencies:
@@ -13209,6 +13156,10 @@ snapshots:
     dependencies:
       zod: 3.25.76
 
+  zod-to-json-schema@3.24.6(zod@4.1.11):
+    dependencies:
+      zod: 4.1.11
+
   zod-to-ts@1.2.0(typescript@5.9.2)(zod@3.25.76):
     dependencies:
       typescript: 5.9.2
@@ -13219,5 +13170,7 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.1.11: {}
 
   zwitch@2.0.4: {}
