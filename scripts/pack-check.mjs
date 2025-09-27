@@ -1,11 +1,11 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, existsSync } from "node:fs"; import { existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 const STRICT = process.argv.includes("--strict");
 const ROOT = process.cwd();
-const RESTRICT = (process.env.CHECK_DIRS||"").split(",").filter(Boolean);
 const PKG_DIR = join(ROOT, "packages");
+const RESTRICT = (process.env.CHECK_DIRS || "").split(",").filter(Boolean);
 
 const allowedGlobs = [
   /^package\.json$/i,
@@ -41,8 +41,7 @@ function listWorkspaceDirs() {
       if (existsSync(join(dir, "package.json"))) dirs.push(dir);
     }
   }
-  if (RESTRICT.length) return dirs.filter(d=>RESTRICT.includes(d));
-  return dirs;
+  return RESTRICT.length ? dirs.filter(d=>RESTRICT.includes(d)) : dirs;
 }
 
 function npmPackDry(dir) {
@@ -52,15 +51,19 @@ function npmPackDry(dir) {
 }
 
 function checkOne(dir, asLabel=null) {
-  // Skip if neither dist/ nor bin/ exists on disk (not built in this job)
-  try {
-    const hasDist = existsSync(require('node:path').join(dir,'dist'));
-    const hasBin  = existsSync(require('node:path').join(dir,'bin'));
-    if (!hasDist && !hasBin) return { skipped: true };
-  } catch {}
   const pkg = readJson(join(dir, "package.json"));
   if (!pkg || !pkg.name || pkg.private) return { skipped: true };
   if (!(pkg.name.startsWith("@pompelmi/") || pkg.name === "pompelmi")) return { skipped: true };
+
+  // only evaluate exports when dist/ exists on disk
+  let hasDist=false, hasBin=false;
+  try {
+    hasDist = existsSync(join(dir, "dist"));
+    hasBin  = existsSync(join(dir, "bin"));
+  } catch {}
+
+  // if neither dist/ nor bin/ exists, this package hasn't been built in this job → skip
+  if (!hasDist && !hasBin) return { skipped: true };
 
   const result = npmPackDry(dir);
   const files = (result.files || []).map(f => f.path || f.name).sort();
@@ -79,7 +82,8 @@ function checkOne(dir, asLabel=null) {
     if (!isAllowed(f)) problems.push(isBanned(f) ? `banned file included: ${f}` : `unexpected file included: ${f}`);
   }
 
-  if (pkg.exports && typeof pkg.exports === "object" && pkg.exports["."]) {
+  // Only enforce exports targets when dist/ is actually present
+  if (hasDist && pkg.exports && typeof pkg.exports === "object" && pkg.exports["."]) {
     const dot = pkg.exports["."];
     const targets = Object.values(dot).filter(v => typeof v === "string");
     const distTargets = targets
@@ -104,6 +108,7 @@ function checkOne(dir, asLabel=null) {
   }
 }
 
+// workspaces
 let bad=0, checked=0;
 for (const d of listWorkspaceDirs()) {
   const res = checkOne(d);
@@ -111,11 +116,13 @@ for (const d of listWorkspaceDirs()) {
   checked++;
   if (res.ok === false) bad++;
 }
+// root (only if public)
 const rootPkg = readJson(join(ROOT, "package.json"));
 if (rootPkg && rootPkg.name && !rootPkg.private) {
   const res = checkOne(ROOT, `${rootPkg.name}@${rootPkg.version} (root)`);
   checked++;
   if (res.ok === false) bad++;
 }
+
 console.log(`\nSummary: ${bad ? "⚠️ issues found" : "✅ all good"} (checked ${checked} packages)`);
 process.exit(STRICT && bad ? 1 : 0);

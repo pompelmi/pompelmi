@@ -953,6 +953,49 @@ jobs:
           fi
 
 
+      - name: Build dirs for pack-check (changed)
+
+
+        if: ${{ steps.pcdirs.outputs.dirs != '' }}
+
+
+        shell: bash
+
+
+        run: |
+
+
+          set -euo pipefail
+
+
+          IFS=',' read -ra D <<< "${{ steps.pcdirs.outputs.dirs }}"
+
+
+          for d in "${D[@]}"; do
+
+
+            if [ -d "$d" ]; then
+
+
+              pnpm -C "$d" --if-present run build || pnpm -r --filter "$d" --if-present run build
+
+
+            fi
+
+
+          done
+
+
+      - name: Build for pack-check (fallback all @pompelmi/*)
+
+
+        if: ${{ steps.pcdirs.outputs.dirs == '' }}
+
+
+        run: pnpm -r --filter '@pompelmi/*' --if-present run build
+
+
+
       - name: Validate tarballs (pack-check)
         env:
           CHECK_DIRS: ${{ steps.pcdirs.outputs.dirs }}
