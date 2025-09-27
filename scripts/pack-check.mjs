@@ -1,9 +1,10 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { readdirSync, readFileSync, existsSync } from "node:fs"; import { existsSync } from "node:fs";
 import { join } from "node:path";
 
 const STRICT = process.argv.includes("--strict");
 const ROOT = process.cwd();
+const RESTRICT = (process.env.CHECK_DIRS||"").split(",").filter(Boolean);
 const PKG_DIR = join(ROOT, "packages");
 
 const allowedGlobs = [
@@ -40,6 +41,7 @@ function listWorkspaceDirs() {
       if (existsSync(join(dir, "package.json"))) dirs.push(dir);
     }
   }
+  if (RESTRICT.length) return dirs.filter(d=>RESTRICT.includes(d));
   return dirs;
 }
 
@@ -50,6 +52,12 @@ function npmPackDry(dir) {
 }
 
 function checkOne(dir, asLabel=null) {
+  // Skip if neither dist/ nor bin/ exists on disk (not built in this job)
+  try {
+    const hasDist = existsSync(require('node:path').join(dir,'dist'));
+    const hasBin  = existsSync(require('node:path').join(dir,'bin'));
+    if (!hasDist && !hasBin) return { skipped: true };
+  } catch {}
   const pkg = readJson(join(dir, "package.json"));
   if (!pkg || !pkg.name || pkg.private) return { skipped: true };
   if (!(pkg.name.startsWith("@pompelmi/") || pkg.name === "pompelmi")) return { skipped: true };

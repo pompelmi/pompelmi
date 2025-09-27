@@ -920,8 +920,42 @@ jobs:
             ~/.pnpm-store
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
-      - name: Validate tarballs (pack-check)
+      - name: Derive pack-check dirs
 
+        id: pcdirs
+
+        shell: bash
+
+        run: |
+
+          set -euo pipefail
+
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+
+          if [ -z "$BASE" ]; then
+
+            BASE=$(git rev-list --max-parents=1 HEAD)
+
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+
+            echo "dirs=" >> "$GITHUB_OUTPUT"
+
+          else
+
+            printf "dirs=%s\n" "$(IFS=,; echo "${PKGDIRS[*]}")" >> "$GITHUB_OUTPUT"
+
+          fi
+
+
+      - name: Validate tarballs (pack-check)
+        env:
+          CHECK_DIRS: ${{ steps.pcdirs.outputs.dirs }}
         run: pnpm run pack:strict
 
       - name: Publish only if version not on npm
