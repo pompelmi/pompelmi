@@ -12,7 +12,7 @@
     "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.5.2",
     "@vitest/coverage-v8": "2.1.9",
     "tsup": "^8.5.0",
     "typescript": "^5.0.0",
