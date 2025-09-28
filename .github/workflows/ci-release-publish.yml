@@ -450,8 +450,9 @@ jobs:
           echo "Using filters: $FILTERS"
           echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
 
-      - name: Prebuild engines (needed by CLI bundling)
+      - name: Prebuild core & engines (needed by CLI bundling)
         run: |
+          pnpm -F @pompelmi/core run build
           pnpm -F @pompelmi/engine run build
           pnpm -F @pompelmi/engine-heuristics run build
 
@@ -904,10 +905,15 @@ jobs:
             exit $STATUS
           fi
 
-      - name: Prebuild engines (needed by CLI bundling)
+      - name: Prebuild core & engines (needed by CLI bundling)
         run: |
+          pnpm -F @pompelmi/core run build
           pnpm -F @pompelmi/engine run build
           pnpm -F @pompelmi/engine-heuristics run build
+
+      - name: Pre-build @pompelmi/core for pack-check consumers
+        if: ${{ always() }}
+        run: pnpm -F @pompelmi/core --if-present run build
 
       - name: Build publishable workspaces (topological; CLI last)
         run: |
@@ -995,12 +1001,10 @@ jobs:
 
 
       - name: Build for pack-check (fallback all @pompelmi/*)
-
-
         if: ${{ steps.pcdirs.outputs.dirs == '' }}
-
-
-        run: pnpm -r --filter '@pompelmi/*' --if-present run build
+        run: |
+          pnpm -F @pompelmi/core --if-present run build
+          pnpm -r --filter '@pompelmi/*' --if-present run build
 
 
 
