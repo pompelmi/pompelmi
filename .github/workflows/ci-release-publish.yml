@@ -450,15 +450,20 @@ jobs:
           echo "Using filters: $FILTERS"
           echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
 
-      - name: Build all packages
+      - name: Prebuild engines (needed by CLI bundling)
+        run: |
+          pnpm -F @pompelmi/engine run build
+          pnpm -F @pompelmi/engine-heuristics run build
+
+      - name: Build packages (topological; CLI last)
         run: |
           pnpm -r \
             ${{ steps.ws.outputs.filters }} \
             --filter '!./examples/*' \
             --filter '!@pompelmi/core' \
-            --workspace-concurrency=16 \
-            --parallel \
+            --filter '!@pompelmi/cli' \
             --if-present run build
+          pnpm -F @pompelmi/cli run build
 
       - name: Ensure Vitest (workspace)
         run: |
@@ -899,16 +904,21 @@ jobs:
             exit $STATUS
           fi
 
-      - name: Build publishable workspaces
+      - name: Prebuild engines (needed by CLI bundling)
+        run: |
+          pnpm -F @pompelmi/engine run build
+          pnpm -F @pompelmi/engine-heuristics run build
+
+      - name: Build publishable workspaces (topological; CLI last)
         run: |
           pnpm -r \
             ${{ steps.ws.outputs.filters }} \
             --filter '@pompelmi/*' \
             --filter '!@pompelmi/core' \
+            --filter '!@pompelmi/cli' \
             --filter '!./examples/*' \
-            --workspace-concurrency=16 \
-            --parallel \
             --if-present run build
+          pnpm -F @pompelmi/cli run build
 
       - name: Save pnpm store cache
         if: ${{ success() && !cancelled() }}
@@ -1436,6 +1446,31 @@ jobs:
       - name: Patch pack-check to allow bin/* when package has "bin"
         run: |
           node -e "const fs=require('fs');const f='scripts/pack-check.mjs';let s=fs.readFileSync(f,'utf8');if(!/allowBinIfPresent/.test(s)){s=s.replace(/const\\s+ALLOWED\\s*=\\s*\\[[\\s\\S]*?\\];/,m=>m+`\n\n// When a package has \"bin\", allow bin/* paths in its tarball\nfunction allowBinIfPresent(pkgJson, path) {\n  try { if (pkgJson && pkgJson.bin) return /^bin\\/.*/i.test(path); } catch {}\n  return false;\n}\n`);s=s.replace(/function\\s+isAllowedFile\\s*\([\\s\\S]*?return\\s+ALLOWED\\.some\([\\s\\S]*?\);[\\s\\S]*?\}/,'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r=>r.test(p)) || allowBinIfPresent(pkgJson,p);\n}');}s=s.replace(/isAllowedFile\(\s*entry\.path\s*\)/g,'isAllowedFile(pkgJson, entry.path)');fs.writeFileSync(f,s);console.log('patched',f);"
+
+      - name: Normalize exports to dist/* for changed workspaces
+        run: |
+          node <<'NODE'
+          const fs=require('fs'), path=require('path');
+          const roots = fs.existsSync('packages') ? fs.readdirSync('packages').map(d=>`packages/${d}/package.json`).filter(p=>fs.existsSync(p)) : [];
+          for(const pj of roots){
+            let raw=fs.readFileSync(pj,'utf8'); if(!raw.trim()) continue; let j; try{j=JSON.parse(raw)}catch{continue}
+            if(!j.name||!j.name.startsWith('@pompelmi/')||j.private) continue;
+            const d=path.dirname(pj);
+            const hasCJS=fs.existsSync(path.join(d,'dist/index.cjs'));
+            const esmPath = fs.existsSync(path.join(d,'dist/index.mjs'))? './dist/index.mjs':'./dist/index.js';
+            if(hasCJS) j.main='./dist/index.cjs';
+            if(fs.existsSync(path.join(d,esmPath.replace('./','')))) j.module=esmPath;
+            j.types=j.types&&j.types.startsWith('./dist/')?j.types:'./dist/index.d.ts';
+            j.exports=j.exports||{}; const ex={};
+            ex.types=j.types; ex.import=j.module||'./dist/index.js'; ex.require=j.main||'./dist/index.cjs'; ex.default=ex.import;
+            j.exports['.']=ex; j.exports['./package.json']='./package.json';
+            const files=new Set(Array.isArray(j.files)?j.files:[]); files.add('dist'); files.add('README.md'); files.add('LICENSE*'); files.add('CHANGELOG*'); files.add('package.json'); if(j.bin) files.add('bin'); j.files=[...files];
+            fs.writeFileSync(pj,JSON.stringify(j,null,2)+'\n'); console.log('fixed', pj);
+          }
+          NODE
+      - name: Patch pack-check to allow bin/* when package has "bin"
+        run: |
+          node -e "const fs=require('fs');const f='scripts/pack-check.mjs';let s=fs.readFileSync(f,'utf8');if(!/allowBinIfPresent/.test(s)){s=s.replace(/const\\s+ALLOWED\\s*=\\s*\\[[\\s\\S]*?\\];/,m=>m+`\n\n// When a package has \"bin\", allow bin/* paths in its tarball\nfunction allowBinIfPresent(pkgJson, path) {\n  try { if (pkgJson && pkgJson.bin) return /^bin\\\/.*/i.test(path); } catch {}\n  return false;\n}\n`);s=s.replace(/function\\s+isAllowedFile\\s*\([\\s\\S]*?return\\s+ALLOWED\\.some\([\\s\\S]*?\);[\\s\\S]*?\}/,'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r=>r.test(p)) || allowBinIfPresent(pkgJson,p);\n}');}s=s.replace(/isAllowedFile\\(\\s*entry\\.path\\s*\\)/g,'isAllowedFile(pkgJson, entry.path)');fs.writeFileSync(f,s);console.log('patched',f);"
 
       - name: Normalize exports to dist/* for changed workspaces
         run: |
