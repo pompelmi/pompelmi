@@ -74,7 +74,7 @@ const extOf = (filename?: string) => {
 async function resolveCreateYaraScannerFromRules():
   Promise<(rules: string) => Promise<PompelmiScanner>> {
   try {
-    const m: any = await import('pompelmi');
+    const m: any = await import('@pompelmi/core');
     const fn = m?.createYaraScannerFromRules ?? m?.default?.createYaraScannerFromRules;
     if (typeof fn === 'function') return fn;
   } catch {}

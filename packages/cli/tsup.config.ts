@@ -1,11 +1,16 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from 'tsup';
+
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: ['esm'],
+  
+  esbuildOptions(options) {
+    options.logOverride = Object.assign({}, options.logOverride, { 'import-is-undefined': 'silent' });
+  },entry: ['src/index.ts'],
   target: 'node18',
+  format: ['esm'],
+  platform: 'node',
   sourcemap: true,
+  dts: false,      // CLI doesn't ship types
   clean: true,
-  outExtension() { return { js: '.mjs' } },
-  banner: { js: '#!/usr/bin/env node' },
-  noExternal: ['pompelmi'],
-})
+  noExternal: [ '@pompelmi/engine', '@pompelmi/engine-heuristics' ],
+  treeshake: true,
+});

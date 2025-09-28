@@ -36,7 +36,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
 
@@ -102,7 +102,6 @@ jobs:
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
           printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
-          npm pkg set version="${ROOT_VERSION}"
 
 
       - name: Configure npm & pnpm for fewer 429s
@@ -235,7 +234,6 @@ jobs:
           # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
           printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
           # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
-          npm pkg set version="${ROOT_VERSION}"
 
       - uses: pnpm/action-setup@v4
         with:
@@ -284,7 +282,7 @@ jobs:
 
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
       - name: Sanitize lockfile (process override)
@@ -719,7 +717,7 @@ jobs:
             pnpm-store-${{ runner.os }}-
       - name: Apply pnpm overrides (CI hotfix)
         run: |
-          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
           echo "pnpm.overrides applied:"
           node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
       - name: Sanitize lockfile (process override)
@@ -1435,3 +1433,28 @@ jobs:
           platforms: linux/amd64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+      - name: Patch pack-check to allow bin/* when package has "bin"
+        run: |
+          node -e "const fs=require('fs');const f='scripts/pack-check.mjs';let s=fs.readFileSync(f,'utf8');if(!/allowBinIfPresent/.test(s)){s=s.replace(/const\\s+ALLOWED\\s*=\\s*\\[[\\s\\S]*?\\];/,m=>m+`\n\n// When a package has \"bin\", allow bin/* paths in its tarball\nfunction allowBinIfPresent(pkgJson, path) {\n  try { if (pkgJson && pkgJson.bin) return /^bin\\/.*/i.test(path); } catch {}\n  return false;\n}\n`);s=s.replace(/function\\s+isAllowedFile\\s*\([\\s\\S]*?return\\s+ALLOWED\\.some\([\\s\\S]*?\);[\\s\\S]*?\}/,'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r=>r.test(p)) || allowBinIfPresent(pkgJson,p);\n}');}s=s.replace(/isAllowedFile\(\s*entry\.path\s*\)/g,'isAllowedFile(pkgJson, entry.path)');fs.writeFileSync(f,s);console.log('patched',f);"
+
+      - name: Normalize exports to dist/* for changed workspaces
+        run: |
+          node <<'NODE'
+          const fs=require('fs'), path=require('path');
+          const roots = fs.existsSync('packages') ? fs.readdirSync('packages').map(d=>`packages/${d}/package.json`).filter(p=>fs.existsSync(p)) : [];
+          for(const pj of roots){
+            let raw=fs.readFileSync(pj,'utf8'); if(!raw.trim()) continue; let j; try{j=JSON.parse(raw)}catch{continue}
+            if(!j.name||!j.name.startsWith('@pompelmi/')||j.private) continue;
+            const d=path.dirname(pj);
+            const hasCJS=fs.existsSync(path.join(d,'dist/index.cjs'));
+            const esmPath = fs.existsSync(path.join(d,'dist/index.mjs'))? './dist/index.mjs':'./dist/index.js';
+            if(hasCJS) j.main='./dist/index.cjs';
+            if(fs.existsSync(path.join(d,esmPath.replace('./','')))) j.module=esmPath;
+            j.types=j.types&&j.types.startsWith('./dist/')?j.types:'./dist/index.d.ts';
+            j.exports=j.exports||{}; const ex={};
+            ex.types=j.types; ex.import=j.module||'./dist/index.js'; ex.require=j.main||'./dist/index.cjs'; ex.default=ex.import;
+            j.exports['.']=ex; j.exports['./package.json']='./package.json';
+            const files=new Set(Array.isArray(j.files)?j.files:[]); files.add('dist'); files.add('README.md'); files.add('LICENSE*'); files.add('CHANGELOG*'); files.add('package.json'); if(j.bin) files.add('bin'); j.files=[...files];
+            fs.writeFileSync(pj,JSON.stringify(j,null,2)+'\n'); console.log('fixed', pj);
+          }
+          NODE

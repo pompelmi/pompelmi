@@ -1,3 +1,28 @@
+const __resolveDeps = async () => {
+  const EngMod = import("@pompelmi/engine");
+  const HeuMod = import("@pompelmi/engine-heuristics");
+
+  const E = (EngMod && (EngMod as any).default) ? (EngMod as any).default : (EngMod as any);
+  const H = (HeuMod && (HeuMod as any).default) ? (HeuMod as any).default : (HeuMod as any);
+
+  const composeScanners =
+      E.composeScanners ?? E.compose ?? E.composeScanner ?? E.composePipeline;
+
+  const CommonHeuristicsScanner =
+      H.CommonHeuristicsScanner ?? H.HeuristicsScanner ?? H.default ?? H;
+
+  const createZipBombGuard =
+      H.createZipBombGuard ?? H.zipBombGuard ?? H.createZipGuard;
+
+  if (!composeScanners) throw new Error('composeScanners not found in @pompelmi/engine');
+  if (!CommonHeuristicsScanner) throw new Error('CommonHeuristicsScanner not found in @pompelmi/engine-heuristics');
+  if (!createZipBombGuard) throw new Error('createZipBombGuard not found in @pompelmi/engine-heuristics');
+
+  return { composeScanners, CommonHeuristicsScanner, createZipBombGuard };
+};
+
+// Top-level await (Node 18+ ESM) gives us ready-to-use symbols
+const { composeScanners, CommonHeuristicsScanner, createZipBombGuard } = await __resolveDeps();
 import type { CAC } from 'cac';
 
 export function addWatchCommand(cli: CAC) {
@@ -30,7 +55,8 @@ export function addWatchCommand(cli: CAC) {
         ? false
         : { stabilityThreshold: Number(flags.debounce)||300, pollInterval: 50 };
 
-      const { composeScanners, CommonHeuristicsScanner, createZipBombGuard } = await import('pompelmi');
+      const Engine = import("@pompelmi/engine");
+const Heur = import("@pompelmi/engine-heuristics");
       const scan = composeScanners(
         [
           ['zipGuard', createZipBombGuard({ maxEntries: 512, maxTotalUncompressedBytes: 100 * 1024 * 1024, maxCompressionRatio: 12 })],

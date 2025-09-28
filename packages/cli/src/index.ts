@@ -1,3 +1,30 @@
+const __resolveDeps = async () => {
+  const EngMod = await import('@pompelmi/engine');
+  const HeuMod = await import('@pompelmi/engine-heuristics');
+
+  const E = (EngMod && (EngMod as any).default) ? (EngMod as any).default : (EngMod as any);
+  const H = (HeuMod && (HeuMod as any).default) ? (HeuMod as any).default : (HeuMod as any);
+
+  const composeScanners = (Engine as any).composeScanners
+  ?? (Engine as any).compose
+  ?? (Engine as any).composeScanner
+  ?? (Engine as any).composePipeline;
+
+  const CommonHeuristicsScanner = (Heur as any).HeuristicsScanner ?? (Heur as any).default;
+
+  const createZipBombGuard = (Heur as any).createZipBombGuard
+  ?? (Heur as any).zipBombGuard
+  ?? (Heur as any).createZipGuard;
+
+  if (!composeScanners) throw new Error('composeScanners not found in @pompelmi/engine');
+  if (!CommonHeuristicsScanner) throw new Error('CommonHeuristicsScanner not found in @pompelmi/engine-heuristics');
+  if (!createZipBombGuard) throw new Error('createZipBombGuard not found in @pompelmi/engine-heuristics');
+
+  return { composeScanners, CommonHeuristicsScanner, createZipBombGuard };
+};
+
+// Top-level await (Node 18+ ESM) gives us ready-to-use symbols
+const { composeScanners, CommonHeuristicsScanner, createZipBombGuard } = await __resolveDeps();
 /* argv shim for default scan */
 const _argv = process.argv;
 const _first = _argv[2];
@@ -10,7 +37,6 @@ import pc from 'picocolors';
 import prettyBytes from 'pretty-bytes';
 import fs from 'node:fs';
 import path from 'node:path';
-import { composeScanners, CommonHeuristicsScanner, createZipBombGuard } from 'pompelmi';
 import { addWatchCommand } from './watch';
 import { addScanDirCommand } from './scan-dir';
 
