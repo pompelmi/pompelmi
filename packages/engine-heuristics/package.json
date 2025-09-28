@@ -12,7 +12,7 @@
     "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
   "peerDependencies": {
-    "pompelmi": "workspace:*"
+    "@pompelmi/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.3.0",

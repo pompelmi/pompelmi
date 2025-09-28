@@ -23,9 +23,9 @@
   "devDependencies": {
     "@pompelmi/engine": "workspace:0.16.0-dev.41-dev.6",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
-    "pompelmi": "workspace:*",
     "tsup": "^8.5.0",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "@pompelmi/core": "workspace:*"
   },
   "type": "module",
   "files": [

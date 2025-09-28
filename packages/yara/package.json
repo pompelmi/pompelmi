@@ -27,7 +27,7 @@
     "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "peerDependencies": {
-    "pompelmi": "*"
+    "@pompelmi/core": "workspace:*"
   },
   "devDependencies": {
     "tsup": "^8.5.0",

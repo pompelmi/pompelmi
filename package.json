@@ -75,7 +75,6 @@
     "gh-pages": "^6.3.0",
     "knip": "^5.64.0",
     "multer": "^2.0.2",
-    "pompelmi": "workspace:0.16.0-dev.41",
     "react": "^18.0.0",
     "rollup": "^4.x",
     "ts-prune": "^0.10.3",
@@ -83,7 +82,8 @@
     "tsup": "^8",
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
-    "vitest": "2.1.9"
+    "vitest": "2.1.9",
+    "@pompelmi/core": "workspace:*"
   },
   "dependencies": {
     "rollup": "^4.45.1"
