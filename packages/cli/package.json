@@ -18,7 +18,9 @@
     "cac": "^6.7.14",
     "chokidar": "^3.6.0",
     "picocolors": "^1.0.0",
-    "pretty-bytes": "^6.1.1"
+    "pretty-bytes": "^6.1.1",
+    "@pompelmi/engine": "workspace:*",
+    "@pompelmi/engine-heuristics": "workspace:*"
   },
   "devDependencies": {
     "@pompelmi/engine": "workspace:0.16.0-dev.41-dev.6",
