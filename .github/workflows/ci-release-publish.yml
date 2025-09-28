@@ -1449,7 +1449,27 @@ jobs:
           cache-to: type=gha,mode=max
       - name: Patch pack-check to allow bin/* when package has "bin"
         run: |
-          node -e "const fs=require('fs');const f='scripts/pack-check.mjs';let s=fs.readFileSync(f,'utf8');if(!/allowBinIfPresent/.test(s)){s=s.replace(/const\\s+ALLOWED\\s*=\\s*\\[[\\s\\S]*?\\];/,m=>m+`\n\n// When a package has \"bin\", allow bin/* paths in its tarball\nfunction allowBinIfPresent(pkgJson, path) {\n  try { if (pkgJson && pkgJson.bin) return /^bin\\/.*/i.test(path); } catch {}\n  return false;\n}\n`);s=s.replace(/function\\s+isAllowedFile\\s*\([\\s\\S]*?return\\s+ALLOWED\\.some\([\\s\\S]*?\);[\\s\\S]*?\}/,'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r=>r.test(p)) || allowBinIfPresent(pkgJson,p);\n}');}s=s.replace(/isAllowedFile\(\s*entry\.path\s*\)/g,'isAllowedFile(pkgJson, entry.path)');fs.writeFileSync(f,s);console.log('patched',f);"
+          node - <<'NODE'
+          const fs = require('fs');
+          const f = 'scripts/pack-check.mjs';
+          let s = fs.readFileSync(f, 'utf8');
+          if (!/allowBinIfPresent/.test(s)) {
+            s = s.replace(/const\s+ALLOWED\s*=\s*\[[\s\S]*?\];/, function (m) {
+              return m + '\n'
+                + 'function allowBinIfPresent(pkgJson, path) {\n'
+                + '  try { if (pkgJson && pkgJson.bin) return /^bin\\/.*/i.test(path); } catch {}\n'
+                + '  return false;\n'
+                + '}\n';
+            });
+            s = s.replace(
+              /function\s+isAllowedFile\s*\([\s\S]*?return\s+ALLOWED\.some\([\s\S]*?\);[\s\S]*?\}/,
+              'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r => r.test(p)) || allowBinIfPresent(pkgJson, p);\n}'
+            );
+          }
+          s = s.replace(/isAllowedFile\(\s*entry\.path\s*\)/g, 'isAllowedFile(pkgJson, entry.path)');
+          fs.writeFileSync(f, s);
+          console.log('patched', f);
+          NODE
 
       - name: Normalize exports to dist/* for changed workspaces
         run: |
@@ -1474,7 +1494,27 @@ jobs:
           NODE
       - name: Patch pack-check to allow bin/* when package has "bin"
         run: |
-          node -e "const fs=require('fs');const f='scripts/pack-check.mjs';let s=fs.readFileSync(f,'utf8');if(!/allowBinIfPresent/.test(s)){s=s.replace(/const\\s+ALLOWED\\s*=\\s*\\[[\\s\\S]*?\\];/,m=>m+`\n\n// When a package has \"bin\", allow bin/* paths in its tarball\nfunction allowBinIfPresent(pkgJson, path) {\n  try { if (pkgJson && pkgJson.bin) return /^bin\\\/.*/i.test(path); } catch {}\n  return false;\n}\n`);s=s.replace(/function\\s+isAllowedFile\\s*\([\\s\\S]*?return\\s+ALLOWED\\.some\([\\s\\S]*?\);[\\s\\S]*?\}/,'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r=>r.test(p)) || allowBinIfPresent(pkgJson,p);\n}');}s=s.replace(/isAllowedFile\\(\\s*entry\\.path\\s*\\)/g,'isAllowedFile(pkgJson, entry.path)');fs.writeFileSync(f,s);console.log('patched',f);"
+          node - <<'NODE'
+          const fs = require('fs');
+          const f = 'scripts/pack-check.mjs';
+          let s = fs.readFileSync(f, 'utf8');
+          if (!/allowBinIfPresent/.test(s)) {
+            s = s.replace(/const\s+ALLOWED\s*=\s*\[[\s\S]*?\];/, function (m) {
+              return m + '\n'
+                + 'function allowBinIfPresent(pkgJson, path) {\n'
+                + '  try { if (pkgJson && pkgJson.bin) return /^bin\\/.*/i.test(path); } catch {}\n'
+                + '  return false;\n'
+                + '}\n';
+            });
+            s = s.replace(
+              /function\s+isAllowedFile\s*\([\s\S]*?return\s+ALLOWED\.some\([\s\S]*?\);[\s\S]*?\}/,
+              'function isAllowedFile(pkgJson, p) {\n  return ALLOWED.some(r => r.test(p)) || allowBinIfPresent(pkgJson, p);\n}'
+            );
+          }
+          s = s.replace(/isAllowedFile\(\s*entry\.path\s*\)/g, 'isAllowedFile(pkgJson, entry.path)');
+          fs.writeFileSync(f, s);
+          console.log('patched', f);
+          NODE
 
       - name: Normalize exports to dist/* for changed workspaces
         run: |
