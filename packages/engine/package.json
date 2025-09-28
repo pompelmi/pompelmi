@@ -52,7 +52,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "^20.19.11",
+    "@types/node": "^24.5.2",
     "@types/yauzl": "^2.10.3",
     "@vitest/coverage-v8": "2.1.9",
     "tsup": "^8.5.0",

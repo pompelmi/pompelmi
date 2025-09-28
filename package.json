@@ -65,7 +65,7 @@
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.5.2",
     "@types/react": "^19.1.8",
     "@types/unzipper": "^0.10.11",
     "@vitest/coverage-v8": "^2",

@@ -40,7 +40,7 @@
     "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
+    "@types/node": "^24.5.2",
     "@types/tar-stream": "^3.1.4",
     "@vitest/coverage-v8": "2.1.9",
     "tsup": "8.5.0",
