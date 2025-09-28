@@ -18,10 +18,12 @@
     "cac": "^6.7.14",
     "chokidar": "^3.6.0",
     "picocolors": "^1.0.0",
-    "pompelmi": "workspace:*",
     "pretty-bytes": "^6.1.1"
   },
   "devDependencies": {
+    "@pompelmi/engine": "workspace:0.16.0-dev.41-dev.6",
+    "@pompelmi/engine-heuristics": "workspace:^0.1.0",
+    "pompelmi": "workspace:*",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3"
   },
@@ -34,11 +36,6 @@
     "package.json",
     "CHANGELOG*"
   ],
-  "exports": {
-    ".": {
-      "import": "./dist/index.mjs"
-    }
-  },
   "sideEffects": false,
   "engines": {
     "node": ">=18"
@@ -51,5 +48,9 @@
     "type": "git",
     "url": "https://github.com/pompelmi/pompelmi",
     "directory": "packages/cli"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
   }
 }
