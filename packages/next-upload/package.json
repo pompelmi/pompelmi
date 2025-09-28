@@ -38,7 +38,8 @@
   },
   "dependencies": {
     "file-type": "^18.7.0",
-    "unzipper": "^0.12.3"
+    "unzipper": "^0.12.3",
+    "@pompelmi/core": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^20.19.10",

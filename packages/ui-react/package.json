@@ -3,7 +3,7 @@
   "version": "0.16.0-dev.41",
   "description": "UI components for integrating file upload and malware scanning with pompelmi.",
   "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "files": [
     "dist/**",
@@ -37,6 +37,7 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     },
     "./package.json": "./package.json"
