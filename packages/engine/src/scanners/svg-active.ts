@@ -15,7 +15,9 @@ export const SvgActiveContentScanner = {
     const lower = head.toLowerCase();
     const hasScript = lower.includes('<script');
     const hasHandlers = /\son[a-z]+\s*=/.test(lower); // e.g., onload= onclick=
-    if (hasScript || hasHandlers) {
+    const hasJavascript = lower.includes('javascript:'); // e.g., <a xlink:href="javascript:alert('XSS')"><text>click me</text></a>
+    
+    if (hasScript || hasHandlers || hasJavascript) {
       return {
         verdict: 'suspicious',
         tags: ['svg','active-content'],
