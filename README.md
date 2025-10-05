@@ -10,6 +10,8 @@
   </a>
   <br/>
   <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
+  <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
+  <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
   <br/>
   
 </p>
@@ -58,6 +60,22 @@
 
 ---
 
+<details>
+<summary><strong>Table of contents</strong></summary>
+
+- [Install](#installation)
+- [Quick‑start](#quick-start)
+- [GitHub Action](#github-action)
+- [Adapters](#adapters)
+- [Diagrams](#diagrams)
+- [Config](#configuration)
+- [Production checklist](#production-checklist)
+- [YARA](#yara-getting-started)
+- [Quick test](#quick-test-no-eicar)
+- [Security](#security-notes)
+- [FAQ](#faq)
+</details>
+
 ## 🚀 Overview
 
 **pompelmi** scans untrusted file uploads **before** they hit disk. A tiny, TypeScript-first toolkit for Node.js with composable scanners, deep ZIP inspection, and optional signature engines.
@@ -78,6 +96,34 @@
 - **DX first** — TypeScript types, ESM/CJS builds, tiny API, adapters for popular web frameworks.
 
 > Keywords: file upload security, malware scanning, YARA, Node.js, Express, Koa, Next.js, ZIP scanning, ZIP bomb, PDF JavaScript, Office macros
+
+## 🧠 Why pompelmi?
+
+- **On‑device, private scanning** – no outbound calls, no data sharing.
+- **Blocks early** – runs *before* you write to disk or persist anything.
+- **Fits your stack** – drop‑in adapters for Express, Koa, Next.js (Fastify plugin in alpha).
+- **Defense‑in‑depth** – ZIP traversal limits, ratio caps, server‑side MIME sniffing, size caps.
+- **Pluggable detection** – bring your own engine (e.g., YARA) via a tiny `{ scan(bytes) }` contract.
+
+### Who is it for?
+
+- Teams who can’t send uploads to third‑party AV APIs.
+- Apps that need predictable, low‑latency decisions inline.
+- Developers who want simple, typed building blocks instead of a daemon.
+
+## 🔍 How it compares
+
+| Capability | pompelmi | ClamAV / node‑clam | Cloud AV APIs |
+| --- | --- | --- | --- |
+| Runs fully in‑process | ✅ | ❌ (separate daemon) | ❌ (network calls) |
+| Bytes stay private | ✅ | ✅ | ❌ |
+| Deep ZIP limits & MIME sniff | ✅ | ✅ (archive scan) | ❓ varies |
+| YARA integration | ✅ optional | ❌* | ❓ varies |
+| Framework adapters | ✅ Express/Koa/Next.js | ❌ | ❌ |
+| Works in CI on artifacts | ✅ | ✅ | ❓ varies |
+| Licensing | MIT | GPL (engine) | Proprietary |
+
+\* You can run YARA alongside ClamAV, but it’s not built‑in.
 
 ---
 
@@ -567,6 +613,14 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 - Prefer running scans in a **dedicated process/container** for defense‑in‑depth.
 
 ---
+
+[...]
+
+## 🔔 Releases & security
+
+- **Changelog / releases:** see [GitHub Releases](https://github.com/pompelmi/pompelmi/releases).
+- **Security disclosures:** please use [GitHub Security Advisories](https://github.com/pompelmi/pompelmi/security/advisories). We’ll coordinate a fix before public disclosure.
+- **Production users:** open a [Discussion](https://github.com/pompelmi/pompelmi/discussions) to share requirements or request adapters.
 
 ## ⭐ Star history
 
