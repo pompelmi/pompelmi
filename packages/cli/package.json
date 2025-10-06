@@ -18,7 +18,7 @@
     "cac": "^6.7.14",
     "chokidar": "^3.6.0",
     "picocolors": "^1.0.0",
-    "pretty-bytes": "^6.1.1",
+    "pretty-bytes": "^7.1.0",
     "@pompelmi/engine": "workspace:*",
     "@pompelmi/engine-heuristics": "workspace:*"
   },
