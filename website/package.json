@@ -34,7 +34,7 @@
     "@babel/preset-env": "^7.28.0",
     "@babel/preset-typescript": "^7.27.1",
     "@rollup/plugin-babel": "^6.0.4",
-    "react-dom": "^18.0.0",
+    "react-dom": "^19.2.0",
     "@types/react-dom": "^19.1.6",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "supertest": "^7.0.0",
