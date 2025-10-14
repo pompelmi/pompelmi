@@ -1261,28 +1261,43 @@ jobs:
 
         run: pnpm run pack:strict
 
-      - name: Publish root to npm
+      - name: Publish root to npm (force latest tag)
         if: steps.rootdecision.outputs.exists == 'false' && steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
         run: |
           # Publish without running lifecycle scripts to avoid build-time cross-deps
-          npm publish --provenance --access public --ignore-scripts
-          echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }}"
+          npm publish --provenance --access public --tag latest --ignore-scripts
+          echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }} (tag=latest)"
 
-      - name: Ensure "latest" tag matches root version (always)
+      - name: Show npm state (debug)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          echo "Registry: $(npm config get registry)"
+          npm whoami || true
+          echo "Versions on npm:" && npm view "$NAME" versions --json || true
+          echo "Dist-tags:" && npm dist-tag ls "$NAME" || true
+
+      - name: Ensure "latest" tag matches root version (fail-fast)
         if: steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
+          set -euo pipefail
           NAME="${{ steps.rootpkg.outputs.name }}"
           VER="${{ steps.rootpkg.outputs.version }}"
           CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+          echo "Current latest=$CUR, expected=$VER"
           if [ "$CUR" != "$VER" ]; then
             echo "Retagging latest -> $VER for $NAME"
-            npm dist-tag add "$NAME@$VER" latest || true
+            npm dist-tag add "$NAME@$VER" latest
+            NEW=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+            echo "After retag: latest=$NEW"
+            test "$NEW" = "$VER"
           else
             echo "$NAME latest already $VER"
           fi
