@@ -1135,10 +1135,10 @@ jobs:
               continue
             fi
             echo "  → publishing…"
-            pnpm --filter "$NAME" publish --access public --no-git-checks --provenance
+            pnpm --filter "$NAME" publish --access public --tag latest --no-git-checks --provenance
           done
 
-      - name: Ensure dist-tag "latest" points to version
+      - name: Ensure dist-tag "latest" points to version (fail-fast)
         if: always()
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -1148,9 +1148,13 @@ jobs:
           while IFS='|' read -r NAME VER; do
             [ -z "$NAME" ] && continue
             CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+            echo "$NAME: current latest=$CUR, expected=$VER"
             if [ "$CUR" != "$VER" ]; then
               echo "Retagging latest -> $VER for $NAME"
-              npm dist-tag add "$NAME@$VER" latest || true
+              npm dist-tag add "$NAME@$VER" latest
+              NEW=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+              echo "After retag: latest=$NEW"
+              test "$NEW" = "$VER"
             else
               echo "$NAME latest already $VER"
             fi

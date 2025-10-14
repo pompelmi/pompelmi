@@ -23,7 +23,7 @@
     "@pompelmi/engine-heuristics": "workspace:*"
   },
   "devDependencies": {
-    "@pompelmi/engine": "workspace:0.16.2-dev.6",
+    "@pompelmi/engine": "workspace:0.16.3-dev.6",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
