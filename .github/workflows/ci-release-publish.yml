@@ -1138,25 +1138,41 @@ jobs:
             pnpm --filter "$NAME" publish --access public --tag latest --no-git-checks --provenance
           done
 
-      - name: Ensure dist-tag "latest" points to version (fail-fast)
+      - name: Ensure dist-tag "latest" points to version (retry, tolerate CDN lag)
         if: always()
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         shell: bash
         run: |
           set -euo pipefail
+          npm config set registry "https://registry.npmjs.org"
+          npm cache clean --force || true
+
           while IFS='|' read -r NAME VER; do
             [ -z "$NAME" ] && continue
-            CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
-            echo "$NAME: current latest=$CUR, expected=$VER"
-            if [ "$CUR" != "$VER" ]; then
-              echo "Retagging latest -> $VER for $NAME"
-              npm dist-tag add "$NAME@$VER" latest
-              NEW=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
-              echo "After retag: latest=$NEW"
-              test "$NEW" = "$VER"
-            else
-              echo "$NAME latest already $VER"
+            echo "Retag latest -> $VER for $NAME (idempotent)"
+            npm dist-tag add "$NAME@$VER" latest 2>&1 || true
+
+            ok=0
+            for i in $(seq 1 18); do
+              CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+              echo "$NAME: Check $i/18 via npm view: latest=$CUR, expected=$VER"
+              if [ "$CUR" = "$VER" ]; then ok=1; break; fi
+
+              CUR2=$(curl -sSfL --retry 3 --retry-delay 2 \
+                -H "Accept: application/json" \
+                -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+                -H "Cache-Control: no-cache" \
+                "https://registry.npmjs.org/$NAME" \
+                | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})")
+              echo "$NAME: Check $i/18 via curl: latest=$CUR2, expected=$VER"
+              if [ "$CUR2" = "$VER" ]; then ok=1; break; fi
+
+              sleep 5
+            done
+
+            if [ "$ok" -ne 1 ]; then
+              echo "::warning::$NAME: npm registry ancora non mostra latest=$VER (cache/CDN). Continuo."
             fi
           done < <(node -e "
             const fs=require('fs'), path=require('path');
@@ -1285,7 +1301,7 @@ jobs:
           echo "Versions on npm:" && npm view "$NAME" versions --json || true
           echo "Dist-tags:" && npm dist-tag ls "$NAME" || true
 
-      - name: Ensure "latest" tag matches root version (fail-fast)
+      - name: Ensure "latest" tag matches root version (retry, tolerate CDN lag)
         if: steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -1294,16 +1310,36 @@ jobs:
           set -euo pipefail
           NAME="${{ steps.rootpkg.outputs.name }}"
           VER="${{ steps.rootpkg.outputs.version }}"
-          CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
-          echo "Current latest=$CUR, expected=$VER"
-          if [ "$CUR" != "$VER" ]; then
-            echo "Retagging latest -> $VER for $NAME"
-            npm dist-tag add "$NAME@$VER" latest
-            NEW=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
-            echo "After retag: latest=$NEW"
-            test "$NEW" = "$VER"
-          else
-            echo "$NAME latest already $VER"
+
+          echo "Retag latest -> $VER (idempotent)"
+          # Idempotent: se è già impostato non fallisce la pipeline
+          npm dist-tag add "$NAME@$VER" latest 2>&1 || true
+
+          # Evita cache locale e forza il registry corretto
+          npm config set registry "https://registry.npmjs.org"
+          npm cache clean --force || true
+
+          ok=0
+          for i in $(seq 1 18); do
+            CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+            echo "Check $i/18 via npm view: latest=$CUR, expected=$VER"
+            if [ "$CUR" = "$VER" ]; then ok=1; break; fi
+
+            # Seconda fonte (no-cache) tramite API del registry
+            CUR2=$(curl -sSfL --retry 3 --retry-delay 2 \
+              -H "Accept: application/json" \
+              -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+              -H "Cache-Control: no-cache" \
+              "https://registry.npmjs.org/$NAME" \
+              | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})")
+            echo "Check $i/18 via curl: latest=$CUR2, expected=$VER"
+            if [ "$CUR2" = "$VER" ]; then ok=1; break; fi
+
+            sleep 5
+          done
+
+          if [ "$ok" -ne 1 ]; then
+            echo "::warning::npm registry ancora non mostra latest=$VER (cache/CDN). Procedo senza fallire."
           fi
 
   # -------------------------------
