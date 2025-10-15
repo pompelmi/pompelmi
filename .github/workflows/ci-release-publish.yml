@@ -1150,8 +1150,19 @@ jobs:
 
           while IFS='|' read -r NAME VER; do
             [ -z "$NAME" ] && continue
+
+            # Skip if that exact version is NOT on npm (package newly created or publish failed)
+            EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+            if [ "$EXISTS" != "$VER" ]; then
+              echo "$NAME@$VER not found on npm yet — skipping retag"
+              continue
+            fi
+
             echo "Retag latest -> $VER for $NAME (idempotent)"
-            npm dist-tag add "$NAME@$VER" latest 2>&1 || true
+            npm dist-tag add "$NAME@$VER" latest 2>/dev/null || true
+
+            # Percent-encode scoped names for registry API (e.g. @pompelmi/cli -> %40pompelmi%2Fcli)
+            ENC_NAME=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
 
             ok=0
             for i in $(seq 1 18); do
@@ -1159,12 +1170,12 @@ jobs:
               echo "$NAME: Check $i/18 via npm view: latest=$CUR, expected=$VER"
               if [ "$CUR" = "$VER" ]; then ok=1; break; fi
 
-              CUR2=$(curl -sSfL --retry 3 --retry-delay 2 \
+              CUR2=$(curl -sSLf --retry 3 --retry-delay 2 \
                 -H "Accept: application/json" \
                 -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
                 -H "Cache-Control: no-cache" \
-                "https://registry.npmjs.org/$NAME" \
-                | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})")
+                "https://registry.npmjs.org/$ENC_NAME" \
+                2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})" || true)
               echo "$NAME: Check $i/18 via curl: latest=$CUR2, expected=$VER"
               if [ "$CUR2" = "$VER" ]; then ok=1; break; fi
 
