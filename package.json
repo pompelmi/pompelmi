@@ -98,7 +98,7 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "optionalDependencies": {
-    "@litko/yara-x": "^0.2.1"
+    "@litko/yara-x": "^0.3.0"
   },
   "exports": {
     ".": {},
