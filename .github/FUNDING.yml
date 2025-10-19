@@ -1,0 +1,13 @@
+# .github/FUNDING.yml
+github: [pompelmi]        # GitHub Sponsors username/org if you enable it
+#patreon: null             # e.g. "yourPatreonId"
+#open_collective: null     # e.g. "pompelmi"
+ko_fi: sonotommy               # e.g. "yourKofiUser"
+#liberapay: null           # e.g. "yourLiberapay"
+#tidelift: null            # e.g. "npm/pompelmi"
+#community_bridge: null
+#issuehunt: null
+#lfx_crowdfunding: null
+#polar: null               # e.g. "yourPolarSlug"
+custom:
+  https://ko-fi.com/sonotommy  # PayPal works via custom links
