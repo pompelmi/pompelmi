@@ -5,8 +5,8 @@ import { performance } from 'node:perf_hooks';
 import { fileTypeFromBuffer } from 'file-type';
 
 
-// Import dal pacchetto principale.
-// Se il tuo pacchetto espone un nome diverso, cambia qui.
+// Import from the main package.
+// If your package exposes a different name, change it here.
 
 export type Verdict = 'clean' | 'suspicious' | 'malicious';
 
@@ -16,7 +16,7 @@ export interface YaraMatch {
   meta?: Record<string, unknown>;
 }
 
-export interface PompelmiScanner {
+export interface Pompe            continue; // avoid "flat" scan of the .zipmiScanner {
   scan(bytes: Uint8Array): Promise<YaraMatch[]>;
 }
 
@@ -133,7 +133,7 @@ function extOf(filename?: string): string | null {
 }
 
 function getFiles(req: Request, mode: 'single' | 'array' | 'any', fieldName?: string): Array<{ buffer?: Buffer; originalname?: string; size?: number }> {
-  // Compatibile con multer
+  // Compatible with multer
   if (mode === 'single') {
     const f = (req as any).file;
     return f ? [f] : [];
@@ -142,7 +142,7 @@ function getFiles(req: Request, mode: 'single' | 'array' | 'any', fieldName?: st
     const arr = (req as any).files?.[fieldName || 'file'];
     return Array.isArray(arr) ? arr : [];
   }
-  // any: supporta req.file, req.files (array) o req.files come oggetto di campi
+  // any: supports req.file, req.files (array) or req.files as object of fields
   const out: any[] = [];
   const anyReq: any = req;
   if (anyReq.file) out.push(anyReq.file);
@@ -322,14 +322,14 @@ async function scanZipBuffer(
 }
 
 async function resolveCreateYaraScannerFromRules(): Promise<(rules: string) => Promise<PompelmiScanner>> {
-  // 1) Prova export top-level
+  // 1) Try top-level export
   try {
     const m: any = await import('pompelmi');
     const fn = m?.createYaraScannerFromRules ?? m?.default?.createYaraScannerFromRules;
     if (typeof fn === 'function') return fn;
   } catch {}
 
-  // 2) Fallback a possibili percorsi di sviluppo/build
+  // 2) Fallback to possible development/build paths
   const candidates = [
     'pompelmi/src/yara/index.js',
     'pompelmi/dist/yara/index.js',
@@ -455,7 +455,7 @@ export function createUploadGuard(options: UploadGuardOptions): RequestHandler {
               detectedMime = ft.mime?.toLowerCase() ?? null;
             }
           } catch (_e) {
-            // opzionale: onScanEvent?.({ type: 'error', error: _e });
+            // optional: onScanEvent?.({ type: 'error', error: _e });
           }
         }
 
@@ -477,7 +477,7 @@ export function createUploadGuard(options: UploadGuardOptions): RequestHandler {
           }
         }
 
-        // Whitelist di MIME (se configurata)
+        // MIME whitelist (if configured)
         if (detectMime && allowedMimeTypes && allowedMimeTypes.length) {
           const mimeToCheck = (detectedMime || 'application/octet-stream').toLowerCase();
           if (!allowedMimeTypes.includes(mimeToCheck)) {
@@ -494,7 +494,7 @@ export function createUploadGuard(options: UploadGuardOptions): RequestHandler {
           }
         }
 
-        // Gestione archivi ZIP (se abilitata)
+        // ZIP archive handling (if enabled)
         if (allowArchives) {
           const nameExtLower = (extOf(filename) || '').toLowerCase();
           const looksZipByExt = nameExtLower === 'zip';
