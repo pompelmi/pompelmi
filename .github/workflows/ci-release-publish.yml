@@ -172,9 +172,9 @@ jobs:
             echo "pnpm not found, installing fallback..."
             VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
             if [ -n "$VER" ]; then
-              npm i -g "pnpm@$VER"
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             else
-              npm i -g pnpm
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             fi
           fi
           pnpm --version
@@ -280,7 +280,7 @@ jobs:
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@d198d2fabf39a7f36b5ce57ce70d4942944f006e
         with:
           languages: javascript
 
@@ -293,7 +293,7 @@ jobs:
             --if-present run build
 
       - name: Analyze
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@d198d2fabf39a7f36b5ce57ce70d4942944f006e
 
   # -------------------------------
   # 2) CI Build (web + packages)
@@ -357,9 +357,9 @@ jobs:
             echo "pnpm not found, installing fallback..."
             VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
             if [ -n "$VER" ]; then
-              npm i -g "pnpm@$VER"
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             else
-              npm i -g pnpm
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             fi
           fi
           pnpm --version
@@ -869,9 +869,9 @@ jobs:
             echo "pnpm not found, installing fallback..."
             VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
             if [ -n "$VER" ]; then
-              npm i -g "pnpm@$VER"
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             else
-              npm i -g pnpm
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
             fi
           fi
           pnpm --version

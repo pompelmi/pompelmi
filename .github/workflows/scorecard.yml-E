@@ -7,14 +7,13 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
-permissions: read-all
+permissions:
+  id-token: write
+  contents: read
+  security-events: write
 
 jobs:
   analysis:
-    permissions:
-      contents: read
-      security-events: write
-      id-token: write
     permissions:
       contents: read
       security-events: write
@@ -33,6 +32,6 @@ jobs:
           publish_results: true
 
       - name: Upload SARIF to code scanning
-        uses: github/codeql-action/upload-sarif@d198d2fabf39a7f36b5ce57ce70d4942944f006e
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: results.sarif
