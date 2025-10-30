@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "cac": "^6.7.14",
-    "chokidar": "^3.6.0",
+    "chokidar": "^4.0.3",
     "picocolors": "^1.0.0",
     "pretty-bytes": "^6.1.1",
     "@pompelmi/engine": "workspace:*",
