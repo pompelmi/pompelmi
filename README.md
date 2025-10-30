@@ -131,6 +131,7 @@
 
 ```bash
 # core library
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pompelmi/pompelmi/badge)](https://securityscorecards.dev/viewer/?uri=github.com/pompelmi/pompelmi)
 npm i pompelmi
 # or
 pnpm add pompelmi
