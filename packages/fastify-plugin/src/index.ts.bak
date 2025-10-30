@@ -4,7 +4,7 @@ import * as path from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { performance } from 'node:perf_hooks';
 
-// Tipi base
+// Base types
 export type Verdict = 'clean' | 'suspicious' | 'malicious';
 
 export interface YaraMatch {
@@ -59,7 +59,7 @@ export interface UploadGuardOptions {
     scanHidden?: boolean;
   };
 
-  // Lettura: se true, prova a leggere TUTTI i file via request.files() (oltre a file()).
+  // Reading: if true, try to read ALL files via request.files() (in addition to file()).
   filesMode?: 'single' | 'all'; // default 'all'
   fieldName?: string; // per route con singolo campo
 }

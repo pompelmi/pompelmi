@@ -17,17 +17,17 @@ export default defineConfig({
       reporter: ['text', 'lcov', 'html'],
       reportsDirectory: './coverage',
 
-      // Conta SOLO i file coperti dai test (niente zero-coverage in mezzo)
+      // Count ONLY files covered by tests (no zero-coverage files mixed in)
       all: false,
 
-      // Misura il core root
+      // Measure the core root
       include: ['src/**/*.ts'],
       exclude: [
         'packages/**', 'dist/**', 'site/**', 'docs/**', 'examples/**', 'website/**',
         '**/*.d.ts', '**/__mocks__/**', '**/*.test.ts', '**/*.spec.ts'
       ],
 
-      // Soglie alte (lo zipTraversalGuard.ts ha già branches ~85.7%)
+      // High thresholds (zipTraversalGuard.ts already has ~85.7% branches)
       thresholds: { branches: 85, lines: 90, functions: 90, statements: 90 }
     }
   }

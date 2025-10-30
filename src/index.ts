@@ -1,16 +1,16 @@
-// src/index.ts — Browser / React entry point per pompelmi
+// src/index.ts — Browser / React entry point for pompelmi
 
-// Re-export API browser
+// Re-export browser API
 export { scanFiles } from './scan';
 export { validateFile } from './validate';
 export { useFileScanner } from './useFileScanner';
 
-// (Se hai aggiunto la funzione con YARA lato browser)
-// Nuova API: heuristics (magic bytes, SVG/script, JPEG trailer) + YARA opzionale
+// (If you added the YARA function for browser-side scanning)
+// New API: heuristics (magic bytes, SVG/script, JPEG trailer) + optional YARA
 
-// Re-export dei TIPI (nessuna ridichiarazione locale)
+// Re-export TYPES (no local redeclaration)
 export type { YaraMatch } from './yara/index';
-export type { NodeScanOptions, NodeFileEntry } from './node/scanDir'; // opzionale
+export type { NodeScanOptions, NodeFileEntry } from './node/scanDir'; // optional
 export { scanFilesWithRemoteYara } from './scan/remote';
 
 export * from './types';

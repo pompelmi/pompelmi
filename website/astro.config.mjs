@@ -39,12 +39,12 @@ export default defineConfig({
   description:
     'File upload malware scanning for Node.js apps. React/Next UI, Express/Koa middleware, size & MIME guards, optional YARA.',
 
-  // v0.33+ => social è un ARRAY di link
+  // v0.33+ => social is an ARRAY of links
   social: [
     { icon: 'github', label: 'GitHub', href: 'https://github.com/pompelmi/pompelmi' }
   ],
 
-  // head deve usare oggetti { tag, attrs, content? }
+  // head must use objects { tag, attrs, content? }
   head: [
     { tag: 'link', attrs: { rel: 'canonical', href: 'https://pompelmi.github.io/pompelmi/' } },
     { tag: 'meta', attrs: { property: 'og:title', content: 'Pompelmi — File upload malware scanning for Node.js' } },

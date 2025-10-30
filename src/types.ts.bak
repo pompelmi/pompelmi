@@ -1,17 +1,17 @@
-/** Tipi condivisi per gli scanner */
+/** Shared types for scanners */
 
 export type Uint8ArrayLike = Uint8Array;
 
 export type Severity = 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
 
 export type Match = {
-  /** Regola/etichetta che ha prodotto il match (es: 'zip_eocd_not_found') */
+  /** Rule/label that produced the match (e.g: 'zip_eocd_not_found') */
   rule: string;
-  /** Nome/ID dello scanner o sorgente (opzionale) */
+  /** Scanner name/ID or source (optional) */
   source?: string;
-  /** Severità del match */
+  /** Match severity */
   severity?: Severity;
-  /** Metadati aggiuntivi (liberi) */
+  /** Additional metadata (free-form) */
   meta?: Record<string, unknown>;
 };
 

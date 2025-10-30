@@ -5,7 +5,7 @@ export default defineConfig({
     globals: true,
     environment: 'node',
 
-    // Cerchiamo test in root e nei packages (anche se escludiamo i packages dalla coverage)
+    // Look for tests in root and packages (even though we exclude packages from coverage)
     include: [
       'tests/**/*.test.ts',
       'test/**/*.test.ts',
