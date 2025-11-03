@@ -33,6 +33,7 @@
   <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white">
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi"></a>
+  <a href="https://securityscorecards.dev/viewer/?uri=github.com/pompelmi/pompelmi"><img alt="OpenSSF Scorecard" src="https://api.securityscorecards.dev/projects/github.com/pompelmi/pompelmi/badge"/></a>
     <a href="https://codecov.io/gh/pompelmi/pompelmi"><img alt="codecov" src="https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg?flag=core"/></a>
   <a href="https://github.com/pompelmi/pompelmi/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI / Release / Publish" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI%20%2F%20Release%20%2F%20Publish"></a>
@@ -45,6 +46,7 @@
 <p align="center"><a href="https://pompelmi.github.io/pompelmi/">Documentation</a> ·
   <a href="#installation">Install</a> ·
   <a href="#quick-start">Quick‑start</a> ·
+  <a href="#minimal-node-usage">Minimal Node</a> ·
   <a href="#github-action">GitHub Action</a> ·
   <a href="#adapters">Adapters</a> ·
   <a href="#diagrams">Diagrams</a> ·
@@ -65,6 +67,7 @@
 
 - [Install](#installation)
 - [Quick‑start](#quick-start)
+- [Minimal Node usage](#minimal-node-usage)
 - [GitHub Action](#github-action)
 - [Adapters](#adapters)
 - [Diagrams](#diagrams)
@@ -131,7 +134,6 @@
 
 ```bash
 # core library
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/pompelmi/pompelmi/badge)](https://securityscorecards.dev/viewer/?uri=github.com/pompelmi/pompelmi)
 npm i pompelmi
 # or
 pnpm add pompelmi
@@ -174,6 +176,21 @@ export const scanner = composeScanners(
   { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500, tagSourceName: true }
 );
 ```
+
+### Minimal Node usage
+
+```ts
+import { scanFile } from 'pompelmi';
+
+const res = await scanFile('path/to/file.zip'); // or any file
+console.log(res.verdict); // "clean" | "suspicious" | "malicious"
+```
+
+> See `examples/scan-one-file.ts` for a runnable script:
+>
+> ```bash
+> pnpm tsx examples/scan-one-file.ts ./path/to/file
+> ```
 
 ### Express
 

@@ -54,3 +54,7 @@ dist-tarballs/
 # tarballs
 *.tgz
 dist-tarballs/
+dist/
+*.d.ts.map
+*.map
+*.bak

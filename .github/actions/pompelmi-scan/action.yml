@@ -31,7 +31,7 @@ inputs:
     required: false
     default: "true"
   cli_version:
-    description: "pompelmi CLI version (e.g. 0.17.0-dev.37) or 'latest'"
+    description: "pompelmi CLI version (e.g. 0.17.0) or 'latest'"
     required: false
     default: "latest"
   output:

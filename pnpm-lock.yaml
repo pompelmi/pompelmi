@@ -43,7 +43,7 @@ importers:
         specifier: workspace:*
         version: link:packages/pompelmi
       '@pompelmi/engine':
-        specifier: workspace:0.17.0-dev.37-dev.6
+        specifier: workspace:0.17.0-dev.6
         version: link:packages/engine
       '@pompelmi/engine-heuristics':
         specifier: workspace:^0.1.0

@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.17.0-dev.37",
+  "version": "0.17.0",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -57,13 +57,14 @@
     "repo:audit": "node scripts/audit.mjs",
     "pack:check": "node scripts/pack-check.mjs",
     "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run",
-    "pack:strict": "node scripts/pack-check.mjs --strict"
+    "pack:strict": "node scripts/pack-check.mjs --strict",
+    "clean": "rimraf dist"
   },
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@pompelmi/core": "workspace:*",
-    "@pompelmi/engine": "workspace:0.17.0-dev.37-dev.6",
+    "@pompelmi/engine": "workspace:0.17.0-dev.6",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
@@ -101,7 +102,12 @@
     "@litko/yara-x": "^0.2.1"
   },
   "exports": {
-    ".": {},
+    ".": {
+      "import": "./dist/pompelmi.esm.js",
+      "require": "./dist/pompelmi.cjs",
+      "default": "./dist/pompelmi.esm.js",
+      "types": "./dist/types/index.d.ts"
+    },
     "./package.json": "./package.json"
   },
   "files": [
@@ -110,7 +116,8 @@
     "README.md",
     "LICENSE*",
     "package.json",
-    "CHANGELOG*"
+    "CHANGELOG*",
+    "LICENSE"
   ],
   "keywords": [
     "security",
@@ -152,5 +159,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "types": "./dist/types/index.d.ts"
 }
