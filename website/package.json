@@ -19,7 +19,7 @@
     "@astrojs/mdx": "^4.3.3",
     "@astrojs/react": "^4.3.0",
     "@astrojs/sitemap": "^3.4.2",
-    "@astrojs/starlight": "^0.35.2",
+    "@astrojs/starlight": "^0.36.2",
     "@astrojs/tailwind": "^6.0.2",
     "@babel/core": "^7.28.0",
     "@babel/preset-env": "^7.28.0",
