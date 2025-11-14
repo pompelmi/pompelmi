@@ -1135,7 +1135,21 @@ jobs:
               continue
             fi
             echo "  → publishing…"
-            pnpm --filter "$NAME" publish --access public --tag latest --no-git-checks --provenance
+            set +e
+            OUT=$(pnpm --filter "$NAME" publish --access public --tag latest --no-git-checks --provenance 2>&1)
+            CODE=$?
+            set -e
+            echo "$OUT"
+            if [ $CODE -ne 0 ]; then
+              if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+                echo "  → version already on npm, treating as success."
+              else
+                echo "  → publish failed"
+                exit $CODE
+              fi
+            else
+              echo "  → publish succeeded"
+            fi
           done
 
       - name: Ensure dist-tag "latest" points to version (retry, tolerate CDN lag)
@@ -1293,14 +1307,26 @@ jobs:
         run: pnpm run pack:strict
 
       - name: Publish root to npm (force latest tag)
-        if: steps.rootdecision.outputs.exists == 'false' && steps.rootpriv.outputs.private == 'false'
+        if: steps.rootpriv.outputs.private == 'false'
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: 'true'
         run: |
-          # Publish without running lifecycle scripts to avoid build-time cross-deps
-          npm publish --provenance --access public --tag latest --ignore-scripts
-          echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }} (tag=latest)"
+          set +e
+          OUT=$(npm publish --provenance --access public --tag latest --ignore-scripts 2>&1)
+          CODE=$?
+          set -e
+          echo "$OUT"
+          if [ $CODE -ne 0 ]; then
+            if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+              echo "Version already exists on npm, treating as success."
+            else
+              echo "npm publish failed"
+              exit $CODE
+            fi
+          else
+            echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }} (tag=latest)"
+          fi
 
       - name: Show npm state (debug)
         env:
