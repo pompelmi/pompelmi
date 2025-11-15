@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.17.0",
+  "version": "0.18.0",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -11,8 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pompelmi/pompelmi.git",
-    "directory": "packages/engine"
+    "url": "https://github.com/pompelmi/pompelmi.git"
   },
   "homepage": "https://pompelmi.github.io/pompelmi/",
   "pnpm": {
@@ -36,7 +35,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && npm run pack:strict",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
     "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
     "dev:remote": "tsx examples/remote-yara-server.ts",
@@ -64,7 +63,7 @@
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@pompelmi/core": "workspace:*",
-    "@pompelmi/engine": "workspace:0.17.0-dev.6",
+    "@pompelmi/engine": "workspace:0.18.0-dev.39-dev.6",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
@@ -90,9 +89,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vitest": "2.1.9"
-  },
-  "dependencies": {
-    "rollup": "^4.45.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
