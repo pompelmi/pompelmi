@@ -1141,7 +1141,7 @@ jobs:
             set -e
             echo "$OUT"
             if [ $CODE -ne 0 ]; then
-              if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+              if echo "$OUT" | grep -qi "cannot publish over"; then
                 echo "  → version already on npm, treating as success."
               else
                 echo "  → publish failed"
@@ -1318,7 +1318,7 @@ jobs:
           set -e
           echo "$OUT"
           if [ $CODE -ne 0 ]; then
-            if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+            if echo "$OUT" | grep -qi "cannot publish over"; then
               echo "Version already exists on npm, treating as success."
             else
               echo "npm publish failed"
@@ -1489,7 +1489,7 @@ jobs:
           CODE=$?
           echo "$OUT"
           if [ $CODE -ne 0 ]; then
-            if echo "$OUT" | grep -q "Cannot publish over existing version"; then
+            if echo "$OUT" | grep -qi "cannot publish over"; then
               echo "Version already exists on GPR, treating as success."
               exit 0
             fi
