@@ -1,0 +1,131 @@
+---
+import { getCollection } from 'astro:content';
+import '../../styles/global.css';
+
+export async function getStaticPaths() {
+  const blogPosts = await getCollection('blog');
+  return blogPosts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+
+const BASE = 'https://pompelmi.github.io/pompelmi';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{post.data.title} — Pompelmi Blog</title>
+    <meta name="description" content={post.data.description} />
+    <link rel="canonical" href={`${BASE}/blog/${post.slug}/`} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:title" content={post.data.title} />
+    <meta property="og:description" content={post.data.description} />
+    <meta property="og:url" content={`${BASE}/blog/${post.slug}/`} />
+    <meta property="og:type" content="article" />
+    <meta property="article:published_time" content={post.data.pubDate.toISOString()} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/pompelmi/favicon.svg" />
+    
+    <style>
+      .prose {
+        max-width: 65ch;
+        color: #374151;
+      }
+      .prose h1 { font-size: 2.25rem; font-weight: 800; margin: 2rem 0 1rem; }
+      .prose h2 { font-size: 1.875rem; font-weight: 700; margin: 1.75rem 0 0.875rem; }
+      .prose h3 { font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 0.75rem; }
+      .prose p { margin: 1rem 0; line-height: 1.75; }
+      .prose ul, .prose ol { margin: 1rem 0; padding-left: 1.5rem; }
+      .prose li { margin: 0.5rem 0; }
+      .prose code { 
+        background: #f3f4f6; 
+        padding: 0.2rem 0.4rem; 
+        border-radius: 0.25rem; 
+        font-size: 0.875em; 
+      }
+      .prose pre { 
+        background: #1f2937; 
+        color: #f3f4f6; 
+        padding: 1rem; 
+        border-radius: 0.5rem; 
+        overflow-x: auto; 
+        margin: 1.5rem 0; 
+      }
+      .prose pre code { 
+        background: transparent; 
+        padding: 0; 
+        color: inherit; 
+      }
+      .prose a { color: #2563eb; text-decoration: underline; }
+      .prose a:hover { color: #1d4ed8; }
+      .prose blockquote {
+        border-left: 4px solid #e5e7eb;
+        padding-left: 1rem;
+        margin: 1.5rem 0;
+        font-style: italic;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+
+  <body class="antialiased bg-gray-50">
+    <header class="bg-white border-b">
+      <div class="mx-auto max-w-5xl px-4 py-6">
+        <nav class="flex items-center justify-between">
+          <a href="/pompelmi/" class="text-xl font-bold">Pompelmi</a>
+          <div class="flex gap-4 text-sm">
+            <a href="/pompelmi/" class="hover:underline">Home</a>
+            <a href="/pompelmi/getting-started/" class="hover:underline">Docs</a>
+            <a href="/pompelmi/blog/" class="font-medium hover:underline">Blog</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-3xl px-4 py-12">
+      <article class="bg-white rounded-lg border p-8">
+        <header class="mb-8 border-b pb-6">
+          <h1 class="text-4xl font-bold mb-3">{post.data.title}</h1>
+          <div class="text-sm text-gray-500">
+            {post.data.pubDate.toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+            {post.data.author && ` • ${post.data.author}`}
+          </div>
+          {post.data.tags && (
+            <div class="flex flex-wrap gap-2 mt-4">
+              {post.data.tags.map((tag) => (
+                <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </header>
+
+        <div class="prose">
+          <Content />
+        </div>
+      </article>
+
+      <div class="mt-8 text-center">
+        <a href="/pompelmi/blog/" class="text-blue-600 hover:underline">
+          ← Back to Blog
+        </a>
+      </div>
+    </main>
+
+    <footer class="mt-16 border-t bg-white">
+      <div class="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-gray-600">
+        <p>© 2024 Pompelmi. MIT License.</p>
+      </div>
+    </footer>
+  </body>
+</html>
