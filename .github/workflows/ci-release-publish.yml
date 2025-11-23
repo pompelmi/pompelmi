@@ -1302,6 +1302,12 @@ jobs:
         run: |
           echo 'Root package.json has "private": true — skipping npm publish.'
 
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build root package (dist/)
+        run: pnpm run build
+
       - name: Validate root tarball (pack-check)
 
         run: pnpm run pack:strict
