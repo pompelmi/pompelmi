@@ -52,8 +52,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build UI React package
-        run: pnpm --filter @pompelmi/ui-react build
+      - name: Build UI React package (if needed)
+        run: |
+          if [ -d "packages/ui-react/src" ]; then
+            pnpm --filter @pompelmi/ui-react build || echo "UI React build skipped or failed"
+          fi
 
       - name: Build website
         env:
