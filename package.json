@@ -108,12 +108,10 @@
   },
   "files": [
     "dist/",
-    "dist",
     "README.md",
-    "LICENSE*",
+    "LICENSE",
     "package.json",
-    "CHANGELOG*",
-    "LICENSE"
+    "CHANGELOG*"
   ],
   "keywords": [
     "security",

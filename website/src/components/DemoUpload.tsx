@@ -149,21 +149,15 @@ export default function DemoUpload() {
   );
 
   return (
-    <section className="max-w-3xl mx-auto my-8 space-y-6">
-      <div className="space-y-3">
-        <h2 className="text-xl font-semibold">Client‑side demo (no upload)</h2>
-        <p className="text-sm text-gray-600">
-          Files are scanned entirely in your browser. Nothing is sent to any server.
-          To connect a real backend later, set <code>PUBLIC_ENGINE_URL</code> and switch back to the
-          server upload component.
-        </p>
-      </div>
-
-      <div className="flex items-center gap-3">
+    <section className="space-y-6">
+      <div className="flex flex-col md:flex-row items-center gap-4">
         <button
           onClick={() => inputRef.current?.click()}
-          className="border px-4 py-2 rounded hover:bg-gray-50"
+          className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 hover:from-blue-700 hover:to-purple-700"
         >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
           Choose file(s) and scan
         </button>
         <input
@@ -173,6 +167,7 @@ export default function DemoUpload() {
           className="hidden"
           onChange={(e) => handleFiles(e.currentTarget.files)}
         />
+        <p className="text-sm text-gray-500 italic">Files are scanned entirely in your browser. Nothing is uploaded.</p>
       </div>
 
       <div
@@ -182,57 +177,101 @@ export default function DemoUpload() {
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`mt-2 border-2 border-dashed rounded p-6 text-center transition-colors ${
-          dragOver ? 'border-black bg-gray-50' : 'border-gray-300'
+        className={`relative border-3 border-dashed rounded-2xl p-12 text-center transition-all ${
+          dragOver 
+            ? 'border-blue-500 bg-blue-50 scale-105' 
+            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
         }`}
       >
-        Drag & drop files here
+        <div className="flex flex-col items-center gap-4">
+          <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+            dragOver ? 'bg-blue-500 scale-110' : 'bg-gray-200'
+          }`}>
+            <svg className={`w-10 h-10 ${dragOver ? 'text-white' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+          </div>
+          <div>
+            <p className="text-lg font-semibold text-gray-700">Drag & drop files here</p>
+            <p className="text-sm text-gray-500 mt-1">or click the button above to select</p>
+          </div>
+        </div>
       </div>
 
       {progress !== null && (
-        <div>
-          <div className="h-2 w-full bg-gray-200 rounded">
+        <div className="glass rounded-xl p-5 border-2 border-blue-200">
+          <div className="flex justify-between items-center mb-3">
+            <span className="font-semibold text-gray-700">Scanning files...</span>
+            <span className="text-sm font-bold text-blue-600">{progress.toFixed(0)}%</span>
+          </div>
+          <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
             <div
-              className="h-2 bg-black rounded transition-all"
+              className="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out"
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           </div>
-          <p className="text-xs mt-1">{progress.toFixed(0)}%</p>
         </div>
       )}
 
       {results.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="font-semibold">Results</h3>
-          <ul className="space-y-2">
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold">Scan Results</h3>
+          </div>
+          <ul className="space-y-3">
             {results.map((r, i) => (
-              <li key={i} className="border rounded p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="font-mono text-sm">{r.fileName}</div>
-                    <div className="text-xs text-gray-600">
-                      {bytesToSize(r.size)} · {r.mime}
-                      {r.ext ? ` · .${r.ext}` : ''}
+              <li key={i} className="glass rounded-2xl p-5 border-2 border-transparent hover:border-blue-300 transition-all">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="font-mono text-base font-semibold text-gray-800 break-all">{r.fileName}</div>
+                    <div className="text-sm text-gray-600 mt-1 flex flex-wrap gap-3">
+                      <span className="inline-flex items-center gap-1">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                        </svg>
+                        {bytesToSize(r.size)}
+                      </span>
+                      <span>•</span>
+                      <span>{r.mime}</span>
+                      {r.ext && (
+                        <>
+                          <span>•</span>
+                          <span className="font-mono">.{r.ext}</span>
+                        </>
+                      )}
                     </div>
                   </div>
                   <span
-                    className={`text-xs font-semibold px-2 py-1 rounded-full ${
+                    className={`inline-flex items-center gap-2 text-sm font-bold px-5 py-2 rounded-full whitespace-nowrap ${
                       r.verdict === 'malicious'
-                        ? 'bg-red-100 text-red-700'
+                        ? 'bg-red-100 text-red-700 border-2 border-red-300'
                         : r.verdict === 'suspicious'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-700'
+                        ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
+                        : 'bg-green-100 text-green-700 border-2 border-green-300'
                     }`}
                   >
+                    {r.verdict === 'malicious' && '✗'}
+                    {r.verdict === 'clean' && '✓'}
+                    {r.verdict === 'suspicious' && '⚠'}
                     {r.verdict.toUpperCase()}
                   </span>
                 </div>
                 {r.findings.length > 0 && (
-                  <ul className="mt-2 list-disc list-inside text-sm">
+                  <ul className="mt-4 space-y-2">
                     {r.findings.map((f) => (
-                      <li key={f.id}>
-                        <span className="font-medium">{f.title}</span>
-                        {f.description ? ` — ${f.description}` : ''}
+                      <li key={f.id} className="flex items-start gap-3 bg-white/50 rounded-lg p-3 border border-gray-200">
+                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                          f.severity === 'high' ? 'bg-red-500' : f.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
+                        }`}></div>
+                        <div className="text-sm">
+                          <span className="font-semibold text-gray-800">{f.title}</span>
+                          {f.description && <span className="text-gray-600"> — {f.description}</span>}
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -243,16 +282,23 @@ export default function DemoUpload() {
         </div>
       )}
 
-      <div>
-        <h3 className="font-semibold mb-2">Log</h3>
-        <ul className="text-sm space-y-1">
-          {log.map((l, i) => (
-            <li key={i} className="font-mono">
-              {l}
-            </li>
-          ))}
-        </ul>
-      </div>
+      {log.length > 0 && (
+        <details className="glass rounded-2xl p-5 border-2 border-gray-200">
+          <summary className="font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            Scan Log ({log.length} entries)
+          </summary>
+          <ul className="mt-4 space-y-1 max-h-64 overflow-y-auto">
+            {log.map((l, i) => (
+              <li key={i} className="font-mono text-sm text-gray-600 bg-gray-50 rounded px-3 py-1">
+                {l}
+              </li>
+            ))}
+          </ul>
+        </details>
+      )}
     </section>
   );
 }

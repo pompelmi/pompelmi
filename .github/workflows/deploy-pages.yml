@@ -1,8 +1,12 @@
-name: Deploy Docs to GitHub Pages
+name: Deploy Website to GitHub Pages
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'website/**'
+      - 'packages/ui-react/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -12,31 +16,49 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - uses: pnpm/action-setup@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
           version: 9.12.0
 
-      - name: Install deps
-        run: pnpm install
+      - name: Get pnpm store directory
+        id: pnpm-cache
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v4
+        with:
+          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build UI React package
+        run: pnpm --filter @pompelmi/ui-react build
 
       - name: Build website
         env:
-          PUBLIC_ENGINE_URL: ${{ secrets.PUBLIC_ENGINE_URL }}  # opzionale per la demo
-        run: |
-          cd website
-          pnpm build
+          PUBLIC_ENGINE_URL: ${{ secrets.PUBLIC_ENGINE_URL }}
+        run: pnpm --filter website build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -46,9 +68,13 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - id: deployment
+      - name: Deploy to GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
