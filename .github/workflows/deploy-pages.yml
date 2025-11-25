@@ -3,10 +3,6 @@ name: Deploy Website to GitHub Pages
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'website/**'
-      - 'packages/ui-react/**'
-      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -19,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -35,49 +31,22 @@ jobs:
         with:
           version: 9.12.0
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
-
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build UI React package (if needed)
-        run: |
-          if [ -d "packages/ui-react/src" ]; then
-            pnpm --filter @pompelmi/ui-react build || echo "UI React build skipped or failed"
-          fi
-
       - name: Build website
-        env:
-          PUBLIC_ENGINE_URL: ${{ secrets.PUBLIC_ENGINE_URL }}
-        run: pnpm --filter website build
+        run: |
+          cd website
+          pnpm build
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: website/dist
 
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
