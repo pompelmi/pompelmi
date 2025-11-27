@@ -9,7 +9,7 @@ export type Verdict = 'clean' | 'suspicious' | 'malicious';
 
 export interface YaraMatch {
   rule: string;
-  tags?: string[];
+  ta        // MIME whitelist (if configured) with fallback from extensions?: string[];
   meta?: Record<string, unknown>;
 }
 export interface PompelmiScanner {
@@ -58,13 +58,13 @@ export interface UploadGuardOptions {
     scanHidden?: boolean;
   };
 
-  // Sorgente file:
-  //  - 'multer': @koa/multer => buffer su ctx.request.file/ctx.request.files o ctx.file/ctx.files
-  //              (alcune varianti/compat usano anche ctx.req.file/ctx.req.files)
-  //  - 'koa-body': formidable => path su disco in ctx.request.files (li leggiamo in buffer)
-  //  - 'auto': prova 'multer', se vuoto prova 'koa-body'
+  // File source:
+  //  - 'multer': @koa/multer => buffer on ctx.request.file/ctx.request.files or ctx.file/ctx.files
+  //              (some variants/compat also use ctx.req.file/ctx.req.files)
+  //  - 'koa-body': formidable => disk path in ctx.request.files (we read them into buffer)
+  //  - 'auto': try 'multer', if empty try 'koa-body'
   filesSource?: 'multer' | 'koa-body' | 'auto'; // default 'auto'
-  fieldName?: string; // per .single()
+  fieldName?: string; // for .single()
 }
 
 class Semaphore {
@@ -193,10 +193,10 @@ async function collectKoaFiles(
 ): Promise<Array<{ buffer: Buffer; filename?: string; size?: number; mimetype?: string }>> {
   const out: Array<{ buffer: Buffer; filename?: string; size?: number; mimetype?: string }> = [];
 
-  // Helpers per normalizzare le varie forme (array / oggetto / singolo)
+  // Helpers to normalize the various forms (array / object / single)
   const pushFile = (f: any) => {
     if (!f) return;
-    const buf: Buffer | undefined = f.buffer; // @koa/multer con memoryStorage
+    const buf: Buffer | undefined = f.buffer; // @koa/multer with memoryStorage
     if (!buf) return;
     const filename: string | undefined = f.originalname || f.filename || f.name;
     const size = typeof f.size === 'number' ? f.size : buf.length;
@@ -218,7 +218,7 @@ async function collectKoaFiles(
     }
   };
 
-  // ---- @koa/multer: legge tipicamente da ctx.request.* e ctx.* (vedi README)
+  // ---- @koa/multer: typically reads from ctx.request.* and ctx.* (see README)
   const anyKoaReq: any = ctx.request as any;
   const anyKoaCtx: any = ctx as any;
   pushFromContainer(anyKoaReq.file);
@@ -226,12 +226,12 @@ async function collectKoaFiles(
   pushFromContainer(anyKoaCtx.file);
   pushFromContainer(anyKoaCtx.files);
 
-  // ---- fallback Node-style (alcune varianti scrivono su ctx.req.*)
+  // ---- fallback Node-style (some variants write to ctx.req.*)
   const anyNodeReq: any = ctx.req as any;
   pushFromContainer(anyNodeReq.file);
   pushFromContainer(anyNodeReq.files);
 
-  // ---- koa-body / formidable: file su disco in ctx.request.files -> leggiamo in Buffer
+  // ---- koa-body / formidable: files on disk in ctx.request.files -> read into Buffer
   const tryKoaBody = async () => {
     const files: any = (ctx.request as any).files;
     if (!files) return;
@@ -389,7 +389,7 @@ export function createKoaUploadGuard(options: UploadGuardOptions) {
             mimeToCheck = extMap[nameExt] ?? null;
           }
 
-          // Se dopo il fallback è ancora sconosciuto, NON applichiamo la whitelist MIME
+          // If after fallback it's still unknown, do NOT apply MIME whitelist
           if (mimeToCheck && !allowedMimeTypes.includes(mimeToCheck)) {
             const payload = {
               ok: false,

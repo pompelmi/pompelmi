@@ -1,0 +1,27 @@
+name: "🐛 Bug report"
+description: Report a problem with pompelmi
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Tell us what you expected vs what happened.
+      placeholder: Clear steps to reproduce...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `node -v`, `pnpm -v`, and the pompelmi package version.
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction
+      description: Minimal repo/code to reproduce (link or gist).
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      render: shell
