@@ -25,7 +25,7 @@
     "@babel/preset-env": "^7.28.0",
     "@babel/preset-typescript": "^7.27.1",
     "@rollup/plugin-babel": "^6.0.4",
-    "@types/koa": "^2.15.0",
+    "@types/koa": "^3.0.1",
     "@types/react-dom": "^19.1.6",
     "@types/supertest": "^6.0.3",
     "@vitest/coverage-v8": "2.1.9",
