@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { BinaryNinjaScanner, createBinaryNinjaScanner } from '../src/index';
 
 // Mock child_process
@@ -14,6 +14,10 @@ vi.mock('fs/promises', () => ({
 }));
 
 describe('BinaryNinjaScanner', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('should create scanner with default options', () => {
     const scanner = new BinaryNinjaScanner();
     expect(scanner).toBeInstanceOf(BinaryNinjaScanner);
@@ -33,37 +37,40 @@ describe('BinaryNinjaScanner', () => {
   });
 
   it('should handle successful analysis', async () => {
-    const mockExecFile = vi.fn().mockResolvedValue({
-      stdout: JSON.stringify({
-        success: true,
-        engine: 'binaryninja-hlil',
-        functions: [{
-          name: 'main',
-          address: '0x1000',
-          size: 100,
-          complexity: 5,
-          callCount: 3,
-          suspiciousCalls: []
-        }],
-        matches: [{
-          rule: 'test_rule',
-          severity: 'medium',
-          engine: 'binaryninja-hlil',
-          confidence: 0.8,
-          meta: { function: 'main' }
-        }],
-        meta: {
-          analysisTime: 1.5,
-          binaryFormat: 'PE',
-          architecture: 'x86_64'
-        }
-      }),
-      stderr: ''
-    });
-
-    // Mock the execFile function
+    // Get the mocked execFile function
     const { execFile } = await import('child_process');
-    vi.mocked(execFile).mockImplementation(mockExecFile as any);
+    
+    // Mock execFile to call the callback with our test data
+    vi.mocked(execFile).mockImplementation((cmd: string, args: string[], options: any, callback: Function) => {
+      const result = {
+        stdout: JSON.stringify({
+          success: true,
+          engine: 'binaryninja-hlil',
+          functions: [{
+            name: 'main',
+            address: '0x1000',
+            size: 100,
+            complexity: 5,
+            callCount: 3,
+            suspiciousCalls: []
+          }],
+          matches: [{
+            rule: 'test_rule',
+            severity: 'medium',
+            engine: 'binaryninja-hlil',
+            confidence: 0.8,
+            meta: { function: 'main' }
+          }],
+          meta: {
+            analysisTime: 1.5,
+            binaryFormat: 'PE',
+            architecture: 'x86_64'
+          }
+        }),
+        stderr: ''
+      };
+      callback(null, result);
+    });
 
     const scanner = new BinaryNinjaScanner();
     const testBytes = new Uint8Array([0x4D, 0x5A]); // PE header
@@ -79,16 +86,18 @@ describe('BinaryNinjaScanner', () => {
   });
 
   it('should handle analysis failure', async () => {
-    const mockExecFile = vi.fn().mockResolvedValue({
-      stdout: JSON.stringify({
-        success: false,
-        error: 'Binary format not supported'
-      }),
-      stderr: ''
-    });
-
     const { execFile } = await import('child_process');
-    vi.mocked(execFile).mockImplementation(mockExecFile as any);
+    
+    vi.mocked(execFile).mockImplementation((cmd: string, args: string[], options: any, callback: Function) => {
+      const result = {
+        stdout: JSON.stringify({
+          success: false,
+          error: 'Binary format not supported'
+        }),
+        stderr: ''
+      };
+      callback(null, result);
+    });
 
     const scanner = new BinaryNinjaScanner();
     const testBytes = new Uint8Array([0x00, 0x01]); // Invalid header
@@ -102,14 +111,16 @@ describe('BinaryNinjaScanner', () => {
   });
 
   it('should handle timeout errors', async () => {
-    const mockExecFile = vi.fn().mockRejectedValue({
-      killed: true,
-      signal: 'SIGTERM',
-      message: 'Process timed out'
-    });
-
     const { execFile } = await import('child_process');
-    vi.mocked(execFile).mockImplementation(mockExecFile as any);
+    
+    vi.mocked(execFile).mockImplementation((cmd: string, args: string[], options: any, callback: Function) => {
+      const error = {
+        killed: true,
+        signal: 'SIGTERM',
+        message: 'Process timed out'
+      };
+      callback(error, null);
+    });
 
     const scanner = new BinaryNinjaScanner({ timeout: 1000 });
     const testBytes = new Uint8Array([0x4D, 0x5A]);
@@ -121,13 +132,15 @@ describe('BinaryNinjaScanner', () => {
   });
 
   it('should handle missing Binary Ninja', async () => {
-    const mockExecFile = vi.fn().mockRejectedValue({
-      code: 'ENOENT',
-      message: 'python3 ENOENT'
-    });
-
     const { execFile } = await import('child_process');
-    vi.mocked(execFile).mockImplementation(mockExecFile as any);
+    
+    vi.mocked(execFile).mockImplementation((cmd: string, args: string[], options: any, callback: Function) => {
+      const error = {
+        code: 'ENOENT',
+        message: 'python3 ENOENT'
+      };
+      callback(error, null);
+    });
 
     const scanner = new BinaryNinjaScanner();
     const testBytes = new Uint8Array([0x4D, 0x5A]);
@@ -139,22 +152,24 @@ describe('BinaryNinjaScanner', () => {
   });
 
   it('should return only matches from scan method', async () => {
-    const mockExecFile = vi.fn().mockResolvedValue({
-      stdout: JSON.stringify({
-        success: true,
-        matches: [{
-          rule: 'suspicious_api_call',
-          severity: 'high',
-          engine: 'binaryninja-hlil',
-          confidence: 0.9
-        }],
-        functions: [],
-        meta: {}
-      })
-    });
-
     const { execFile } = await import('child_process');
-    vi.mocked(execFile).mockImplementation(mockExecFile as any);
+    
+    vi.mocked(execFile).mockImplementation((cmd: string, args: string[], options: any, callback: Function) => {
+      const result = {
+        stdout: JSON.stringify({
+          success: true,
+          matches: [{
+            rule: 'suspicious_api_call',
+            severity: 'high',
+            engine: 'binaryninja-hlil',
+            confidence: 0.9
+          }],
+          functions: [],
+          meta: {}
+        })
+      };
+      callback(null, result);
+    });
 
     const scanner = new BinaryNinjaScanner();
     const testBytes = new Uint8Array([0x4D, 0x5A]);
