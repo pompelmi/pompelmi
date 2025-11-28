@@ -280,7 +280,7 @@ jobs:
           key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@d198d2fabf39a7f36b5ce57ce70d4942944f006e
+        uses: github/codeql-action/init@014f16e7ab1402f30e7c3329d33797e7948572db
         with:
           languages: javascript
 
@@ -293,7 +293,7 @@ jobs:
             --if-present run build
 
       - name: Analyze
-        uses: github/codeql-action/analyze@d198d2fabf39a7f36b5ce57ce70d4942944f006e
+        uses: github/codeql-action/analyze@014f16e7ab1402f30e7c3329d33797e7948572db
 
   # -------------------------------
   # 2) CI Build (web + packages)
