@@ -9,9 +9,15 @@ export interface YaraMatch {
   meta?: Record<string, unknown>;
 }
 
+// Re-export decompilation types
+export * from './types/decompilation';
+
+// Re-export HIPAA compliance types
+export * from './hipaa-compliance';
+
 export interface Match {
   rule: string;
-  // usato da zip-bomb-guard ecc. Manteniamo anche 'suspicious' per compat.
+  // used by zip-bomb-guard etc. We also keep 'suspicious' for compatibility.
   severity?: 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
   meta?: Record<string, unknown>;
 }
@@ -39,7 +45,7 @@ interface BaseReport {
   file?: FileInfo;
   durationMs?: number;
   error?: string;
-  ok: boolean; // true se verdict === 'clean'
+  ok: boolean; // true if verdict === 'clean'
 
   truncated?: boolean;
   timedOut?: boolean;
@@ -50,5 +56,5 @@ export interface StreamScanReport extends BaseReport {}
 
 export type ScanReport = NormalScanReport | StreamScanReport;
 
-// alias usato da alcuni guard
+// alias used by some guards
 export type Uint8ArrayLike = Uint8Array | ArrayBufferView;

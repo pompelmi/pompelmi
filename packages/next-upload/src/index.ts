@@ -162,10 +162,27 @@ async function scanZipBuffer(
 
     await sem.acquire();
     try {
-      const matches = await Promise.race([
-        opts.scanner.scan(new Uint8Array(entryBytes)),
-        (async () => { await delay(timeoutMs); throw new Error('scan_timeout'); })()
-      ]) as YaraMatch[];
+      // Create scanner promise and track it to handle timeouts properly
+      const scanPromise = opts.scanner.scan(new Uint8Array(entryBytes));
+      const timeoutPromise = (async () => {
+        await delay(timeoutMs);
+        throw new Error('scan_timeout');
+      })();
+
+      let matches: YaraMatch[];
+      try {
+        matches = await Promise.race([scanPromise, timeoutPromise]) as YaraMatch[];
+      } catch (error) {
+        // If timeout wins, the scanner promise continues running in background.
+        // We can't cancel it, but we must prevent unhandled rejections.
+        // Attach a catch handler to silently consume any future rejection/fulfillment.
+        scanPromise.catch(() => {
+          // Silently handle scanner completion after timeout to prevent unhandled rejections.
+          // The scanner may still be running, but we've abandoned its result.
+        });
+        throw error;
+      }
+      
       const verdict = mapMatchesToVerdict(matches);
       if (verdict !== 'clean') { onScanEvent?.({ type: 'archive_blocked', archive: archiveName, entry: name, verdict }); return verdict; }
     } finally { sem.release(); }
@@ -218,11 +235,26 @@ export function createNextUploadHandler(options: UploadHandlerOptions) {
 
   const sem = new Semaphore(concurrency);
 
-  async function scanWithTimeout(scanFn: () => Promise<YaraMatch[]>, ms: number) {
-    return Promise.race([
-      scanFn(),
-      (async () => { await delay(ms); throw new Error('scan_timeout'); })()
-    ]) as Promise<YaraMatch[]>;
+  async function scanWithTimeout(scanFn: () => Promise<YaraMatch[]>, ms: number): Promise<YaraMatch[]> {
+    // Create scanner promise and track it to handle timeouts properly
+    const scanPromise = scanFn();
+    const timeoutPromise = (async () => {
+      await delay(ms);
+      throw new Error('scan_timeout');
+    })();
+
+    try {
+      return await Promise.race([scanPromise, timeoutPromise]) as YaraMatch[];
+    } catch (error) {
+      // If timeout wins, the scanner promise continues running in background.
+      // We can't cancel it, but we must prevent unhandled rejections.
+      // Attach a catch handler to silently consume any future rejection/fulfillment.
+      scanPromise.catch(() => {
+        // Silently handle scanner completion after timeout to prevent unhandled rejections.
+        // The scanner may still be running, but we've abandoned its result.
+      });
+      throw error;
+    }
   }
 
   return async function POST(request: Request): Promise<Response> {
