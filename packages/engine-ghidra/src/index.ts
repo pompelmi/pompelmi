@@ -180,7 +180,7 @@ export class GhidraScanner implements DecompilationScanner {
       await fs.mkdir(projectDir, { recursive: true });
       
       // Write binary to temp file
-      await fs.writeFile(binPath, Buffer.from(bytes));
+      await fs.writeFile(binPath, bytes);
       
       // Create Ghidra analysis script
       await this.createAnalysisScript(scriptPath);
@@ -226,7 +226,7 @@ export class GhidraScanner implements DecompilationScanner {
       
       try {
         // Look for JSON output in the logs
-        const jsonMatch = stdout.match(/POMPELMI_RESULT:(.*?)POMPELMI_END/s);
+        const jsonMatch = stdout.match(/POMPELMI_RESULT:([\s\S]*?)POMPELMI_END/);
         if (jsonMatch) {
           rawResult = JSON.parse(jsonMatch[1]);
         } else {

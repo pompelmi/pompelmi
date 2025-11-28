@@ -170,13 +170,11 @@ export class BinaryNinjaScanner implements DecompilationScanner {
     
     try {
       // Write binary to temp file
-      await fs.writeFile(binPath, Buffer.from(bytes));
+      await fs.writeFile(binPath, bytes);
       
       // Get path to analysis script
-      // Get current module directory
-      const currentFile = fileURLToPath(import.meta.url);
-      const currentDir = path.dirname(currentFile);
-      const scriptPath = path.join(currentDir, '..', 'scripts', 'hlil_analysis.py');
+      // Use require.resolve to find the module directory
+      const scriptPath = path.join(__dirname, '..', 'scripts', 'hlil_analysis.py');
       
       // Prepare environment - sanitize for HIPAA compliance
       const env = { ...process.env };
