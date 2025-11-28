@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.16.4",
+  "version": "0.20.0",
   "description": "RFI-safe file uploads for Node.js — Express/Koa/Next.js middleware with deep ZIP inspection, MIME/size checks, and optional YARA scanning.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -11,8 +11,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/pompelmi/pompelmi.git",
-    "directory": "packages/engine"
+    "url": "https://github.com/pompelmi/pompelmi.git"
   },
   "homepage": "https://pompelmi.github.io/pompelmi/",
   "pnpm": {
@@ -36,7 +35,7 @@
   },
   "scripts": {
     "build": "rollup -c",
-    "prepublishOnly": "npm run build",
+    "prepublishOnly": "npm run build && npm run pack:strict",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
     "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
     "dev:remote": "tsx examples/remote-yara-server.ts",
@@ -57,13 +56,14 @@
     "repo:audit": "node scripts/audit.mjs",
     "pack:check": "node scripts/pack-check.mjs",
     "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run",
-    "pack:strict": "node scripts/pack-check.mjs --strict"
+    "pack:strict": "node scripts/pack-check.mjs --strict",
+    "clean": "rimraf dist"
   },
   "license": "MIT",
   "devDependencies": {
     "@biomejs/biome": "^2.2.4",
     "@pompelmi/core": "workspace:*",
-    "@pompelmi/engine": "workspace:0.16.4-dev.6",
+    "@pompelmi/engine": "workspace:*",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
@@ -81,7 +81,7 @@
     "gh-pages": "^6.3.0",
     "knip": "^5.64.0",
     "multer": "^2.0.2",
-    "react": "^18.0.0",
+    "react": "^19.2.0",
     "rollup": "^4.x",
     "ts-prune": "^0.10.3",
     "tslib": "^2.8.1",
@@ -89,9 +89,6 @@
     "tsx": "^4.20.3",
     "typescript": "^5.9.2",
     "vitest": "2.1.9"
-  },
-  "dependencies": {
-    "rollup": "^4.45.1"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",
@@ -101,14 +98,18 @@
     "@litko/yara-x": "^0.2.1"
   },
   "exports": {
-    ".": {},
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/pompelmi.esm.js",
+      "require": "./dist/pompelmi.cjs",
+      "default": "./dist/pompelmi.esm.js"
+    },
     "./package.json": "./package.json"
   },
   "files": [
     "dist/",
-    "dist",
     "README.md",
-    "LICENSE*",
+    "LICENSE",
     "package.json",
     "CHANGELOG*"
   ],
@@ -152,5 +153,6 @@
   },
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "types": "./dist/types/index.d.ts"
 }

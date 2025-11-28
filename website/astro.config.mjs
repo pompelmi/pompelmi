@@ -61,6 +61,11 @@ export default defineConfig({
   },
   sidebar: [
     { label: 'Overview', slug: 'index' },
+    { 
+      label: 'Blog', 
+      link: '/pompelmi/blog/',
+      badge: { text: 'New', variant: 'success' }
+    },
     { label: 'Tutorials', autogenerate: { directory: 'tutorials', collapsed: false } },
     { label: 'How-to Guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },

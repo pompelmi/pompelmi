@@ -32,25 +32,29 @@ pnpm-debug.log*
 .env.local
 .env.*.local
 
-# archives
+# archives & tarballs
 *.tgz
+dist-tarballs/
 
+# temporary files and test artifacts
+tmp-*
+.tmp-*
+tmp-yara-int
+uploads/
+*.bak
+vitest.config.backup*.ts
+vitest.config.broken*.ts
 
-esempi_promozione/
-# Block EICAR test artifacts
+# EICAR test artifacts
 EICAR*
 eicar*
-# pompelmi hygiene
-.DS_Store
-tmp-*
-tmp-yara-int
-*.log
-coverage/
 
-# tarballs
-*.tgz
-dist-tarballs/
+# personal notes and temporary text files
+general_info.txt
+infos.txt
+macro.txt
+note_mie.txt
 
-# tarballs
-*.tgz
-dist-tarballs/
+# source maps
+*.d.ts.map
+*.map

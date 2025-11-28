@@ -31,7 +31,7 @@ inputs:
     required: false
     default: "true"
   cli_version:
-    description: "pompelmi CLI version (e.g. 0.16.4) or 'latest'"
+    description: "pompelmi CLI version (e.g. 0.17.0) or 'latest'"
     required: false
     default: "latest"
   output:
@@ -59,7 +59,7 @@ runs:
   using: "composite"
   steps:
     - name: Setup Node.js
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
       with:
         node-version: "20"
 

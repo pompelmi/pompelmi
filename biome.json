@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -9,19 +9,18 @@
   "linter": {
     "enabled": true
   },
-  "organizeImports": {
-    "enabled": true
-  },
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "files": {
-    "ignore": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "coverage/**",
-      "samples/**",
-      "website/**",
-      "site/**",
-      "tmp-*/**",
-      ".tmp-*/**"
+    "includes": [
+      "**",
+      "!**/node_modules/**",
+      "!**/dist/**",
+      "!**/coverage/**",
+      "!**/samples/**",
+      "!**/website/**",
+      "!**/site/**",
+      "!**/tmp-*/**",
+      "!**/.tmp-*/**"
     ]
   }
 }

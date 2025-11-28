@@ -1,49 +1,89 @@
-# Starlight Starter Kit: Basics
+# Pompelmi Website
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+> Modern, beautiful documentation and marketing site for Pompelmi built with Astro and Starlight.
 
+ Features## 
+
+- **Astro + Starlight** - Fast, accessible documentation
+- **Tailwind CSS** - Modern, responsive design with glass morphism effects
+- **React Components** - Interactive demos and UI elements
+- **Gradient Animations** - Eye-catching animated backgrounds
+- **SEO Optimized** - Comprehensive meta tags and structured data
+- **GitHub Pages Ready** - Automated deployment workflow
+
+## 
+```bash
+# Install dependencies
+pnpm install
+
+# Start dev server
+pnpm dev
+
+# Build for production
+pnpm build
+
+# Preview production build
+pnpm preview
 ```
-pnpm create astro@latest -- --template starlight
+
+## 
+```
+website/
+ public/           # Static assets (favicon, OG images)
+ src/
+ assets/       # Images and media   
+ components/   # React/Astro components   
+ DemoUpload.tsx      
+ CodeTabs.astro      
+ HowItWorks.astro      
+ content/      # Markdown content   
+ blog/     # Blog posts      
+ docs/     # Documentation      
+ pages/        # Page routes   
+ index.astro    # Landing page      
+ blog/      
+ styles/       # Global styles   
+ global.css       
+ astro.config.mjs  # Astro configuration
+ tailwind.config.cjs
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+## 
+The website uses a modern design system with:
+- **Glass morphism** effects for cards and navigation
+- **Gradient animations** for hero sections and CTAs
+- **Floating animations** for background elements
+- **Smooth transitions** and hover effects
+- **Responsive typography** with fluid scaling
+- **Custom scrollbar** styling
 
-## 🚀 Project Structure
+## 
+- [Astro](https://astro.build) v5.x - Static site generator
+- [Starlight](https://starlight.astro.build) - Documentation theme
+- [React](https://react.dev) v19 - UI components
+- [Tailwind CSS](https://tailwindcss.com) v3 - Styling
+- [TypeScript](https://typescriptlang.org) - Type safety
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
+## 
+- **Documentation** - Comprehensive guides in `src/content/docs/`
+- **Blog** - Articles and tutorials in `src/content/blog/`
+- **Components** - Reusable UI components in `src/components/`
 
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
-```
+## 
+The website is automatically deployed to GitHub Pages via GitHub Actions when changes are pushed to the `main` branch. See `.github/workflows/deploy-pages.yml` for the deployment configuration.
 
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
+Build triggers:
+- Changes to `website/**`
+- Changes to `packages/ui-react/**`
+- Manual workflow dispatch
 
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
+## 
+Analytics are tracked via Plausible (privacy-friendly, GDPR compliant).
 
-Static assets, like favicons, can be placed in the `public/` directory.
+## 
+- [Live Site](https://pompelmi.github.io/pompelmi/)
+- [Main Repository](https://github.com/pompelmi/pompelmi)
+- [Documentation](https://pompelmi.github.io/pompelmi/getting-started/)
 
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `pnpm install`             | Installs dependencies                            |
-| `pnpm dev`             | Starts local dev server at `localhost:4321`      |
-| `pnpm build`           | Build your production site to `./dist/`          |
-| `pnpm preview`         | Preview your build locally, before deploying     |
-| `pnpm astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `pnpm astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+## 
+MIT - See LICENSE in the repository root.
