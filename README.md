@@ -26,6 +26,8 @@
 <strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.
 </p>
 
+**Keywords:** file upload security · malware detection · YARA · Node.js middleware · Express · Koa · Next.js · ZIP bomb protection
+
 
 
 <p align="center">
@@ -85,41 +87,33 @@
 
 </div>
 
-<table>
-<tr>
-<td width="33%" align="center">
-<h4>🔒 Privacy First</h4>
-All scanning happens in-process. No cloud calls, no data leaks. Your files never leave your infrastructure.
-</td>
-<td width="33%" align="center">
-<h4>⚡ Lightning Fast</h4>
-In-process scanning with zero network latency. Configurable concurrency for high-throughput scenarios.
-</td>
-<td width="33%" align="center">
-<h4>🎨 Developer Friendly</h4>
-TypeScript-first, zero-config defaults, drop-in middleware. Get started in under 5 minutes.
-</td>
-</tr>
-</table>
+| 🔒 Privacy First | ⚡ Lightning Fast | 🎨 Developer Friendly |
+| --- | --- | --- |
+| All scanning happens in-process. No cloud calls, no data leaks. Your files never leave your infrastructure. | In-process scanning with zero network latency. Configurable concurrency for high-throughput scenarios. | TypeScript-first, zero-config defaults, drop-in middleware. Get started in under 5 minutes. |
 
 ---
 
-<details>
-<summary><strong>Table of contents</strong></summary>
+## Table of Contents
 
-- [Install](#installation)
-- [Quick‑start](#quick-start)
-- [Minimal Node usage](#minimal-node-usage)
-- [GitHub Action](#github-action)
-- [Adapters](#adapters)
-- [Diagrams](#diagrams)
-- [Config](#configuration)
-- [Production checklist](#production-checklist)
-- [YARA](#yara-getting-started)
-- [Quick test](#quick-test-no-eicar)
-- [Security](#security-notes)
+- [Overview](#overview)
+- [Highlights](#highlights)
+- [Why pompelmi](#why-pompelmi)
+- [How it compares](#how-it-compares)
+- [What Developers Say](#what-developers-say)
+- [What Makes pompelmi Special](#what-makes-pompelmi-special)
+- [Use Cases](#use-cases)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [Minimal Node usage](#minimal-node-usage)
+  - [Express](#express)
+  - [Koa](#koa)
+  - [Next.js (App Router)](#nextjs-app-router)
+- [Configuration](#configuration)
+- [Security Notes](#security-notes)
+- [Testing & Development](#testing--development)
 - [FAQ](#faq)
-</details>
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
@@ -160,7 +154,7 @@ TypeScript-first, zero-config defaults, drop-in middleware. Get started in under
 ## 🧠 Why pompelmi?
 
 - **On‑device, private scanning** – no outbound calls, no data sharing.
-- **Blocks early** – runs *before* you write to disk or persist anything.
+- **Blocks early** – runs _before_ you write to disk or persist anything.
 - **Fits your stack** – drop‑in adapters for Express, Koa, Next.js (Fastify plugin in alpha).
 - **Defense‑in‑depth** – ZIP traversal limits, ratio caps, server‑side MIME sniffing, size caps.
 - **Pluggable detection** – bring your own engine (e.g., YARA) via a tiny `{ scan(bytes) }` contract.
@@ -198,7 +192,7 @@ TypeScript-first, zero-config defaults, drop-in middleware. Get started in under
 > "The YARA integration is seamless. We went from prototype to production in less than a week."
 > — DevSecOps Engineer
 
-*Want to share your experience? [Open a discussion](https://github.com/pompelmi/pompelmi/discussions)!*
+_Want to share your experience? [Open a discussion](https://github.com/pompelmi/pompelmi/discussions)!_
 
 ---
 
