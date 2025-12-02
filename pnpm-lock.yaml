@@ -269,6 +269,34 @@ importers:
         specifier: ^3.23.5
         version: 3.24.6(zod@3.25.76)
 
+  packages/engine-binaryninja:
+    dependencies:
+      pompelmi:
+        specifier: workspace:*
+        version: link:../..
+      tmp:
+        specifier: ^0.2.1
+        version: 0.2.5
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.3.0
+      '@types/tmp':
+        specifier: ^0.2.6
+        version: 0.2.6
+      '@vitest/coverage-v8':
+        specifier: 2.1.9
+        version: 2.1.9(vitest@2.1.9(@types/node@24.3.0))
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.0)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.2
+      vitest:
+        specifier: 2.1.9
+        version: 2.1.9(@types/node@24.3.0)
+
   packages/engine-clamav:
     dependencies:
       clamscan:
@@ -278,6 +306,34 @@ importers:
       '@types/node':
         specifier: ^24.3.0
         version: 24.3.0
+      '@vitest/coverage-v8':
+        specifier: 2.1.9
+        version: 2.1.9(vitest@2.1.9(@types/node@24.3.0))
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.0(jiti@2.6.0)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
+      typescript:
+        specifier: ^5.0.0
+        version: 5.9.2
+      vitest:
+        specifier: 2.1.9
+        version: 2.1.9(@types/node@24.3.0)
+
+  packages/engine-ghidra:
+    dependencies:
+      pompelmi:
+        specifier: workspace:*
+        version: link:../..
+      tmp:
+        specifier: ^0.2.1
+        version: 0.2.5
+    devDependencies:
+      '@types/node':
+        specifier: ^24.3.0
+        version: 24.3.0
+      '@types/tmp':
+        specifier: ^0.2.6
+        version: 0.2.6
       '@vitest/coverage-v8':
         specifier: 2.1.9
         version: 2.1.9(vitest@2.1.9(@types/node@24.3.0))
@@ -2648,6 +2704,9 @@ packages:
 
   '@types/tar-stream@3.1.4':
     resolution: {integrity: sha512-921gW0+g29mCJX0fRvqeHzBlE/XclDaAG0Ousy1LCghsOhvaKacDeRGEVzQP9IPfKn8Vysy7FEXAIxycpc/CMg==}
+
+  '@types/tmp@0.2.6':
+    resolution: {integrity: sha512-chhaNf2oKHlRkDGt+tiKE2Z5aJ6qalm7Z9rlLdBwmOiAAf09YQvvoLXjWK4HWPF1xU/fqvMgfNfpVoBscA/tKA==}
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
@@ -5681,6 +5740,10 @@ packages:
     resolution: {integrity: sha512-n1cw8k1k0x4pgA2+9XrOkFydTerNcJ1zWCO5Nn9scWHTD+5tp8dghT2x1uduQePZTZgd3Tupf+x9BxJjeJi77Q==}
     engines: {node: '>=14.0.0'}
 
+  tmp@0.2.5:
+    resolution: {integrity: sha512-voyz6MApa1rQGUxT3E+BK7/ROe8itEx7vD8/HEvt4xwXucvQ5G5oeEiHkmHZJuBO21RpOf+YYm9MOivj709jow==}
+    engines: {node: '>=14.14'}
+
   to-regex-range@5.0.1:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
@@ -8312,6 +8375,8 @@ snapshots:
     dependencies:
       '@types/node': 20.19.11
 
+  '@types/tmp@0.2.6': {}
+
   '@types/trusted-types@2.0.7':
     optional: true
 
@@ -8350,7 +8415,7 @@ snapshots:
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
       istanbul-reports: 3.2.0
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       magicast: 0.3.5
       std-env: 3.9.0
       test-exclude: 7.0.1
@@ -8368,7 +8433,7 @@ snapshots:
       istanbul-lib-report: 3.0.1
       istanbul-lib-source-maps: 5.0.6
       istanbul-reports: 3.2.0
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       magicast: 0.3.5
       std-env: 3.9.0
       test-exclude: 7.0.1
@@ -8388,7 +8453,7 @@ snapshots:
     dependencies:
       '@vitest/spy': 2.1.9
       estree-walker: 3.0.3
-      magic-string: 0.30.17
+      magic-string: 0.30.19
     optionalDependencies:
       vite: 5.4.19(@types/node@20.19.11)
 
@@ -8396,7 +8461,7 @@ snapshots:
     dependencies:
       '@vitest/spy': 2.1.9
       estree-walker: 3.0.3
-      magic-string: 0.30.17
+      magic-string: 0.30.19
     optionalDependencies:
       vite: 5.4.19(@types/node@24.3.0)
 
@@ -8412,7 +8477,7 @@ snapshots:
   '@vitest/snapshot@2.1.9':
     dependencies:
       '@vitest/pretty-format': 2.1.9
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       pathe: 1.1.2
 
   '@vitest/spy@2.1.9':
@@ -9746,7 +9811,7 @@ snapshots:
 
   fix-dts-default-cjs-exports@1.0.1:
     dependencies:
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       mlly: 1.7.4
       rollup: 4.49.0
 
@@ -12297,6 +12362,8 @@ snapshots:
 
   tinyspy@3.0.2: {}
 
+  tmp@0.2.5: {}
+
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
@@ -12636,7 +12703,7 @@ snapshots:
       chai: 5.3.1
       debug: 4.4.1
       expect-type: 1.2.2
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       pathe: 1.1.2
       std-env: 3.9.0
       tinybench: 2.9.0
@@ -12671,7 +12738,7 @@ snapshots:
       chai: 5.3.1
       debug: 4.4.1
       expect-type: 1.2.2
-      magic-string: 0.30.17
+      magic-string: 0.30.19
       pathe: 1.1.2
       std-env: 3.9.0
       tinybench: 2.9.0

@@ -1,29 +1,20 @@
-const __resolveDeps = async () => {
-  const EngMod = import("@pompelmi/engine");
-  const HeuMod = import("@pompelmi/engine-heuristics");
+import type { CAC } from 'cac';
 
-  const E = (EngMod && (EngMod as any).default) ? (EngMod as any).default : (EngMod as any);
+const __resolveDeps = async () => {
+  const HeuMod = await import("@pompelmi/engine-heuristics");
+
   const H = (HeuMod && (HeuMod as any).default) ? (HeuMod as any).default : (HeuMod as any);
 
-  const composeScanners =
-      E.composeScanners ?? E.compose ?? E.composeScanner ?? E.composePipeline;
+  const composeScanners = H.composeScanners;
+  const CommonHeuristicsScanner = H.CommonHeuristicsScanner ?? H.createHeuristicsScanner();
 
-  const CommonHeuristicsScanner =
-      H.CommonHeuristicsScanner ?? H.HeuristicsScanner ?? H.default ?? H;
+  if (!composeScanners) throw new Error('Scanner composition function not found. Please check your installation.');
+  if (!CommonHeuristicsScanner) throw new Error('Heuristics scanner not found. Please check your installation.');
 
-  const createZipBombGuard =
-      H.createZipBombGuard ?? H.zipBombGuard ?? H.createZipGuard;
-
-  if (!composeScanners) throw new Error('composeScanners not found in @pompelmi/engine');
-  if (!CommonHeuristicsScanner) throw new Error('CommonHeuristicsScanner not found in @pompelmi/engine-heuristics');
-  if (!createZipBombGuard) throw new Error('createZipBombGuard not found in @pompelmi/engine-heuristics');
-
-  return { composeScanners, CommonHeuristicsScanner, createZipBombGuard };
+  return { composeScanners, CommonHeuristicsScanner };
 };
 
-// Top-level await (Node 18+ ESM) gives us ready-to-use symbols
-const { composeScanners, CommonHeuristicsScanner, createZipBombGuard } = await __resolveDeps();
-import type { CAC } from 'cac';
+const { composeScanners, CommonHeuristicsScanner } = await __resolveDeps();
 
 export function addWatchCommand(cli: CAC) {
   cli.command('watch [pattern]')
@@ -55,15 +46,23 @@ export function addWatchCommand(cli: CAC) {
         ? false
         : { stabilityThreshold: Number(flags.debounce)||300, pollInterval: 50 };
 
-      const Engine = import("@pompelmi/engine");
-const Heur = import("@pompelmi/engine-heuristics");
-      const scan = composeScanners(
-        [
-          ['zipGuard', createZipBombGuard({ maxEntries: 512, maxTotalUncompressedBytes: 100 * 1024 * 1024, maxCompressionRatio: 12 })],
-          ['heuristics', CommonHeuristicsScanner],
-        ],
-        { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500, tagSourceName: true }
-      );
+      // Initialize scanner
+      const scanners = [CommonHeuristicsScanner];
+      const composedScanner = composeScanners(scanners);
+
+      const scanFile = async (filePath: string) => {
+        const buffer = (await import('node:fs')).readFileSync(filePath);
+        const bytes = new Uint8Array(buffer);
+        const matches = await composedScanner.scan(bytes);
+        
+        let verdict: 'clean' | 'suspicious' | 'malicious' = 'clean';
+        if (matches.length > 0) {
+          const hasHighSeverity = matches.some(m => (m as any).severity === 'high');
+          verdict = hasHighSeverity ? 'malicious' : 'suspicious';
+        }
+        
+        return { verdict, matches };
+      };
 
       const shouldKeep = (file:string) => {
         if (!exts.length) return true;
@@ -106,7 +105,7 @@ const Heur = import("@pompelmi/engine-heuristics");
 
         if (!shouldKeep(file)) return;
 
-        const r = await scan({ file, size: 0 });
+        const r = await scanFile(file);
 
         if (r.verdict==='malicious') worst='malicious';
         else if (r.verdict==='suspicious' && worst==='clean') worst='suspicious';
