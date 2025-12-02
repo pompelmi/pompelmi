@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pompelmi Analytics Dashboard</title>
+    <meta name="description" content="Real-time analytics and monitoring dashboard for pompelmi file upload security">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=GA_MEASUREMENT_ID"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'GA_MEASUREMENT_ID');
+        
+        // Track security events
+        function trackSecurityEvent(eventName, parameters) {
+            gtag('event', eventName, {
+                event_category: 'security',
+                custom_parameters: parameters
+            });
+        }
+        
+        // Track file upload events
+        function trackFileUpload(verdict, fileType, fileSize) {
+            gtag('event', 'file_upload', {
+                event_category: 'uploads',
+                verdict: verdict,
+                file_type: fileType,
+                file_size: fileSize
+            });
+        }
+    </script>
+    
+    <!-- Plausible Analytics (Privacy-focused alternative) -->
+    <script defer data-domain="pompelmi.github.io" src="https://plausible.io/js/plausible.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #0ea5e9;
+        }
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-clean { background-color: #22c55e; }
+        .status-suspicious { background-color: #f59e0b; }
+        .status-malicious { background-color: #ef4444; }
+        
+        .chart-container {
+            margin: 20px 0;
+            height: 300px;
+        }
+        
+        h1 {
+            text-align: center;
+            color: #1f2937;
+        }
+        
+        .real-time {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <h1>🛡️ pompelmi Security Dashboard</h1>
+        
+        <div class="metric-grid">
+            <div class="metric-card">
+                <div class="metric-value real-time" id="totalScans">Loading...</div>
+                <div class="metric-label">Total Files Scanned</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="cleanFiles">
+                    <span class="status-indicator status-clean"></span>
+                    <span>Loading...</span>
+                </div>
+                <div class="metric-label">Clean Files</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="suspiciousFiles">
+                    <span class="status-indicator status-suspicious"></span>
+                    <span>Loading...</span>
+                </div>
+                <div class="metric-label">Suspicious Files</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="maliciousFiles">
+                    <span class="status-indicator status-malicious"></span>
+                    <span>Loading...</span>
+                </div>
+                <div class="metric-label">Malicious Files Blocked</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="averageScanTime">Loading...</div>
+                <div class="metric-label">Average Scan Time (ms)</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-value" id="threatDetectionRate">Loading...</div>
+                <div class="metric-label">Threat Detection Rate</div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <h3>Recent Security Events</h3>
+            <div id="recentEvents">Loading events...</div>
+        </div>
+        
+        <div class="metric-card">
+            <h3>File Type Distribution</h3>
+            <div class="chart-container" id="fileTypeChart"></div>
+        </div>
+        
+        <div class="metric-card">
+            <h3>Scan Performance Over Time</h3>
+            <div class="chart-container" id="performanceChart"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data generator for demonstration
+        function generateMockData() {
+            return {
+                totalScans: Math.floor(Math.random() * 10000) + 50000,
+                cleanFiles: Math.floor(Math.random() * 9000) + 45000,
+                suspiciousFiles: Math.floor(Math.random() * 100) + 50,
+                maliciousFiles: Math.floor(Math.random() * 50) + 25,
+                averageScanTime: Math.floor(Math.random() * 200) + 150,
+                recentEvents: [
+                    { time: '2025-11-30T10:30:00Z', type: 'malicious', file: 'suspicious.exe', threat: 'Trojan.Generic' },
+                    { time: '2025-11-30T10:25:00Z', type: 'suspicious', file: 'document.pdf', threat: 'Macro detected' },
+                    { time: '2025-11-30T10:20:00Z', type: 'clean', file: 'image.jpg', threat: null }
+                ]
+            };
+        }
+        
+        function updateDashboard() {
+            const data = generateMockData();
+            
+            document.getElementById('totalScans').textContent = data.totalScans.toLocaleString();
+            document.getElementById('cleanFiles').querySelector('span:last-child').textContent = data.cleanFiles.toLocaleString();
+            document.getElementById('suspiciousFiles').querySelector('span:last-child').textContent = data.suspiciousFiles.toLocaleString();
+            document.getElementById('maliciousFiles').querySelector('span:last-child').textContent = data.maliciousFiles.toLocaleString();
+            document.getElementById('averageScanTime').textContent = data.averageScanTime + 'ms';
+            
+            const threatRate = ((data.maliciousFiles + data.suspiciousFiles) / data.totalScans * 100).toFixed(2);
+            document.getElementById('threatDetectionRate').textContent = threatRate + '%';
+            
+            // Update recent events
+            const eventsHtml = data.recentEvents.map(event => {
+                const statusClass = `status-${event.type}`;
+                const time = new Date(event.time).toLocaleTimeString();
+                return `
+                    <div style="padding: 8px; border-left: 3px solid var(--color-${event.type}); margin: 5px 0; background: #f9f9f9;">
+                        <span class="status-indicator ${statusClass}"></span>
+                        <strong>${time}</strong> - ${event.file} 
+                        ${event.threat ? `(${event.threat})` : ''}
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('recentEvents').innerHTML = eventsHtml;
+            
+            // Track analytics
+            if (typeof gtag !== 'undefined') {
+                gtag('event', 'dashboard_view', {
+                    event_category: 'analytics',
+                    total_scans: data.totalScans,
+                    threat_rate: threatRate
+                });
+            }
+        }
+        
+        // Real-time updates
+        updateDashboard();
+        setInterval(updateDashboard, 30000); // Update every 30 seconds
+        
+        // Example integration code for users
+        function createAnalyticsIntegration() {
+            return `
+// Add to your pompelmi configuration
+const analyticsConfig = {
+  onScanEvent: (event) => {
+    // Track with Google Analytics
+    if (typeof gtag !== 'undefined') {
+      gtag('event', 'file_scan', {
+        event_category: 'security',
+        verdict: event.verdict,
+        file_type: event.fileType,
+        scan_time: event.duration
+      });
+    }
+    
+    // Track with Plausible (privacy-focused)
+    if (typeof plausible !== 'undefined') {
+      plausible('File Scan', {
+        props: {
+          verdict: event.verdict,
+          fileType: event.fileType
+        }
+      });
+    }
+    
+    // Send to your analytics endpoint
+    fetch('/api/analytics/scan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        timestamp: new Date().toISOString(),
+        verdict: event.verdict,
+        fileType: event.fileType,
+        scanDuration: event.duration,
+        threats: event.threats
+      })
+    });
+  }
+};
+
+const scanner = createUploadGuard({
+  ...securityPolicy,
+  ...analyticsConfig
+});
+`;
+        }
+        
+        // Display integration example
+        console.log('pompelmi Analytics Integration:', createAnalyticsIntegration());
+    </script>
+</body>
+</html>

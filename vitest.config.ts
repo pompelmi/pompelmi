@@ -4,7 +4,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    testTimeout: 60000, // Increased to 60 seconds to handle Binary Ninja analysis
+    testTimeout: 30000,
     include: [
       'tests/**/*.test.ts',
       'test/**/*.test.ts',

@@ -1,20 +1,88 @@
-# Contributing
+# Contributing to pompelmi
 
-When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change. 
+Thank you for your interest in contributing to **pompelmi**! We welcome contributions from developers of all experience levels.
 
-Please note we have a code of conduct, please follow it in all your interactions with the project.
+## 🚀 Getting Started
 
-## Pull Request Process
+### Prerequisites
 
-1. Ensure any install or build dependencies are removed before the end of the layer when doing a 
-   build.
-2. Update the README.md with details of changes to the interface, this includes new environment 
-   variables, exposed ports, useful file locations and container parameters.
-3. Increase the version numbers in any examples files and the README.md to the new version that this
-   Pull Request would represent. The versioning scheme we use is [SemVer](http://semver.org/).
-4. You may merge the Pull Request in once you have the sign-off of two other developers, or if you 
-   do not have permission to do that, you may request the second reviewer to merge it for you.
+- **Node.js** ≥18
+- **pnpm** (recommended) or npm
+- **Git**
+
+### Development Setup
+
+1. **Fork and clone** the repository:
+   ```bash
+   git clone https://github.com/YOUR_USERNAME/pompelmi.git
+   cd pompelmi
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   pnpm install
+   ```
+
+3. **Run tests** to ensure everything works:
+   ```bash
+   pnpm test
+   ```
+
+4. **Build the project**:
+   ```bash
+   pnpm build
+   ```
+
+## 🛠️ Development Workflow
+
+### Making Changes
+
+1. **Create a feature branch**:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes** following our coding standards
+3. **Add tests** for new functionality
+4. **Update documentation** if needed
+5. **Run the full test suite**:
+   ```bash
+   pnpm repo:doctor
+   ```
+
+## 📋 Pull Request Process
+
+1. **Link to an issue** or provide detailed description
+2. **Update tests** and documentation
+3. **Ensure CI passes** all checks
+4. **Request review** from maintainers
+5. **Address feedback** promptly
+
+### PR Checklist
+
+- [ ] Tests pass locally
+- [ ] Documentation updated
+- [ ] Breaking changes noted
+- [ ] Commit messages follow conventional format
+
+## 🎯 What to Contribute
+
+### Priority Areas
+
+- **New scanning engines** (ClamAV, custom heuristics)
+- **Framework adapters** (Fastify, Hapi, etc.)
+- **Performance optimizations**
+- **Documentation improvements**
+- **Bug fixes and edge cases**
+
+## 🔒 Security Contributions
+
+Security is paramount for pompelmi. If you find a security vulnerability:
+
+1. **DO NOT** open a public issue
+2. **Create a private security advisory** on GitHub
+3. **Include** detailed steps to reproduce
+4. **Wait** for maintainer response before disclosure
 
 ## Code of Conduct
 
