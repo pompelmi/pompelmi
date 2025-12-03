@@ -83,64 +83,6 @@ jobs:
             fi
           done
 
-  publish-github:
-    name: Publish to GitHub Packages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: false
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-        with:
-          version: 9.12.0
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-          registry-url: 'https://npm.pkg.github.com'
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        run: pnpm run build
-
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          # Update package name for GitHub Packages if needed
-          ROOT_NAME=$(node -p "require('./package.json').name")
-          if [ "$ROOT_NAME" = "pompelmi" ]; then
-            node -e "
-              const pkg = require('./package.json');
-              pkg.name = '@pompelmi/pompelmi';
-              require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
-            "
-          fi
-
-          # Publish root package
-          if [ "$(node -p "require('./package.json').private")" != "true" ]; then
-            npm publish --registry=https://npm.pkg.github.com --access public || true
-          fi
-
-          # Publish workspace packages
-          for pkg in packages/*/; do
-            if [ -f "$pkg/package.json" ]; then
-              cd "$pkg"
-              IS_PRIVATE=$(node -p "require('./package.json').private || false" 2>/dev/null || echo "false")
-              if [ "$IS_PRIVATE" != "true" ]; then
-                npm publish --registry=https://npm.pkg.github.com --access public || true
-              fi
-              cd ../..
-            fi
-          done
-
   publish-container:
     name: Publish Container
     if: github.ref == 'refs/heads/main'
