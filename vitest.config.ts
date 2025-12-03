@@ -12,16 +12,6 @@ export default defineConfig({
       'packages/**/test/**/*.test.ts',
       'packages/**/*.test.ts'
     ],
-    // Exclude engine tests that require external dependencies in CI
-    exclude: [
-      '**/node_modules/**',
-      '**/dist/**',
-      ...(process.env.CI ? [
-        'packages/engine-binaryninja/**/*.test.ts',
-        'packages/engine-ghidra/**/*.test.ts', 
-        'packages/engine-clamav/**/*.test.ts'
-      ] : [])
-    ],
     coverage: {
       enabled: true,
       provider: 'v8',

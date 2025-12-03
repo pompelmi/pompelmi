@@ -18,7 +18,7 @@ concurrency:
 
 env:
   NODE_VERSION: '20'
-  ROOT_VERSION: '0.11.0'
+  ROOT_VERSION: '0.24.0'
 
 jobs:
   # -------------------------------
@@ -737,7 +737,7 @@ jobs:
   # -------------------------------
   publish-workspaces:
     name: npm publish (only if version not on npm)
-    needs: [build]
+    needs: [build, publish-root, publish-root-gpr]
     if: >
       (github.event_name == 'push' && github.ref_name == 'main') ||
       (github.event_name == 'workflow_dispatch') ||
@@ -1418,15 +1418,15 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://npm.pkg.github.com'
 
-      - name: Auth for GitHub Packages
+      - name: Auth for GitHub Packages (allow unscoped packages)
         run: |
-          printf "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n@pompelmi:registry=https://npm.pkg.github.com\nalways-auth=true\n" > ~/.npmrc
+          printf "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n@pompelmi:registry=https://npm.pkg.github.com\npompelmi:registry=https://npm.pkg.github.com\nalways-auth=true\n" > ~/.npmrc
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Temporarily scope root package name for GPR
+      - name: Keep root package name as 'pompelmi' for primary GitHub Package
         run: |
-          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('package.json','utf8'));if(j.name==='pompelmi'){j.name='@pompelmi/pompelmi';fs.writeFileSync('package.json',JSON.stringify(j,null,2)+'\n');console.log('Root name ->',j.name)}else{console.log('Root already scoped:',j.name)}"
+          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('package.json','utf8'));console.log('Keeping root package name as:',j.name);if(!j.keywords){j.keywords=[]}if(!j.keywords.includes('primary')){j.keywords.unshift('primary','main','pompelmi')}j.description='[MAIN PACKAGE] '+j.description;fs.writeFileSync('package.json',JSON.stringify(j,null,2)+'\n');console.log('Updated package.json to emphasize this is the primary package')"
 
       - name: Read root name & version
         id: rootpkg_gpr
@@ -1462,8 +1462,12 @@ jobs:
           ORG="${{ github.repository_owner }}"
           NAME="${{ steps.rootpkg_gpr.outputs.name }}"
           VER="${{ steps.rootpkg_gpr.outputs.version }}"
-          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
-          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          # For unscoped packages, use the name directly; for scoped, URL-encode
+          if [[ "$NAME" == @* ]]; then
+            PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          else
+            PKG_ENC="$NAME"
+          fi
           # Prefer PAT with read:org + write:packages
           if [ -n "${PACKAGES_PAT:-}" ]; then
             export GH_TOKEN="$PACKAGES_PAT"
@@ -1513,8 +1517,12 @@ jobs:
           set -euo pipefail
           ORG="${{ github.repository_owner }}"
           NAME="${{ steps.rootpkg_gpr.outputs.name }}"
-          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
-          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          # For unscoped packages, use the name directly; for scoped, URL-encode  
+          if [[ "$NAME" == @* ]]; then
+            PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          else
+            PKG_ENC="$NAME"
+          fi
           
           # Prefer a Personal Access Token with read:org + write:packages (recommended for org-level package ops).
           # Fallback to the workflow's GITHUB_TOKEN if no PAT is provided.
