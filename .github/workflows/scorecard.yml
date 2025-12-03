@@ -22,6 +22,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           persist-credentials: false
+          submodules: false
 
       - name: Run OpenSSF Scorecard
         uses: ossf/scorecard-action@62b2cac7ed8198b15735ed49ab1e5cf35480ba46 # v2.4.0
