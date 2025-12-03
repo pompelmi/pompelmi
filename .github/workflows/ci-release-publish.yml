@@ -303,7 +303,7 @@ jobs:
     needs: [codeql]
     runs-on: ubuntu-latest
     outputs:
-      site_changed: ${{ steps.changes.outputs.site }}
+      site_changed: ${{ steps.site_fallback.outputs.site }}
     permissions:
       contents: read
       id-token: write
@@ -498,10 +498,21 @@ jobs:
       - name: Detect changed paths
         id: changes
         uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        continue-on-error: true
         with:
           filters: |
             site:
               - 'site/**'
+
+      - name: Set site_changed fallback
+        id: site_fallback
+        run: |
+          if [ "${{ steps.changes.outcome }}" = "failure" ]; then
+            echo "site=true" >> "$GITHUB_OUTPUT"
+            echo "paths-filter failed, defaulting site_changed to true"
+          else
+            echo "site=${{ steps.changes.outputs.site }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Compute affected workspaces
         id: ws
