@@ -40,6 +40,9 @@
   "scripts": {
     "build": "rollup -c",
     "prepublishOnly": "npm run build && npm run pack:strict",
+    "test": "vitest",
+    "test:ci": "vitest run --reporter=verbose --no-coverage",
+    "test:unit": "vitest run --no-coverage",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
     "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
     "dev:remote": "tsx examples/remote-yara-server.ts",
@@ -51,6 +54,8 @@
     "preview": "npm pack --dry-run",
     "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
     "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit",
+    "lint": "biome check .",
+    "lint:fix": "biome check --fix .",
     "smoke": "node scripts/smoke.mjs",
     "test:e2e": "node scripts/e2e.mjs",
     "repo:doctor": "pnpm install --frozen-lockfile && pnpm -r --if-present build && pnpm -r --if-present test && npm run -s preview || true && node scripts/smoke.mjs && node scripts/e2e.mjs || true",
