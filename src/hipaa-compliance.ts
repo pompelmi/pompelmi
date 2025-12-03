@@ -48,12 +48,12 @@ class HipaaComplianceManager {
 
   constructor(config: HipaaConfig) {
     this.config = {
-      enabled: true,
       sanitizeErrors: true,
       sanitizeFilenames: true,
       encryptTempFiles: true,
       memoryProtection: true,
       requireSecureTransport: true,
+      enabled: true,
       ...config
     };
     this.sessionId = this.generateSessionId();
