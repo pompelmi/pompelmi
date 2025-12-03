@@ -510,12 +510,19 @@ jobs:
           set -euo pipefail
           # Determine base SHA for diff (PR, push or fallback to first parent)
           BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
-          if [ -z "$BASE" ]; then
-            BASE=$(git rev-list --max-parents=1 HEAD)
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            # Fallback to HEAD~1 if available, otherwise skip diff
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+              BASE="HEAD~1"
+            else
+              echo "No valid base SHA found, analyzing all packages"
+              echo "filters=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
           echo "Base SHA: $BASE"
           # List changed files between base and HEAD
-          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
           if [ -z "$CHANGED" ]; then
             echo "filters=" >> "$GITHUB_OUTPUT"
             exit 0
@@ -737,7 +744,7 @@ jobs:
   # -------------------------------
   publish-workspaces:
     name: npm publish (only if version not on npm)
-    needs: [build, publish-root, publish-root-gpr]
+    needs: [build]
     if: >
       (github.event_name == 'push' && github.ref_name == 'main') ||
       (github.event_name == 'workflow_dispatch') ||
@@ -768,10 +775,16 @@ jobs:
         run: |
           set -euo pipefail
           BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
-          if [ -z "$BASE" ]; then
-            BASE=$(git rev-list --max-parents=1 HEAD)
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+              BASE="HEAD~1"
+            else
+              echo "No valid base SHA found, analyzing all packages"
+              echo "filters=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           fi
-          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
           if [ -z "$CHANGED" ]; then
             echo "filters=" >> "$GITHUB_OUTPUT"
             exit 0
@@ -1030,13 +1043,25 @@ jobs:
 
           BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
 
-          if [ -z "$BASE" ]; then
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
 
-            BASE=$(git rev-list --max-parents=1 HEAD)
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+
+              BASE="HEAD~1"
+
+            else
+
+              echo "No valid base SHA found, checking all packages"
+
+              echo "dirs=" >> "$GITHUB_OUTPUT"
+
+              exit 0
+
+            fi
 
           fi
 
-          CHANGED=$(git diff --name-only "$BASE"...HEAD || true)
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
 
           mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
 
@@ -1456,7 +1481,7 @@ jobs:
         id: check_gpr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGES_PAT: ${{ secrets.PACKAGES_PAT }}
+          # PACKAGES_PAT is optional - will be checked in script
         run: |
           set -euo pipefail
           ORG="${{ github.repository_owner }}"
@@ -1469,12 +1494,12 @@ jobs:
             PKG_ENC="$NAME"
           fi
           # Prefer PAT with read:org + write:packages
-          if [ -n "${PACKAGES_PAT:-}" ]; then
+          if [ -n "${PACKAGES_PAT:-}" ] && [ "$PACKAGES_PAT" != "" ]; then
             export GH_TOKEN="$PACKAGES_PAT"
             echo "Using PACKAGES_PAT for GitHub API."
           else
             export GH_TOKEN="$GITHUB_TOKEN"
-            echo "Using GITHUB_TOKEN for GitHub API."
+            echo "Using GITHUB_TOKEN for GitHub API (PACKAGES_PAT not available)."
           fi
           EXISTS=false
           if gh api -X GET -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC" >/dev/null 2>&1; then
@@ -1512,7 +1537,7 @@ jobs:
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PACKAGES_PAT: ${{ secrets.PACKAGES_PAT }}
+          # PACKAGES_PAT is optional - will be checked in script
         run: |
           set -euo pipefail
           ORG="${{ github.repository_owner }}"
@@ -1526,12 +1551,12 @@ jobs:
           
           # Prefer a Personal Access Token with read:org + write:packages (recommended for org-level package ops).
           # Fallback to the workflow's GITHUB_TOKEN if no PAT is provided.
-          if [ -n "${PACKAGES_PAT:-}" ]; then
+          if [ -n "${PACKAGES_PAT:-}" ] && [ "$PACKAGES_PAT" != "" ]; then
             export GH_TOKEN="$PACKAGES_PAT"
             echo "Using PACKAGES_PAT for GitHub API."
           else
             export GH_TOKEN="$GITHUB_TOKEN"
-            echo "Using GITHUB_TOKEN for GitHub API."
+            echo "Using GITHUB_TOKEN for GitHub API (PACKAGES_PAT not available)."
           fi
           
           echo "Ensuring package exists in API before changing visibility…"
