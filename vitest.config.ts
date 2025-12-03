@@ -6,7 +6,7 @@ export default defineConfig({
     environment: 'node',
     testTimeout: 30000,
     // Limit memory usage for CI
-    maxConcurrency: process.env.CI ? 2 : undefined,
+    maxConcurrency: process.env.CI ? 1 : undefined,
     include: [
       'tests/**/*.test.ts',
       'test/**/*.test.ts',
@@ -24,6 +24,9 @@ export default defineConfig({
       provider: 'v8',
       reporter: process.env.CI ? ['lcov'] : ['text', 'lcov', 'html'],
       reportsDirectory: './coverage',
+      
+      // CI memory optimization: disable concurrent processing
+      processingConcurrency: process.env.CI ? 1 : undefined,
 
       // Count ONLY files covered by tests (no zero-coverage files mixed in)
       all: false,
