@@ -58,3 +58,6 @@ note_mie.txt
 # source maps
 *.d.ts.map
 *.map
+
+# nested repo (old submodule)
+pompelmi/
