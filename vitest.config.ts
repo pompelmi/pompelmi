@@ -5,6 +5,8 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     testTimeout: 30000,
+    // Limit memory usage for CI
+    maxConcurrency: process.env.CI ? 2 : undefined,
     include: [
       'tests/**/*.test.ts',
       'test/**/*.test.ts',
@@ -20,17 +22,28 @@ export default defineConfig({
     coverage: {
       enabled: true,
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
+      reporter: process.env.CI ? ['lcov'] : ['text', 'lcov', 'html'],
       reportsDirectory: './coverage',
 
       // Count ONLY files covered by tests (no zero-coverage files mixed in)
       all: false,
 
-      // Measure the core root
+      // Measure the core root only to reduce memory usage
       include: ['src/**/*.ts'],
       exclude: [
-        'packages/**', 'dist/**', 'site/**', 'docs/**', 'examples/**', 'website/**',
-        '**/*.d.ts', '**/__mocks__/**', '**/*.test.ts', '**/*.spec.ts'
+        'packages/**', 
+        'dist/**', 
+        'site/**', 
+        'docs/**', 
+        'examples/**', 
+        'website/**',
+        '**/*.d.ts', 
+        '**/__mocks__/**', 
+        '**/*.test.ts', 
+        '**/*.spec.ts',
+        // Exclude large files that might cause memory issues
+        'src/engines/dynamic-taint.ts',
+        'src/**/*.generated.ts'
       ],
 
       // Moderate thresholds to avoid CI failures while maintaining quality

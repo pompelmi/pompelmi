@@ -570,7 +570,14 @@ jobs:
           pnpm -w add -D vitest@2 @vitest/coverage-v8@2
 
 
+      - name: Test packages (no coverage)
+        run: |
+          # Run package tests without coverage first to catch failures early
+          pnpm -r --filter '@pompelmi/*' --if-present test
+
       - name: Test (generate coverage)
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
         run: |
           # Run Vitest once at workspace root; vitest.config.ts already scans tests in packages/**
           pnpm vitest run --coverage --passWithNoTests
