@@ -5,6 +5,11 @@
  * with support for memory tainting, register tracking, and vulnerability detection.
  */
 
+import * as crypto from 'crypto';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
+
 import type {
   TaintSource,
   TaintSink,
