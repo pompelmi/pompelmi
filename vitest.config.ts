@@ -12,6 +12,11 @@ export default defineConfig({
       'packages/**/test/**/*.test.ts',
       'packages/**/*.test.ts'
     ],
+    // Skip Binary Ninja tests in CI since Binary Ninja isn't installed
+    exclude: process.env.CI ? [
+      'packages/engine-binaryninja/**/*.test.ts',
+      'packages/engine-ghidra/**/*.test.ts'
+    ] : [],
     coverage: {
       enabled: true,
       provider: 'v8',
