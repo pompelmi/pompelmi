@@ -81,7 +81,7 @@
     "@vitest/coverage-v8": "^2",
     "cors": "^2.8.5",
     "depcheck": "^1.4.7",
-    "express": "^5.1.0",
+    "express": "^4.22.0",
     "gh-pages": "^6.3.0",
     "knip": "^5.64.0",
     "multer": "^2.0.2",
