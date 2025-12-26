@@ -53,8 +53,8 @@ class HipaaComplianceManager {
       encryptTempFiles: true,
       memoryProtection: true,
       requireSecureTransport: true,
-      enabled: true,
-      ...config
+      ...config,
+      enabled: config.enabled !== undefined ? config.enabled : true
     };
     this.sessionId = this.generateSessionId();
   }

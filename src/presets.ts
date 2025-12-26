@@ -58,15 +58,16 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
     
     if (!opts.decompilationEngine || opts.decompilationEngine === 'binaryninja-hlil' || opts.decompilationEngine === 'both') {
       try {
-        // Dynamic import to avoid bundling issues
-        import('@pompelmi/engine-binaryninja').then(({ createBinaryNinjaScanner }) => {
-          const binjaScanner = createBinaryNinjaScanner({
+        // Dynamic import to avoid bundling issues - using Function to bypass TypeScript type checking
+        const importModule = new Function('specifier', 'return import(specifier)');
+        importModule('@pompelmi/engine-binaryninja').then((mod: any) => {
+          const binjaScanner = mod.createBinaryNinjaScanner({
             timeout: opts.decompilationTimeout || opts.timeout || 30000,
             depth,
             pythonPath: opts.pythonPath,
             binaryNinjaPath: opts.binaryNinjaPath
           });
-          scanners.push(binjaScanner as any);
+          scanners.push(binjaScanner);
         }).catch(() => {
           // Binary Ninja engine not available
         });
@@ -77,15 +78,16 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
     
     if (!opts.decompilationEngine || opts.decompilationEngine === 'ghidra-pcode' || opts.decompilationEngine === 'both') {
       try {
-        // Dynamic import for Ghidra engine (when implemented)
-        import('@pompelmi/engine-ghidra').then(({ createGhidraScanner }) => {
-          const ghidraScanner = createGhidraScanner({
+        // Dynamic import for Ghidra engine (when implemented) - using Function to bypass TypeScript type checking
+        const importModule = new Function('specifier', 'return import(specifier)');
+        importModule('@pompelmi/engine-ghidra').then((mod: any) => {
+          const ghidraScanner = mod.createGhidraScanner({
             timeout: opts.decompilationTimeout || opts.timeout || 30000,
             depth,
             ghidraPath: opts.ghidraPath,
             analyzeHeadless: opts.analyzeHeadless
           });
-          scanners.push(ghidraScanner as any);
+          scanners.push(ghidraScanner);
         }).catch(() => {
           // Ghidra engine not available
         });
