@@ -3,6 +3,10 @@ title: Introduction
 outline: deep
 ---
 
+::: tip ☁️ **New: Cloud API Available**
+**Running on Serverless or can't install ClamAV?** Use our **[Official Hosted API on RapidAPI](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)** → Zero setup, no binaries, works on AWS Lambda/Vercel/Netlify. [**Learn more**](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)
+:::
+
 # Pompelmi — Introduction
 
 **Pompelmi** is a file‑upload security toolkit for Node.js. It focuses on **malware scanning** and **policy enforcement** before your app ever stores or processes a file.

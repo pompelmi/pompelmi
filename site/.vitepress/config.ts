@@ -67,6 +67,7 @@ export default defineConfig({
     nav: [
       { text: 'Docs', link: '/docs/' },
       { text: 'Demo', link: '/demo/' },
+      { text: '☁️ Cloud API', link: 'https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner' },
       { text: 'GitHub', link: 'https://github.com/pompelmi/pompelmi' },
     ],
     sidebar: {

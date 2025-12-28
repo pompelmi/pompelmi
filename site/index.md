@@ -13,6 +13,9 @@ hero:
     - theme: brand
       text: Get Started
       link: /docs/
+    - theme: brand
+      text: ☁️ Cloud API
+      link: https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner
     - theme: alt
       text: View Demo
       link: /demo/
@@ -23,6 +26,8 @@ hero:
       text: npm Install
       link: https://www.npmjs.com/package/pompelmi
 features:
+  - title: ☁️ Cloud API Available
+    details: Can't install ClamAV or running on Serverless? Use our hosted API on RapidAPI. Zero setup, no binaries, works on AWS Lambda/Vercel/Netlify. Instant malware scanning via HTTP.
   - title: 🔒 Privacy First
     details: All scanning happens in-process. No cloud calls, no data leaks. Your files never leave your infrastructure. Perfect for GDPR/HIPAA compliance.
   - title: ⚡ Lightning Fast
