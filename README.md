@@ -1,3 +1,16 @@
+<!-- Language Selector -->
+<div align="center">
+
+**Read this in other languages:** [Italiano](docs/i18n/README.it.md) | [Français](docs/i18n/README.fr.md) | [Español](docs/i18n/README.es.md) | [Deutsch](docs/i18n/README.de.md) | [日本語](docs/i18n/README.ja.md) | [简体中文](docs/i18n/README.zh-CN.md) | [한국어](docs/i18n/README.ko.md) | [Português (BR)](docs/i18n/README.pt-BR.md) | [Русский](docs/i18n/README.ru.md) | [Türkçe](docs/i18n/README.tr.md)
+
+</div>
+
+---
+
+> 💡 **Translation Note:** If you want to help improve translations, please open a PR. The English README is the source of truth.
+
+---
+
 <!-- HERO START -->
 
 <p align="center">
@@ -140,6 +153,25 @@ Use the **[Official Hosted API on RapidAPI](https://rapidapi.com/SonoTommy/api/p
 - [FAQ](#faq)
 - [Contributing](#contributing)
 - [License](#license)
+
+---
+
+## 🌍 Translations
+
+pompelmi documentation is available in multiple languages to help developers worldwide:
+
+- 🇮🇹 **[Italiano (Italian)](docs/i18n/README.it.md)** — Documentazione completa in italiano
+- 🇫🇷 **[Français (French)](docs/i18n/README.fr.md)** — Documentation complète en français
+- 🇪🇸 **[Español (Spanish)](docs/i18n/README.es.md)** — Documentación completa en español
+- 🇩🇪 **[Deutsch (German)](docs/i18n/README.de.md)** — Vollständige Dokumentation auf Deutsch
+- 🇯🇵 **[日本語 (Japanese)](docs/i18n/README.ja.md)** — 日本語による完全なドキュメント
+- 🇨🇳 **[简体中文 (Simplified Chinese)](docs/i18n/README.zh-CN.md)** — 完整的简体中文文档
+- 🇰🇷 **[한국어 (Korean)](docs/i18n/README.ko.md)** — 완전한 한국어 문서
+- 🇧🇷 **[Português (Brasil)](docs/i18n/README.pt-BR.md)** — Documentação completa em português
+- 🇷🇺 **[Русский (Russian)](docs/i18n/README.ru.md)** — Полная документация на русском
+- 🇹🇷 **[Türkçe (Turkish)](docs/i18n/README.tr.md)** — Türkçe tam dokümantasyon
+
+**Help improve translations:** We welcome contributions to improve and maintain translations. The English README is the authoritative source. To contribute, please open a Pull Request with your improvements.
 
 ---
 
