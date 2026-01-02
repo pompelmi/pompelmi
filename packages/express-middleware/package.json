@@ -51,8 +51,8 @@
     "express": "^4.19.0",
     "multer": "^2.0.2",
     "supertest": "^7.0.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "vitest": "2.1.9",
     "@pompelmi/core": "workspace:*"
   },
