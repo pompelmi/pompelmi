@@ -1,13 +1,23 @@
-<!-- Language Selector -->
 <div align="center">
 
-**Read this in other languages:** [Italiano](docs/i18n/README.it.md) | [Français](docs/i18n/README.fr.md) | [Español](docs/i18n/README.es.md) | [Deutsch](docs/i18n/README.de.md) | [日本語](docs/i18n/README.ja.md) | [简体中文](docs/i18n/README.zh-CN.md) | [한국어](docs/i18n/README.ko.md) | [Português (BR)](docs/i18n/README.pt-BR.md) | [Русский](docs/i18n/README.ru.md) | [Türkçe](docs/i18n/README.tr.md)
+<!-- Language Selector -->
+<p>
+  <strong>Read this in other languages:</strong><br/>
+  <a href="docs/i18n/README.it.md">🇮🇹 Italiano</a> •
+  <a href="docs/i18n/README.fr.md">🇫🇷 Français</a> •
+  <a href="docs/i18n/README.es.md">🇪🇸 Español</a> •
+  <a href="docs/i18n/README.de.md">🇩🇪 Deutsch</a> •
+  <a href="docs/i18n/README.ja.md">🇯🇵 日本語</a> •
+  <a href="docs/i18n/README.zh-CN.md">🇨🇳 简体中文</a> •
+  <a href="docs/i18n/README.ko.md">🇰🇷 한국어</a> •
+  <a href="docs/i18n/README.pt-BR.md">🇧🇷 Português</a> •
+  <a href="docs/i18n/README.ru.md">🇷🇺 Русский</a> •
+  <a href="docs/i18n/README.tr.md">🇹🇷 Türkçe</a>
+</p>
+
+> 💡 **Translation Note:** Help improve translations by opening a PR. The English README is the source of truth.
 
 </div>
-
----
-
-> 💡 **Translation Note:** If you want to help improve translations, please open a PR. The English README is the source of truth.
 
 ---
 
@@ -35,11 +45,20 @@
 
 <h1 align="center">pompelmi</h1>
 
-
+<p align="center">
+  <strong>Fast, Private, and Powerful File Malware Scanning for Node.js</strong>
+</p>
 
 <p align="center">
+  ⚡ Zero-config setup • 🔒 Privacy-first • 🧩 Composable scanners • 📦 Deep ZIP inspection • 🎯 Framework adapters
+</p>
 
-<strong>Fast file‑upload malware scanning for Node.js</strong> — optional <strong>YARA</strong> integration, ZIP deep‑inspection, and drop‑in adapters for <em>Express</em>, <em>Koa</em>, and <em>Next.js</em>. Private by design. Typed. Tiny.
+<p align="center">
+  <strong>YARA</strong> integration • <strong>ZIP bomb</strong> protection • Drop-in middleware for <strong>Express</strong>, <strong>Koa</strong>, <strong>Fastify</strong>, and <strong>Next.js</strong>
+</p>
+
+<p align="center">
+  <em>Scan files before they hit disk. Keep user data private. Ship with confidence.</em>
 </p>
 
 **Keywords:** file upload security · malware detection · YARA · Node.js middleware · Express · Koa · Next.js · ZIP bomb protection
