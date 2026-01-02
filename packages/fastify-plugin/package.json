@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@fastify/multipart": "^9.0.3",
-    "@types/node": "^20.11.0",
+    "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "2.1.9",
     "fastify": "^5.5.0",
     "file-type": "^18.7.0",
