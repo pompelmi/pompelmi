@@ -43,7 +43,7 @@
     "@types/node": "^24.3.0",
     "@types/tar-stream": "^3.1.4",
     "@vitest/coverage-v8": "2.1.9",
-    "tsup": "8.5.0",
+    "tsup": "8.5.1",
     "vitest": "2.1.9"
   },
   "dependencies": {
