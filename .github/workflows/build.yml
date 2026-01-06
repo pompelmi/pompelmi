@@ -66,7 +66,7 @@ jobs:
 
       - name: Setup Pages
         if: steps.site_check.outputs.changed == 'true'
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         if: steps.site_check.outputs.changed == 'true'
