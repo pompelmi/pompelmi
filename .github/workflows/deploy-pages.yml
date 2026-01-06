@@ -42,19 +42,37 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          # Install root dependencies first
+          pnpm install --no-frozen-lockfile
+          # Then install VitePress site dependencies
+          if [ -d "site/site" ]; then
+            cd site/site && pnpm install && cd ../..
+          fi
 
       - name: Build website
         id: build
         run: |
-          if [ -d "website" ]; then
-            pnpm -C website build
+          if [ -d "site/site" ] && [ -f "site/site/package.json" ]; then
+            echo "Building from site/site directory..."
+            cd site/site
+            pnpm build
+            cd ../..
+            echo "path=site/site/.vitepress/dist" >> $GITHUB_OUTPUT
+          elif [ -d "website" ] && [ -f "website/package.json" ]; then
+            echo "Building from website directory..."
+            cd website
+            pnpm build
+            cd ..
             echo "path=website/dist" >> $GITHUB_OUTPUT
-          elif [ -d "site" ]; then
-            pnpm -C site build
+          elif [ -d "site" ] && [ -f "site/.vitepress/config.ts" ]; then
+            echo "Building from site directory..."
+            cd site
+            pnpm build
+            cd ..
             echo "path=site/.vitepress/dist" >> $GITHUB_OUTPUT
           else
-            echo "No website or site directory found"
+            echo "No valid website directory found"
             exit 1
           fi
 
