@@ -18,8 +18,8 @@
     "@types/node": "^24.3.0",
     "@types/tmp": "^0.2.6",
     "@vitest/coverage-v8": "2.1.9",
-    "tsup": "^8.5.0",
-    "typescript": "^5.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "vitest": "2.1.9"
   },
   "peerDependencies": {

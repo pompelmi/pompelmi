@@ -65,13 +65,13 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@biomejs/biome": "^2.2.4",
+    "@biomejs/biome": "^2.3.11",
     "@pompelmi/core": "workspace:*",
     "@pompelmi/engine": "workspace:*",
     "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "@rollup/plugin-commonjs": "^28.0.6",
-    "@rollup/plugin-node-resolve": "^16.0.1",
-    "@rollup/plugin-typescript": "^12.1.4",
+    "@rollup/plugin-node-resolve": "^16.0.3",
+    "@rollup/plugin-typescript": "^12.3.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/multer": "^2.0.0",
@@ -83,15 +83,15 @@
     "depcheck": "^1.4.7",
     "express": "^5.1.0",
     "gh-pages": "^6.3.0",
-    "knip": "^5.64.0",
+    "knip": "^5.80.0",
     "multer": "^2.0.2",
-    "react": "^19.2.0",
+    "react": "^19.2.3",
     "rollup": "^4.x",
     "ts-prune": "^0.10.3",
     "tslib": "^2.8.1",
     "tsup": "^8",
-    "tsx": "^4.20.3",
-    "typescript": "^5.9.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "2.1.9"
   },
   "peerDependencies": {
@@ -99,7 +99,7 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "optionalDependencies": {
-    "@litko/yara-x": "^0.2.1"
+    "@litko/yara-x": "^0.4.0"
   },
   "exports": {
     ".": {
