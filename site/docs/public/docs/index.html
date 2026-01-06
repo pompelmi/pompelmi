@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="it-it" dir="ltr" itemscope itemtype="http://schema.org/Article" data-r-output-format="html">
+  <head><script src="/pompelmi/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=pompelmi/livereload" data-no-instant defer></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="height=device-height, width=device-width, initial-scale=1.0, minimum-scale=1.0">
+    <meta name="generator" content="Hugo 0.148.2">
+    <meta name="generator" content="Relearn 8.0.0+9803d5122ebb3276acea823f476e9eb44f607862">
+    <meta name="description" content="Welcome to the documentation section of Pompelmi.
+Below you’ll find the main guides and API reference.
+Introduction API Reference">
+    <meta name="author" content="">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Documentation :: Pompelmi">
+    <meta name="twitter:description" content="Welcome to the documentation section of Pompelmi.
+Below you’ll find the main guides and API reference.
+Introduction API Reference">
+    <meta property="og:url" content="http://localhost:1313/pompelmi/docs/index.html">
+    <meta property="og:site_name" content="Pompelmi">
+    <meta property="og:title" content="Documentation :: Pompelmi">
+    <meta property="og:description" content="Welcome to the documentation section of Pompelmi.
+Below you’ll find the main guides and API reference.
+Introduction API Reference">
+    <meta property="og:locale" content="it_it">
+    <meta property="og:type" content="website">
+    <meta itemprop="name" content="Documentation :: Pompelmi">
+    <meta itemprop="description" content="Welcome to the documentation section of Pompelmi.
+Below you’ll find the main guides and API reference.
+Introduction API Reference">
+    <meta itemprop="datePublished" content="2025-08-01T00:00:00+00:00">
+    <meta itemprop="dateModified" content="2025-08-01T00:00:00+00:00">
+    <meta itemprop="wordCount" content="19">
+    <title>Documentation :: Pompelmi</title>
+    <link href="/pompelmi/docs/index.xml" rel="alternate" type="application/rss+xml" title="Documentation :: Pompelmi">
+    <link href="/pompelmi/css/auto-complete/auto-complete.min.css?1753876432" rel="stylesheet">
+    <script src="/pompelmi/js/auto-complete/auto-complete.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/search-lunr.js?1753876432" defer></script>
+    <script src="/pompelmi/js/search.js?1753876432" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.index_js_url="/pompelmi/searchindex.en.js?1753876432";
+    </script>
+    <script src="/pompelmi/js/lunr/lunr.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/lunr/lunr.stemmer.support.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/lunr/lunr.multi.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/lunr/lunr.it.min.js?1753876432" defer></script>
+    <script>
+      window.relearn = window.relearn || {};
+      window.relearn.contentLangs=['it'];
+    </script>
+    <link href="/pompelmi/fonts/fontawesome/css/fontawesome-all.min.css?1753876432" rel="stylesheet" media="print" onload="this.media='all';this.onload=null;"><noscript><link href="/pompelmi/fonts/fontawesome/css/fontawesome-all.min.css?1753876432" rel="stylesheet"></noscript>
+    <link href="/pompelmi/css/perfect-scrollbar/perfect-scrollbar.min.css?1753876432" rel="stylesheet">
+    <link href="/pompelmi/css/theme.css?1753876432" rel="stylesheet">
+    <link href="/pompelmi/css/format-html.css?1753876432" rel="stylesheet" id="R-format-style">
+    <script>
+      window.relearn = window.relearn || {};
+      // configuration
+      window.relearn.min = ``;
+      window.relearn.path='\/docs\/index.html';
+      window.relearn.relBasePath='..';
+      window.relearn.relBaseUri='..\/..';
+      window.relearn.absBaseUri='http:\/\/localhost:1313\/pompelmi';
+      window.relearn.disableAnchorCopy=false;
+      window.relearn.disableAnchorScrolling=false;
+      window.relearn.disableInlineCopyToClipboard=false;
+      window.relearn.enableBlockCodeWrap=true;
+      // legal
+      window.relearn.getItem = (s,n) => {return s.getItem(n)};
+      window.relearn.setItem = (s,n,v) => {return s.setItem(n,v)};
+      window.relearn.removeItem = (s,n) => {return s.removeItem(n)};
+      // translations
+      window.T_Copy_to_clipboard = `Copy to clipboard`;
+      window.T_Copied_to_clipboard = `Copied to clipboard!`;
+      window.T_Copy_link_to_clipboard = `Copy link to clipboard`;
+      window.T_Link_copied_to_clipboard = `Copied link to clipboard!`;
+      window.T_Reset_view = `Reset view`;
+      window.T_View_reset = `View reset!`;
+      window.T_No_results_found = `No results found for "{0}"`;
+      window.T_N_results_found = `{1} results found for "{0}"`;
+      // variant stuff
+      window.relearn.themevariants = [ 'auto' ];
+      window.relearn.customvariantname = "my-custom-variant";
+      window.relearn.changeVariant = function(variant) {
+        var oldVariant = document.documentElement.dataset.rThemeVariant;
+        window.relearn.setItem(window.localStorage, window.relearn.absBaseUri + "/variant", variant);
+        document.documentElement.dataset.rThemeVariant = variant;
+        if (oldVariant != variant) {
+          document.dispatchEvent( new CustomEvent('themeVariantLoaded', { detail: { variant, oldVariant } }) );
+          window.relearn.markVariant();
+        }
+      }
+      window.relearn.markVariant = function() {
+        var variant = window.relearn.getItem(window.localStorage, window.relearn.absBaseUri + "/variant");
+        document.querySelectorAll(".R-variantswitcher select").forEach((select) => {select.value = variant;});
+      }
+      window.relearn.initVariant = function() {
+        var variant = window.relearn.getItem(window.localStorage, window.relearn.absBaseUri + "/variant") ?? "";
+        if( variant == window.relearn.customvariantname ){
+        }else if( !variant || !window.relearn.themevariants.includes(variant) ){
+          variant = window.relearn.themevariants[0];
+          window.relearn.setItem(window.localStorage, window.relearn.absBaseUri + "/variant", variant);
+        }
+        document.documentElement.dataset.rThemeVariant = variant;
+      }
+      window.relearn.initVariant();
+      window.relearn.markVariant();
+    </script>
+  </head>
+  <body class="mobile-support html" data-url="/pompelmi/docs/index.html">
+    <div id="R-body" class="default-animation">
+      <div id="R-body-overlay"></div>
+      <nav id="R-topbar">
+        <div class="topbar-wrapper">
+          <div class="topbar-sidebar-divider"></div>
+          <div class="topbar-area topbar-area-start" data-area="start">
+            <div class="topbar-button topbar-button-sidebar" data-content-empty="disable" data-width-s="show" data-width-m="hide" data-width-l="hide"><button class="topbar-control" onclick="toggleNav()" type="button" title="Menu (CTRL&#43;ALT&#43;n)"><i class="fa-fw fas fa-bars"></i></button>
+            </div>
+            <div class="topbar-button topbar-button-toc" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show"><button class="topbar-control" onclick="toggleTopbarFlyout(this)" type="button" title="Table of Contents (CTRL&#43;ALT&#43;t)"><i class="fa-fw fas fa-list-alt"></i></button>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper"> 
+                </div>
+              </div>
+            </div>
+          </div>
+          <ol class="topbar-breadcrumbs breadcrumbs highlightable" itemscope itemtype="http://schema.org/BreadcrumbList"><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><a itemprop="item" href="/pompelmi/index.html"><span itemprop="name">Pompelmi</span></a><meta itemprop="position" content="1">&nbsp;>&nbsp;</li><li itemscope itemtype="https://schema.org/ListItem" itemprop="itemListElement" class=""><span itemprop="name">Documentation</span><meta itemprop="position" content="2"></li>
+          </ol>
+          <div class="topbar-area topbar-area-end" data-area="end">
+            <div class="topbar-button topbar-button-prev" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show"><a class="topbar-control" href="/pompelmi/index.html" title="Pompelmi (🡐)"><i class="fa-fw fas fa-chevron-left"></i></a>
+            </div>
+            <div class="topbar-button topbar-button-next" data-content-empty="disable" data-width-s="show" data-width-m="show" data-width-l="show"><span class="topbar-control"><i class="fa-fw fas fa-chevron-right"></i></span>
+            </div>
+            <div class="topbar-button topbar-button-more" data-content-empty="hide" data-width-s="show" data-width-m="show" data-width-l="show"><button class="topbar-control" onclick="toggleTopbarFlyout(this)" type="button" title="More"><i class="fa-fw fas fa-ellipsis-v"></i></button>
+              <div class="topbar-content">
+                <div class="topbar-content-wrapper">
+                  <div class="topbar-area topbar-area-more" data-area="more">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+      <div id="R-main-overlay"></div>
+      <main id="R-body-inner" class="highlightable docs" tabindex="-1">
+        <div class="flex-block-wrapper">
+<article class="default">
+  <header class="headline">
+  </header>
+
+<h1 id="documentation">Documentation</h1>
+
+<p>Welcome to the documentation section of <strong>Pompelmi</strong>.<br>
+Below you’ll find the main guides and API reference.</p>
+<ul>
+<li><a href="./introduction/">Introduction</a></li>
+<li><a href="./api/">API Reference</a></li>
+</ul>
+
+  <footer class="footline">
+              <i class='fa-fw fas fa-calendar'></i> Aug 1, 2025
+  </footer>
+</article>
+        </div>
+      </main>
+    </div>
+    <aside id="R-sidebar" class="default-animation">
+      <div id="R-header-topbar" class="default-animation"></div>
+      <div id="R-header-wrapper" class="default-animation">
+        <div id="R-header" class="default-animation">
+          <a id="R-logo" class="R-default" href="/pompelmi/index.html">
+            <div class="logo-title">Pompelmi</div>
+          </a>
+        </div>
+        <search><form action="/pompelmi/search/index.html" method="get">
+          <div class="searchbox default-animation">
+            <button class="search-detail" type="submit" title="Search (CTRL+ALT+f)"><i class="fas fa-search"></i></button>
+            <label class="a11y-only" for="R-search-by">Search</label>
+            <input data-search-input id="R-search-by" name="search-by" class="search-by" type="search" placeholder="Search...">
+            <button class="search-clear" type="button" data-search-clear="" title="Clear search"><i class="fas fa-times" title="Clear search"></i></button>
+          </div>
+        </form></search>
+      </div>
+      <div id="R-homelinks" class="default-animation homelinks">
+        <div class="R-menu-divider default-animation">
+          <hr class="padding">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-homelinks">
+          <ul class="space collapsible-menu">
+            <li class="" data-nav-id="/pompelmi/index.html"><a class="padding" href="/pompelmi/index.html"><i class="fa-fw fas fa-home"></i> Home</a></li>
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-headercontrols">
+          <ul class="">
+          </ul>
+        </div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding">
+        </div>
+      </div>
+      <div id="R-content-wrapper" class="highlightable">
+        <div class="R-sidebarmenu R-shortcutmenu-main">
+          <ul class="enlarge morespace collapsible-menu">
+            <li class="active " data-nav-id="/pompelmi/docs/index.html"><a class="padding" href="/pompelmi/docs/index.html">Documentation</a></li>
+          </ul>
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-shortcuts">
+          <ul class="space collapsible-menu">
+          </ul>
+        </div>
+        <div id="R-footer-margin"></div>
+        <div class="R-menu-divider default-animation">
+          <hr class="padding">
+        </div>
+        <div class="R-sidebarmenu R-shortcutmenu-footercontrols">
+          <ul class="">
+          </ul>
+        </div>
+<div id="R-footer"><p>Built with <a href="https://github.com/McShelby/hugo-theme-relearn" title="love"><i class="fas fa-heart"></i></a> by <a href="https://gohugo.io/">Hugo</a></p></div>
+      </div>
+    </aside>
+    <script src="/pompelmi/js/clipboard/clipboard.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/perfect-scrollbar/perfect-scrollbar.min.js?1753876432" defer></script>
+    <script src="/pompelmi/js/theme.js?1753876432" defer></script>
+  </body>
+</html>

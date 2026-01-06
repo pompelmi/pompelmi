@@ -1,0 +1,20 @@
+name: "✨ Feature request"
+description: Suggest an idea for pompelmi
+labels: [enhancement]
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      placeholder: What problem does this solve?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      placeholder: API/UX, examples, trade-offs...
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

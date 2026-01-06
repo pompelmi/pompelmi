@@ -1,0 +1,24 @@
+codecov:
+  require_ci_to_pass: yes
+coverage:
+  status:
+    project:
+      core:
+        flags: core
+        target: 90%
+        threshold: 2%
+      default:
+        target: 90%
+        threshold: 2%
+    patch:
+      default:
+        target: 90%
+        threshold: 2%
+ignore:
+  - "packages/**"
+  - "dist/**"
+  - "site/**"
+  - "docs/**"
+  - "examples/**"
+  - "website/**"
+  - "**/*.d.ts"

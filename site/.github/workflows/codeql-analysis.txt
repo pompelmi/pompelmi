@@ -1,0 +1,53 @@
+name: CodeQL Security Scan
+
+# Minimal permissions for Code Scanning
+permissions:
+  contents: read          # to check out the code
+  security-events: write  # to upload SARIF results
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          if [ ! -f pnpm-workspace.yaml ]; then
+            printf "packages:\n  - 'packages/*'\n" > pnpm-workspace.yaml
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build project
+        run: pnpm run build
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3

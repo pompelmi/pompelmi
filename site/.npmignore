@@ -1,0 +1,100 @@
+# Development dependencies
+node_modules/
+.pnpm-store/
+
+# Source files (we publish built dist/ instead)
+src/
+packages/
+examples/
+tests/
+scripts/
+docs/
+site/
+website/
+
+# Build configuration
+rollup.config.js
+tsconfig.json
+tsconfig.strict.json
+tsconfig.build.json
+vitest.config.ts
+vitest.config.*.ts
+biome.json
+.knip.json
+codecov.yml
+
+# Development artifacts
+coverage/
+.tmp-*
+tmp-*
+*.log
+*.tgz
+dist-tarballs/
+uploads/
+
+# System/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.cache/
+.temp/
+tmp/
+
+# Git
+.git/
+.github/
+.gitignore
+.gitattributes
+.gitmodules
+
+# Environment files
+.env
+.env.*
+
+# Build outputs we don't want to publish
+.next/
+out/
+.vite/
+.turbo/
+.parcel-cache/
+**/build/
+
+# Map files (already excluded in package.json files field)
+**/*.map
+*.d.ts.map
+
+# Test files
+**/__tests__/
+**/*.test.*
+**/*.spec.js
+**/*.spec.ts
+__mocks__/
+
+# Misc development files
+*.bak
+*.backup.*
+*.broken.*
+*.txt
+*.sarif
+*.png
+index.js
+index.mjs
+
+# Config files
+.editorconfig
+.nvmrc
+.node-version
+.tool-versions
+.npmrc
+pnpm-workspace.yaml
+pnpm-lock.yaml
+
+# Documentation (except README)
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# Samples and fixtures
+**/samples/
+**/fixtures/

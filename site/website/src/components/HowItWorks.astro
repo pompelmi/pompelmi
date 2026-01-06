@@ -1,0 +1,49 @@
+---
+/** Minimal, responsive diagram that doesn’t rely on Mermaid */
+---
+<figure class="hiw">
+  <svg viewBox="0 0 880 230" role="img" aria-label="Upload → Pre-filters → Engine → Verdict → UI">
+    <defs>
+      <marker id="arrow" orient="auto" markerWidth="8" markerHeight="8" refX="8" refY="4">
+        <path d="M0,0 L8,4 L0,8 Z"></path>
+      </marker>
+      <style>
+        .box { rx:12; ry:12; }
+        text { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; font-size:14px }
+        .line { fill:none; stroke:#666; stroke-width:2; marker-end:url(#arrow) }
+        .label { font-weight:600 }
+      </style>
+    </defs>
+
+    <rect class="box" x="20"  y="60" width="150" height="60" fill="#f3f4f6" stroke="#d1d5db"/>
+    <text x="95"  y="95" text-anchor="middle"><tspan class="label">Client Upload</tspan></text>
+
+    <rect class="box" x="210" y="60" width="170" height="60" fill="#eef2ff" stroke="#c7d2fe"/>
+    <text x="295" y="88" text-anchor="middle">Pre-filters</text>
+    <text x="295" y="106" text-anchor="middle">(MIME, size, count)</text>
+
+    <rect class="box" x="420" y="40" width="170" height="100" fill="#ecfeff" stroke="#a5f3fc"/>
+    <text x="505" y="76" text-anchor="middle"><tspan class="label">Pompelmi Engine</tspan></text>
+    <text x="505" y="96" text-anchor="middle">ZIP deep scan, YARA (opt.)</text>
+    <text x="505" y="116" text-anchor="middle">Verdict per file</text>
+
+    <rect class="box" x="630" y="60" width="110" height="60" fill="#fef3c7" stroke="#fde68a"/>
+    <text x="685" y="88" text-anchor="middle">Verdict</text>
+    <text x="685" y="106" text-anchor="middle">CLEAN/FLAG</text>
+
+    <rect class="box" x="770" y="60" width="90" height="60" fill="#e0f2fe" stroke="#bae6fd"/>
+    <text x="815" y="95" text-anchor="middle">UI</text>
+
+    <path class="line" d="M170,90 L210,90"/>
+    <path class="line" d="M380,90 L420,90"/>
+    <path class="line" d="M590,90 L630,90"/>
+    <path class="line" d="M740,90 L770,90"/>
+  </svg>
+  <figcaption class="cap">End-to-end flow: client upload → filters → engine → verdict → UI.</figcaption>
+</figure>
+
+<style>
+  .hiw { margin: 2rem 0; }
+  .hiw svg { width: 100%; height: auto; }
+  .cap { color:#6b7280; font-size: 0.9rem; text-align:center; margin-top: .5rem; }
+</style>

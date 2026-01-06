@@ -1,0 +1,1678 @@
+name: CI / CodeQL / Release / Publish
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+# Permessi minimi a livello workflow; i job aggiungono ciò che serve
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+  ROOT_VERSION: '0.20.0'
+
+jobs:
+  # -------------------------------
+  # 1) CodeQL (security scan)
+  # -------------------------------
+  codeql:
+    name: CodeQL Security Scan
+    permissions:
+      contents: read          # checkout
+      security-events: write  # upload SARIF
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Apply pnpm overrides (CI hotfix)
+        run: |
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          echo "pnpm.overrides applied:"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          run_install: false
+      - name: Setup Node (with pnpm cache)
+        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup Node (no cache, no lockfile yet)
+        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Configure npm & pnpm for fewer 429s
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install deps (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "pnpm install (workspace)"
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
+
+      - name: Build workspace (root + packages)
+        run: |
+          pnpm -r --if-present run build
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for 'process'"
+            fi
+          fi
+
+      - name: PNPM version
+        run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
+
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            else
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            fi
+          fi
+          pnpm --version
+
+
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          set -euo pipefail
+          # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
+          # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
+
+
+      - name: Configure npm & pnpm for fewer 429s
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages \
+              --filter '!@pompelmi/*' \
+              --filter '!./examples/*' \
+              --filter '!./site' 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
+
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@d198d2fabf39a7f36b5ce57ce70d4942944f006e
+        with:
+          languages: javascript
+
+      - name: Build (light)
+        run: |
+          pnpm -r \
+            --filter '!@pompelmi/*' \
+            --filter '!./examples/*' \
+            --filter '!./site' \
+            --if-present run build
+
+      - name: Analyze
+        uses: github/codeql-action/analyze@d198d2fabf39a7f36b5ce57ce70d4942944f006e
+
+  # -------------------------------
+  # 2) CI Build (web + packages)
+  # -------------------------------
+  build:
+    name: Build & Test
+    needs: [codeql]
+    runs-on: ubuntu-latest
+    outputs:
+      site_changed: ${{ steps.site_fallback.outputs.site }}
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Ensure pnpm-workspace.yaml
+        run: |
+          set -euo pipefail
+          # Always ensure root is part of the workspace (so local 'pompelmi' is linkable)
+          printf "packages:\n  - '.'\n  - 'packages/*'\n  - 'examples/*'\n  - 'site'\n" > pnpm-workspace.yaml
+          # Force the root workspace version so subpackages depending on pompelmi@^${ROOT_VERSION} resolve to the local workspace instead of npm registry
+
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          run_install: false
+
+
+
+      - name: Setup Node (with pnpm cache)
+        if: ${{ hashFiles('pnpm-lock.yaml') != '' }}
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Setup Node (no cache, no lockfile yet)
+        if: ${{ hashFiles('pnpm-lock.yaml') == '' }}
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: PNPM version
+        run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
+
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            else
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            fi
+          fi
+          pnpm --version
+
+      - name: Apply pnpm overrides (CI hotfix)
+        run: |
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          echo "pnpm.overrides applied:"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for 'process'"
+            fi
+          fi
+
+      - name: Install YARA (for malware scan)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y yara
+
+      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        run: |
+          set -euo pipefail
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples site website 2>/dev/null | sort -u || true)
+          if [ ${#REFS[@]} -gt 0 ]; then
+            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
+            mkdir -p dist-tarballs
+            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
+            pnpm -F @pompelmi/ui-react build
+            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            if [ -f "$PROD_PATH" ]; then
+              :
+            else
+              PROD_PATH="packages/ui-react/$PROD_PATH"
+            fi
+            PROD_BASE="$(basename "$PROD_PATH")"
+            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
+            for ref in "${REFS[@]}"; do
+              TARGET_BASE="$(basename "$ref")"
+              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
+                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
+              fi
+            done
+            ls -la dist-tarballs
+          else
+            echo "No dist-tarballs reference found; skipping pack"
+          fi
+
+      - name: Configure npm & pnpm for fewer 429s
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
+
+      - name: Detect changed paths
+        id: changes
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        continue-on-error: true
+        with:
+          filters: |
+            site:
+              - 'site/**'
+
+      - name: Set site_changed fallback
+        id: site_fallback
+        run: |
+          # Default to true to ensure Pages deployment doesn't get skipped due to path detection issues
+          echo "site=true" >> "$GITHUB_OUTPUT"
+
+      - name: Compute affected workspaces
+        id: ws
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Determine base SHA for diff (PR, push or fallback to first parent)
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            # Fallback to HEAD~1 if available, otherwise skip diff
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+              BASE="HEAD~1"
+            else
+              echo "No valid base SHA found, analyzing all packages"
+              echo "filters=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          echo "Base SHA: $BASE"
+          # List changed files between base and HEAD
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
+          if [ -z "$CHANGED" ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # Extract unique package directories under packages/
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILTERS=""
+          for d in "${PKGDIRS[@]}"; do
+            # Use path-based filters; pnpm accepts directory filters
+            FILTERS+=" --filter ./"$d
+          done
+          echo "Using filters: $FILTERS"
+          echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
+
+      - name: Prebuild core & engines (needed by CLI bundling)
+        run: |
+          pnpm -F @pompelmi/core run build
+          pnpm -F @pompelmi/engine run build
+          pnpm -F @pompelmi/engine-heuristics run build
+
+      - name: Build packages (topological; CLI last)
+        run: |
+          pnpm -r \
+            ${{ steps.ws.outputs.filters }} \
+            --filter '!./examples/*' \
+            --filter '!@pompelmi/core' \
+            --filter '!@pompelmi/cli' \
+            --if-present run build
+          pnpm -F @pompelmi/cli run build
+
+      - name: Ensure Vitest (workspace)
+        run: |
+          # Pin matching major versions to avoid Vitest/coverage mismatch
+          pnpm -w add -D vitest@2 @vitest/coverage-v8@2
+
+
+      - name: Test packages (no coverage)
+        run: |
+          # Run package tests without coverage first to catch failures early
+          pnpm -r --filter '@pompelmi/*' --if-present test
+
+      - name: Test workspace (no coverage for CI memory constraints)
+        env:
+          NODE_OPTIONS: "--max_old_space_size=4096"
+        run: |
+          # Run tests without coverage in CI to avoid memory issues
+          pnpm vitest run --passWithNoTests
+
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
+      - name: Normalize LCOV paths (repo-relative) - Skip if no coverage
+        shell: bash
+        run: |
+          if [ ! -d coverage ]; then
+            echo "No coverage directory found, skipping LCOV normalization"
+            exit 0
+          fi
+          ROOT="$(pwd)"
+          # normalize root coverage file if present
+          [ -f coverage/lcov.info ] && sed -i "s|^SF:${ROOT}/|SF:|g" coverage/lcov.info
+          find packages -type f -path '*/coverage/lcov.info' -print0 | while IFS= read -r -d '' f; do
+            pkgdir="$(dirname "$(dirname "$f")")"   # e.g. packages/engine
+            # remove absolute workspace prefix if present
+            sed -i "s|^SF:${ROOT}/|SF:|g" "$f"
+            # if SF path is relative (e.g. SF:src/index.ts or SF:index.ts), prefix with the package dir
+            awk -v P="$pkgdir/" 'BEGIN{OFS=""}
+              /^SF:/ {
+                if ($0 !~ /^SF:\// && $0 !~ /^SF:packages\//) sub(/^SF:/, "SF:" P)
+              }
+              { print }
+            ' "$f" > "$f.tmp" && mv "$f.tmp" "$f"
+          done
+
+      - name: Verify LCOV presence (debug) - Skip if no coverage
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -d coverage ]; then
+            echo "No coverage directory found, skipping LCOV verification"
+            exit 0
+          fi
+          echo "Root coverage dir:" && ls -lah coverage || true
+          if [ ! -s coverage/lcov.info ]; then
+            echo "::warning::coverage/lcov.info is missing or empty"
+            exit 0
+          fi
+          echo "LCOV lines: $(wc -l < coverage/lcov.info)"
+          echo "--- LCOV head ---" && head -n 20 coverage/lcov.info || true
+          echo "--- LCOV tail ---" && tail -n 20 coverage/lcov.info || true
+
+
+      - name: Upload coverage to Codecov
+        if: ${{ always() && hashFiles('**/coverage/lcov.info') != '' }}
+        uses: codecov/codecov-action@5a1091511ad55cbe89839c7260b706298ca349f7 # v5.5.1
+        with:
+          use_oidc: true
+          files: coverage/lcov.info,packages/**/coverage/lcov.info
+          disable_search: true
+          flags: core
+          name: codecov-core
+          fail_ci_if_error: true
+          verbose: true
+
+
+      - name: Security scan (pompelmi) — repo root
+        uses: ./.github/actions/pompelmi-scan
+        with:
+          path: "."
+          deep_zip: true
+          fail_on_detect: false
+
+      - name: Setup Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5.0.0
+
+      - name: Build site
+        run: pnpm -C site build
+
+      - name: Security scan (pompelmi) — site dist
+        if: ${{ hashFiles('site/.vitepress/dist/**') != '' }}
+        uses: ./.github/actions/pompelmi-scan
+        with:
+          path: "site/.vitepress/dist"
+          deep_zip: true
+          fail_on_detect: false
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4.0.0
+        with:
+          path: site/.vitepress/dist
+
+  # -------------------------------
+  # 3) Release da package.json (crea tag + GitHub Release)
+  # -------------------------------
+  release:
+    name: Release from package.json
+    needs: [build]
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # creare tag e Release
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Read version from package.json
+        id: pkg
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-.].+)?$ ]]; then
+            echo "Invalid semver in package.json: $VERSION"
+            exit 1
+          fi
+
+      - name: Decide tag & prerelease flag
+        id: meta
+        run: |
+          TAG="v${{ steps.pkg.outputs.version }}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          if [[ "${{ steps.pkg.outputs.version }}" == *-* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if tag exists
+        id: check
+        run: |
+          git fetch --tags --force
+          if git rev-parse -q --verify "refs/tags/${{ steps.meta.outputs.tag }}"; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop (tag already exists)
+        if: steps.check.outputs.exists == 'true'
+        run: echo "Tag ${{ steps.meta.outputs.tag }} exists. Skipping."
+
+      - name: Create and push git tag
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "${{ steps.meta.outputs.tag }}" -m "Release ${{ steps.pkg.outputs.version }}"
+          git push origin "${{ steps.meta.outputs.tag }}"
+
+      - name: Build asset (optional)
+        id: pkgasset
+        if: steps.check.outputs.exists == 'false'
+        run: |
+          if [ -d dist ]; then
+            tar -czf "pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz" dist
+            echo "asset=pompelmi-dist-${{ steps.pkg.outputs.version }}.tgz" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release (auto notes)
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          EXTRA=""
+          if [ "${{ steps.meta.outputs.prerelease }}" = "true" ]; then
+            EXTRA="$EXTRA --prerelease"
+          fi
+          if [ -n "${{ steps.pkgasset.outputs.asset }}" ]; then
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA \
+              "${{ steps.pkgasset.outputs.asset }}"
+          else
+            gh release create "${{ steps.meta.outputs.tag }}" \
+              --title "${{ steps.meta.outputs.tag }}" \
+              --generate-notes $EXTRA
+          fi
+
+  # -------------------------------
+  # 4) Publish workspaces to npm (skips only if that version already exists)
+  # -------------------------------
+  publish-workspaces:
+    name: npm publish (only if version not on npm)
+    needs: [build]
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed paths (workspaces)
+        id: changes
+        uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+        with:
+          filters: |
+            packages:
+              - 'packages/**'
+
+      - name: Compute affected workspaces
+        id: ws
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+              BASE="HEAD~1"
+            else
+              echo "No valid base SHA found, analyzing all packages"
+              echo "filters=" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          fi
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
+          if [ -z "$CHANGED" ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+            echo "filters=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          FILTERS=""
+          for d in "${PKGDIRS[@]}"; do
+            FILTERS+=" --filter ./"$d
+          done
+          echo "filters=$FILTERS" >> "$GITHUB_OUTPUT"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+      - name: Apply pnpm overrides (CI hotfix)
+        run: |
+          node -e "const fs=require('fs');const f='package.json';const j=JSON.parse(fs.readFileSync(f,'utf8'));(j.pnpm??={});(j.pnpm.overrides??={});j.pnpm.overrides.fflate='0.8.2';j.pnpm.overrides.regjsgen='0.8.0';j.pnpm.overrides['regexpu-core>regjsgen']='0.8.0';j.pnpm.overrides['@babel/helper-create-regexp-features-plugin>regjsgen']='0.8.0';j.pnpm.overrides['@types/cookies']='0.9.1';j.pnpm.overrides['@types/koa>@types/cookies']='0.9.1';j.pnpm.overrides.process='0.11.10';j.pnpm.overrides.pompelmi='workspace:*';j.pnpm.overrides['@pompelmi/core']='workspace:*';fs.writeFileSync(f,JSON.stringify(j,null,2)+'\n');"
+          echo "pnpm.overrides applied:"
+          node -p "JSON.stringify(require('./package.json').pnpm.overrides,null,2)"
+      - name: Sanitize lockfile (process override)
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            if grep -Eq 'process@(npm:)?0\.11\.(1[1-9]|[2-9][0-9])' pnpm-lock.yaml; then
+              echo "Found invalid process version in lockfile → removing pnpm-lock.yaml"
+              rm pnpm-lock.yaml
+            else
+              echo "Lockfile looks fine for '\''process'\''"
+            fi
+          fi
+
+
+
+      - name: Ensure repository field in workspaces (for provenance)
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = require('path');
+          const repoUrl = process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : '');
+          if (!repoUrl) {
+            console.warn('REPO_URL not set; will skip repository injection.');
+          }
+          const root = 'packages';
+          if (!fs.existsSync(root)) process.exit(0);
+          for (const d of fs.readdirSync(root)) {
+            const pkgPath = path.join(root, d, 'package.json');
+            if (!fs.existsSync(pkgPath)) continue;
+            let raw = fs.readFileSync(pkgPath, 'utf8');
+            if (!raw.trim()) { console.warn('Skipping empty package.json:', pkgPath); continue; }
+            let j;
+            try { j = JSON.parse(raw); } catch { console.warn('Skipping invalid JSON:', pkgPath); continue; }
+            if (!j.name || !j.name.startsWith('@pompelmi/')) continue;
+            if (j.private) continue;
+            if (repoUrl) {
+              j.repository = { type: 'git', url: repoUrl };
+            } else if (!j.repository) {
+              j.repository = { type: 'git', url: 'https://github.com/pompelmi/pompelmi' };
+            }
+            fs.writeFileSync(pkgPath, JSON.stringify(j, null, 2) + '\n');
+            console.log('Updated repository for', j.name);
+          }
+          NODE
+
+      - name: PNPM version
+        run: pnpm --version
+
+      - name: Which pnpm (diagnostics)
+        run: which pnpm && pnpm -v
+
+      - name: Fallback install pnpm if missing
+        run: |
+          if ! command -v pnpm >/dev/null 2>&1; then
+            echo "pnpm not found, installing fallback..."
+            VER=$(node -p "((require('./package.json').packageManager||'').split('@')[1])||''")
+            if [ -n "$VER" ]; then
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            else
+              corepack enable && corepack prepare pnpm@9.12.0 --activate
+            fi
+          fi
+          pnpm --version
+
+      
+
+      - name: (CI fix) Pack @pompelmi/ui-react if tarball is referenced
+        id: pack
+        run: |
+          set -euo pipefail
+          mapfile -t REFS < <(grep -Roh 'dist-tarballs/[^"]*pompelmi-ui-react[^"]*\.tgz' examples site website 2>/dev/null | sort -u || true)
+          if [ ${#REFS[@]} -gt 0 ]; then
+            echo "Detected dist-tarballs reference(s) -> packing @pompelmi/ui-react"
+            mkdir -p dist-tarballs
+            pnpm -F @pompelmi/ui-react install --no-frozen-lockfile
+            pnpm -F @pompelmi/ui-react build
+            PROD_PATH=$(pnpm -C packages/ui-react pack | tail -n1 | tr -d '\n')
+            if [ -f "$PROD_PATH" ]; then
+              :
+            else
+              PROD_PATH="packages/ui-react/$PROD_PATH"
+            fi
+            PROD_BASE="$(basename "$PROD_PATH")"
+            cp "$PROD_PATH" "dist-tarballs/$PROD_BASE"
+            for ref in "${REFS[@]}"; do
+              TARGET_BASE="$(basename "$ref")"
+              if [ "$TARGET_BASE" != "$PROD_BASE" ]; then
+                cp "dist-tarballs/$PROD_BASE" "dist-tarballs/$TARGET_BASE"
+              fi
+            done
+            ls -la dist-tarballs
+            echo "packed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No dist-tarballs reference found; skipping pack"
+            echo "packed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure npm & pnpm for fewer 429s
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> ~/.npmrc
+          echo "always-auth=true" >> ~/.npmrc
+          pnpm config set fetch-retries 5
+          pnpm config set fetch-retry-mintimeout 20000
+          pnpm config set fetch-retry-maxtimeout 120000
+          pnpm config set network-timeout 300000
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Install deps (pnpm) — 429-aware retry
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          configure_pnpm_base() {
+            pnpm config set fetch-retries 5
+            pnpm config set fetch-retry-mintimeout 20000
+            pnpm config set fetch-retry-maxtimeout 120000
+            pnpm config set network-timeout 300000
+          }
+
+          configure_pnpm_final_boost() {
+            pnpm config set fetch-retries 8
+            pnpm config set fetch-retry-mintimeout 40000
+            pnpm config set fetch-retry-maxtimeout 240000
+            pnpm config set network-timeout 600000
+          }
+
+          run_install() {
+            echo "Run # Always install with link-workspace-packages so local pompelmi@${ROOT_VERSION} is linked"
+            pnpm install --no-frozen-lockfile --link-workspace-packages 2>&1 | tee install.log
+          }
+
+          configure_pnpm_base
+
+          ATTEMPTS=6
+          DELAY=10
+          STATUS=1
+
+          for i in $(seq 1 $ATTEMPTS); do
+            echo "Attempt $i/$ATTEMPTS: pnpm install"
+            set +e
+            run_install
+            STATUS=$?
+            set -e
+
+            if [[ $STATUS -eq 0 ]]; then
+              echo "Install succeeded"
+              break
+            fi
+
+            if grep -q 'ERR_PNPM_FETCH_429\|Too Many Requests - 429' install.log; then
+              if [[ $i -eq $ATTEMPTS ]]; then
+                echo "429 persisted to final attempt. Applying final boost and retrying once more..."
+                configure_pnpm_final_boost
+                set +e
+                run_install
+                STATUS=$?
+                set -e
+                break
+              fi
+              JITTER=$((RANDOM % 6))
+              SLEEP_FOR=$((DELAY + JITTER))
+              echo "Hit 429 rate limit. Backing off for ${SLEEP_FOR}s (base ${DELAY}s + jitter ${JITTER}s)..."
+              sleep "$SLEEP_FOR"
+              DELAY=$((DELAY*2))
+              continue
+            else
+              echo "Non-429 install error. Failing fast."
+              exit $STATUS
+            fi
+          done
+
+          if [[ $STATUS -ne 0 ]]; then
+            echo "Install failed due to persistent 429s or other errors."
+            exit $STATUS
+          fi
+
+      - name: Prebuild core & engines (needed by CLI bundling)
+        run: |
+          pnpm -F @pompelmi/core run build
+          pnpm -F @pompelmi/engine run build
+          pnpm -F @pompelmi/engine-heuristics run build
+
+      - name: Pre-build @pompelmi/core for pack-check consumers
+        if: ${{ always() }}
+        run: pnpm -F @pompelmi/core --if-present run build
+
+      - name: Build publishable workspaces (topological; CLI last)
+        run: |
+          pnpm -r \
+            ${{ steps.ws.outputs.filters }} \
+            --filter '@pompelmi/*' \
+            --filter '!@pompelmi/core' \
+            --filter '!@pompelmi/cli' \
+            --filter '!./examples/*' \
+            --if-present run build
+          pnpm -F @pompelmi/cli run build
+
+      - name: Save pnpm store cache
+        if: ${{ success() && !cancelled() }}
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: ${{ steps.pnpm-cache.outputs.cache-primary-key }}
+
+      - name: Derive pack-check dirs
+
+        id: pcdirs
+
+        shell: bash
+
+        run: |
+
+          set -euo pipefail
+
+          BASE="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+
+          if [ -z "$BASE" ] || ! git cat-file -e "$BASE" 2>/dev/null; then
+
+            if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
+
+              BASE="HEAD~1"
+
+            else
+
+              echo "No valid base SHA found, checking all packages"
+
+              echo "dirs=" >> "$GITHUB_OUTPUT"
+
+              exit 0
+
+            fi
+
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE"...HEAD 2>/dev/null || git diff --name-only HEAD 2>/dev/null || true)
+
+          mapfile -t PKGDIRS < <(echo "$CHANGED" | awk -F/ '/^packages\//{print $1 "/" $2}' | sort -u)
+
+          if [ ${#PKGDIRS[@]} -eq 0 ]; then
+
+            echo "dirs=" >> "$GITHUB_OUTPUT"
+
+          else
+
+            printf "dirs=%s\n" "$(IFS=,; echo "${PKGDIRS[*]}")" >> "$GITHUB_OUTPUT"
+
+          fi
+
+
+      - name: Build dirs for pack-check (changed)
+
+
+        if: ${{ steps.pcdirs.outputs.dirs != '' }}
+
+
+        shell: bash
+
+
+        run: |
+
+
+          set -euo pipefail
+
+
+          IFS=',' read -ra D <<< "${{ steps.pcdirs.outputs.dirs }}"
+
+
+          for d in "${D[@]}"; do
+
+
+            if [ -d "$d" ]; then
+
+
+              pnpm -C "$d" --if-present run build || pnpm -r --filter "$d" --if-present run build
+
+
+            fi
+
+
+          done
+
+
+      - name: Build for pack-check (fallback all @pompelmi/*)
+        if: ${{ steps.pcdirs.outputs.dirs == '' }}
+        run: |
+          pnpm -F @pompelmi/core --if-present run build
+          pnpm -r --filter '@pompelmi/*' --if-present run build
+
+
+
+      - name: Validate tarballs (pack-check)
+        env:
+          CHECK_DIRS: ${{ steps.pcdirs.outputs.dirs }}
+        run: pnpm run pack:strict
+
+      - name: Publish only if version not on npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Scanning publishable workspaces…"
+          # Produce lines: name|version|dir
+          mapfile -t ROWS < <(node -e "
+            const fs=require('fs'), path=require('path');
+            const root='packages';
+            if(!fs.existsSync(root)) process.exit(0);
+            for(const d of fs.readdirSync(root)){
+              const p=path.join(root,d,'package.json');
+              if(!fs.existsSync(p)) continue;
+              const j=JSON.parse(fs.readFileSync(p,'utf8'));
+              if(!j.name||!j.version) continue;
+              if(j.name === '@pompelmi/core') continue;
+              if(!j.name.startsWith('@pompelmi/')) continue;
+              if(j.private) continue;
+              console.log(`${j.name}|${j.version}|${path.dirname(p)}`);
+            }
+          ")
+
+          for row in "${ROWS[@]}"; do
+            IFS='|' read -r NAME VER DIR <<< "$row"
+            if [ "$NAME" = "@pompelmi/core" ]; then
+              echo "  → skipping @pompelmi/core (not published by this job)"
+              continue
+            fi
+            echo "• $NAME@$VER"
+            EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+            if [ "$EXISTS" = "$VER" ]; then
+              echo "  → already on npm, skip"
+              continue
+            fi
+            echo "  → publishing…"
+            set +e
+            OUT=$(pnpm --filter "$NAME" publish --access public --tag latest --no-git-checks --provenance 2>&1)
+            CODE=$?
+            set -e
+            echo "$OUT"
+            if [ $CODE -ne 0 ]; then
+              if echo "$OUT" | grep -qi "cannot publish over"; then
+                echo "  → version already on npm, treating as success."
+              else
+                echo "  → publish failed"
+                exit $CODE
+              fi
+            else
+              echo "  → publish succeeded"
+            fi
+          done
+
+      - name: Ensure dist-tag "latest" points to version (retry, tolerate CDN lag)
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm config set registry "https://registry.npmjs.org"
+          npm cache clean --force || true
+
+          while IFS='|' read -r NAME VER; do
+            [ -z "$NAME" ] && continue
+
+            # Skip if that exact version is NOT on npm (package newly created or publish failed)
+            EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+            if [ "$EXISTS" != "$VER" ]; then
+              echo "$NAME@$VER not found on npm yet — skipping retag"
+              continue
+            fi
+
+            echo "Retag latest -> $VER for $NAME (idempotent)"
+            npm dist-tag add "$NAME@$VER" latest 2>/dev/null || true
+
+            # Percent-encode scoped names for registry API (e.g. @pompelmi/cli -> %40pompelmi%2Fcli)
+            ENC_NAME=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+
+            ok=0
+            for i in $(seq 1 18); do
+              CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+              echo "$NAME: Check $i/18 via npm view: latest=$CUR, expected=$VER"
+              if [ "$CUR" = "$VER" ]; then ok=1; break; fi
+
+              CUR2=$(curl -sSLf --retry 3 --retry-delay 2 \
+                -H "Accept: application/json" \
+                -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+                -H "Cache-Control: no-cache" \
+                "https://registry.npmjs.org/$ENC_NAME" \
+                2>/dev/null | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})" || true)
+              echo "$NAME: Check $i/18 via curl: latest=$CUR2, expected=$VER"
+              if [ "$CUR2" = "$VER" ]; then ok=1; break; fi
+
+              sleep 5
+            done
+
+            if [ "$ok" -ne 1 ]; then
+              echo "::warning::$NAME: npm registry ancora non mostra latest=$VER (cache/CDN). Continuo."
+            fi
+          done < <(node -e "
+            const fs=require('fs'), path=require('path');
+            const root='packages';
+            if(!fs.existsSync(root)) process.exit(0);
+            for(const d of fs.readdirSync(root)){
+              const p=path.join(root,d,'package.json');
+              if(!fs.existsSync(p)) continue;
+              const j=JSON.parse(fs.readFileSync(p,'utf8'));
+              if(j.name&&j.version&&j.name.startsWith('@pompelmi/')&&!j.private){
+                if(j.name === '@pompelmi/core') continue;
+                console.log(j.name+'|'+j.version);
+              }
+            }
+          ")
+
+
+  # -------------------------------
+  # 4b) Publish root package (pompelmi) to npm
+  #     Skips ONLY if that exact version already exists on npm
+  # -------------------------------
+  publish-root:
+    name: npm publish root (pompelmi)
+    needs: [build]
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          run_install: false
+
+      - name: Setup Node
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+      - name: Restore pnpm store cache
+        id: pnpm-cache
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: |
+            ~/.pnpm-store
+          key: pnpm-store-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            pnpm-store-${{ runner.os }}-
+
+      - name: Ensure repository field matches this repo (for provenance)
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const repoUrl = process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : '');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          pkg.repository = { type: 'git', url: repoUrl || 'https://github.com/pompelmi/pompelmi' };
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('Set root repository to', pkg.repository.url);
+          NODE
+
+      - name: Read root package name & version
+        id: rootpkg
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Read root private flag
+        id: rootpriv
+        run: |
+          PRIV=$(node -p "Boolean(require('./package.json').private)")
+          echo "private=${PRIV}" >> "$GITHUB_OUTPUT"
+
+      - name: Decide publish (skip only if exact version exists)
+        id: rootdecision
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          VER="${{ steps.rootpkg.outputs.version }}"
+          EXISTS=$(npm view "$NAME@$VER" version 2>/dev/null || true)
+          if [ "$EXISTS" = "$VER" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Version already on npm: $NAME@$VER — skipping publish"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Version not on npm: $NAME@$VER — will publish"
+          fi
+      - name: Stop (root is private)
+        if: steps.rootpriv.outputs.private == 'true'
+        run: |
+          echo 'Root package.json has "private": true — skipping npm publish.'
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Build root package (dist/)
+        run: pnpm run build
+
+      - name: Validate root tarball (pack-check)
+
+        run: pnpm run pack:strict
+
+      - name: Publish root to npm (force latest tag)
+        if: steps.rootpriv.outputs.private == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          set +e
+          OUT=$(npm publish --provenance --access public --tag latest --ignore-scripts 2>&1)
+          CODE=$?
+          set -e
+          echo "$OUT"
+          if [ $CODE -ne 0 ]; then
+            if echo "$OUT" | grep -qi "cannot publish over"; then
+              echo "Version already exists on npm, treating as success."
+            else
+              echo "npm publish failed"
+              exit $CODE
+            fi
+          else
+            echo "Published ${{ steps.rootpkg.outputs.name }}@${{ steps.rootpkg.outputs.version }} (tag=latest)"
+          fi
+
+      - name: Show npm state (debug)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          echo "Registry: $(npm config get registry)"
+          npm whoami || true
+          echo "Versions on npm:" && npm view "$NAME" versions --json || true
+          echo "Dist-tags:" && npm dist-tag ls "$NAME" || true
+
+      - name: Ensure "latest" tag matches root version (retry, tolerate CDN lag)
+        if: steps.rootpriv.outputs.private == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          NAME="${{ steps.rootpkg.outputs.name }}"
+          VER="${{ steps.rootpkg.outputs.version }}"
+
+          echo "Retag latest -> $VER (idempotent)"
+          # Idempotent: se è già impostato non fallisce la pipeline
+          npm dist-tag add "$NAME@$VER" latest 2>&1 || true
+
+          # Evita cache locale e forza il registry corretto
+          npm config set registry "https://registry.npmjs.org"
+          npm cache clean --force || true
+
+          ok=0
+          for i in $(seq 1 18); do
+            CUR=$(npm view "$NAME" dist-tags.latest 2>/dev/null || echo "")
+            echo "Check $i/18 via npm view: latest=$CUR, expected=$VER"
+            if [ "$CUR" = "$VER" ]; then ok=1; break; fi
+
+            # Seconda fonte (no-cache) tramite API del registry
+            CUR2=$(curl -sSfL --retry 3 --retry-delay 2 \
+              -H "Accept: application/json" \
+              -H "Authorization: Bearer $NODE_AUTH_TOKEN" \
+              -H "Cache-Control: no-cache" \
+              "https://registry.npmjs.org/$NAME" \
+              | node -e "let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);console.log(j['dist-tags']?.latest||'');}catch{}})")
+            echo "Check $i/18 via curl: latest=$CUR2, expected=$VER"
+            if [ "$CUR2" = "$VER" ]; then ok=1; break; fi
+
+            sleep 5
+          done
+
+          if [ "$ok" -ne 1 ]; then
+            echo "::warning::npm registry ancora non mostra latest=$VER (cache/CDN). Procedo senza fallire."
+          fi
+
+  # -------------------------------
+  # 4c) Publish root to GitHub Packages (npm.pkg.github.com)
+  # -------------------------------
+  publish-root-gpr:
+    name: npm publish root to GitHub Packages
+    needs: [build]
+    if: >
+      (github.event_name == 'push' && github.ref_name == 'main') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # v4.2.0
+        with:
+          run_install: false
+
+      - name: Setup Node (GitHub Packages)
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # v6.0.0
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://npm.pkg.github.com'
+
+      - name: Auth for GitHub Packages
+        run: |
+          printf "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}\n@pompelmi:registry=https://npm.pkg.github.com\nalways-auth=true\n" > ~/.npmrc
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Temporarily scope root package name for GPR
+        run: |
+          node -e "const fs=require('fs');const j=JSON.parse(fs.readFileSync('package.json','utf8'));if(j.name==='pompelmi'){j.name='@pompelmi/pompelmi';fs.writeFileSync('package.json',JSON.stringify(j,null,2)+'\n');console.log('Root name ->',j.name)}else{console.log('Root already scoped:',j.name)}"
+
+      - name: Read root name & version
+        id: rootpkg_gpr
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+      - name: Read root private flag
+        id: rootpriv_gpr
+        run: |
+          PRIV=$(node -p "Boolean(require('./package.json').private)")
+          echo "private=${PRIV}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure repository field matches this repo (git+https) for GPR
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const repoUrl = (process.env.REPO_URL || (process.env.GITHUB_REPOSITORY ? `https://github.com/${process.env.GITHUB_REPOSITORY}` : 'https://github.com/pompelmi/pompelmi')).replace(/^https:\/\//,'git+https://');
+          const pkg = JSON.parse(fs.readFileSync('package.json','utf8'));
+          pkg.repository = { type: 'git', url: repoUrl };
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          console.log('Set root repository to', pkg.repository.url);
+          NODE
+
+      - name: Decide publish (GPR) — check via GitHub API (PAT fallback)
+        id: check_gpr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PACKAGES_PAT is optional - will be checked in script
+        run: |
+          set -euo pipefail
+          ORG="${{ github.repository_owner }}"
+          NAME="${{ steps.rootpkg_gpr.outputs.name }}"
+          VER="${{ steps.rootpkg_gpr.outputs.version }}"
+          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
+          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          # Prefer PAT with read:org + write:packages
+          if [ -n "${PACKAGES_PAT:-}" ] && [ "$PACKAGES_PAT" != "" ]; then
+            export GH_TOKEN="$PACKAGES_PAT"
+            echo "Using PACKAGES_PAT for GitHub API."
+          else
+            export GH_TOKEN="$GITHUB_TOKEN"
+            echo "Using GITHUB_TOKEN for GitHub API (PACKAGES_PAT not available)."
+          fi
+          EXISTS=false
+          if gh api -X GET -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC" >/dev/null 2>&1; then
+            if gh api -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC/versions?per_page=100" --jq '.[].name' | grep -Fxq "$VER"; then
+              EXISTS=true
+            fi
+          fi
+          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
+          echo "exists=$EXISTS"
+      - name: Stop (root is private) (GPR)
+        if: steps.rootpriv_gpr.outputs.private == 'true'
+        run: |
+          echo 'Root package.json has "private": true — skipping GitHub Packages publish.'
+
+      - name: Publish to GitHub Packages
+        if: steps.check_gpr.outputs.exists == 'false' && steps.rootpriv_gpr.outputs.private == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          OUT=$(npm publish --access public --ignore-scripts --registry=https://npm.pkg.github.com 2>&1)
+          CODE=$?
+          echo "$OUT"
+          if [ $CODE -ne 0 ]; then
+            if echo "$OUT" | grep -qi "cannot publish over"; then
+              echo "Version already exists on GPR, treating as success."
+              exit 0
+            fi
+            exit $CODE
+          fi
+          echo "Published ${{ steps.rootpkg_gpr.outputs.name }}@${{ steps.rootpkg_gpr.outputs.version }} to GitHub Packages"
+
+      - name: Make GPR package public (retry + PAT fallback)
+        if: steps.check_gpr.outputs.exists == 'false' && steps.rootpriv_gpr.outputs.private == 'false'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # PACKAGES_PAT is optional - will be checked in script
+        run: |
+          set -euo pipefail
+          ORG="${{ github.repository_owner }}"
+          NAME="${{ steps.rootpkg_gpr.outputs.name }}"
+          # URL-encode the package name (e.g. '@pompelmi/pompelmi' -> '%40pompelmi%2Fpompelmi')
+          PKG_ENC=$(node -e "console.log(encodeURIComponent(process.argv[1]))" "$NAME")
+          
+          # Prefer a Personal Access Token with read:org + write:packages (recommended for org-level package ops).
+          # Fallback to the workflow's GITHUB_TOKEN if no PAT is provided.
+          if [ -n "${PACKAGES_PAT:-}" ] && [ "$PACKAGES_PAT" != "" ]; then
+            export GH_TOKEN="$PACKAGES_PAT"
+            echo "Using PACKAGES_PAT for GitHub API."
+          else
+            export GH_TOKEN="$GITHUB_TOKEN"
+            echo "Using GITHUB_TOKEN for GitHub API (PACKAGES_PAT not available)."
+          fi
+          
+          echo "Ensuring package exists in API before changing visibility…"
+          # Wait up to ~90s for package indexing after publish
+          for i in $(seq 1 18); do
+            if gh api -X GET -H "Accept: application/vnd.github+json" "/orgs/$ORG/packages/npm/$PKG_ENC" >/dev/null 2>&1; then
+              echo "Package visible to API (attempt $i)."
+              break
+            fi
+            echo "Package not visible yet (attempt $i)…"
+            sleep 5
+          done
+          
+          echo "Setting visibility=public for $NAME in org $ORG"
+          if ! gh api -X PATCH \
+                -H "Accept: application/vnd.github+json" \
+                "/orgs/$ORG/packages/npm/$PKG_ENC/visibility" \
+                -f visibility=public; then
+            echo "::warning::Failed to set package visibility to public. Possible causes:"
+            echo "::warning::- Org policy disallows Public packages (Org Settings → Packages)."
+            echo "::warning::- Token lacks scopes (need read:org + write:packages)."
+            echo "::warning::- Package not yet indexed (race condition)."
+          fi
+
+  # -------------------------------
+  # 5) Deploy GitHub Pages (se Pages è attivo)
+  # -------------------------------
+  deploy-pages:
+    name: Deploy GitHub Pages
+    needs: [build]
+    if: ${{ github.event_name == 'push' && github.ref_name == 'main' && needs.build.outputs.site_changed == 'true' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    concurrency:
+      group: pages-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4.0.5
+
+  # -------------------------------
+  # 6) Publish container to GHCR
+  # -------------------------------
+  publish-container:
+    name: Publish container to GHCR
+    needs: [build]
+    if: ${{ (github.event_name == 'push' && github.ref_name == 'main') || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write   # required to push images to GHCR with GITHUB_TOKEN
+    env:
+      REGISTRY: ghcr.io
+      IMAGE_NAME: ${{ github.repository_owner }}/pompelmi-engine
+    steps:
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          fetch-depth: 0
+
+      - name: Read engine version from package.json
+        id: engine
+        shell: bash
+        run: |
+          node -e "console.log('version=' + require('./packages/engine/package.json').version)" >> "$GITHUB_OUTPUT"
+
+      - name: Set up QEMU (optional for multi-arch)
+        uses: docker/setup-qemu-action@29109295f81e9208d7d86ff1c6c12d2833863392 # v3.6.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - name: Login to GHCR
+        uses: docker/login-action@5e57cd118135c172c3672efd75eb46360885c0ef # v3.6.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker metadata (tags & labels)
+        id: meta
+        uses: docker/metadata-action@c1e51972afc2121e065aed6d45c65596fe445f3f # v5.8.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ steps.engine.outputs.version }}
+            type=raw,value=dev
+            type=sha
+
+      - name: Build & Push image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
+        with:
+          context: packages/engine
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          platforms: linux/amd64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

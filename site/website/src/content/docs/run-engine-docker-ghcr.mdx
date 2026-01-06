@@ -1,0 +1,40 @@
+---
+title: Run the engine via Docker (GHCR)
+description: Pull and run the reference scan engine from GitHub Container Registry.
+---
+
+## Pull the image
+
+```bash
+# dev tag
+docker pull ghcr.io/<owner>/pompelmi-engine:dev
+
+# or a specific version
+docker pull ghcr.io/<owner>/pompelmi-engine:0.17.0-dev.6
+```
+
+> Replace `<owner>` with your GitHub org/user (e.g., `pompelmi`).
+
+## Run the engine
+
+```bash
+docker run --rm -p 8787:8787 \
+  -e CORS_ORIGIN="*" \
+  -e MAX_BYTES=$((25*1024*1024)) \
+  -e ALLOW_MIME="image/png,image/jpeg,image/gif,application/pdf,application/zip,text/plain,application/octet-stream" \
+  -e TIMEOUT_MS=10000 \
+  -e FAIL_CLOSED=true \
+  ghcr.io/<owner>/pompelmi-engine:dev
+```
+
+Health check:
+
+```bash
+curl -s http://localhost:8787/healthz
+```
+
+Scan a file:
+
+```bash
+curl -s -F "file=@/path/to/file.ext" http://localhost:8787/scan
+```

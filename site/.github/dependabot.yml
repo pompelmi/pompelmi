@@ -1,0 +1,23 @@
+version: 2
+updates:
+  # pnpm workspaces are handled under the "npm" ecosystem; Dependabot detects pnpm via the lockfile
+  - package-ecosystem: "npm"
+    directory: "/"               # IMPORTANT: run from monorepo root
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "Europe/Rome"
+    # Group non-breaking bumps to reduce PR noise
+    groups:
+      minor-and-patch:
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 10
+
+  # Optional: keep GitHub Actions updated
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

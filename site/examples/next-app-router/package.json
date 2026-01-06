@@ -1,0 +1,20 @@
+{
+  "name": "pompelmi-next-app-router-example",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3005",
+    "build": "echo 'skipped'",
+    "start": "next start -p 3005"
+  },
+  "dependencies": {
+    "@pompelmi/engine-heuristics": "workspace:^",
+    "next": "^16.0.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.30",
+    "@types/react": "^19.2.0",
+    "typescript": "^5.4.5"
+  }
+}

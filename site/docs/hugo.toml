@@ -1,0 +1,22 @@
+baseURL = "https://pompelmi.github.io/pompelmi/"
+languageCode = "en-us"
+title = "pompelmi - Fast File Upload Security for Node.js"
+theme = "relearn"
+
+# SEO and meta configuration
+[params]
+  mainSections  = ["docs"]
+  github_repo   = "https://github.com/pompelmi/pompelmi"
+  github_branch = "gh-pages"
+  description   = "Fast file upload malware scanning for Node.js with YARA integration, ZIP inspection, and Express/Koa/Next.js adapters. Private by design."
+  keywords      = "file upload security, malware detection, YARA, Node.js, Express, Koa, Next.js, TypeScript, cybersecurity"
+  author        = "pompelmi contributors"
+  
+# Open Graph / Social Media
+[params.social]
+  twitter = "@pompelmi"
+  github  = "pompelmi/pompelmi"
+  
+# SEO optimization
+[markup.goldmark.renderer]
+  unsafe = true

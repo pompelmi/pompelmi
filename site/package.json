@@ -1,16 +1,174 @@
 {
-  "name": "@pompelmi/site",
-  "private": true,
+  "name": "pompelmi",
+  "version": "0.20.1",
+  "description": "Fast, private malware scanner for Node.js file uploads. TypeScript-first library with Express, Koa, Fastify & Next.js adapters. Features deep ZIP inspection, YARA integration, ZIP bomb protection, and real-time threat detection. Zero cloud dependencies - scan files in-process before they hit disk. Perfect for GDPR/HIPAA compliance.",
+  "main": "./dist/pompelmi.cjs",
+  "module": "./dist/pompelmi.esm.js",
   "type": "module",
+  "browser": {
+    "yara": false,
+    "util": false
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git"
+  },
+  "homepage": "https://pompelmi.github.io/pompelmi/",
+  "pnpm": {
+    "overrides": {
+      "process": "0.11.10",
+      "regjsgen": "0.8.0",
+      "fflate": "0.8.2",
+      "@tokenizer/inflate>fflate": "0.8.2",
+      "file-type>fflate": "0.8.2",
+      "regexpu-core>regjsgen": "0.8.0",
+      "@babel/helper-create-regexp-features-plugin>regjsgen": "0.8.0",
+      "vitest": "2.1.9",
+      "@vitest/coverage-v8": "2.1.9",
+      "babel-plugin-polyfill-corejs3": "^0.13.0",
+      "@types/cookies": "0.9.1",
+      "@types/koa>@types/cookies": "0.9.1",
+      "pompelmi": "workspace:*",
+      "@pompelmi/core": "workspace:*",
+      "katex": "0.16.10",
+      "react": "^19.2.0",
+      "react-dom": "^19.2.0",
+      "@types/react": "^19.2.0",
+      "@types/react-dom": "^19.2.0"
+    }
+  },
   "scripts": {
-    "dev": "vitepress dev",
-    "build": "vitepress build",
-    "preview": "vitepress preview"
+    "build": "rollup -c",
+    "prepublishOnly": "npm run build && npm run pack:strict",
+    "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
+    "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
+    "dev:remote": "tsx examples/remote-yara-server.ts",
+    "docs:build": "hugo -s docs -D -d docs",
+    "predocs:deploy": "npm run docs:build",
+    "docs:deploy": "gh-pages -d docs -b gh-pages",
+    "yara:check": "node scripts/yara-quick-check-cli.mjs",
+    "build:core": "pnpm -r --filter '!./examples/*' --if-present build",
+    "preview": "npm pack --dry-run",
+    "typecheck": "tsc -p tsconfig.json --noEmit || tsc -p tsconfig.build.json --noEmit",
+    "typecheck:strict": "tsc -p tsconfig.strict.json --noEmit",
+    "smoke": "node scripts/smoke.mjs",
+    "test:e2e": "node scripts/e2e.mjs",
+    "repo:doctor": "pnpm install --frozen-lockfile && pnpm -r --if-present build && pnpm -r --if-present test && npm run -s preview || true && node scripts/smoke.mjs && node scripts/e2e.mjs || true",
+    "audit:deps": "depcheck --skip-missing true || true",
+    "audit:code": "knip --reporter compact || true",
+    "audit:exports": "ts-prune -p tsconfig.json || true",
+    "repo:audit": "node scripts/audit.mjs",
+    "pack:check": "node scripts/pack-check.mjs",
+    "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run",
+    "pack:strict": "node scripts/pack-check.mjs --strict",
+    "clean": "rimraf dist"
   },
+  "license": "MIT",
   "devDependencies": {
-    "vitepress": "^1.6.4"
+    "@biomejs/biome": "^2.2.4",
+    "@pompelmi/core": "workspace:*",
+    "@pompelmi/engine": "workspace:*",
+    "@pompelmi/engine-heuristics": "workspace:^0.1.0",
+    "@rollup/plugin-commonjs": "^28.0.6",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.4",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/multer": "^2.0.0",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.8",
+    "@types/unzipper": "^0.10.11",
+    "@vitest/coverage-v8": "^2",
+    "cors": "^2.8.5",
+    "depcheck": "^1.4.7",
+    "express": "^5.1.0",
+    "gh-pages": "^6.3.0",
+    "knip": "^5.64.0",
+    "multer": "^2.0.2",
+    "react": "^19.2.0",
+    "rollup": "^4.x",
+    "ts-prune": "^0.10.3",
+    "tslib": "^2.8.1",
+    "tsup": "^8",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2",
+    "vitest": "2.1.9"
   },
-  "dependencies": {
-    "vue": "^3.5.18"
-  }
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "optionalDependencies": {
+    "@litko/yara-x": "^0.2.1"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/pompelmi.esm.js",
+      "require": "./dist/pompelmi.cjs",
+      "default": "./dist/pompelmi.esm.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE",
+    "package.json",
+    "CHANGELOG*"
+  ],
+  "keywords": [
+    "malware-scanner",
+    "file-upload-security",
+    "virus-scanner",
+    "antivirus",
+    "malware-detection",
+    "threat-detection",
+    "security-scanner",
+    "file-scanner",
+    "file-scanning",
+    "yara",
+    "yara-rules",
+    "zip-bomb-protection",
+    "express-middleware",
+    "koa-middleware",
+    "fastify-plugin",
+    "nextjs",
+    "next-js",
+    "nodejs-security",
+    "typescript-security",
+    "file-validation",
+    "upload-sanitization",
+    "mime-type-validation",
+    "security",
+    "cybersecurity",
+    "devsecops",
+    "gdpr-compliance",
+    "hipaa-compliance",
+    "privacy-first",
+    "in-process-scanning",
+    "zero-cloud",
+    "node",
+    "nodejs",
+    "typescript",
+    "express",
+    "koa",
+    "fastify"
+  ],
+  "directories": {
+    "example": "examples"
+  },
+  "author": "",
+  "packageManager": "pnpm@9.12.0",
+  "resolutions": {
+    "process": "0.11.10"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "types": "./dist/types/index.d.ts"
 }

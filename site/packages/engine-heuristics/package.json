@@ -1,0 +1,55 @@
+{
+  "name": "@pompelmi/engine-heuristics",
+  "version": "0.1.0",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format esm,cjs --dts --clean",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
+  },
+  "peerDependencies": {
+    "@pompelmi/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@vitest/coverage-v8": "2.1.9",
+    "tsup": "^8.5.0",
+    "typescript": "^5.0.0",
+    "vitest": "2.1.9"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE*",
+    "dist",
+    "package.json",
+    "CHANGELOG*"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "typings": "dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi",
+    "directory": "packages/engine-heuristics"
+  }
+}

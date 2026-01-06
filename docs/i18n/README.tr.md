@@ -46,27 +46,8 @@
 
 ---
 
-<div align="center">
-
-## ⚡ **Hızlı Başlangıç (Bulut)**
-
-**Serverless üzerinde mi çalışıyorsunuz veya ClamAV kurulumu yapamıyor musunuz?**  
-**[RapidAPI'daki Resmi Barındırılan API](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)** kullanın →
-
-✅ **Sıfır Kurulum** • Yüklenecek binary yok  
-✅ **Serverless-Hazır** • AWS Lambda, Vercel, Netlify'da çalışır  
-✅ **Otomatik Ölçekleme** • RAM/CPU yükü yok  
-✅ **Yerleşik Koruma** • Otomatik ZIP-bomba tespiti
-
-[**→ RapidAPI'de Başlayın**](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)
-
-</div>
-
----
-
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=version&color=0a7ea4&logo=npm"></a>
-  <a href="https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner"><img alt="Cloud API" src="https://img.shields.io/badge/☁️_Cloud_API-Available_on_RapidAPI-0055FF?style=flat&logo=icloud&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi?label=downloads&color=6E9F18&logo=npm"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm weekly downloads" src="https://img.shields.io/npm/dw/pompelmi?label=weekly&color=blue&logo=npm"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm total downloads" src="https://img.shields.io/npm/dt/pompelmi?label=total%20downloads&color=success&logo=npm"></a>

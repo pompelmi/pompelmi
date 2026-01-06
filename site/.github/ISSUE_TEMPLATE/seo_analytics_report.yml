@@ -1,0 +1,155 @@
+name: "📊 SEO & Analytics Report"
+description: "Report SEO performance and analytics insights for pompelmi"
+title: "[SEO]: "
+labels: ["seo", "analytics", "marketing"]
+assignees: []
+body:
+  - type: markdown
+    value: |
+      📈 **SEO & Analytics Tracking Report**
+      
+      Help us track and improve pompelmi's online visibility and search engine optimization.
+
+  - type: dropdown
+    id: report-type
+    attributes:
+      label: "Report Type"
+      description: "What type of SEO/analytics report is this?"
+      options:
+        - "Search ranking improvement"
+        - "Organic traffic increase"
+        - "Keyword opportunity"
+        - "Backlink opportunity"
+        - "Content performance"
+        - "Technical SEO issue"
+        - "Competitor analysis"
+        - "User analytics insight"
+    validations:
+      required: true
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: "Key Findings"
+      description: "What did you discover?"
+      placeholder: |
+        - pompelmi ranks #3 for "node.js file upload security"
+        - Our documentation gets 65% organic traffic
+        - Missing meta descriptions on 3 pages
+    validations:
+      required: true
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: "Performance Metrics"
+      description: "Share relevant metrics and data"
+      placeholder: |
+        **Search Performance:**
+        - Organic traffic: +45% MoM
+        - Average position: 12.3 → 8.7
+        - Click-through rate: 4.2%
+        
+        **Key Keywords:**
+        - "file upload security": Position 8 (↑3)
+        - "yara node.js": Position 15 (↑7)
+        
+        **User Analytics:**
+        - Bounce rate: 32%
+        - Avg session duration: 3:42
+        - Pages per session: 2.8
+
+  - type: textarea
+    id: opportunities
+    attributes:
+      label: "Growth Opportunities"
+      description: "What opportunities did you identify?"
+      placeholder: |
+        1. **Content Gap**: No tutorial for "malware scanning API"
+        2. **Keyword Opportunity**: "nodejs security middleware" (low competition)
+        3. **Backlink Target**: Security blog mentions need follow-up
+        4. **Technical**: Site speed could improve by 15%
+
+  - type: textarea
+    id: recommendations
+    attributes:
+      label: "Actionable Recommendations"
+      description: "What specific actions should we take?"
+      placeholder: |
+        **High Priority:**
+        - [ ] Add schema markup to tutorial pages
+        - [ ] Create "malware detection guide" content
+        - [ ] Optimize images for Core Web Vitals
+        
+        **Medium Priority:**
+        - [ ] Update meta descriptions
+        - [ ] Internal linking improvements
+        - [ ] Guest post outreach to 3 security blogs
+
+  - type: textarea
+    id: competitive-analysis
+    attributes:
+      label: "Competitive Analysis"
+      description: "How do we compare to similar projects?"
+      placeholder: |
+        **Competitors Analysis:**
+        - multer-security: Ranks higher for "express upload" but weaker content
+        - node-av: Strong technical docs, opportunity for better UX content
+        - file-guard: Limited SEO presence, opportunity to capture their keywords
+
+  - type: checkboxes
+    id: seo-areas
+    attributes:
+      label: "SEO Areas Covered"
+      options:
+        - label: "Keyword research and ranking analysis"
+        - label: "On-page SEO optimization"
+        - label: "Technical SEO (Core Web Vitals, etc)"
+        - label: "Content strategy and gap analysis"
+        - label: "Backlink profile and opportunities"
+        - label: "Local/industry-specific optimization"
+        - label: "User experience and conversion metrics"
+        - label: "Competitor benchmarking"
+
+  - type: dropdown
+    id: data-source
+    attributes:
+      label: "Data Source"
+      description: "Where did this data come from?"
+      options:
+        - "Google Analytics"
+        - "Google Search Console"
+        - "Ahrefs"
+        - "SEMrush"
+        - "Moz"
+        - "Plausible Analytics"
+        - "Manual research"
+        - "User feedback"
+        - "GitHub Analytics"
+    validations:
+      required: true
+
+  - type: textarea
+    id: supporting-data
+    attributes:
+      label: "Supporting Data"
+      description: "Screenshots, charts, or links to supporting evidence"
+      placeholder: |
+        **Links:**
+        - Search Console report: [link]
+        - Analytics dashboard: [link]
+        - Keyword tool results: [link]
+        
+        **Screenshots:** (attach files or paste links)
+
+  - type: checkboxes
+    id: implementation
+    attributes:
+      label: "Implementation Status"
+      options:
+        - label: "Ready to implement immediately"
+        - label: "Needs further research"
+        - label: "Requires developer resources"
+        - label: "Needs content creation"
+        - label: "Requires third-party tools"
+        - label: "Long-term strategic initiative"

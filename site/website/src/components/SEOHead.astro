@@ -1,0 +1,50 @@
+---
+/**
+ * Props:
+ * - title?: string
+ * - description?: string
+ * - image?: string (1200x630; absolute or under /public)
+ * - noindex?: boolean
+ * - canonical?: string
+ * - jsonLd?: Record<string, any> | Record<string, any>[]
+ */
+const {
+  title = 'Pompelmi — File upload malware scanning for Node.js',
+  description = 'Fast, safe file upload scanning for Node.js. Deep ZIP inspection, MIME/size policies, optional YARA, and ready-made adapters.',
+  image = '/pompelmi/og.png',
+  noindex = false,
+  canonical: canonicalOverride,
+  jsonLd = null,
+} = Astro.props
+
+const site = Astro.site?.toString().replace(/\/$/, '') || ''
+const base = import.meta.env.BASE_URL || '/'
+const path = Astro.url?.pathname || '/'
+const canonical = canonicalOverride || (site ? new URL(`${base.replace(/\/$/, '')}${path}`, site).toString() : undefined)
+const ogImage = image.startsWith('http')
+  ? image
+  : site
+    ? new URL(image.startsWith(base) ? image : `${base.replace(/\/$/, '')}${image}`, site).toString()
+    : image
+---
+<title>{title}</title>
+<meta name="description" content={description} />
+{canonical && <link rel="canonical" href={canonical} />}
+{noindex && <meta name="robots" content="noindex,nofollow" />}
+
+<meta property="og:type" content="website" />
+{canonical && <meta property="og:url" content={canonical} />}
+<meta property="og:title" content={title} />
+<meta property="og:description" content={description} />
+<meta property="og:image" content={ogImage} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={title} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogImage} />
+
+{jsonLd && (
+  Array.isArray(jsonLd)
+    ? jsonLd.map((node) => <script type="application/ld+json">{JSON.stringify(node)}</script>)
+    : <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+)}

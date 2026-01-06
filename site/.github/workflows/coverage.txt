@@ -1,0 +1,39 @@
+name: Coverage
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # Usa la versione da "packageManager" nel package.json
+      - uses: pnpm/action-setup@v4
+        with:
+          run_install: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+          cache-dependency-path: pnpm-lock.yaml
+
+      - run: pnpm install --frozen-lockfile
+
+      # <<< QUI LA DIFFERENZA: usa "exec" invece di cercare uno script "vitest"
+      - name: Run tests with coverage (workspace)
+        run: pnpm -r --filter './packages/*' --filter '!./packages/ui-react' exec vitest run --coverage
+
+      - name: Upload to Codecov (OIDC, no token)
+        if: ${{ hashFiles('packages/**/coverage/lcov.info') != '' }}
+        uses: codecov/codecov-action@v4
+        with:
+          use_oidc: true
+          files: "packages/**/coverage/lcov.info"
+          fail_ci_if_error: true
+          verbose: true

@@ -1,0 +1,134 @@
+---
+title: Pompelmi
+description: File upload malware scanning for Node.js (Express/Koa/Next.js) with ZIP deep-inspection, MIME/size guards & optional YARA.
+---
+
+import CodeTabs from "../../components/CodeTabs.astro";
+
+<p align="center">
+  <img
+    src="og.png"
+    alt="Pompelmi overview"
+    width="1200"
+    height="630"
+    loading="eager"
+    decoding="async"
+    style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,.08)"
+  />
+</p>
+
+# Scan & block malicious file uploads in Node.js
+
+<script type="module" is:inline>{`
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: prefersDark ? 'dark' : 'default' });
+`}</script>
+
+
+<p align="center">
+  <a href="https://github.com/pompelmi/pompelmi/stargazers">
+    <img alt="GitHub Stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/issues">
+    <img alt="Open Issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
+    <img alt="License" src="https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge" />
+  </a>
+  <a href="https://github.com/pompelmi/pompelmi/deployments">
+    <img alt="GitHub Pages" src="https://img.shields.io/github/deployments/pompelmi/pompelmi/github-pages?label=github%20pages&style=for-the-badge" />
+  </a>
+</p>
+
+
+Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
+
+- **UI** — Ready‑made upload button & dropzone for **React/Next.js**.
+- **Server** — Lightweight middlewares for **Express/Koa** and helpers for **Next.js API routes**.
+- **Safety** — Size & MIME guards, optional **YARA** rules, and clear **CLEAN / SUSPICIOUS / MALICIOUS** verdicts.
+
+> 🧪 **Live demo:** on the homepage drag a clean JPG → **CLEAN**; try the **EICAR** test string → **MALICIOUS**.
+
+## Quickstart
+
+<CodeTabs />
+
+## Highlights
+
+- ✅ **Developer‑friendly**: copy‑paste examples, sensible defaults.
+- ⚡ **Fast path**: avoids heavy engines unless needed; instant verdicts for common cases.
+- 🛡️ **Defense‑in‑depth**: layered checks (extension, MIME, size, optional YARA).
+- 🧩 **Modular**: UI and server parts work together or stand‑alone.
+- 🔍 **Transparent results**: simple JSON verdict with reasons.
+
+## Quick links
+
+- Tutorial: **[Getting started](./tutorials/getting-started/)** (≈ 5 min)
+- How‑to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[Koa](./how-to/koa/)**
+- Reference: **[@pompelmi/ui-react](./reference/ui-react/)**
+- Deep dive: **[Architecture & threat model](./explanations/architecture/)**
+
+## What you get
+
+- **Beautiful uploads** out of the box (button & dropzone).
+- **Server peace of mind** (simple middlewares; clear allow/deny).
+- **Copy‑pastable examples** and a **live playground**.
+
+> 💡 **Tip:** Testing locally? Use the standard **EICAR** test file. It’s safe and widely used to verify malware scanners.
+
+## Stars trend
+
+<p align="center">
+  <img alt="Star history" src="https://starchart.cc/pompelmi/pompelmi.svg" width="640" height="320" />
+</p>
+
+<sub>Badges are powered by Shields.io and update automatically.</sub>
+
+{/* JSON-LD: SoftwareApplication */}
+<script type="application/ld+json">{`
+{
+  "@context":"https://schema.org",
+  "@type":"SoftwareApplication",
+  "name":"Pompelmi",
+  "applicationCategory":"DeveloperApplication",
+  "operatingSystem":"Linux, macOS, Windows",
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
+  "softwareVersion":"0.17.0",
+  "url":"https://pompelmi.github.io/pompelmi/",
+  "downloadUrl":"https://www.npmjs.com/package/pompelmi",
+  "author":{"@type":"Organization","name":"Pompelmi"}
+}
+`}</script>
+
+{/* JSON-LD: FAQPage (align with your actual FAQ content if you add one here) */}
+<script type="application/ld+json">{`
+{
+  "@context":"https://schema.org",
+  "@type":"FAQPage",
+  "mainEntity":[
+    {
+      "@type":"Question",
+      "name":"Does Pompelmi support YARA rules?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules; use built-in policies alongside."}
+    },
+    {
+      "@type":"Question",
+      "name":"Can it inspect ZIP archives and prevent ZIP bombs?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth."}
+    }
+  ]
+}
+`}</script>
+---
+
+## What’s new (0.17.0 dev)
+
+- **Reference scan engine**: `@pompelmi/engine` with streaming hashing and builtin EICAR detection.
+- **Magic-bytes MIME sniffing**: server validates real file signatures.
+- **Docker image on GHCR**: run it anywhere and connect the UI with `engineUrl`.
+
+**Start here:**  
+- Reference → **Engine HTTP API**  
+- How-to → **Run the engine via Docker (GHCR)**  
+- Guides → **Connect the UI to the Engine**

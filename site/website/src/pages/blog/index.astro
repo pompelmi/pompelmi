@@ -1,0 +1,83 @@
+---
+import { getCollection } from 'astro:content';
+import '../../styles/global.css';
+
+const blogPosts = (await getCollection('blog')).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
+);
+
+const BASE = 'https://pompelmi.github.io/pompelmi';
+const TITLE = 'Blog — Pompelmi';
+const DESC = 'Security insights, tutorials, and updates about file upload protection for Node.js applications.';
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{TITLE}</title>
+    <meta name="description" content={DESC} />
+    <link rel="canonical" href={BASE + '/blog/'} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta property="og:title" content={TITLE} />
+    <meta property="og:description" content={DESC} />
+    <meta property="og:url" content={BASE + '/blog/'} />
+    <meta name="twitter:card" content="summary" />
+    <link rel="icon" href="/pompelmi/favicon.svg" />
+  </head>
+
+  <body class="antialiased bg-gray-50">
+    <header class="bg-white border-b">
+      <div class="mx-auto max-w-5xl px-4 py-6">
+        <nav class="flex items-center justify-between">
+          <a href="/pompelmi/" class="text-xl font-bold">Pompelmi</a>
+          <div class="flex gap-4 text-sm">
+            <a href="/pompelmi/" class="hover:underline">Home</a>
+            <a href="/pompelmi/getting-started/" class="hover:underline">Docs</a>
+            <a href="/pompelmi/blog/" class="font-medium hover:underline">Blog</a>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main class="mx-auto max-w-5xl px-4 py-12">
+      <h1 class="text-4xl font-bold mb-2">Blog</h1>
+      <p class="text-gray-600 mb-12">Security insights, tutorials, and project updates.</p>
+
+      <div class="space-y-8">
+        {blogPosts.map((post) => (
+          <article class="bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
+            <a href={`/pompelmi/blog/${post.slug}/`}>
+              <h2 class="text-2xl font-semibold mb-2 hover:text-blue-600">
+                {post.data.title}
+              </h2>
+            </a>
+            <div class="text-sm text-gray-500 mb-3">
+              {post.data.pubDate.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+              {post.data.author && ` • ${post.data.author}`}
+            </div>
+            <p class="text-gray-700 mb-4">{post.data.description}</p>
+            {post.data.tags && (
+              <div class="flex flex-wrap gap-2">
+                {post.data.tags.map((tag) => (
+                  <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </article>
+        ))}
+      </div>
+    </main>
+
+    <footer class="mt-16 border-t bg-white">
+      <div class="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-gray-600">
+        <p>© 2024 Pompelmi. MIT License.</p>
+      </div>
+    </footer>
+  </body>
+</html>

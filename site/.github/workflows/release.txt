@@ -1,0 +1,130 @@
+name: npm publish (exact x.y.z only, if not already on registry)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Ensure repository field matches this repo (required for provenance)
+        run: |
+          npm pkg set repository.type=git
+          npm pkg set repository.url="https://github.com/${GITHUB_REPOSITORY}"
+
+      - name: Read package name and version
+        id: pkg
+        run: |
+          echo "name=$(node -p "require('./package.json').name")" >> $GITHUB_OUTPUT
+          echo "version=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Sanity check version (must be x.y.z with no suffix)
+        id: checkver
+        run: |
+          VER="${{ steps.pkg.outputs.version }}"
+          if ! echo "$VER" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::package.json version must be x.y.z (no pre-release/build metadata). Found: $VER"
+            exit 1
+          fi
+
+      - name: List versions on npm
+        id: list
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          npm view "$NAME" versions --json || true
+
+      - name: Decide whether to publish
+        id: decision
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          VER="${{ steps.pkg.outputs.version }}"
+          LIST=$(npm view "$NAME" versions --json || echo '[]')
+          # Use Node with CLI arg so we don't rely on env export
+          EXISTS=$(echo "$LIST" | node -e "const fs=require('fs');const d=JSON.parse(fs.readFileSync(0,'utf8')||'[]');const v=process.argv[1];process.stdout.write(Array.isArray(d)&&d.includes(v)?'true':'false')" "$VER")
+          echo "exists=$EXISTS" >> $GITHUB_OUTPUT
+          if [ "$EXISTS" = "true" ]; then
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          fi
+          echo "package: $NAME"
+          echo "requested version: $VER"
+          echo "exists on npm: $EXISTS"
+
+      - name: Install deps
+        if: steps.decision.outputs.should_publish == 'true'
+        run: npm ci
+
+      - name: Build
+        if: steps.decision.outputs.should_publish == 'true'
+        run: npm run build --if-present
+
+      - name: Ensure version unchanged after build
+        if: steps.decision.outputs.should_publish == 'true'
+        run: |
+          BEFORE="${{ steps.pkg.outputs.version }}"
+          AFTER=$(node -p "require('./package.json').version")
+          if [ "$BEFORE" != "$AFTER" ]; then
+            echo "::error::package.json version changed during build from $BEFORE to $AFTER"
+            exit 1
+          fi
+
+      - name: Publish to npm (ignore lifecycle scripts)
+        if: steps.decision.outputs.should_publish == 'true'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: 'true'
+        run: |
+          npm publish --provenance --access public --ignore-scripts --tag latest
+          echo "Published ${{ steps.pkg.outputs.name }}@${{ steps.pkg.outputs.version }}"
+
+      - name: Ensure npm "latest" tag points to package.json version
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          VER="${{ steps.pkg.outputs.version }}"
+          TAGS=$(npm view "$NAME" dist-tags --json || echo '{}')
+          LATEST=$(echo "$TAGS" | node -e "const fs=require('fs');const t=JSON.parse(fs.readFileSync(0,'utf8')||'{}');process.stdout.write(t.latest||'')")
+          echo "current latest: $LATEST"
+          if [ "$LATEST" != "$VER" ]; then
+            echo "Retagging: setting latest -> $VER"
+            npm dist-tag add "$NAME@$VER" latest
+          else
+            echo "latest already points to $VER"
+          fi
+      - name: Remove npm "next" dist-tag if present
+        if: always()
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          NAME="${{ steps.pkg.outputs.name }}"
+          CUR_NEXT=$(npm view "$NAME" dist-tags.next 2>/dev/null || echo "")
+          if [ -n "$CUR_NEXT" ]; then
+            echo "Removing next tag (was: $CUR_NEXT)"
+            npm dist-tag rm "$NAME" next
+          else
+            echo "No next tag to remove"
+          fi
+          

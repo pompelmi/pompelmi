@@ -1,0 +1,63 @@
+# dependencies & package manager store
+node_modules/
+.pnpm-store/
+
+# build outputs / caches
+**/dist/
+**/build/
+.next/
+out/
+coverage/
+.vite/
+.turbo/
+.cache/
+.parcel-cache/
+.temp/
+tmp/
+
+# system/IDE
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# env (pesanti/sensibili)
+.env
+.env.local
+.env.*.local
+
+# archives & tarballs
+*.tgz
+dist-tarballs/
+
+# temporary files and test artifacts
+tmp-*
+.tmp-*
+tmp-yara-int
+uploads/
+*.bak
+vitest.config.backup*.ts
+vitest.config.broken*.ts
+
+# EICAR test artifacts
+EICAR*
+eicar*
+
+# personal notes and temporary text files
+general_info.txt
+infos.txt
+macro.txt
+note_mie.txt
+
+# source maps
+*.d.ts.map
+*.map
+
+# nested repo (old submodule)
+pompelmi/

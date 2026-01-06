@@ -147,7 +147,7 @@ pompelmi requires a **Node.js runtime environment** with filesystem access. This
 | Azure App Service | AWS Lambda@Edge |
 | Traditional VPS/servers | Netlify Edge Functions |
 
-> 💡 **Need edge deployment?** Consider using pompelmi's cloud API instead of local scanning.
+> 💡 **Need edge deployment?** Consider serverless-compatible scanning solutions.
 
 ---
 

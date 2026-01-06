@@ -1,0 +1,65 @@
+{
+  "name": "@pompelmi/fastify-plugin",
+  "version": "0.17.0",
+  "description": "Fastify upload scanning plugin for pompelmi (YARA) with MIME sniffing and ZIP limits.",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE*",
+    "dist",
+    "package.json",
+    "CHANGELOG*"
+  ],
+  "sideEffects": false,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/fastify-plugin"
+  },
+  "scripts": {
+    "build": "tsup src/index.ts --dts --format esm,cjs --clean --external unzipper,@aws-sdk/client-s3",
+    "dev": "tsup src/index.ts --watch --dts --format esm,cjs",
+    "demo": "node packages/fastify-plugin/tests/demo-server.mjs",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
+  },
+  "peerDependencies": {
+    "@fastify/multipart": "^9.0.0",
+    "fastify": "^5.0.0",
+    "@pompelmi/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@fastify/multipart": "^9.0.3",
+    "@types/node": "^20.11.0",
+    "@vitest/coverage-v8": "2.1.9",
+    "fastify": "^5.5.0",
+    "file-type": "^18.7.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.5.0",
+    "unzipper": "^0.12.3",
+    "vitest": "2.1.9"
+  },
+  "license": "MIT",
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=18.17"
+  },
+  "typings": "dist/index.d.ts"
+}

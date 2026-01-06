@@ -1,0 +1,10 @@
+* text=auto eol=lf
+
+# Binary formats
+*.{png,jpg,jpeg,gif,zip,bin,pdf} binary
+
+# Keep repo language stats clean
+/samples/** linguist-documentation
+/assets/**  linguist-vendored
+/website/** linguist-documentation
+/site/**    linguist-documentation

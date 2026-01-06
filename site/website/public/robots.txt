@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /pompelmi/
+
+Sitemap: https://pompelmi.github.io/pompelmi/sitemap-index.xml

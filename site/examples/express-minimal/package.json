@@ -1,0 +1,14 @@
+{
+  "name": "pompelmi-express-minimal",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "pompelmi": "file:../../"
+  }
+}

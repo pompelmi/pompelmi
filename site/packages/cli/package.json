@@ -1,0 +1,65 @@
+{
+  "name": "@pompelmi/cli",
+  "version": "0.1.0",
+  "private": false,
+  "description": "pompelmi - CLI file scanner",
+  "license": "MIT",
+  "bin": {
+    "pompelmi": "./bin/pompelmi.mjs"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "start": "node dist/index.js --help",
+    "preview": "npm pack --dry-run",
+    "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
+  },
+  "dependencies": {
+    "cac": "^6.7.14",
+    "chokidar": "^3.6.0",
+    "picocolors": "^1.0.0",
+    "pretty-bytes": "^6.1.1",
+    "@pompelmi/engine": "workspace:*",
+    "@pompelmi/engine-heuristics": "workspace:*"
+  },
+  "devDependencies": {
+    "@pompelmi/engine": "workspace:0.17.0-dev.6",
+    "@pompelmi/engine-heuristics": "workspace:^0.1.0",
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3",
+    "@pompelmi/core": "workspace:*"
+  },
+  "type": "module",
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE*",
+    "package.json",
+    "CHANGELOG*"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi",
+    "directory": "packages/cli"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}

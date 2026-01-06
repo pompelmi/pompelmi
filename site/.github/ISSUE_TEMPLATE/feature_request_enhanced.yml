@@ -1,0 +1,127 @@
+name: "🚀 Feature Request"
+description: "Suggest a new feature or enhancement for pompelmi"
+title: "[FEATURE]: "
+labels: ["enhancement", "triage"]
+assignees: []
+body:
+  - type: markdown
+    value: |
+      Thank you for suggesting a new feature! Your ideas help make pompelmi better for everyone.
+      
+      Before submitting, please check if a similar feature request already exists.
+
+  - type: textarea
+    id: feature-description
+    attributes:
+      label: "Feature Description"
+      description: "Describe the feature you'd like to see implemented"
+      placeholder: "I would like pompelmi to support..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem-statement
+    attributes:
+      label: "Problem Statement"
+      description: "What problem does this feature solve?"
+      placeholder: "Currently, when using pompelmi for [use case], I face the problem of..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: "Proposed Solution"
+      description: "How would you like this feature to work?"
+      placeholder: |
+        Example API:
+        ```javascript
+        const scanner = createUploadGuard({
+          newFeature: {
+            // configuration options
+          }
+        });
+        ```
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: "Alternatives Considered"
+      description: "What other approaches have you considered?"
+      placeholder: "I've considered using [alternative], but it doesn't work because..."
+
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: "Feature Type"
+      description: "What type of feature is this?"
+      options:
+        - "New scanner engine"
+        - "Framework integration (Express/Koa/Next.js/etc)"
+        - "Performance improvement"
+        - "Security enhancement"
+        - "Developer experience"
+        - "Configuration option"
+        - "API enhancement"
+        - "Documentation"
+        - "Other"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: impact
+    attributes:
+      label: "Expected Impact"
+      options:
+        - label: "This would improve security"
+        - label: "This would improve performance" 
+        - label: "This would improve developer experience"
+        - label: "This would enable new use cases"
+        - label: "This would fix compatibility issues"
+
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: "Use Cases"
+      description: "Describe specific use cases where this feature would be helpful"
+      placeholder: |
+        1. **E-commerce platform**: When users upload product images...
+        2. **Document management**: For processing PDF uploads...
+        3. **File sharing service**: To scan downloads before sharing...
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: "Priority Level"
+      description: "How important is this feature to you?"
+      options:
+        - "Low - Nice to have"
+        - "Medium - Would be helpful"
+        - "High - Important for my use case"
+        - "Critical - Blocking my adoption"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: "Contribution"
+      options:
+        - label: "I'm willing to implement this feature"
+        - label: "I can help with testing"
+        - label: "I can help with documentation"
+        - label: "I can provide code examples"
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: "Checklist"
+      options:
+        - label: "I have searched for existing feature requests"
+          required: true
+        - label: "I have provided a clear problem statement"
+          required: true
+        - label: "I have described the proposed solution"
+          required: true
+        - label: "I have considered alternatives"
+          required: false

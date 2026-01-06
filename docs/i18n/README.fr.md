@@ -28,8 +28,6 @@
 
 <h1 align="center">pompelmi</h1>
 
-
-
 <p align="center">
 
 <strong>Analyse rapide de fichiers téléchargés pour Node.js</strong> — intégration optionnelle de <strong>YARA</strong>, inspection approfondie des ZIP et adaptateurs prêts à l'emploi pour <em>Express</em>, <em>Koa</em> et <em>Next.js</em>. Privé par conception. Typé. Compact.
@@ -39,27 +37,8 @@
 
 ---
 
-<div align="center">
-
-## ⚡ **Démarrage Rapide (Cloud)**
-
-**Vous utilisez du Serverless ou ne pouvez pas installer ClamAV ?**  
-Utilisez l'**[API officielle hébergée sur RapidAPI](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)** →
-
-✅ **Aucune Configuration** • Aucun binaire à installer  
-✅ **Prêt pour le Serverless** • Fonctionne sur AWS Lambda, Vercel, Netlify  
-✅ **Auto-Scalable** • Aucune surcharge RAM/CPU  
-✅ **Protection Intégrée** • Détection automatique des bombes ZIP
-
-[**→ Commencer sur RapidAPI**](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)
-
-</div>
-
----
-
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=version&color=0a7ea4&logo=npm"></a>
-  <a href="https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner"><img alt="Cloud API" src="https://img.shields.io/badge/☁️_Cloud_API-Available_on_RapidAPI-0055FF?style=flat&logo=icloud&logoColor=white"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi?label=downloads&color=6E9F18&logo=npm"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm weekly downloads" src="https://img.shields.io/npm/dw/pompelmi?label=weekly&color=blue&logo=npm"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm total downloads" src="https://img.shields.io/npm/dt/pompelmi?label=total%20downloads&color=success&logo=npm"></a>
@@ -211,50 +190,6 @@ Utilisez l'**[API officielle hébergée sur RapidAPI](https://rapidapi.com/SonoT
 \* Vous pouvez exécuter YARA en parallèle de ClamAV, mais ce n'est pas intégré.
 
 ---
-## ☁️ Bibliothèque vs API Cloud
-
-Vous hésitez entre la bibliothèque locale et l'API Cloud hébergée ? Voici une comparaison détaillée :
-
-| Fonctionnalité | **Bibliothèque Locale** | **☁️ API Cloud** |
-| --- | --- | --- |
-| **Temps de Configuration** | Complexe (installer les binaires ClamAV/YARA) | **Instantané** (juste une clé API) |
-| **Déploiement** | Nécessite des dépendances natives | **Zéro dépendance** |
-| **Utilisation RAM** | Élevée (daemon ClamAV ~500MB+) | **Zéro** (s'exécute sur notre infra) |
-| **Utilisation CPU** | Élevée pendant les scans | **Zéro** (déchargé) |
-| **Support Serverless** | Difficile (problèmes de compilation de binaires) | **Natif** (HTTP uniquement) |
-| **AWS Lambda** | Difficile (couches personnalisées nécessaires) | **Parfaitement adapté** |
-| **Vercel / Netlify** | Non supporté (pas de binaires) | **Entièrement supporté** |
-| **Heroku** | Nécessite des buildpacks | **Plug-and-play** |
-| **Protection contre les Bombes ZIP** | Configuration manuelle | **Auto-activée** |
-| **Protection contre les Traversées** | Configuration manuelle | **Intégrée** |
-| **Mises à Jour des Signatures** | Manuelle (ClamAV freshclam) | **Auto-mises à jour** |
-| **Règles YARA** | Intégration personnalisée nécessaire | **Gérées pour vous** |
-| **Heuristiques** | À configurer vous-même | **Pré-configurées** |
-| **Confidentialité des Données** | 100% sur site | Scans via API |
-| **GDPR/HIPAA** | ✅ Contrôle total | Dépend du cas d'usage |
-| **Latence** | ~0ms (en mémoire) | ~100-500ms (réseau) |
-| **Débit** | Limité par votre serveur | **Auto-scalé** |
-| **Maintenance** | Vous gérez les mises à jour | **Nous nous en chargeons** |
-| **Coût** | Infrastructure + temps DevOps | **Paiement par scan** |
-| **Idéal Pour** | Apps sur site, critiques pour la confidentialité | Serverless, prototypes rapides, SaaS |
-
-### 🎯 Guide de Décision
-
-**Choisissez la Bibliothèque Locale si :**
-- Vous avez besoin d'une confidentialité des données à 100% (santé, finance, gouvernement)
-- Vous utilisez des VM ou des serveurs dédiés avec contrôle total
-- Vous voulez personnaliser les règles YARA ou ajouter des analyseurs personnalisés
-- Vous avez des ressources DevOps pour maintenir ClamAV/YARA
-
-**Choisissez l'API Cloud si :**
-- Vous déployez sur **AWS Lambda, Vercel ou Netlify**
-- Vous voulez **expédier rapidement** sans surcharge DevOps
-- Vous avez besoin d'**auto-scaling** pour les pics de trafic
-- Vous voulez **zéro maintenance** et des signatures toujours à jour
-
-[**→ Essayer l'API Cloud sur RapidAPI**](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)
-
----
 ## 💬 Ce que Disent les Développeurs
 
 > "pompelmi a rendu incroyablement facile l'ajout de l'analyse de malware à notre API Express. Le support TypeScript est fantastique !"
@@ -317,73 +252,6 @@ Validez les téléchargements de contenu généré par les utilisateurs (images,
 ---
 
 ## 🔧 Installation
-
-### 🚀 Option A : API Cloud (Recommandée pour Serverless)
-
-**Parfait pour :** AWS Lambda, Vercel, Netlify, Heroku, ou tout environnement où l'installation de binaires natifs (comme ClamAV) est difficile ou impossible.
-
-**Avantages :**
-- ✅ **Configuration instantanée** – Aucun binaire, aucune configuration
-- ✅ **Aucune utilisation RAM/CPU** – Déchargez l'analyse vers notre infrastructure
-- ✅ **Auto-scalé** – Gérez les pics de trafic sans provisionnement
-- ✅ **Protections intégrées** – Bombe ZIP, traversée et heuristiques incluses
-
-#### Étape 1 : Obtenez Votre Clé API
-
-Inscrivez-vous sur **[RapidAPI](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)** et abonnez-vous pour obtenir votre clé API.
-
-#### Étape 2 : Scannez des Fichiers via HTTP
-
-```javascript
-// En utilisant fetch (Node 18+)
-const scanFile = async (fileBuffer, filename) => {
-  const formData = new FormData();
-  formData.append('file', new Blob([fileBuffer]), filename);
-
-  const response = await fetch('https://pompelmi-malware-scanner.p.rapidapi.com/scan', {
-    method: 'POST',
-    headers: {
-      'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-      'X-RapidAPI-Host': 'pompelmi-malware-scanner.p.rapidapi.com'
-    },
-    body: formData
-  });
-
-  const result = await response.json();
-  return result; // { verdict: 'clean' | 'suspicious' | 'malicious', ... }
-};
-```
-
-```javascript
-// En utilisant axios
-const axios = require('axios');
-const FormData = require('form-data');
-
-const scanFile = async (fileBuffer, filename) => {
-  const form = new FormData();
-  form.append('file', fileBuffer, filename);
-
-  const { data } = await axios.post(
-    'https://pompelmi-malware-scanner.p.rapidapi.com/scan',
-    form,
-    {
-      headers: {
-        ...form.getHeaders(),
-        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
-        'X-RapidAPI-Host': 'pompelmi-malware-scanner.p.rapidapi.com'
-      }
-    }
-  );
-
-  return data; // { verdict: 'clean' | 'suspicious' | 'malicious', ... }
-};
-```
-
-[**→ Voir la Documentation Complète de l'API**](https://rapidapi.com/SonoTommy/api/pompelmi-malware-scanner)
-
----
-
-### 🏠 Option B : Bibliothèque Locale (Nécessite des Dépendances Natives)
 
 **Parfait pour :** Déploiements sur site, VM, serveurs dédiés ou lorsque vous avez besoin d'un contrôle et d'une confidentialité complets.
 
