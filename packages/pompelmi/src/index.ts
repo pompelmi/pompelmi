@@ -3,6 +3,23 @@ export interface PompelmiScanner { scan(bytes: Uint8Array): Promise<YaraMatch[]>
 
 export * from './scan.js';
 export { isMalware } from './isMalware.js';
+export { scanStream, scanStreamFromBuffer } from './scanStream.js';
+export type { StreamScanOptions } from './scanStream.js';
+
+// Magic bytes detection & polyglot analysis
+export {
+  MagicBytesDetector,
+  defaultDetector,
+  detectFormat,
+  detectPolyglot,
+  analyzeSecurityRisks,
+  DEFAULT_SIGNATURES,
+} from './magicBytes/index.js';
+export type {
+  MagicBytesSignature,
+  MagicBytesResult,
+  PolyglotResult,
+} from './magicBytes/index.js';
 
 
 /**

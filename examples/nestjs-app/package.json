@@ -1,0 +1,27 @@
+{
+  "name": "pompelmi-nestjs-example",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Example NestJS application demonstrating @pompelmi/nestjs integration",
+  "scripts": {
+    "start": "tsx src/main.ts",
+    "start:dev": "tsx watch src/main.ts",
+    "test:upload": "curl -F \"file=@../../samples/sample.txt\" http://localhost:3000/upload",
+    "test:malware": "echo 'X5O!P%@AP[4\\\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' > /tmp/eicar.txt && curl -F \"file=@/tmp/eicar.txt\" http://localhost:3000/upload"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.0.0",
+    "@nestjs/core": "^11.0.0",
+    "@nestjs/platform-express": "^11.0.0",
+    "@pompelmi/nestjs": "workspace:*",
+    "@pompelmi/core": "workspace:*",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/multer": "^1.4.12",
+    "@types/node": "^24.3.0",
+    "tsx": "^4.19.2"
+  }
+}

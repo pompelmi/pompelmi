@@ -3,4 +3,5 @@ packages:
   - 'packages/*'
   - 'examples/*'
   - 'site'
+  - 'site/site'
   - 'website'

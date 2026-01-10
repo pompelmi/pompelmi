@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
-    "start": "node dist/index.js --help",
+    "start": "node bin/pompelmi.mjs --help",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "preview": "npm pack --dry-run",
     "prepublishOnly": "npm run build && npx -y publint && npm pack --dry-run"
   },
@@ -19,15 +21,14 @@
     "chokidar": "^3.6.0",
     "picocolors": "^1.0.0",
     "pretty-bytes": "^6.1.1",
-    "@pompelmi/engine": "workspace:*",
-    "@pompelmi/engine-heuristics": "workspace:*"
+    "cli-table3": "^0.6.5",
+    "@pompelmi/core": "workspace:*"
   },
   "devDependencies": {
-    "@pompelmi/engine": "workspace:0.17.0-dev.6",
-    "@pompelmi/engine-heuristics": "workspace:^0.1.0",
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
-    "@pompelmi/core": "workspace:*"
+    "vitest": "^2.1.9",
+    "@types/node": "^24.3.0"
   },
   "type": "module",
   "files": [
