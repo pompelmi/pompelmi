@@ -54,7 +54,7 @@
 </p>
 
 <p align="center">
-  <strong>YARA</strong> integration • <strong>ZIP bomb</strong> protection • Drop-in middleware for <strong>Express</strong>, <strong>Koa</strong>, <strong>Fastify</strong>, and <strong>Next.js</strong>
+  <strong>YARA</strong> integration • <strong>ZIP bomb</strong> protection • Drop-in middleware for <strong>Express</strong>, <strong>Koa</strong>, <strong>NestJS</strong>, <strong>Fastify</strong>, and <strong>Next.js</strong> • <strong>CLI</strong> for CI/CD
 </p>
 
 <p align="center">
@@ -72,6 +72,13 @@
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm total downloads" src="https://img.shields.io/npm/dt/pompelmi?label=total%20downloads&color=success&logo=npm"></a>
   <img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/pompelmi?label=size&color=success">
   <a href="https://snyk.io/test/github/pompelmi/pompelmi"><img alt="Known Vulnerabilities" src="https://snyk.io/test/github/pompelmi/pompelmi/badge.svg"></a>
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@pompelmi/cli"><img alt="CLI version" src="https://img.shields.io/npm/v/@pompelmi/cli?label=CLI&color=0a7ea4&logo=npm"></a>
+  <a href="https://www.npmjs.com/package/@pompelmi/nestjs-integration"><img alt="NestJS version" src="https://img.shields.io/npm/v/@pompelmi/nestjs-integration?label=NestJS&color=E0234E&logo=nestjs"></a>
+  <a href="https://www.npmjs.com/package/@pompelmi/express-middleware"><img alt="Express version" src="https://img.shields.io/npm/v/@pompelmi/express-middleware?label=Express&color=000000&logo=express"></a>
+  <a href="https://www.npmjs.com/package/@pompelmi/next-upload"><img alt="Next.js version" src="https://img.shields.io/npm/v/@pompelmi/next-upload?label=Next.js&color=000000&logo=nextdotjs"></a>
 </p>
 
 <p align="center">
@@ -187,7 +194,13 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 **📦 ZIP hardening** — traversal/bomb guards, polyglot & macro hints
 
-**🔌 Drop-in adapters** — Express, Koa, Fastify, Next.js
+**🔌 Drop-in adapters** — Express, Koa, Fastify, Next.js, **NestJS**
+
+**🌊 Stream-based scanning** — memory-efficient processing with configurable buffer limits
+
+**⚙️ CLI for CI/CD** — standalone command-line tool for scanning files and directories
+
+**🔍 Polyglot detection** — advanced magic bytes analysis and embedded script detection
 
 **📘 Typed & tiny** — modern TS, minimal surface, tree-shakeable
 
@@ -201,7 +214,15 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 **🔍 Built‑in scanners** — drop‑in **CommonHeuristicsScanner** (PDF risky actions, Office macros, PE header) and **Zip‑bomb Guard**; add your own or YARA via a tiny `{ scan(bytes) }` contract.
 
+**🔬 Polyglot & embedded script detection** — advanced magic bytes analysis detects mixed-format files and embedded scripts with **30+ file signatures**.
+
+**🌊 Memory-efficient streaming** — scan large files without loading them entirely into memory with automatic stream routing.
+
 **⚙️ Compose scanning** — run multiple scanners in parallel or sequentially with timeouts and short‑circuiting via `composeScanners()`.
+
+**🏗️ Framework integrations** — native modules for **NestJS**, Express, Koa, Next.js, and Fastify with first-class TypeScript support.
+
+**🔧 Production-ready CLI** — standalone tool for CI/CD pipelines with watch mode, multiple output formats (JSON, table, minimal).
 
 **☁️ Zero cloud** — scans run in‑process. Keep bytes private. Perfect for GDPR/HIPAA compliance.
 
@@ -339,8 +360,14 @@ npm i @pompelmi/koa-middleware
 # Next.js
 npm i @pompelmi/next-upload
 
+# NestJS
+npm i @pompelmi/nestjs-integration
+
 # Fastify (alpha)
 npm i @pompelmi/fastify-plugin
+
+# Standalone CLI
+npm i -g @pompelmi/cli
 ```
 
 > **Note:** Core library works standalone. Install adapters only if using specific frameworks.
@@ -447,6 +474,67 @@ export const dynamic = 'force-dynamic';
 
 export const POST = createNextUploadHandler({ ...policy, scanner });
 ```
+
+### NestJS
+
+```ts
+// app.module.ts
+import { Module } from '@nestjs/common';
+import { PompelmiModule } from '@pompelmi/nestjs-integration';
+import { CommonHeuristicsScanner } from 'pompelmi';
+
+@Module({
+  imports: [
+    PompelmiModule.forRoot({
+      includeExtensions: ['pdf', 'zip', 'png', 'jpg'],
+      allowedMimeTypes: ['application/pdf', 'application/zip', 'image/png', 'image/jpeg'],
+      maxFileSizeBytes: 10 * 1024 * 1024,
+      scanners: [CommonHeuristicsScanner],
+    }),
+  ],
+})
+export class AppModule {}
+
+// upload.controller.ts
+import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { PompelmiInterceptor, PompelmiResult } from '@pompelmi/nestjs-integration';
+
+@Controller('upload')
+export class UploadController {
+  @Post()
+  @UseInterceptors(FileInterceptor('file'), PompelmiInterceptor)
+  async uploadFile(@UploadedFile() file: Express.Multer.File & { pompelmi?: PompelmiResult }) {
+    return { 
+      success: true, 
+      verdict: file.pompelmi?.verdict 
+    };
+  }
+}
+```
+
+> See `packages/nestjs-integration/README.md` for full documentation.
+
+### CLI Usage
+
+```bash
+# Scan a single file
+pompelmi scan file.pdf
+
+# Scan directory recursively
+pompelmi scan ./uploads --recursive
+
+# Watch directory for changes
+pompelmi watch ./uploads
+
+# JSON output for CI/CD
+pompelmi scan ./dist --output json --exit-on-suspicious
+
+# Full options
+pompelmi scan --help
+```
+
+> See `packages/cli/README.md` for comprehensive CLI documentation.
 
 ---
 
