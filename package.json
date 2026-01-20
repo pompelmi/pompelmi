@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.20.1",
+  "version": "0.25.0",
   "description": "Fast, private malware scanner for Node.js file uploads. TypeScript-first library with Express, Koa, Fastify & Next.js adapters. Features deep ZIP inspection, YARA integration, ZIP bomb protection, and real-time threat detection. Zero cloud dependencies - scan files in-process before they hit disk. Perfect for GDPR/HIPAA compliance.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",

@@ -25,9 +25,14 @@ export type {
 /**
  * Optional YARA: this placeholder throws until the YARA engine package is provided.
  * For now, pass a `scanner` object to adapters instead of `rules`.
+ * 
+ * @throws {Error} When called without the YARA engine package installed
  */
 export async function createYaraScannerFromRules(_rules: string): Promise<PompelmiScanner> {
-  throw new Error("YARA engine not bundled in 'pompelmi' core (yet). Pass `scanner` to adapters or install the YARA add-on.");
+  throw new Error(
+    "YARA engine not bundled in 'pompelmi' core. " +
+    "Pass 'scanner' to adapters or install '@pompelmi/engine-yara' package."
+  );
 }
 
 /** Minimal stub for a remote engine API (browser usage) */
@@ -39,16 +44,14 @@ export async function createRemoteEngine(_opts?: Record<string, unknown>) {
   };
 }
 
-export const version = "0.17.0";
+export const version = "0.25.0";
 
-
-
-
-
-
-
-
-
+// Performance monitoring utilities
+export {
+  createPerformanceMonitor,
+  formatPerformanceMetrics
+} from './utils/performance.js';
+export type { PerformanceMetrics } from './utils/performance.js';
 
 export { createProductionScannerFactory } from './presets/production';
 export { createZipTraversalGuard } from './scanners/zipTraversalGuard';

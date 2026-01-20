@@ -111,16 +111,11 @@ export async function scan(
     buffer = Buffer.from(input);
   } else {
     // This branch should not be reached due to routing above,
-    // but kept for safety
+    // but kept for safety - convert stream to buffer
     const chunks: Buffer[] = [];
-    await pipeline(
-      input,
-      async function* (source) {
-        for await (const chunk of source) {
-          chunks.push(Buffer.from(chunk));
-        }
-      },
-    );
+    for await (const chunk of input) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
+    }
     buffer = Buffer.concat(chunks);
   }
 
