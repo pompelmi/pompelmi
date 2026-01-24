@@ -23,7 +23,7 @@
     "vitest": "2.1.9"
   },
   "peerDependencies": {
-    "pompelmi": "workspace:*"
+    "@pompelmi/core": "^0.26.0"
   },
   "files": [
     "dist/**",

@@ -42,7 +42,7 @@
   },
   "peerDependencies": {
     "express": "^4.18.0 || ^5.0.0",
-    "@pompelmi/core": "workspace:*"
+    "@pompelmi/core": "^0.26.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

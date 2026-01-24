@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "moduleResolution": "node",
-    "jsx": "react-jsx",
     "skipLibCheck": true,
     "target": "ES2020",
     "module": "esnext",
