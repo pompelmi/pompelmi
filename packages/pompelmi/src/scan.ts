@@ -113,7 +113,7 @@ export async function scan(
     // This branch should not be reached due to routing above,
     // but kept for safety - convert stream to buffer
     const chunks: Buffer[] = [];
-    for await (const chunk of input) {
+    for await (const chunk of (input as Readable)) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     buffer = Buffer.concat(chunks);
