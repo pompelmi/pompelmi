@@ -24,75 +24,49 @@
 <!-- HERO START -->
 
 <p align="center">
-
-<br/>
-<a href="https://www.producthunt.com/products/pompelmi?embed=true&utm_source=badge-pompelmi&utm_medium=badge" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light&t=1756653468504" alt="pompelmi - free&#0044;&#0032;open&#0045;source&#0032;file&#0032;scanner | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-<br/>
-  <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
+  <br/>
+  <!-- Responsive logo using picture element -->
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg">
+    <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg">
     <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" />
-  </a>
-  <br/>
-  <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
-  <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
-  <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
-  <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe"><img alt="Featured on DEV.to" src="https://img.shields.io/badge/featured-DEV.to-0A0A0A?logo=devdotto"></a>
-  <br/>
-  <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
-  <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://awesome.re/mentioned-badge-flat.svg"></a>
-  <br/>
-  
+  </picture>
+  <br/><br/>
 </p>
 
 <h1 align="center">pompelmi</h1>
 
 <p align="center">
-  <strong>Fast, Private, and Powerful File Malware Scanning for Node.js</strong>
+  <strong>Secure File Upload Scanning for Node.js</strong>
 </p>
 
 <p align="center">
-  ⚡ Zero-config setup • 🔒 Privacy-first • 🧩 Composable scanners • 📦 Deep ZIP inspection • 🎯 Framework adapters
+  <em>Privacy-first malware detection with YARA, ZIP bomb protection, and framework adapters</em>
 </p>
 
 <p align="center">
-  <strong>YARA</strong> integration • <strong>ZIP bomb</strong> protection • Drop-in middleware for <strong>Express</strong>, <strong>Koa</strong>, <strong>NestJS</strong>, <strong>Fastify</strong>, and <strong>Next.js</strong> • <strong>CLI</strong> for CI/CD
+  Scan files before they hit disk • Keep user data private • Zero cloud dependencies
 </p>
-
-<p align="center">
-  <em>Scan files before they hit disk. Keep user data private. Ship with confidence.</em>
-</p>
-
-**Keywords:** file upload security · malware detection · YARA · Node.js middleware · Express · Koa · Next.js · ZIP bomb protection
 
 ---
 
+---
+
+<!-- Badges Section -->
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi?label=version&color=0a7ea4&logo=npm"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi?label=downloads&color=6E9F18&logo=npm"></a>
-  <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm weekly downloads" src="https://img.shields.io/npm/dw/pompelmi?label=weekly&color=blue&logo=npm"></a>
-  <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm total downloads" src="https://img.shields.io/npm/dt/pompelmi?label=total%20downloads&color=success&logo=npm"></a>
-  <img alt="npm bundle size" src="https://img.shields.io/bundlephobia/minzip/pompelmi?label=size&color=success">
-  <a href="https://snyk.io/test/github/pompelmi/pompelmi"><img alt="Known Vulnerabilities" src="https://snyk.io/test/github/pompelmi/pompelmi/badge.svg"></a>
-</p>
-
-<p align="center">
-  <a href="https://www.npmjs.com/package/@pompelmi/cli"><img alt="CLI version" src="https://img.shields.io/npm/v/@pompelmi/cli?label=CLI&color=0a7ea4&logo=npm"></a>
-  <a href="https://www.npmjs.com/package/@pompelmi/nestjs-integration"><img alt="NestJS version" src="https://img.shields.io/npm/v/@pompelmi/nestjs-integration?label=NestJS&color=E0234E&logo=nestjs"></a>
-  <a href="https://www.npmjs.com/package/@pompelmi/express-middleware"><img alt="Express version" src="https://img.shields.io/npm/v/@pompelmi/express-middleware?label=Express&color=000000&logo=express"></a>
-  <a href="https://www.npmjs.com/package/@pompelmi/next-upload"><img alt="Next.js version" src="https://img.shields.io/npm/v/@pompelmi/next-upload?label=Next.js&color=000000&logo=nextdotjs"></a>
-</p>
-
-<p align="center">
+  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi?color=blue"></a>
   <img alt="node" src="https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js&logoColor=white">
+  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI Status" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI&logo=github"></a>
+</p>
+
+<p align="center">
+  <a href="https://codecov.io/gh/pompelmi/pompelmi"><img alt="codecov" src="https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg?flag=core"/></a>
   <img alt="types" src="https://img.shields.io/badge/types-TypeScript-3178C6?logo=typescript&logoColor=white">
   <img alt="ESM" src="https://img.shields.io/badge/ESM%2FCJS-compatible-yellow">
-  <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE"><img alt="license" src="https://img.shields.io/npm/l/pompelmi?color=blue"></a>
-</p>
-
-<p align="center">
-  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci-release-publish.yml"><img alt="CI Status" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci-release-publish.yml?branch=main&label=CI&logo=github"></a>
-  <a href="https://codecov.io/gh/pompelmi/pompelmi"><img alt="codecov" src="https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg?flag=core"/></a>
+  <a href="https://snyk.io/test/github/pompelmi/pompelmi"><img alt="Known Vulnerabilities" src="https://snyk.io/test/github/pompelmi/pompelmi/badge.svg"></a>
   <a href="https://securityscorecards.dev/viewer/?uri=github.com/pompelmi/pompelmi"><img alt="OpenSSF Scorecard" src="https://api.securityscorecards.dev/projects/github.com/pompelmi/pompelmi/badge"/></a>
-  <a href="https://bestpractices.coreinfrastructure.org/projects/9999"><img alt="OpenSSF Best Practices" src="https://img.shields.io/badge/OpenSSF-Best%20Practices-green?logo=openbadges"></a>
 </p>
 
 <p align="center">
@@ -100,20 +74,16 @@
   <a href="https://github.com/pompelmi/pompelmi/network/members"><img alt="GitHub forks" src="https://img.shields.io/github/forks/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/watchers"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/issues"><img alt="open issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi?color=orange"></a>
-  <img alt="PRs welcome" src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg">
-  <a href="https://github.com/pompelmi/pompelmi/commits/main"><img alt="last commit" src="https://img.shields.io/github/last-commit/pompelmi/pompelmi?color=blue"></a>
-  <a href="https://github.com/pompelmi/pompelmi/graphs/contributors"><img alt="contributors" src="https://img.shields.io/github/contributors/pompelmi/pompelmi?color=purple"></a>
 </p>
 
 <p align="center">
   <strong>
     <a href="https://pompelmi.github.io/pompelmi/">📚 Documentation</a> •
-    <a href="#installation">💾 Install</a> •
-    <a href="#quick-start">⚡ Quick Start</a> •
-    <a href="#adapters">🧩 Adapters</a> •
-    <a href="#yara-getting-started">🧬 YARA</a> •
-    <a href="#github-action">🤖 CI/CD</a> •
-    <a href="#faq">❓ FAQ</a>
+    <a href="#-installation">💾 Install</a> •
+    <a href="#-quick-start">⚡ Quick Start</a> •
+    <a href="#-adapters">🧩 Adapters</a> •
+    <a href="#-yara-getting-started">🧬 YARA</a> •
+    <a href="#-github-action">🤖 CI/CD</a>
   </strong>
 </p>
 
@@ -123,15 +93,32 @@
 
 ---
 
-<div align="center">
+## 🎬 Demo
 
-### 🎯 Why Choose pompelmi?
+> *(Demo GIF coming soon — showing Express + pompelmi scanning a file upload)*
 
-</div>
+**Want to try it now?** Check out our [live examples](./examples/) or install and run locally:
 
-| 🔒 Privacy First | ⚡ Lightning Fast | 🎨 Developer Friendly |
-| --- | --- | --- |
-| All scanning happens in-process. No cloud calls, no data leaks. Your files never leave your infrastructure. | In-process scanning with zero network latency. Configurable concurrency for high-throughput scenarios. | TypeScript-first, zero-config defaults, drop-in middleware. Get started in under 5 minutes. |
+```bash
+npm i pompelmi @pompelmi/express-middleware
+```
+
+---
+
+## ✨ Features
+
+**pompelmi** provides enterprise-grade file scanning for Node.js applications:
+
+- **🔒 Privacy-First Architecture** — All scanning happens in-process. No cloud calls, no data leaks. Your files never leave your infrastructure.
+- **⚡ Lightning Fast** — In-process scanning with zero network latency. Configurable concurrency for high-throughput scenarios.
+- **🧩 Composable Scanners** — Mix heuristics + signatures; set `stopOn` and timeouts. Bring your own YARA rules.
+- **📦 Deep ZIP Inspection** — Traversal/bomb guards, polyglot & macro hints, nested archive scanning with configurable depth limits.
+- **🔌 Framework Adapters** — Drop-in middleware for Express, Koa, Fastify, Next.js, and **NestJS** with first-class TypeScript support.
+- **🌊 Stream-Based Processing** — Memory-efficient scanning with configurable buffer limits. Scan large files without loading them entirely into memory.
+- **🔍 Polyglot Detection** — Advanced magic bytes analysis detects mixed-format files and embedded scripts with **30+ file signatures**.
+- **⚙️ CLI for CI/CD** — Standalone command-line tool for scanning files and directories with watch mode and multiple output formats.
+- **📘 TypeScript-First** — Complete type definitions, modern ESM/CJS builds, minimal surface, tree-shakeable.
+- **⚡ Zero Core Dependencies** — Core library has minimal deps for fast installation and reduced supply chain risk.
 
 ---
 
@@ -320,7 +307,9 @@ Validate user-generated content uploads (images, videos, documents) before proce
 
 ---
 
-## 🔧 Installation
+---
+
+## 📦 Installation
 
 **pompelmi** is a privacy-first Node.js library for local file scanning.
 
@@ -348,7 +337,7 @@ Validate user-generated content uploads (images, videos, documents) before proce
 </tr>
 </table>
 
-#### 📦 Optional Framework Adapters
+#### 📦 Framework Adapters
 
 ```bash
 # Express
@@ -372,97 +361,89 @@ npm i -g @pompelmi/cli
 
 > **Note:** Core library works standalone. Install adapters only if using specific frameworks.
 
-> Optional dev deps used in the examples:
->
-> ```bash
-> npm i -D tsx express multer @koa/router @koa/multer koa next
-> ```
-
 ---
 
-## ⚡ Quick‑start
+## 🚀 Getting Started
 
-**At a glance (policy + scanners)**
+Get secure file scanning running in under 5 minutes with pompelmi's zero-config defaults.
+
+### Step 1: Install
+
+```bash
+npm install pompelmi
+```
+
+### Step 2: Create Security Policy
+
+Create a reusable security policy and scanner configuration:
 
 ```ts
-// Compose built‑in scanners (no EICAR). Optionally add your own/YARA.
+// lib/security.ts
 import { CommonHeuristicsScanner, createZipBombGuard, composeScanners } from 'pompelmi';
 
 export const policy = {
-  includeExtensions: ['zip','png','jpg','jpeg','pdf'],
-  allowedMimeTypes: ['application/zip','image/png','image/jpeg','application/pdf','text/plain'],
-  maxFileSizeBytes: 20 * 1024 * 1024,
+  includeExtensions: ['zip', 'png', 'jpg', 'jpeg', 'pdf', 'txt'],
+  allowedMimeTypes: ['application/zip', 'image/png', 'image/jpeg', 'application/pdf', 'text/plain'],
+  maxFileSizeBytes: 20 * 1024 * 1024, // 20MB
   timeoutMs: 5000,
   concurrency: 4,
-  failClosed: true,
-  onScanEvent: (ev: unknown) => console.log('[scan]', ev)
+  failClosed: true, // Block uploads on scanner errors
+  onScanEvent: (event: unknown) => console.log('[scan]', event)
 };
 
 export const scanner = composeScanners(
   [
-    ['zipGuard', createZipBombGuard({ maxEntries: 512, maxTotalUncompressedBytes: 100 * 1024 * 1024, maxCompressionRatio: 12 })],
+    ['zipGuard', createZipBombGuard({ 
+      maxEntries: 512, 
+      maxTotalUncompressedBytes: 100 * 1024 * 1024,
+      maxCompressionRatio: 12 
+    })],
     ['heuristics', CommonHeuristicsScanner],
-    // ['yara', YourYaraScanner],
+    // Add your own scanners or YARA rules here
   ],
-  { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500, tagSourceName: true }
+  { 
+    parallel: false, 
+    stopOn: 'suspicious', 
+    timeoutMsPerScanner: 1500,
+    tagSourceName: true 
+  }
 );
 ```
 
-### Minimal Node usage
+### Step 3: Choose Your Integration
 
-```ts
-import { scanFile } from 'pompelmi';
+Pick the integration that matches your framework:
 
-const res = await scanFile('path/to/file.zip'); // or any file
-console.log(res.verdict); // "clean" | "suspicious" | "malicious"
-```
-
-> See `examples/scan-one-file.ts` for a runnable script:
->
-> ```bash
-> pnpm tsx examples/scan-one-file.ts ./path/to/file
-> ```
-
-### Express
+#### Express
 
 ```ts
 import express from 'express';
 import multer from 'multer';
 import { createUploadGuard } from '@pompelmi/express-middleware';
-import { policy, scanner } from './security'; // the snippet above
+import { policy, scanner } from './lib/security';
 
 const app = express();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: policy.maxFileSizeBytes } });
-
-app.post('/upload', upload.any(), createUploadGuard({ ...policy, scanner }), (req, res) => {
-  res.json({ ok: true, scan: (req as any).pompelmi ?? null });
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: policy.maxFileSizeBytes }
 });
 
-app.listen(3000, () => console.log('http://localhost:3000'));
+app.post('/upload', 
+  upload.any(), 
+  createUploadGuard({ ...policy, scanner }), 
+  (req, res) => {
+    // File is safe - proceed with your logic
+    res.json({ 
+      success: true, 
+      verdict: (req as any).pompelmi?.verdict || 'clean'
+    });
+  }
+);
+
+app.listen(3000, () => console.log('🚀 Server running on http://localhost:3000'));
 ```
 
-### Koa
-
-```ts
-import Koa from 'koa';
-import Router from '@koa/router';
-import multer from '@koa/multer';
-import { createKoaUploadGuard } from '@pompelmi/koa-middleware';
-import { policy, scanner } from './security';
-
-const app = new Koa();
-const router = new Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: policy.maxFileSizeBytes } });
-
-router.post('/upload', upload.any(), createKoaUploadGuard({ ...policy, scanner }), (ctx) => {
-  ctx.body = { ok: true, scan: (ctx as any).pompelmi ?? null };
-});
-
-app.use(router.routes()).use(router.allowedMethods());
-app.listen(3003, () => console.log('http://localhost:3003'));
-```
-
-### Next.js (App Router)
+#### Next.js App Router
 
 ```ts
 // app/api/upload/route.ts
@@ -475,7 +456,132 @@ export const dynamic = 'force-dynamic';
 export const POST = createNextUploadHandler({ ...policy, scanner });
 ```
 
-### NestJS
+#### Koa
+
+```ts
+import Koa from 'koa';
+import Router from '@koa/router';
+import multer from '@koa/multer';
+import { createKoaUploadGuard } from '@pompelmi/koa-middleware';
+import { policy, scanner } from './lib/security';
+
+const app = new Koa();
+const router = new Router();
+const upload = multer({ 
+  storage: multer.memoryStorage(),
+  limits: { fileSize: policy.maxFileSizeBytes }
+});
+
+router.post('/upload',
+  upload.any(),
+  createKoaUploadGuard({ ...policy, scanner }),
+  (ctx) => {
+    ctx.body = { 
+      success: true, 
+      verdict: (ctx as any).pompelmi?.verdict || 'clean'
+    };
+  }
+);
+
+app.use(router.routes()).use(router.allowedMethods());
+app.listen(3003, () => console.log('🚀 Server running on http://localhost:3003'));
+```
+
+#### Standalone / Programmatic
+
+```ts
+import { scanFile } from 'pompelmi';
+
+const result = await scanFile('path/to/file.zip');
+console.log(result.verdict); // "clean" | "suspicious" | "malicious"
+
+if (result.verdict === 'malicious') {
+  console.error('⚠️ Malicious file detected!');
+  console.error(result.reasons);
+}
+```
+
+### Step 4: Test It
+
+Upload a test file to verify everything works:
+
+```bash
+curl -X POST http://localhost:3000/upload \
+  -F "file=@test.pdf"
+```
+
+✅ **Done!** Your app now has secure file upload scanning.
+
+---
+
+## 📘 Code Examples
+
+### Example 1: Express with Custom Error Handling
+
+```ts
+import express from 'express';
+import multer from 'multer';
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import { policy, scanner } from './lib/security';
+
+const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/upload',
+  upload.single('file'),
+  createUploadGuard({ ...policy, scanner }),
+  (req, res) => {
+    const scanResult = (req as any).pompelmi;
+    
+    if (scanResult?.verdict === 'malicious') {
+      return res.status(422).json({
+        error: 'Malicious file detected',
+        reasons: scanResult.reasons
+      });
+    }
+    
+    if (scanResult?.verdict === 'suspicious') {
+      // Log for review but allow upload
+      console.warn('Suspicious file uploaded:', req.file?.originalname);
+    }
+    
+    // Process clean file
+    res.json({ success: true, fileName: req.file?.originalname });
+  }
+);
+
+app.listen(3000);
+```
+
+### Example 2: Next.js Route Handler with Custom Response
+
+```ts
+// app/api/scan/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { scanBuffer } from 'pompelmi';
+import { scanner } from '@/lib/security';
+
+export async function POST(req: NextRequest) {
+  const formData = await req.formData();
+  const file = formData.get('file') as File;
+  
+  if (!file) {
+    return NextResponse.json({ error: 'No file provided' }, { status: 400 });
+  }
+  
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await scanner.scan(buffer);
+  
+  return NextResponse.json({
+    fileName: file.name,
+    verdict: result.verdict,
+    safe: result.verdict === 'clean',
+    reasons: result.reasons || []
+  });
+}
+```
+
+### Example 3: NestJS Controller
 
 ```ts
 // app.module.ts
@@ -505,36 +611,20 @@ export class UploadController {
   @Post()
   @UseInterceptors(FileInterceptor('file'), PompelmiInterceptor)
   async uploadFile(@UploadedFile() file: Express.Multer.File & { pompelmi?: PompelmiResult }) {
+    if (file.pompelmi?.verdict === 'malicious') {
+      throw new BadRequestException('Malicious file detected');
+    }
+    
     return { 
       success: true, 
-      verdict: file.pompelmi?.verdict 
+      verdict: file.pompelmi?.verdict,
+      fileName: file.originalname
     };
   }
 }
 ```
 
-> See `packages/nestjs-integration/README.md` for full documentation.
-
-### CLI Usage
-
-```bash
-# Scan a single file
-pompelmi scan file.pdf
-
-# Scan directory recursively
-pompelmi scan ./uploads --recursive
-
-# Watch directory for changes
-pompelmi watch ./uploads
-
-# JSON output for CI/CD
-pompelmi scan ./dist --output json --exit-on-suspicious
-
-# Full options
-pompelmi scan --help
-```
-
-> See `packages/cli/README.md` for comprehensive CLI documentation.
+> 📖 **More examples:** Check the [examples/](./examples/) directory for complete working demos including Express, Koa, Next.js, and more.
 
 ---
 
@@ -592,12 +682,29 @@ Use the adapter that matches your web framework. All adapters share the same pol
   <img src="https://img.shields.io/badge/Express-✓-000000?style=flat-square&logo=express" alt="Express">
   <img src="https://img.shields.io/badge/Koa-✓-33333D?style=flat-square&logo=koa" alt="Koa">
   <img src="https://img.shields.io/badge/Next.js-✓-000000?style=flat-square&logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/NestJS-✓-E0234E?style=flat-square&logo=nestjs" alt="NestJS">
   <img src="https://img.shields.io/badge/Fastify-alpha-000000?style=flat-square&logo=fastify" alt="Fastify">
-  <img src="https://img.shields.io/badge/NestJS-planned-E0234E?style=flat-square&logo=nestjs" alt="NestJS">
   <img src="https://img.shields.io/badge/Remix-planned-000000?style=flat-square&logo=remix" alt="Remix">
   <img src="https://img.shields.io/badge/hapi-planned-F26D00?style=flat-square" alt="hapi">
   <img src="https://img.shields.io/badge/SvelteKit-planned-FF3E00?style=flat-square&logo=svelte" alt="SvelteKit">
 </p>
+
+### Available Adapters
+
+| Framework | Package | Status | Install |
+|-----------|---------|--------|---------|
+| **Express** | `@pompelmi/express-middleware` | ✅ Stable | `npm i @pompelmi/express-middleware` |
+| **Koa** | `@pompelmi/koa-middleware` | ✅ Stable | `npm i @pompelmi/koa-middleware` |
+| **Next.js** | `@pompelmi/next-upload` | ✅ Stable | `npm i @pompelmi/next-upload` |
+| **NestJS** | `@pompelmi/nestjs-integration` | ✅ Stable | `npm i @pompelmi/nestjs-integration` |
+| **Fastify** | `@pompelmi/fastify-plugin` | 🔶 Alpha | `npm i @pompelmi/fastify-plugin` |
+| **Remix** | - | 🔜 Planned | Coming soon |
+| **SvelteKit** | - | 🔜 Planned | Coming soon |
+| **hapi** | - | 🔜 Planned | Coming soon |
+
+See the [📘 Code Examples](#-code-examples) section above for integration examples.
+
+---
 
 | Framework | Package | Status |
 | --- | --- | --- |
@@ -947,6 +1054,8 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 
 ---
 
+---
+
 ## 🏆 Community & Recognition
 
 pompelmi has been featured in leading developer publications and is trusted by teams worldwide for secure file upload handling.
@@ -957,12 +1066,61 @@ pompelmi has been featured in leading developer publications and is trusted by t
   <img src="https://img.shields.io/badge/Featured%20in-Bytes-111111?style=for-the-badge" alt="Bytes">
 </p>
 
-### 🤝 Join the Community
+<!-- MENTIONS:START -->
 
-- 💬 [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions) — Ask questions, share ideas
-- 🐛 [Issue Tracker](https://github.com/pompelmi/pompelmi/issues) — Report bugs, request features
-- 📖 [Documentation](https://pompelmi.github.io/pompelmi/) — Comprehensive guides and API reference
-- 🔒 [Security](https://github.com/pompelmi/pompelmi/security) — Report security vulnerabilities privately
+## 🌟 Featured In
+
+*Last updated: January 24, 2026*
+
+*No mentions found yet. Run `npm run mentions:find` to discover mentions.*
+
+<!-- MENTIONS:END -->
+
+### 🤝 Community & Support
+
+**Need help? We're here for you!**
+
+- 📖 **[Documentation](https://pompelmi.github.io/pompelmi/)** — Complete API reference, guides, and tutorials
+- 💬 **[GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)** — Ask questions, share ideas, get community support
+- 🐛 **[Issue Tracker](https://github.com/pompelmi/pompelmi/issues)** — Report bugs, request features
+- 🔒 **[Security Policy](https://github.com/pompelmi/pompelmi/security)** — Report security vulnerabilities privately
+- 💼 **Commercial Support** — For enterprise support and consulting, contact the maintainers
+
+**Supported Frameworks:**
+- ✅ Express
+- ✅ Koa  
+- ✅ Next.js (App & Pages Router)
+- ✅ NestJS
+- ✅ Fastify (alpha)
+- 🔜 Remix (planned)
+- 🔜 SvelteKit (planned)
+- 🔜 hapi (planned)
+
+---
+
+## 📊 Star History
+
+<p align="center">
+  <a href="https://star-history.com/#pompelmi/pompelmi&Date">
+    <img src="https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date" alt="Star History Chart" />
+  </a>
+</p>
+
+---
+
+## 🎖️ Contributors
+
+Thanks to all the amazing contributors who have helped make pompelmi better!
+
+<p align="center">
+  <a href="https://github.com/pompelmi/pompelmi/graphs/contributors">
+    <img src="https://contrib.rocks/image?repo=pompelmi/pompelmi" alt="Contributors" />
+  </a>
+</p>
+
+<p align="center">
+  <em>Want to contribute? Check out our <a href="./CONTRIBUTING.md">Contributing Guide</a>!</em>
+</p>
 
 ---
 
@@ -1008,12 +1166,6 @@ pnpm -r lint
 ```
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
-
-### 🎖️ Contributors
-
-Thanks to all the amazing contributors who have helped make pompelmi better!
-
-<!-- Add contributor images here in the future -->
 
 ---
 

@@ -61,7 +61,11 @@
     "pack:check": "node scripts/pack-check.mjs",
     "pack:list": "pnpm -r --filter \"@pompelmi/*\" --if-present pack --json --dry-run",
     "pack:strict": "node scripts/pack-check.mjs --strict",
-    "clean": "rimraf dist"
+    "clean": "rimraf dist",
+    "mentions:find": "node scripts/find-mentions.mjs",
+    "mentions:render": "node scripts/render-mentions-readme.mjs",
+    "mentions:inject": "node scripts/inject-mentions-readme.mjs",
+    "mentions:update": "npm run mentions:find && npm run mentions:render && npm run mentions:inject"
   },
   "license": "MIT",
   "devDependencies": {
