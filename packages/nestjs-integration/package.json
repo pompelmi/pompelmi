@@ -1,7 +1,6 @@
 {
   "name": "@pompelmi/nestjs",
   "version": "0.1.0",
-  "private": "false",
   "description": "NestJS integration module for Pompelmi malware scanner",
   "license": "MIT",
   "publishConfig": {
