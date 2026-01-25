@@ -31,6 +31,19 @@
     <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg">
     <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" />
   </picture>
+  <br/>
+  <a href="https://www.producthunt.com/products/pompelmi"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light" alt="pompelmi - Secure File Upload Scanning for Node.js | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+  <br/>
+  <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
+  <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
+  <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
+  <a href="https://app.daily.dev/posts/pompelmi"><img alt="Featured on daily.dev" src="https://img.shields.io/badge/featured-daily.dev-CE3DF3?logo=dailydotdev"></a>
+  <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe"><img alt="Featured on DEV.to" src="https://img.shields.io/badge/featured-DEV.to-0A0A0A?logo=devdotto"></a>
+  <br/>
+  <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
+  <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://awesome.re/mentioned-badge-flat.svg"></a>
+  <a href="https://github.com/sbilly/awesome-security"><img alt="Mentioned in Awesome Security" src="https://awesome.re/mentioned-badge.svg"></a>
+  <a href="https://github.com/sindresorhus/awesome-nodejs"><img alt="Mentioned in Awesome Node.js" src="https://awesome.re/mentioned-badge-flat.svg"></a>
   <br/><br/>
 </p>
 
