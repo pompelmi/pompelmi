@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.27.1] - 2026-01-26
+
+### Security
+- 🔐 **Critical Security Fixes**: Fixed 89 vulnerabilities (6 critical, 36 high, 35 moderate, 12 low)
+- 🔐 **Dependency Updates**: Updated 26 package overrides including esbuild, vite, astro, next, body-parser, qs, lodash
+- 🔐 **CVE Fixes**: Patched multiple CVEs in dependencies
+
+### Fixed
+- 🐛 Fixed GitHub Actions workflow with correct pnpm/action-setup SHA
+- 🐛 Resolved CI/CD pipeline execution errors
+
 ## [0.27.0] - 2026-01-26
 
 ### Added
