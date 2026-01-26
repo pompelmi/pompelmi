@@ -1,0 +1,22 @@
+{
+  "name": "pompelmi-nextjs-presets-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Next.js App Router example with pompelmi policy presets",
+  "scripts": {
+    "dev": "next dev -p 3200",
+    "build": "next build",
+    "start": "next start -p 3200"
+  },
+  "dependencies": {
+    "next": "^15.1.6",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "pompelmi": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.2.0",
+    "typescript": "^5.9.2"
+  }
+}

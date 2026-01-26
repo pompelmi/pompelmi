@@ -6,6 +6,14 @@ export { isMalware } from './isMalware.js';
 export { scanStream, scanStreamFromBuffer } from './scanStream.js';
 export type { StreamScanOptions } from './scanStream.js';
 
+// Presets
+export { applyPreset, getPreset, listPresets, PRESETS } from './presets/index.js';
+export type { PresetName, ScanOptionsWithPreset } from './presets/index.js';
+
+// Reason Codes
+export { ReasonCode, getReasonCodeInfo, inferReasonCode, REASON_CODE_METADATA } from './reasonCodes.js';
+export type { ReasonCodeInfo, Finding } from './reasonCodes.js';
+
 // Magic bytes detection & polyglot analysis
 export {
   MagicBytesDetector,

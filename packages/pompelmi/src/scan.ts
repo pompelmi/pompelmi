@@ -3,6 +3,8 @@ import { promisify } from 'node:util';
 import { pipeline as _pipeline } from 'node:stream';
 import { scanStream } from './scanStream.js';
 import { analyzeSecurityRisks, detectPolyglot } from './magicBytes/index.js';
+import { applyPreset, type ScanOptionsWithPreset } from './presets/index.js';
+import { ReasonCode, inferReasonCode, type ReasonCodeInfo, getReasonCodeInfo, type Finding } from './reasonCodes.js';
 
 const pipeline = promisify(_pipeline);
 
@@ -38,6 +40,8 @@ export interface ScanReport {
   verdict: Verdict;
   /** Names of YARA rules or heuristic reasons that matched. */
   findings: string[];
+  /** Findings with reason codes (new structured format) */
+  findingsWithReasons?: Finding[];
   /** Total bytes processed. */
   bytes: number;
   /** Wall-clock duration in milliseconds. */
@@ -55,18 +59,26 @@ export interface ScanReport {
  * **Memory Efficient:** When scanning streams, only buffers up to 10MB (configurable)
  * for signature matching, making it safe for large files.
  *
+ * **Presets:** Use `preset: 'strict' | 'balanced' | 'fast'` for quick configuration.
+ *
  * ⚠️ **Note**: This is a *placeholder* implementation that only recognises the
  * EICAR test string. In the real project this function will delegate to the
  * YARA engine, archive handlers, heuristic modules, etc.
  *
  * @param input - Data to scan (Buffer, Readable stream, or string)
- * @param opts - Scanning options
+ * @param opts - Scanning options (supports presets)
  * @returns Promise resolving to ScanReport
  *
  * @example
  * ```typescript
  * // Scan a buffer (in-memory)
  * const result = await scan(fileBuffer);
+ *
+ * // Scan with preset
+ * const result = await scan(fileBuffer, { preset: 'strict' });
+ *
+ * // Override preset options
+ * const result = await scan(fileBuffer, { preset: 'strict', maxDepth: 5 });
  *
  * // Scan a stream (memory-efficient for large files)
  * const stream = createReadStream('large-file.bin');
@@ -78,26 +90,29 @@ export interface ScanReport {
  */
 export async function scan(
   input: Buffer | Readable | string,
-  opts: ScanOptions = {},
+  opts: ScanOptionsWithPreset = {},
 ): Promise<ScanReport> {
   const start = Date.now();
+  
+  // Apply preset if specified
+  const options = applyPreset(opts);
 
   // ─── Route to stream scanner for Readable inputs ─────────────────────────
-  if (input instanceof Readable || opts.useStreamScanner) {
+  if (input instanceof Readable || options.useStreamScanner) {
     // Use memory-efficient stream scanner
     if (input instanceof Readable) {
       return scanStream(input, {
-        ...opts,
-        maxBufferSize: opts.maxBufferSize,
+        ...options,
+        maxBufferSize: options.maxBufferSize,
       });
     }
     
     // Convert buffer/string to stream if useStreamScanner explicitly requested
-    if (opts.useStreamScanner) {
+    if (options.useStreamScanner) {
       const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
       const stream = Readable.from(buffer);
       return scanStream(stream, {
-        ...opts,
+        ...options,
         maxBufferSize: opts.maxBufferSize,
       });
     }
@@ -124,10 +139,15 @@ export async function scan(
     'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
 
   const findings: string[] = [];
+  const findingsWithReasons: Finding[] = [];
   let verdict: Verdict = 'clean';
 
   if (buffer.includes(EICAR_SIGNATURE)) {
     findings.push('EICAR test signature');
+    findingsWithReasons.push({
+      message: 'EICAR test signature',
+      reasonCode: ReasonCode.MALWARE_EICAR_TEST,
+    });
     verdict = 'malicious';
   }
 
@@ -136,6 +156,15 @@ export async function scan(
   
   if (securityAnalysis.suspicious) {
     findings.push(...securityAnalysis.reasons);
+    
+    // Add findings with reason codes
+    for (const reason of securityAnalysis.reasons) {
+      const reasonCode = inferReasonCode(reason);
+      findingsWithReasons.push({
+        message: reason,
+        reasonCode,
+      });
+    }
     
     // Upgrade verdict if not already malicious
     if (verdict !== 'malicious') {
@@ -154,7 +183,13 @@ export async function scan(
   // Additional polyglot-specific analysis
   const polyglotResult = detectPolyglot(buffer);
   if (polyglotResult.isPolyglot && !findings.some(f => f.includes('Polyglot'))) {
-    findings.push(`Polyglot file: ${polyglotResult.formats.join(', ')}`);
+    const message = `Polyglot file: ${polyglotResult.formats.join(', ')}`;
+    findings.push(message);
+    findingsWithReasons.push({
+      message,
+      reasonCode: ReasonCode.FILE_POLYGLOT,
+      metadata: { formats: polyglotResult.formats },
+    });
     if (verdict === 'clean') {
       verdict = 'suspicious';
     }
@@ -163,6 +198,7 @@ export async function scan(
   return {
     verdict,
     findings,
+    findingsWithReasons,
     bytes: buffer.length,
     durationMs: Date.now() - start,
   };

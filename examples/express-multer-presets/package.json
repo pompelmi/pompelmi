@@ -1,0 +1,17 @@
+{
+  "name": "pompelmi-express-multer-presets-example",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Example: Express + Multer with pompelmi policy presets",
+  "scripts": {
+    "start": "node index.mjs",
+    "dev": "node --watch index.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "@pompelmi/express-middleware": "workspace:*",
+    "pompelmi": "workspace:*"
+  }
+}
