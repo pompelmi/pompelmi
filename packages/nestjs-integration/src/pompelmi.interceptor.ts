@@ -54,12 +54,15 @@ export class PompelmiInterceptor implements NestInterceptor {
       if (Array.isArray(request.files)) {
         // FilesInterceptor or AnyFilesInterceptor
         files.push(...request.files);
-      } else if (typeof request.files === 'object') {
+      } else if (typeof request.files === 'object' && request.files !== null && !Array.isArray(request.files)) {
         // FileFieldsInterceptor (object with fieldname keys)
-        for (const fieldname of Object.keys(request.files)) {
-          const fieldFiles = request.files[fieldname];
-          if (Array.isArray(fieldFiles)) {
-            files.push(...fieldFiles);
+        // Use Object.prototype.hasOwnProperty to safely check for own properties
+        for (const fieldname in request.files) {
+          if (Object.prototype.hasOwnProperty.call(request.files, fieldname)) {
+            const fieldFiles = request.files[fieldname];
+            if (Array.isArray(fieldFiles)) {
+              files.push(...fieldFiles);
+            }
           }
         }
       }
@@ -88,12 +91,14 @@ export class PompelmiInterceptor implements NestInterceptor {
     const result = await this.pompelmiService.scan(file.buffer);
 
     if (result.verdict === 'malicious') {
+      // Sanitize filename to prevent injection attacks
+      const sanitizedFilename = String(file.originalname || 'unknown').replace(/[\x00-\x1F\x7F]/g, '');
       throw new BadRequestException({
         message: 'Malware detected in uploaded file',
         details: {
           verdict: result.verdict,
           findings: result.findings,
-          filename: file.originalname,
+          filename: sanitizedFilename,
           mimetype: file.mimetype,
           size: file.size,
         },
@@ -102,8 +107,11 @@ export class PompelmiInterceptor implements NestInterceptor {
 
     // Optionally warn about suspicious files (without blocking)
     if (result.verdict === 'suspicious') {
+      // Sanitize filename for logging to prevent format string attacks
+      const sanitizedFilename = String(file.originalname || 'unknown').replace(/[\x00-\x1F\x7F%]/g, '');
       // In a production system, you might want to log this
-      console.warn(`Suspicious file detected: ${file.originalname}`, {
+      console.warn('Suspicious file detected', {
+        filename: sanitizedFilename,
         findings: result.findings,
       });
     }

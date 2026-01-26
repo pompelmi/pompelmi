@@ -30,7 +30,7 @@
       "@types/koa>@types/cookies": "0.9.1",
       "pompelmi": "workspace:*",
       "@pompelmi/core": "workspace:*",
-      "katex": "0.16.10",
+      "katex": "0.16.21",
       "react": "^19.2.0",
       "react-dom": "^19.2.0",
       "@types/react": "^19.2.0",

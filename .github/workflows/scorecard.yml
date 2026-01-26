@@ -19,7 +19,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
           submodules: false
@@ -32,6 +32,6 @@ jobs:
           publish_results: true
 
       - name: Upload SARIF to Security
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@48ab28a6f5dbc2a99bf1e0131198dd80722e22df # v3.28.0
         with:
           sarif_file: results.sarif
