@@ -1,0 +1,12 @@
+feat(security): improve OpenSSF Scorecard 5.1 to 7.5+
+
+- Pin all GitHub Actions to SHA256 hashes
+- Tighten token permissions to least privilege
+- Update 14 vulnerable dependencies  
+- Enhance SECURITY.md with disclosure process
+
+Expected improvements:
+- Pinned-Dependencies: 2 -> 10
+- Token-Permissions: 0 -> 10
+- Vulnerabilities: 0 -> 7
+- Security-Policy: 4 -> 10

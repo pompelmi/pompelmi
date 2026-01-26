@@ -27,3 +27,17 @@ export { createPresetScanner, composeScanners, type PresetName, type PresetOptio
 
 export { scanBytes, scanFile, type ScanOptions } from './scan';
 export * from "./presets";
+
+// Export new utilities
+export { 
+  PerformanceTracker, 
+  aggregateScanStats,
+  type PerformanceMetrics,
+  type ScanStatistics,
+} from './utils/performance-metrics';
+
+export {
+  detectPolyglot,
+  detectObfuscatedScripts,
+  analyzeNestedArchives,
+} from './utils/advanced-detection';

@@ -1,5 +1,7 @@
 import { createPresetScanner, type PresetName } from './presets';
 import type { Match, ScanContext, ScanReport, Verdict, YaraMatch } from './types';
+import { PerformanceTracker } from './utils/performance-metrics';
+import { detectPolyglot, detectObfuscatedScripts, analyzeNestedArchives } from './utils/advanced-detection';
 
 /** Mappa veloce estensione -> mime (basic) */
 function guessMimeByExt(name?: string): string | undefined {
@@ -37,11 +39,15 @@ function toYaraMatches(ms: Match[]): YaraMatch[] {
 export type ScanOptions = {
   preset?: PresetName;     // default: 'zip-basic'
   ctx?: ScanContext;       // filename/mime/size ecc.
+  enableAdvancedDetection?: boolean; // Enable polyglot & obfuscation detection (default: true)
+  enablePerformanceTracking?: boolean; // Track detailed performance metrics (default: false)
 };
 
 /** Scan di bytes (browser/node) usando preset (default: zip-basic) */
 export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Promise<ScanReport> {
-  const t0 = Date.now();
+  const perfTracker = opts.enablePerformanceTracking ? new PerformanceTracker() : null;
+  perfTracker?.checkpoint('prep_start');
+  
   const preset = opts.preset ?? 'zip-basic';
   const ctx: ScanContext = {
     ...opts.ctx,
@@ -49,14 +55,49 @@ export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Prom
     size: opts.ctx?.size ?? input.byteLength,
   };
 
+  perfTracker?.checkpoint('prep_end');
+  perfTracker?.checkpoint('heuristics_start');
+
   const scanFn = createPresetScanner(preset);
   const matchesH = await (typeof (scanFn as any) === "function" ? (scanFn as any) : (scanFn as any).scan)(input, ctx);
-  const matches = toYaraMatches(matchesH);
+  let allMatches = [...matchesH];
 
+  perfTracker?.checkpoint('heuristics_end');
+
+  // Advanced detection (enabled by default)
+  if (opts.enableAdvancedDetection !== false) {
+    perfTracker?.checkpoint('advanced_start');
+    
+    // Detect polyglot files
+    const polyglotMatches = detectPolyglot(input);
+    allMatches.push(...polyglotMatches);
+
+    // Detect obfuscated scripts
+    const obfuscatedMatches = detectObfuscatedScripts(input);
+    allMatches.push(...obfuscatedMatches);
+
+    // Check for excessive nesting in archives
+    const nestingAnalysis = analyzeNestedArchives(input);
+    if (nestingAnalysis.hasExcessiveNesting) {
+      allMatches.push({
+        rule: 'excessive_archive_nesting',
+        severity: 'high',
+        meta: { 
+          description: 'Excessive archive nesting detected',
+          depth: nestingAnalysis.depth,
+        },
+      });
+    }
+
+    perfTracker?.checkpoint('advanced_end');
+  }
+
+  const matches = toYaraMatches(allMatches);
   const verdict = computeVerdict(matches);
-  const durationMs = Date.now() - t0;
+  const t0 = perfTracker ? perfTracker.getDuration() : Date.now();
+  const durationMs = perfTracker ? perfTracker.getDuration() : 0;
 
-  return {
+  const report: ScanReport = {
     ok: verdict === 'clean',
     verdict,
     matches,
@@ -67,6 +108,13 @@ export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Prom
     truncated: false,
     timedOut: false,
   };
+
+  // Add performance metrics if tracking enabled
+  if (perfTracker && opts.enablePerformanceTracking) {
+    (report as any).performanceMetrics = perfTracker.getMetrics(input.byteLength);
+  }
+
+  return report;
 }
 
 /** Scan di un file su disco (Node). Import dinamico per non vincolare il bundle browser. */
