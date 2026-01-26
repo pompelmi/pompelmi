@@ -25,7 +25,7 @@ jobs:
           submodules: false
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@a17c15e9a2c062cd3e28a1edcfbfb636c3ee94dd # v4.1.0
+        uses: pnpm/action-setup@1e1c8eafbd745f64b1ef30a7d7ed7965034c486c # v4.1.0
         with:
           version: 9.12.0
 
