@@ -20,7 +20,7 @@ jobs:
           submodules: false
 
       - name: Create SBOM (CycloneDX)
-        uses: anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5 # v0.17.0
+        uses: anchore/sbom-action@62ad5284b8ced813296287a0b63906cb364b73ee # v0.22.0
         with:
           format: cyclonedx-json
           output-file: sbom.cdx.json
