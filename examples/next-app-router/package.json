@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "@pompelmi/engine-heuristics": "workspace:^",
-    "next": "^16.0.6",
+    "next": "^15.5.10",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
