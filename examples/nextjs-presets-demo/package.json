@@ -9,7 +9,7 @@
     "start": "next start -p 3200"
   },
   "dependencies": {
-    "next": "^15.1.6",
+    "next": "^16.1.5",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "pompelmi": "workspace:*"
