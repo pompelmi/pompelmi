@@ -126,7 +126,7 @@ npm i pompelmi @pompelmi/express-middleware
 - **⚡ Lightning Fast** — In-process scanning with zero network latency. Configurable concurrency for high-throughput scenarios.
 - **🧩 Composable Scanners** — Mix heuristics + signatures; set `stopOn` and timeouts. Bring your own YARA rules.
 - **📦 Deep ZIP Inspection** — Traversal/bomb guards, polyglot & macro hints, nested archive scanning with configurable depth limits.
-- **🔌 Framework Adapters** — Drop-in middleware for Express, Koa, Fastify, Next.js, and **NestJS** with first-class TypeScript support.
+- **🔌 Framework Adapters** — Drop-in middleware for Express, Koa, Fastify, Next.js, Nuxt/Nitro, and **NestJS** with first-class TypeScript support.
 - **🌊 Stream-Based Processing** — Memory-efficient scanning with configurable buffer limits. Scan large files without loading them entirely into memory.
 - **🔍 Polyglot Detection** — Advanced magic bytes analysis detects mixed-format files and embedded scripts with **30+ file signatures**.
 - **⚙️ CLI for CI/CD** — Standalone command-line tool for scanning files and directories with watch mode and multiple output formats.
@@ -194,7 +194,7 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 **📦 ZIP hardening** — traversal/bomb guards, polyglot & macro hints
 
-**🔌 Drop-in adapters** — Express, Koa, Fastify, Next.js, **NestJS**
+**🔌 Drop-in adapters** — Express, Koa, Fastify, Next.js, Nuxt/Nitro, **NestJS**
 
 **🌊 Stream-based scanning** — memory-efficient processing with configurable buffer limits
 
@@ -220,7 +220,7 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 **⚙️ Compose scanning** — run multiple scanners in parallel or sequentially with timeouts and short‑circuiting via `composeScanners()`.
 
-**🏗️ Framework integrations** — native modules for **NestJS**, Express, Koa, Next.js, and Fastify with first-class TypeScript support.
+**🏗️ Framework integrations** — native modules for **NestJS**, Express, Koa, Next.js, Nuxt/Nitro, and Fastify with first-class TypeScript support.
 
 **🔧 Production-ready CLI** — standalone tool for CI/CD pipelines with watch mode, multiple output formats (JSON, table, minimal).
 
@@ -228,13 +228,13 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 **👨‍💻 DX first** — TypeScript types, ESM/CJS builds, tiny API, adapters for popular web frameworks.
 
-> **SEO Keywords:** file upload security, malware detection, virus scanner, Node.js security, Express middleware, YARA integration, ZIP bomb protection, file validation, upload sanitization, threat detection, security scanner, antivirus Node.js, file scanning library, TypeScript security, Next.js security, Koa middleware, server-side validation, file integrity check, malware prevention, secure file upload
+> **SEO Keywords:** file upload security, malware detection, virus scanner, Node.js security, Express middleware, YARA integration, ZIP bomb protection, file validation, upload sanitization, threat detection, security scanner, antivirus Node.js, file scanning library, TypeScript security, Next.js security, Nuxt security, Nitro security, Koa middleware, server-side validation, file integrity check, malware prevention, secure file upload
 
 ## 🧠 Why pompelmi?
 
 - **On‑device, private scanning** – no outbound calls, no data sharing.
 - **Blocks early** – runs _before_ you write to disk or persist anything.
-- **Fits your stack** – drop‑in adapters for Express, Koa, Next.js (Fastify plugin in alpha).
+- **Fits your stack** – drop‑in adapters for Express, Koa, Next.js, Nuxt/Nitro (Fastify plugin in alpha).
 - **Defense‑in‑depth** – ZIP traversal limits, ratio caps, server‑side MIME sniffing, size caps.
 - **Pluggable detection** – bring your own engine (e.g., YARA) via a tiny `{ scan(bytes) }` contract.
 
@@ -637,7 +637,7 @@ export class UploadController {
 }
 ```
 
-> 📖 **More examples:** Check the [examples/](./examples/) directory for complete working demos including Express, Koa, Next.js, and more.
+> 📖 **More examples:** Check the [examples/](./examples/) directory for complete working demos including Express, Koa, Next.js, Nuxt/Nitro, and more.
 
 ---
 
@@ -695,6 +695,7 @@ Use the adapter that matches your web framework. All adapters share the same pol
   <img src="https://img.shields.io/badge/Express-✓-000000?style=flat-square&logo=express" alt="Express">
   <img src="https://img.shields.io/badge/Koa-✓-33333D?style=flat-square&logo=koa" alt="Koa">
   <img src="https://img.shields.io/badge/Next.js-✓-000000?style=flat-square&logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/Nuxt-✓-00DC82?style=flat-square&logo=nuxt.js" alt="Nuxt">
   <img src="https://img.shields.io/badge/NestJS-✓-E0234E?style=flat-square&logo=nestjs" alt="NestJS">
   <img src="https://img.shields.io/badge/Fastify-alpha-000000?style=flat-square&logo=fastify" alt="Fastify">
   <img src="https://img.shields.io/badge/Remix-planned-000000?style=flat-square&logo=remix" alt="Remix">
@@ -709,6 +710,7 @@ Use the adapter that matches your web framework. All adapters share the same pol
 | **Express** | `@pompelmi/express-middleware` | ✅ Stable | `npm i @pompelmi/express-middleware` |
 | **Koa** | `@pompelmi/koa-middleware` | ✅ Stable | `npm i @pompelmi/koa-middleware` |
 | **Next.js** | `@pompelmi/next-upload` | ✅ Stable | `npm i @pompelmi/next-upload` |
+| **Nuxt/Nitro** | `pompelmi` (local) or remote API | ✅ Docs | [See guide](https://pompelmi.github.io/pompelmi/how-to/nuxt-nitro/) |
 | **NestJS** | `@pompelmi/nestjs-integration` | ✅ Stable | `npm i @pompelmi/nestjs-integration` |
 | **Fastify** | `@pompelmi/fastify-plugin` | 🔶 Alpha | `npm i @pompelmi/fastify-plugin` |
 | **Remix** | - | 🔜 Planned | Coming soon |

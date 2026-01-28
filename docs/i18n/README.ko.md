@@ -37,10 +37,10 @@
 
 <p align="center">
 
-<strong>Node.js를 위한 빠른 파일 업로드 악성코드 스캐닝</strong> — 선택적 <strong>YARA</strong> 통합, ZIP 심층 검사, 그리고 <em>Express</em>, <em>Koa</em>, <em>Next.js</em>를 위한 드롭인 어댑터. 프라이버시 우선 설계. 타입 지원. 작은 용량.
+<strong>Node.js를 위한 빠른 파일 업로드 악성코드 스캐닝</strong> — 선택적 <strong>YARA</strong> 통합, ZIP 심층 검사, 그리고 <em>Express</em>, <em>Koa</em>, <em>Next.js</em>, <em>Nuxt/Nitro</em>를 위한 드롭인 어댑터. 프라이버시 우선 설계. 타입 지원. 작은 용량.
 </p>
 
-**키워드:** 파일 업로드 보안 · 악성코드 탐지 · YARA · Node.js 미들웨어 · Express · Koa · Next.js · ZIP 폭탄 방어
+**키워드:** 파일 업로드 보안 · 악성코드 탐지 · YARA · Node.js 미들웨어 · Express · Koa · Next.js · Nuxt · Nitro · ZIP 폭탄 방어
 
 ---
 
@@ -146,7 +146,7 @@
 
 **📦 ZIP 강화** — 경로 조작/폭탄 방어, 폴리글롯 & 매크로 힌트
 
-**🔌 드롭인 어댑터** — Express, Koa, Fastify, Next.js
+**🔌 드롭인 어댑터** — Express, Koa, Fastify, Next.js, Nuxt/Nitro
 
 **📘 타입 지원 & 작은 용량** — 모던 TS, 최소한의 인터페이스, 트리 셰이킹 가능
 
@@ -172,7 +172,7 @@
 
 - **온디바이스, 비공개 스캐닝** – 아웃바운드 호출 없음, 데이터 공유 없음.
 - **조기 차단** – 디스크에 쓰거나 무언가를 저장하기 _전에_ 실행됩니다.
-- **당신의 스택에 적합** – Express, Koa, Next.js용 드롭인 어댑터(Fastify 플러그인은 알파 버전).
+- **당신의 스택에 적합** – Express, Koa, Next.js, Nuxt/Nitro용 드롭인 어댑터(Fastify 플러그인은 알파 버전).
 - **심층 방어** – ZIP 경로 조작 제한, 비율 제한, 서버 측 MIME 스니핑, 크기 제한.
 - **플러그 가능한 탐지** – 작은 `{ scan(bytes) }` 계약을 통해 자신만의 엔진(예: YARA)을 가져오세요.
 

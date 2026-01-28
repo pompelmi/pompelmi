@@ -3,19 +3,19 @@
 ## Recommended Description (160 characters max for SEO)
 
 ```
-Fast, private malware scanner for Node.js. TypeScript library with Express/Koa/Next.js adapters. YARA, ZIP bomb protection, GDPR/HIPAA compliant.
+Fast, private malware scanner for Node.js. TypeScript library with Express/Koa/Next.js/Nuxt adapters. YARA, ZIP bomb protection, GDPR/HIPAA compliant.
 ```
 
 ## Alternative Shorter Version (100 characters)
 
 ```
-Private malware scanner for Node.js file uploads. Express, Koa, Next.js middleware. YARA + ZIP protection.
+Private malware scanner for Node.js file uploads. Express, Koa, Next.js, Nuxt middleware. YARA + ZIP protection.
 ```
 
 ## Alternative Longer Version
 
 ```
-Free, open-source malware scanner for Node.js file uploads. TypeScript-first with framework adapters (Express, Koa, Fastify, Next.js). Features: YARA integration, ZIP bomb protection, in-process scanning, zero cloud dependencies. Perfect for GDPR/HIPAA compliance.
+Free, open-source malware scanner for Node.js file uploads. TypeScript-first with framework adapters (Express, Koa, Fastify, Next.js, Nuxt/Nitro). Features: YARA integration, ZIP bomb protection, in-process scanning, zero cloud dependencies. Perfect for GDPR/HIPAA compliance.
 ```
 
 ## Suggested GitHub Topics
