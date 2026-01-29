@@ -41,3 +41,51 @@ export {
   detectObfuscatedScripts,
   analyzeNestedArchives,
 } from './utils/advanced-detection';
+
+// Export cache management
+export {
+  ScanCacheManager,
+  getDefaultCache,
+  resetDefaultCache,
+  type CacheEntry,
+  type CacheOptions,
+  type CacheStats,
+} from './utils/cache-manager';
+
+// Export batch scanning
+export {
+  BatchScanner,
+  batchScan,
+  type BatchScanOptions,
+  type BatchScanResult,
+  type ScanTask,
+} from './utils/batch-scanner';
+
+// Export threat intelligence
+export {
+  ThreatIntelligenceAggregator,
+  LocalThreatIntelligence,
+  createThreatIntelligence,
+  getFileHash,
+  type ThreatIntelligenceSource,
+  type ThreatInfo,
+  type EnhancedScanReport,
+} from './utils/threat-intelligence';
+
+// Export export utilities
+export {
+  ScanResultExporter,
+  exportScanResults,
+  type ExportFormat,
+  type ExportOptions,
+} from './utils/export';
+
+// Export configuration
+export {
+  ConfigManager,
+  createConfig,
+  getPresetConfig,
+  DEFAULT_CONFIG,
+  CONFIG_PRESETS,
+  type ScannerConfig,
+} from './config';

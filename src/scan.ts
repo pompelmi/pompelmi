@@ -2,6 +2,8 @@ import { createPresetScanner, type PresetName } from './presets';
 import type { Match, ScanContext, ScanReport, Verdict, YaraMatch } from './types';
 import { PerformanceTracker } from './utils/performance-metrics';
 import { detectPolyglot, detectObfuscatedScripts, analyzeNestedArchives } from './utils/advanced-detection';
+import { getDefaultCache } from './utils/cache-manager';
+import type { ScannerConfig } from './config';
 
 /** Mappa veloce estensione -> mime (basic) */
 function guessMimeByExt(name?: string): string | undefined {
@@ -41,14 +43,27 @@ export type ScanOptions = {
   ctx?: ScanContext;       // filename/mime/size ecc.
   enableAdvancedDetection?: boolean; // Enable polyglot & obfuscation detection (default: true)
   enablePerformanceTracking?: boolean; // Track detailed performance metrics (default: false)
+  enableCache?: boolean;   // Enable result caching (default: false)
+  config?: Partial<ScannerConfig>; // Configuration overrides
 };
 
 /** Scan di bytes (browser/node) usando preset (default: zip-basic) */
 export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Promise<ScanReport> {
-  const perfTracker = opts.enablePerformanceTracking ? new PerformanceTracker() : null;
+  // Check cache first if enabled
+  if (opts.enableCache || opts.config?.performance?.enableCache) {
+    const cache = getDefaultCache(opts.config?.performance?.cacheOptions);
+    const cached = cache.get(input, opts.preset);
+    if (cached) {
+      return cached;
+    }
+  }
+
+  const perfTracker = (opts.enablePerformanceTracking || opts.config?.performance?.enablePerformanceTracking) 
+    ? new PerformanceTracker() 
+    : null;
   perfTracker?.checkpoint('prep_start');
   
-  const preset = opts.preset ?? 'zip-basic';
+  const preset = opts.preset ?? opts.config?.defaultPreset ?? 'zip-basic';
   const ctx: ScanContext = {
     ...opts.ctx,
     mimeType: opts.ctx?.mimeType ?? guessMimeByExt(opts.ctx?.filename),
@@ -64,29 +79,38 @@ export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Prom
 
   perfTracker?.checkpoint('heuristics_end');
 
-  // Advanced detection (enabled by default)
-  if (opts.enableAdvancedDetection !== false) {
+  // Advanced detection (enabled by default, can be overridden by config)
+  const advancedEnabled = opts.enableAdvancedDetection ?? opts.config?.advanced?.enablePolyglotDetection ?? true;
+  if (advancedEnabled) {
     perfTracker?.checkpoint('advanced_start');
     
     // Detect polyglot files
-    const polyglotMatches = detectPolyglot(input);
-    allMatches.push(...polyglotMatches);
+    if (opts.config?.advanced?.enablePolyglotDetection !== false) {
+      const polyglotMatches = detectPolyglot(input);
+      allMatches.push(...polyglotMatches);
+    }
 
     // Detect obfuscated scripts
-    const obfuscatedMatches = detectObfuscatedScripts(input);
-    allMatches.push(...obfuscatedMatches);
+    if (opts.config?.advanced?.enableObfuscationDetection !== false) {
+      const obfuscatedMatches = detectObfuscatedScripts(input);
+      allMatches.push(...obfuscatedMatches);
+    }
 
     // Check for excessive nesting in archives
-    const nestingAnalysis = analyzeNestedArchives(input);
-    if (nestingAnalysis.hasExcessiveNesting) {
-      allMatches.push({
-        rule: 'excessive_archive_nesting',
-        severity: 'high',
-        meta: { 
-          description: 'Excessive archive nesting detected',
-          depth: nestingAnalysis.depth,
-        },
-      });
+    if (opts.config?.advanced?.enableNestedArchiveAnalysis !== false) {
+      const nestingAnalysis = analyzeNestedArchives(input);
+      const maxDepth = opts.config?.advanced?.maxArchiveDepth ?? 5;
+      if (nestingAnalysis.hasExcessiveNesting || (nestingAnalysis.depth > maxDepth)) {
+        allMatches.push({
+          rule: 'excessive_archive_nesting',
+          severity: 'high',
+          meta: { 
+            description: 'Excessive archive nesting detected',
+            depth: nestingAnalysis.depth,
+            maxAllowed: maxDepth,
+          },
+        });
+      }
     }
 
     perfTracker?.checkpoint('advanced_end');
@@ -110,9 +134,18 @@ export async function scanBytes(input: Uint8Array, opts: ScanOptions = {}): Prom
   };
 
   // Add performance metrics if tracking enabled
-  if (perfTracker && opts.enablePerformanceTracking) {
+  if (perfTracker && (opts.enablePerformanceTracking || opts.config?.performance?.enablePerformanceTracking)) {
     (report as any).performanceMetrics = perfTracker.getMetrics(input.byteLength);
   }
+
+  // Cache result if enabled
+  if (opts.enableCache || opts.config?.performance?.enableCache) {
+    const cache = getDefaultCache(opts.config?.performance?.cacheOptions);
+    cache.set(input, report, opts.preset);
+  }
+
+  // Invoke callbacks if configured
+  opts.config?.callbacks?.onScanComplete?.(report);
 
   return report;
 }
