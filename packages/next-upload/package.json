@@ -37,7 +37,7 @@
     "@pompelmi/core": "^0.26.0"
   },
   "dependencies": {
-    "file-type": "^18.7.0",
+    "file-type": "^21.3.0",
     "unzipper": "^0.12.3",
     "@pompelmi/core": "^0.26.0"
   },
