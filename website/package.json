@@ -28,7 +28,7 @@
     "@types/koa": "^2.15.0",
     "@types/react-dom": "^19.1.6",
     "@types/supertest": "^6.0.3",
-    "@vitest/coverage-v8": "2.1.9",
+    "@vitest/coverage-v8": "4.0.18",
     "astro": "^5.12.9",
     "autoprefixer": "^10.4.21",
     "postcss": "^8.5.6",
