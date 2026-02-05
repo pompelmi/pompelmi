@@ -36,9 +36,22 @@
   <br/>
   <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
   <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
+  <a href="https://medium.com/node-weekly/node-weekly-issue-145-07f40a2cd3f3"><img alt="Featured in Node Weekly #145" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23145-FF6600?logo=node.js"></a>
   <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
   <a href="https://app.daily.dev/posts/pompelmi"><img alt="Featured on daily.dev" src="https://img.shields.io/badge/featured-daily.dev-CE3DF3?logo=dailydotdev"></a>
+  <a href="https://app.daily.dev/posts/q7cusr92j"><img alt="Featured on daily.dev" src="https://img.shields.io/badge/featured-daily.dev-CE3DF3?logo=dailydotdev"></a>
   <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe"><img alt="Featured on DEV.to" src="https://img.shields.io/badge/featured-DEV.to-0A0A0A?logo=devdotto"></a>
+  <br/>
+  <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img alt="Featured on HelpNet Security" src="https://img.shields.io/badge/featured-HelpNet%20Security-FF6B35"></a>
+  <a href="https://risky.biz/risky-bulletin-researcher-scores-250-000-for-chrome-bug/"><img alt="Mentioned in Risky.Biz" src="https://img.shields.io/badge/mentioned-Risky.Biz-DC143C"></a>
+  <a href="https://www.anquan114.com/archives/6969"><img alt="Featured on AnQuan114" src="https://img.shields.io/badge/featured-AnQuan114-FF4500"></a>
+  <a href="https://www.toptool.app/ru/product/pompelmi"><img alt="Listed on TopTool.app" src="https://img.shields.io/badge/listed-TopTool.app-4A90E2"></a>
+  <a href="https://alternativeto.net/software/pompelmi/"><img alt="Listed on AlternativeTo" src="https://img.shields.io/badge/listed-AlternativeTo-7B68EE"></a>
+  <br/>
+  <a href="https://www.tasc.tw/tw/news-detail/pompelmi-open-source-secure-file-upload-scanning-node-js%EF%BC%8F?kind=28"><img alt="Featured on TASC Taiwan" src="https://img.shields.io/badge/featured-TASC%20Taiwan-1E90FF"></a>
+  <a href="https://webboard-nsoc.ncsa.or.th/topic/2583/cyber-threat-intelligence-03-february-2026"><img alt="Featured on NCSA Thailand" src="https://img.shields.io/badge/featured-NCSA%20Thailand-FF69B4"></a>
+  <a href="https://www.linkedin.com/posts/helpnetsecurity_scanner-software-opensource-activity-7424044015076970496-Nt_u/"><img alt="Featured on LinkedIn" src="https://img.shields.io/badge/featured-LinkedIn-0A66C2?logo=linkedin"></a>
+  <a href="https://x.com/TheCyberSecHub/status/2018213695143419937"><img alt="Mentioned on X/Twitter" src="https://img.shields.io/badge/mentioned-X%2FTwitter-000000?logo=x"></a>
   <br/>
   <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
   <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://awesome.re/mentioned-badge-flat.svg"></a>
