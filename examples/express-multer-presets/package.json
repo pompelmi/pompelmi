@@ -9,7 +9,7 @@
     "dev": "node --watch index.mjs"
   },
   "dependencies": {
-    "express": "^5.1.0",
+    "express": "^5.2.1",
     "multer": "^2.0.2",
     "@pompelmi/express-middleware": "workspace:*",
     "pompelmi": "workspace:*"
