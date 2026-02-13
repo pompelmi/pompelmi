@@ -69,7 +69,7 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
           });
           scanners.push(binjaScanner);
         }).catch(() => {
-          // Binary Ninja engine not available
+          // Binary Ninja engine not available - silently skip
         });
       } catch {
         // Engine not installed
@@ -89,7 +89,7 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
           });
           scanners.push(ghidraScanner);
         }).catch(() => {
-          // Ghidra engine not available
+          // Ghidra engine not available - silently skip
         });
       } catch {
         // Engine not installed

@@ -34,26 +34,8 @@
   <br/>
   <a href="https://www.producthunt.com/products/pompelmi"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light" alt="pompelmi - Secure File Upload Scanning for Node.js | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
   <br/>
-  <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
-  <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
-  <a href="https://medium.com/node-weekly/node-weekly-issue-145-07f40a2cd3f3"><img alt="Featured in Node Weekly #145" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23145-FF6600?logo=node.js"></a>
-  <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
-  <a href="https://app.daily.dev/posts/pompelmi"><img alt="Featured on daily.dev" src="https://img.shields.io/badge/featured-daily.dev-CE3DF3?logo=dailydotdev"></a>
-  <a href="https://app.daily.dev/posts/q7cusr92j"><img alt="Featured on daily.dev" src="https://img.shields.io/badge/featured-daily.dev-CE3DF3?logo=dailydotdev"></a>
-  <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe"><img alt="Featured on DEV.to" src="https://img.shields.io/badge/featured-DEV.to-0A0A0A?logo=devdotto"></a>
-  <br/>
   <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img alt="Featured on HelpNet Security" src="https://img.shields.io/badge/🔒_FEATURED-HelpNet%20Security-FF6B35?style=for-the-badge"></a>
   <a href="https://snyk.io/test/github/pompelmi/pompelmi"><img alt="Secured by Snyk" src="https://img.shields.io/badge/🛡️_SECURED_BY-Snyk-4C4A73?style=for-the-badge&logo=snyk"></a>
-  <br/>
-  <a href="https://risky.biz/risky-bulletin-researcher-scores-250-000-for-chrome-bug/"><img alt="Mentioned in Risky.Biz" src="https://img.shields.io/badge/mentioned-Risky.Biz-DC143C"></a>
-  <a href="https://www.anquan114.com/archives/6969"><img alt="Featured on AnQuan114" src="https://img.shields.io/badge/featured-AnQuan114-FF4500"></a>
-  <a href="https://www.toptool.app/ru/product/pompelmi"><img alt="Listed on TopTool.app" src="https://img.shields.io/badge/listed-TopTool.app-4A90E2"></a>
-  <a href="https://alternativeto.net/software/pompelmi/"><img alt="Listed on AlternativeTo" src="https://img.shields.io/badge/listed-AlternativeTo-7B68EE"></a>
-  <br/>
-  <a href="https://www.tasc.tw/tw/news-detail/pompelmi-open-source-secure-file-upload-scanning-node-js%EF%BC%8F?kind=28"><img alt="Featured on TASC Taiwan" src="https://img.shields.io/badge/featured-TASC%20Taiwan-1E90FF"></a>
-  <a href="https://webboard-nsoc.ncsa.or.th/topic/2583/cyber-threat-intelligence-03-february-2026"><img alt="Featured on NCSA Thailand" src="https://img.shields.io/badge/featured-NCSA%20Thailand-FF69B4"></a>
-  <a href="https://www.linkedin.com/posts/helpnetsecurity_scanner-software-opensource-activity-7424044015076970496-Nt_u/"><img alt="Featured on LinkedIn" src="https://img.shields.io/badge/featured-LinkedIn-0A66C2?logo=linkedin"></a>
-  <a href="https://x.com/TheCyberSecHub/status/2018213695143419937"><img alt="Mentioned on X/Twitter" src="https://img.shields.io/badge/mentioned-X%2FTwitter-000000?logo=x"></a>
   <br/>
   <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
   <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://awesome.re/mentioned-badge-flat.svg"></a>
@@ -75,8 +57,6 @@
 <p align="center">
   Scan files before they hit disk • <strong>Keep user data private</strong> • <strong>Zero cloud dependencies</strong>
 </p>
-
----
 
 ---
 
@@ -205,26 +185,20 @@ curl -X POST http://localhost:3000/upload -F "file=@test.pdf"
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Highlights](#highlights)
+- [Features](#features)
+- [Quick Start](#quick-start)
 - [Why pompelmi](#why-pompelmi)
-- [How it compares](#how-it-compares)
-- [What Developers Say](#what-developers-say)
-- [What Makes pompelmi Special](#what-makes-pompelmi-special)
 - [Use Cases](#use-cases)
 - [Installation](#installation)
-- [Quick Start](#quick-start)
-  - [Minimal Node usage](#minimal-node-usage)
-  - [Express](#express)
-  - [Koa](#koa)
-  - [Next.js (App Router)](#nextjs-app-router)
+- [Getting Started](#getting-started)
+- [Code Examples](#code-examples)
 - [Adapters](#adapters)
 - [GitHub Action](#github-action)
 - [Configuration](#configuration)
 - [YARA Getting Started](#yara-getting-started)
 - [Security Notes](#security-notes)
-
-- [Testing & Development](#testing--development)
+- [Production Checklist](#production-checklist)
+- [Community & Recognition](#community--recognition)
 - [FAQ](#faq)
 - [Contributing](#contributing)
 - [License](#license)
@@ -250,55 +224,7 @@ pompelmi documentation is available in multiple languages to help developers wor
 
 ---
 
-## 🚀 Overview
-
-**pompelmi** scans untrusted file uploads **before** they hit disk. A tiny, TypeScript-first toolkit for Node.js with composable scanners, deep ZIP inspection, and optional signature engines. **Privacy-First** architecture with **Zero Cloud Dependencies** means your data never leaves your infrastructure.
-
-### 🎯 Key Features
-
-**🔒 Private by design** — no outbound calls; bytes never leave your process
-
-**🧩 Composable scanners** — mix heuristics + signatures; set `stopOn` and timeouts
-
-**📦 ZIP hardening** — traversal/bomb guards, polyglot & macro hints
-
-**🔌 Drop-in adapters** — Express, Koa, Fastify, Next.js, Nuxt/Nitro, **NestJS**
-
-**🌊 Stream-based scanning** — memory-efficient processing with configurable buffer limits
-
-**⚙️ CLI for CI/CD** — standalone command-line tool for scanning files and directories
-
-**🔍 Polyglot detection** — advanced magic bytes analysis and embedded script detection
-
-**📘 Typed & tiny** — modern TS, minimal surface, tree-shakeable
-
-**⚡ Zero dependencies** — core library has minimal deps, fast installation
-
-## ✨ Highlights
-
-**🛡️ Block risky uploads early** — classify uploads as _clean_, _suspicious_, or _malicious_ and stop them at the edge.
-
-**✅ Real guards** — extension allow‑list, server‑side MIME sniff (magic bytes), per‑file size caps, and **deep ZIP** traversal with anti‑bomb limits.
-
-**🔍 Built‑in scanners** — drop‑in **CommonHeuristicsScanner** (PDF risky actions, Office macros, PE header) and **Zip‑bomb Guard**; add your own or YARA via a tiny `{ scan(bytes) }` contract.
-
-**🔬 Polyglot & embedded script detection** — advanced magic bytes analysis detects mixed-format files and embedded scripts with **30+ file signatures**.
-
-**🌊 Memory-efficient streaming** — scan large files without loading them entirely into memory with automatic stream routing.
-
-**⚙️ Compose scanning** — run multiple scanners in parallel or sequentially with timeouts and short‑circuiting via `composeScanners()`.
-
-**🏗️ Framework integrations** — native modules for **NestJS**, Express, Koa, Next.js, Nuxt/Nitro, and Fastify with first-class TypeScript support.
-
-**🔧 Production-ready CLI** — standalone tool for CI/CD pipelines with watch mode, multiple output formats (JSON, table, minimal).
-
-**☁️ Zero Cloud Dependencies** — scans run in‑process. **Keep bytes private.** Perfect for **GDPR/HIPAA compliance**.
-
-**👨‍💻 DX first** — TypeScript types, ESM/CJS builds, tiny API, adapters for popular web frameworks.
-
-> **SEO Keywords:** file upload security, malware detection, virus scanner, Node.js security, Express middleware, YARA integration, ZIP bomb protection, file validation, upload sanitization, threat detection, security scanner, antivirus Node.js, file scanning library, TypeScript security, Next.js security, Nuxt security, Nitro security, Koa middleware, server-side validation, file integrity check, malware prevention, secure file upload
-
-## 🧠 Why Pompelmi?
+## 🧠 Why pompelmi?
 
 pompelmi delivers **Privacy-First** malware detection with **Zero Cloud Dependencies** — keeping your data secure and your latency zero.
 
@@ -328,32 +254,13 @@ pompelmi delivers **Privacy-First** malware detection with **Zero Cloud Dependen
 | **TypeScript Support** | ✅ First-class | ❌ Community types | ❓ Varies |
 | **YARA Integration** | ✅ Built-in | ⚙️ Manual setup | ❓ Limited |
 
-
----
-## 💬 What Developers Say
-
-> "pompelmi made it incredibly easy to add malware scanning to our Express API. The TypeScript support is fantastic!"
-> — Developer using pompelmi in production
-
-> "Finally, a file scanning solution that doesn't require sending our users' data to third parties. Perfect for GDPR compliance."
-> — Security Engineer at a healthcare startup
-
-> "The YARA integration is seamless. We went from prototype to production in less than a week."
-> — DevSecOps Engineer
-
-_Want to share your experience? [Open a discussion](https://github.com/pompelmi/pompelmi/discussions)!_
-
----
-
-## 🌟 What Makes pompelmi Special?
-
 ### 🎯 Developer Experience
 
-Built with developers in mind from day one. Simple API, comprehensive TypeScript types, and excellent documentation mean you can integrate secure file scanning in minutes, not days. Hot module replacement support and detailed error messages make debugging a breeze.
+Built with developers in mind from day one. Simple API, comprehensive TypeScript types, and excellent documentation mean you can integrate secure file scanning in minutes, not days.
 
 ### 🚀 Performance First
 
-Optimized for high-throughput scenarios with configurable concurrency, streaming support, and minimal memory overhead. Process thousands of files without breaking a sweat. Scans run in-process with no IPC overhead.
+Optimized for high-throughput scenarios with configurable concurrency, streaming support, and minimal memory overhead. Scans run in-process with no IPC overhead.
 
 ### 🔐 Security Without Compromise
 
@@ -388,8 +295,6 @@ Scan files at ingestion time for corporate file sharing platforms, wikis, and co
 ### 🎨 Media & Creative Platforms
 
 Validate user-generated content uploads (images, videos, documents) before processing and storage.
-
----
 
 ---
 
@@ -794,19 +699,6 @@ See the [📘 Code Examples](#-code-examples) section above for integration exam
 
 ---
 
-| Framework | Package | Status |
-| --- | --- | --- |
-| Express | `@pompelmi/express-middleware` | ✅ alpha |
-| Koa | `@pompelmi/koa-middleware` | ✅ alpha |
-| Next.js (App Router) | `@pompelmi/next-upload` | ✅ alpha |
-| Fastify | `@pompelmi/fastify-plugin` | 🚧 alpha |
-| NestJS | nestjs | 📋 planned |
-| Remix | remix | 📋 planned |
-| hapi | hapi plugin | 📋 planned |
-| SvelteKit | sveltekit | 📋 planned |
-
----
-
 ## 🗺️ Diagrams
 
 ### Upload scanning flow
@@ -1130,17 +1022,11 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 
 ---
 
-##  Releases & security
+##  Releases & Security
 
 - **Changelog / releases:** see [GitHub Releases](https://github.com/pompelmi/pompelmi/releases).
 - **Security disclosures:** please use [GitHub Security Advisories](https://github.com/pompelmi/pompelmi/security/advisories). We’ll coordinate a fix before public disclosure.
 - **Production users:** open a [Discussion](https://github.com/pompelmi/pompelmi/discussions) to share requirements or request adapters.
-
-## ⭐ Star history
-
-[![Star History Chart](https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date)](https://star-history.com/#pompelmi/pompelmi&Date)
-
----
 
 ---
 
@@ -1223,6 +1109,19 @@ pompelmi has been featured in **leading security and developer publications** an
 <!-- MENTIONS:START -->
 <!-- MENTIONS:END -->
 
+### 💬 What Developers Say
+
+> "pompelmi made it incredibly easy to add malware scanning to our Express API. The TypeScript support is fantastic!"
+> — Developer using pompelmi in production
+
+> "Finally, a file scanning solution that doesn't require sending our users' data to third parties. Perfect for GDPR compliance."
+> — Security Engineer at a healthcare startup
+
+> "The YARA integration is seamless. We went from prototype to production in less than a week."
+> — DevSecOps Engineer
+
+_Want to share your experience? [Open a discussion](https://github.com/pompelmi/pompelmi/discussions)!_
+
 ### 🤝 Community & Support
 
 **Need help? We're here for you!**
@@ -1245,16 +1144,6 @@ pompelmi has been featured in **leading security and developer publications** an
 
 ---
 
-## 📊 Star History
-
-<p align="center">
-  <a href="https://star-history.com/#pompelmi/pompelmi&Date">
-    <img src="https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date" alt="Star History Chart" />
-  </a>
-</p>
-
----
-
 ## 🎖️ Contributors
 
 Thanks to all the amazing contributors who have helped make pompelmi better!
@@ -1267,6 +1156,16 @@ Thanks to all the amazing contributors who have helped make pompelmi better!
 
 <p align="center">
   <em>Want to contribute? Check out our <a href="./CONTRIBUTING.md">Contributing Guide</a>!</em>
+</p>
+
+---
+
+## ⭐ Star History
+
+<p align="center">
+  <a href="https://star-history.com/#pompelmi/pompelmi&Date">
+    <img src="https://api.star-history.com/svg?repos=pompelmi/pompelmi&type=Date" alt="Star History Chart" width="600" />
+  </a>
 </p>
 
 ---
@@ -1324,25 +1223,9 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
 - [Examples](./examples/) — Real-world integration examples
 - [Security Guide](./SECURITY.md) — Security best practices and disclosure policy
 
-### 🎥 Tutorials & Articles
-
-- **File Upload Security in Node.js** — Best practices guide (coming soon)
-- **Integrating YARA with pompelmi** — Advanced detection setup (coming soon)
-- **Zero-Trust File Uploads** — Architecture patterns (coming soon)
-
 ### 🛠️ Tools & Integrations
 
 - [GitHub Action](https://github.com/pompelmi/pompelmi/tree/main/.github/actions/pompelmi-scan) — CI/CD scanning
-- [Docker Images](https://hub.docker.com/r/pompelmi/pompelmi) — Containerized scanning (coming soon)
-- [Cloud Functions](https://github.com/pompelmi/cloud-functions) — Serverless examples (coming soon)
-
----
-
-## 📊 Project Stats
-
-<p align="center">
-  <img src="https://repobeats.axiom.co/api/embed/YOUR_EMBED_ID.svg" alt="Repobeats analytics" />
-</p>
 
 ---
 
@@ -1353,19 +1236,6 @@ pompelmi stands on the shoulders of giants. Special thanks to:
 - The YARA project for powerful pattern matching
 - The Node.js community for excellent tooling
 - All our contributors and users
-
----
-
-## 📞 Support
-
-Need help? We're here for you!
-
-- 📖 [Documentation](https://pompelmi.github.io/pompelmi/)
-- 💬 [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
-- 🐛 [Issue Tracker](https://github.com/pompelmi/pompelmi/issues)
-- 🔒 [Security](https://github.com/pompelmi/pompelmi/security) (for vulnerabilities)
-
-For commercial support and consulting, contact the maintainers.
 
 ---
 

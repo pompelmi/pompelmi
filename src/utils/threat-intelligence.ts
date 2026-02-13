@@ -26,13 +26,24 @@ export interface ThreatInfo {
   detectedAt?: Date;
 }
 
-export interface EnhancedScanReport extends ScanReport {
+export interface EnhancedScanReport {
   /** Threat intelligence findings */
   threatIntel?: ThreatInfo[];
   /** File hash (SHA-256) */
   fileHash?: string;
   /** Risk score (0-100) */
   riskScore?: number;
+  /** Include all properties from ScanReport */
+  verdict: import('../types').Verdict;
+  matches: import('../types').YaraMatch[];
+  reasons?: string[];
+  file?: import('../types').FileInfo;
+  durationMs?: number;
+  error?: string;
+  ok: boolean;
+  truncated?: boolean;
+  timedOut?: boolean;
+  engine?: string;
 }
 
 /**

@@ -15,7 +15,9 @@ export function createScanner(rulesPath = process.env.POMPELMI_YARA_RULES ?? 'ru
         p.stdout.on('data', d => out += String(d));
         p.stderr.on('data', d => err += String(d));
         p.on('close', () => {
-          void fs.unlink(tmp).catch(()=>{});
+          void fs.unlink(tmp).catch(()=>{
+            // Ignore cleanup errors
+          });
           if (err && !out) return resolve([]);
           const matches = out.split('\n').filter(Boolean).map(line => {
             const [rule, file, ...rest] = line.split(' ');
