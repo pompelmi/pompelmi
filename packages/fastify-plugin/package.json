@@ -42,13 +42,13 @@
     "@pompelmi/core": "^0.26.0"
   },
   "devDependencies": {
-    "@fastify/multipart": "^9.0.3",
+    "@fastify/multipart": "^9.4.0",
     "@types/node": "^20.11.0",
     "@vitest/coverage-v8": "2.1.9",
-    "fastify": "^5.5.0",
+    "fastify": "^5.7.4",
     "file-type": "^18.7.0",
-    "tsup": "^8.5.0",
-    "typescript": "^5.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "unzipper": "^0.12.3",
     "vitest": "2.1.9"
   },
