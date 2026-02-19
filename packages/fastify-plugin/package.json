@@ -46,7 +46,7 @@
     "@types/node": "^20.11.0",
     "@vitest/coverage-v8": "2.1.9",
     "fastify": "^5.5.0",
-    "file-type": "^18.7.0",
+    "file-type": "^21.3.0",
     "tsup": "^8.5.0",
     "typescript": "^5.5.0",
     "unzipper": "^0.12.3",
