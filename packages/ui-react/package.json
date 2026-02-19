@@ -27,7 +27,7 @@
   "devDependencies": {
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
-    "@vitest/coverage-v8": "2.1.9",
+    "@vitest/coverage-v8": "4.0.18",
     "rimraf": "^5.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.0.0",
