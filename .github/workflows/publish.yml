@@ -62,45 +62,52 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build packages
-        run: pnpm -r run build
+        # --if-present skips packages without a build script instead of failing
+        run: pnpm -r --filter '!./examples/*' --if-present run build
 
       - name: Publish packages
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
         run: |
-          # Check and publish root package
+          REPO_ROOT=$(pwd)
+
+          # Publish root package
           ROOT_NAME=$(node -p "require('./package.json').name")
           ROOT_VERSION=$(node -p "require('./package.json').version")
-          
-          if [ "$(node -p "require('./package.json').private")" != "true" ]; then
+
+          if [ "$(node -p "require('./package.json').private || false")" != "true" ]; then
             EXISTS=$(npm view "$ROOT_NAME@$ROOT_VERSION" version 2>/dev/null || echo "")
             if [ "$EXISTS" != "$ROOT_VERSION" ]; then
               echo "Publishing $ROOT_NAME@$ROOT_VERSION"
-              npm publish --access public --provenance
+              # --ignore-scripts: prepublishOnly already ran via pnpm build above
+              # pnpm publish resolves workspace:* references correctly
+              pnpm publish --access public --provenance --no-git-checks --ignore-scripts
             else
-              echo "$ROOT_NAME@$ROOT_VERSION already exists"
+              echo "$ROOT_NAME@$ROOT_VERSION already exists on npm — skipping"
             fi
           fi
 
-          # Check and publish workspace packages
+          # Publish workspace packages
           for pkg in packages/*/; do
-            if [ -f "$pkg/package.json" ]; then
-              cd "$pkg"
-              PKG_NAME=$(node -p "require('./package.json').name || ''" 2>/dev/null || echo "")
-              PKG_VERSION=$(node -p "require('./package.json').version || ''" 2>/dev/null || echo "")
-              IS_PRIVATE=$(node -p "require('./package.json').private || false" 2>/dev/null || echo "false")
-              
-              if [ -n "$PKG_NAME" ] && [ -n "$PKG_VERSION" ] && [ "$IS_PRIVATE" != "true" ]; then
-                EXISTS=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
-                if [ "$EXISTS" != "$PKG_VERSION" ]; then
-                  echo "Publishing $PKG_NAME@$PKG_VERSION"
-                  npm publish --access public --provenance
-                else
-                  echo "$PKG_NAME@$PKG_VERSION already exists"
-                fi
-              fi
-              cd ../..
+            PKG_JSON="$REPO_ROOT/$pkg/package.json"
+            if [ ! -f "$PKG_JSON" ]; then continue; fi
+
+            PKG_NAME=$(node -p "require('$PKG_JSON').name || ''" 2>/dev/null || echo "")
+            PKG_VERSION=$(node -p "require('$PKG_JSON').version || ''" 2>/dev/null || echo "")
+            IS_PRIVATE=$(node -p "require('$PKG_JSON').private || false" 2>/dev/null || echo "false")
+
+            if [ -z "$PKG_NAME" ] || [ -z "$PKG_VERSION" ] || [ "$IS_PRIVATE" = "true" ]; then
+              continue
+            fi
+
+            EXISTS=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
+            if [ "$EXISTS" != "$PKG_VERSION" ]; then
+              echo "Publishing $PKG_NAME@$PKG_VERSION"
+              pnpm publish --access public --provenance --no-git-checks --ignore-scripts \
+                --filter "$PKG_NAME"
+            else
+              echo "$PKG_NAME@$PKG_VERSION already exists on npm — skipping"
             fi
           done
 
