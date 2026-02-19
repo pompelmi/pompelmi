@@ -51,7 +51,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build packages
-        run: pnpm -r --filter '!./examples/*' --if-present run build
+        run: pnpm run build
 
       - name: Run tests with coverage
         env:
@@ -131,7 +131,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build for analysis
-        run: pnpm -r --filter '!./examples/*' --if-present run build
+        run: pnpm run build
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@ea9e4e37992a54ee68a9622e985e60c8e8f12d9f # v3.27.5
