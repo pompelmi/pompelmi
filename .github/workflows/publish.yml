@@ -104,8 +104,8 @@ jobs:
             EXISTS=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
             if [ "$EXISTS" != "$PKG_VERSION" ]; then
               echo "Publishing $PKG_NAME@$PKG_VERSION"
-              pnpm publish --access public --provenance --no-git-checks --ignore-scripts \
-                --filter "$PKG_NAME"
+              # pnpm publish must run from the package directory
+              (cd "$REPO_ROOT/$pkg" && pnpm publish --access public --provenance --no-git-checks --ignore-scripts)
             else
               echo "$PKG_NAME@$PKG_VERSION already exists on npm — skipping"
             fi
