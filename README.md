@@ -89,7 +89,7 @@
   <strong>
     <a href="https://pompelmi.github.io/pompelmi/">📚 Documentation</a> •
     <a href="#-installation">💾 Install</a> •
-    <a href="#-quick-start">⚡ Quick Start</a> •
+    <a href="#-quickstart">⚡ Quickstart</a> •
     <a href="#-adapters">🧩 Adapters</a> •
     <a href="#-yara-getting-started">🧬 YARA</a> •
     <a href="#-github-action">🤖 CI/CD</a>
@@ -99,6 +99,37 @@
 <p align="center"><em>Coverage badge reflects core library (<code>src/**</code>); adapters are measured separately.</em></p>
 
 <!-- HERO END -->
+
+---
+
+## 📦 Installation
+
+```bash
+npm install pompelmi
+```
+
+> Node.js 18+ required. No daemon, no cloud API keys, no configuration files needed to get started.
+
+---
+
+## ⚡ Quickstart
+
+Scan a file and act on the result in three lines:
+
+```ts
+import { scanFile } from 'pompelmi';
+
+const result = await scanFile('path/to/upload.pdf');
+// result.verdict → "clean" | "suspicious" | "malicious"
+
+if (result.verdict !== 'clean') {
+  console.error('Blocked:', result.verdict, result.reasons);
+} else {
+  console.log('Safe to process.');
+}
+```
+
+That's it. No server required, no framework dependency — works standalone in any Node.js script or service.
 
 ---
 
@@ -131,78 +162,29 @@ npm i pompelmi @pompelmi/express-middleware
 
 ---
 
-## ⚡ Quick Start
-
-Get secure file upload scanning running in **under 5 minutes**.
-
-### Express Integration
-
-```ts
-import express from 'express';
-import multer from 'multer';
-import { createUploadGuard } from '@pompelmi/express-middleware';
-import { CommonHeuristicsScanner, createZipBombGuard, composeScanners } from 'pompelmi';
-
-const app = express();
-const upload = multer({ storage: multer.memoryStorage() });
-
-// Configure your security policy
-const scanner = composeScanners(
-  [
-    ['zipGuard', createZipBombGuard({ maxEntries: 512, maxCompressionRatio: 12 })],
-    ['heuristics', CommonHeuristicsScanner],
-  ],
-  { parallel: false, stopOn: 'suspicious', timeoutMsPerScanner: 1500 }
-);
-
-app.post('/upload',
-  upload.single('file'),
-  createUploadGuard({
-    includeExtensions: ['pdf', 'zip', 'png', 'jpg'],
-    allowedMimeTypes: ['application/pdf', 'application/zip', 'image/png', 'image/jpeg'],
-    maxFileSizeBytes: 20 * 1024 * 1024, // 20MB
-    scanner,
-    failClosed: true
-  }),
-  (req, res) => {
-    // File is safe - proceed with your logic
-    res.json({ success: true, message: 'File uploaded successfully' });
-  }
-);
-
-app.listen(3000, () => console.log('🚀 Server running on http://localhost:3000'));
-```
-
-**Test it:**
-```bash
-curl -X POST http://localhost:3000/upload -F "file=@test.pdf"
-```
-
-✅ **Done!** Your app now blocks malicious uploads before they hit disk.
-
-👉 **[Explore full documentation →](https://pompelmi.github.io/pompelmi/)** | **[See more examples →](./examples/)**
-
----
-
 ## Table of Contents
 
-- [Features](#features)
-- [Quick Start](#quick-start)
-- [Why pompelmi](#why-pompelmi)
-- [Use Cases](#use-cases)
-- [Installation](#installation)
-- [Getting Started](#getting-started)
-- [Code Examples](#code-examples)
-- [Adapters](#adapters)
-- [GitHub Action](#github-action)
-- [Configuration](#configuration)
-- [YARA Getting Started](#yara-getting-started)
-- [Security Notes](#security-notes)
-- [Production Checklist](#production-checklist)
-- [Community & Recognition](#community--recognition)
-- [FAQ](#faq)
-- [Contributing](#contributing)
-- [License](#license)
+- [Installation](#-installation)
+- [Quickstart](#-quickstart)
+- [Demo](#-demo)
+- [Features](#-features)
+- [Why pompelmi?](#-why-pompelmi)
+- [Use Cases](#-use-cases)
+- [Getting Started](#-getting-started)
+- [Code Examples](#-code-examples)
+- [Adapters](#-adapters)
+- [GitHub Action](#-github-action)
+- [Diagrams](#️-diagrams)
+- [Configuration](#️-configuration)
+- [Production Checklist](#-production-checklist)
+- [YARA Getting Started](#-yara-getting-started)
+- [Security Notes](#-security-notes)
+- [Releases & Security](#-releases--security)
+- [Community & Recognition](#-community--recognition)
+- [FAQ](#-faq)
+- [Tests & Coverage](#-tests--coverage)
+- [Contributing](#-contributing)
+- [License](#-license)
 
 ---
 
@@ -299,71 +281,11 @@ Validate user-generated content uploads (images, videos, documents) before proce
 
 ---
 
-## 📦 Installation
-
-**pompelmi** is a privacy-first Node.js library for local file scanning.
-
-**Requirements:**
-- Node.js 18+
-- Optional: ClamAV binaries (for signature-based scanning)
-- Optional: YARA libraries (for custom rules)
-
-<table>
-<tr>
-<td><b>npm</b></td>
-<td><code>npm install pompelmi</code></td>
-</tr>
-<tr>
-<td><b>pnpm</b></td>
-<td><code>pnpm add pompelmi</code></td>
-</tr>
-<tr>
-<td><b>yarn</b></td>
-<td><code>yarn add pompelmi</code></td>
-</tr>
-<tr>
-<td><b>bun</b></td>
-<td><code>bun add pompelmi</code></td>
-</tr>
-</table>
-
-#### 📦 Framework Adapters
-
-```bash
-# Express
-npm i @pompelmi/express-middleware
-
-# Koa
-npm i @pompelmi/koa-middleware
-
-# Next.js
-npm i @pompelmi/next-upload
-
-# NestJS
-npm i @pompelmi/nestjs-integration
-
-# Fastify (alpha)
-npm i @pompelmi/fastify-plugin
-
-# Standalone CLI
-npm i -g @pompelmi/cli
-```
-
-> **Note:** Core library works standalone. Install adapters only if using specific frameworks.
-
----
-
 ## 🚀 Getting Started
 
 Get secure file scanning running in under 5 minutes with pompelmi's zero-config defaults.
 
-### Step 1: Install
-
-```bash
-npm install pompelmi
-```
-
-### Step 2: Create Security Policy
+### Step 1: Create Security Policy
 
 Create a reusable security policy and scanner configuration:
 
@@ -400,7 +322,7 @@ export const scanner = composeScanners(
 );
 ```
 
-### Step 3: Choose Your Integration
+### Step 2: Choose Your Integration
 
 Pick the integration that matches your framework:
 
@@ -491,7 +413,7 @@ if (result.verdict === 'malicious') {
 }
 ```
 
-### Step 4: Test It
+### Step 3: Test It
 
 Upload a test file to verify everything works:
 
@@ -693,6 +615,28 @@ Use the adapter that matches your web framework. All adapters share the same pol
 | **Remix** | - | 🔜 Planned | Coming soon |
 | **SvelteKit** | - | 🔜 Planned | Coming soon |
 | **hapi** | - | 🔜 Planned | Coming soon |
+
+```bash
+# Express
+npm i @pompelmi/express-middleware
+
+# Koa
+npm i @pompelmi/koa-middleware
+
+# Next.js
+npm i @pompelmi/next-upload
+
+# NestJS
+npm i @pompelmi/nestjs-integration
+
+# Fastify (alpha)
+npm i @pompelmi/fastify-plugin
+
+# Standalone CLI
+npm i -g @pompelmi/cli
+```
+
+> **Note:** Core library works standalone. Install adapters only if using a specific framework.
 
 See the [📘 Code Examples](#-code-examples) section above for integration examples.
 
