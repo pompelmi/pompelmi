@@ -575,8 +575,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0(koa@3.1.1)(multer@2.0.2)
       '@koa/router':
-        specifier: ^12.0.2
-        version: 12.0.2
+        specifier: ^15.3.0
+        version: 15.3.0(koa@3.1.1)
       '@pompelmi/core':
         specifier: workspace:*
         version: link:../pompelmi
@@ -2405,9 +2405,11 @@ packages:
       koa: '>=2.16.3'
       multer: '>=2.0.2'
 
-  '@koa/router@12.0.2':
-    resolution: {integrity: sha512-sYcHglGKTxGF+hQ6x67xDfkE9o+NhVlRHBqq6gLywaMc6CojK/5vFZByphdonKinYlMLkEkacm+HEse9HzwgTA==}
-    engines: {node: '>= 12'}
+  '@koa/router@15.3.0':
+    resolution: {integrity: sha512-s87hWJjFYky2Z97u8jzah73sSHp4IZivD/2PZCuspHRvcKU69OPLoBIbKigVlBmS50yFTh9GHFfr1hDag4+wXw==}
+    engines: {node: '>= 20'}
+    peerDependencies:
+      koa: '>=2.16.3'
 
   '@litko/yara-x-darwin-arm64@0.2.1':
     resolution: {integrity: sha512-HFff7LmlD3+z4YzxKWLtf9bOOZRvlHk/H4+ZQ1QsFNzgNXlaK4qP2aRs14YL8MI0o7tHIMx/GBRfX8xLZ5MzVA==}
@@ -5733,9 +5735,6 @@ packages:
   path-to-regexp@0.1.12:
     resolution: {integrity: sha512-RA1GjUVMnvYFxuqovrEqZoxxW5NUZqbwKtYz/Tt7nXerk0LbLblQmrsgdeOxV5SFHf0UDggjS/bSeOZwt1pmEQ==}
 
-  path-to-regexp@6.3.0:
-    resolution: {integrity: sha512-Yhpw4T9C6hPpgPeA28us07OJeqZ5EzQTkbfwuhsUg0c237RomFoETJgmp2sa3F/41gfLE6G5cqcYwznmeEeOlQ==}
-
   path-to-regexp@8.3.0:
     resolution: {integrity: sha512-7jdwVIRtsP8MYpdXSwOS0YdD0Du+qOoF/AEPIt88PcCFrZCzx41oxku1jD88hZBwbNUIEfpqvuhjFaMAqMTWnA==}
 
@@ -8710,13 +8709,13 @@ snapshots:
       koa: 3.1.1
       multer: 2.0.2
 
-  '@koa/router@12.0.2':
+  '@koa/router@15.3.0(koa@3.1.1)':
     dependencies:
-      debug: 4.4.1
-      http-errors: 2.0.0
+      debug: 4.4.3
+      http-errors: 2.0.1
+      koa: 3.1.1
       koa-compose: 4.1.0
-      methods: 1.1.2
-      path-to-regexp: 6.3.0
+      path-to-regexp: 8.3.0
     transitivePeerDependencies:
       - supports-color
 
@@ -12839,8 +12838,6 @@ snapshots:
       minipass: 7.1.2
 
   path-to-regexp@0.1.12: {}
-
-  path-to-regexp@6.3.0: {}
 
   path-to-regexp@8.3.0: {}
 
