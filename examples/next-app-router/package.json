@@ -9,12 +9,12 @@
   "dependencies": {
     "@pompelmi/engine-heuristics": "workspace:^",
     "next": "^16.0.6",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
   },
   "devDependencies": {
     "@types/node": "^20.11.30",
-    "@types/react": "^19.2.0",
-    "typescript": "^5.4.5"
+    "@types/react": "^19.2.14",
+    "typescript": "^5.9.3"
   }
 }
