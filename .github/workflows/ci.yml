@@ -3,8 +3,17 @@ name: CI
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'site/**'
+      - 'blog/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - 'site/**'
   workflow_dispatch:
 
 permissions:
@@ -44,13 +53,22 @@ jobs:
       - name: Build packages
         run: pnpm run build
 
-      - name: Run tests (memory-optimized)
+      - name: Run tests with coverage
         env:
           NODE_OPTIONS: "--max_old_space_size=4096"
           CI: true
-        run: |
-          # Run only root workspace tests to avoid memory issues
-          pnpm vitest run --no-coverage --reporter=basic --passWithNoTests || echo "Tests completed with warnings"
+        run: pnpm run test:coverage:ci
+
+      - name: Upload coverage to Codecov
+        if: always()
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info,./coverage/coverage-final.json
+          flags: core
+          name: pompelmi-core
+          fail_ci_if_error: false
+          verbose: false
 
   lint:
     name: Lint

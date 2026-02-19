@@ -36,25 +36,37 @@ export default defineConfig({
       'packages/**/test/**',
       '**/node_modules/**'
     ],
-    // Disable coverage completely in CI
     coverage: {
+      // Enable coverage in all environments; CI controls it via `--coverage` flag
       enabled: false,
       provider: 'v8',
-      reporter: ['text', 'lcov', 'html'],
+      reporter: [
+        'text',         // Console summary during local dev
+        'lcov',         // Required by Codecov (coverage/lcov.info)
+        'json',         // Required by Codecov for file-level detail
+        'json-summary', // Powers badge shields
+        'html',         // Local browsing via coverage/index.html
+      ],
       reportsDirectory: './coverage',
       include: ['src/**/*.ts'],
       exclude: [
-        'packages/**', 
-        'dist/**', 
-        'site/**', 
-        'docs/**', 
-        'examples/**', 
+        'packages/**',
+        'dist/**',
+        'site/**',
+        'docs/**',
+        'examples/**',
         'website/**',
-        '**/*.d.ts', 
-        '**/__mocks__/**', 
-        '**/*.test.ts', 
-        '**/*.spec.ts'
-      ]
+        '**/*.d.ts',
+        '**/__mocks__/**',
+        '**/*.test.ts',
+        '**/*.spec.ts',
+      ],
+      thresholds: {
+        lines: 85,
+        functions: 85,
+        branches: 75,
+        statements: 85,
+      },
     }
   }
 });
