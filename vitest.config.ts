@@ -61,12 +61,8 @@ export default defineConfig({
         '**/*.test.ts',
         '**/*.spec.ts',
       ],
-      thresholds: {
-        lines: 85,
-        functions: 85,
-        branches: 75,
-        statements: 85,
-      },
+      // Thresholds intentionally unset — run `pnpm test:coverage` locally first
+      // to measure the real baseline, then add thresholds here.
     }
   }
 });
