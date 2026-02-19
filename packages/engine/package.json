@@ -46,8 +46,8 @@
   },
   "dependencies": {
     "@fastify/cors": "^10.0.0",
-    "@fastify/multipart": "^9.0.3",
-    "fastify": "^5.0.0",
+    "@fastify/multipart": "^9.4.0",
+    "fastify": "^5.7.4",
     "yauzl": "^3.2.0",
     "zod": "^3.23.8"
   },
@@ -55,12 +55,12 @@
     "@types/node": "^20.19.11",
     "@types/yauzl": "^2.10.3",
     "@vitest/coverage-v8": "2.1.9",
-    "tsup": "^8.5.0",
-    "tsx": "^4.15.7",
-    "typescript": "^5.6.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3",
     "vitest": "1.6.0",
     "yazl": "^3.3.1",
-    "zod-to-json-schema": "^3.23.5"
+    "zod-to-json-schema": "^3.25.1"
   },
   "engines": {
     "node": ">=18"
