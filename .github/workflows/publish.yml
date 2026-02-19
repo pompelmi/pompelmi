@@ -62,7 +62,7 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build packages
-        run: pnpm run build
+        run: pnpm -r run build
 
       - name: Publish packages
         env:
@@ -77,7 +77,7 @@ jobs:
             EXISTS=$(npm view "$ROOT_NAME@$ROOT_VERSION" version 2>/dev/null || echo "")
             if [ "$EXISTS" != "$ROOT_VERSION" ]; then
               echo "Publishing $ROOT_NAME@$ROOT_VERSION"
-              npm publish --access public --provenance || true
+              npm publish --access public --provenance
             else
               echo "$ROOT_NAME@$ROOT_VERSION already exists"
             fi
@@ -95,7 +95,7 @@ jobs:
                 EXISTS=$(npm view "$PKG_NAME@$PKG_VERSION" version 2>/dev/null || echo "")
                 if [ "$EXISTS" != "$PKG_VERSION" ]; then
                   echo "Publishing $PKG_NAME@$PKG_VERSION"
-                  npm publish --access public --provenance || true
+                  npm publish --access public --provenance
                 else
                   echo "$PKG_NAME@$PKG_VERSION already exists"
                 fi
