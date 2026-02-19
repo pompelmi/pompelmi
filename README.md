@@ -82,6 +82,7 @@
   <a href="https://github.com/pompelmi/pompelmi/network/members"><img alt="GitHub forks" src="https://img.shields.io/github/forks/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/watchers"><img alt="GitHub watchers" src="https://img.shields.io/github/watchers/pompelmi/pompelmi?style=social"></a>
   <a href="https://github.com/pompelmi/pompelmi/issues"><img alt="open issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi?color=orange"></a>
+  <a href="https://github.com/sponsors/pompelmi"><img alt="GitHub Sponsors" src="https://img.shields.io/github/sponsors/pompelmi?style=social&label=Sponsor"></a>
 </p>
 
 <p align="center">
@@ -1131,6 +1132,7 @@ _Want to share your experience? [Open a discussion](https://github.com/pompelmi/
 - 🐛 **[Issue Tracker](https://github.com/pompelmi/pompelmi/issues)** — Report bugs, request features
 - 🔒 **[Security Policy](https://github.com/pompelmi/pompelmi/security)** — Report security vulnerabilities privately
 - 💼 **Commercial Support** — For enterprise support and consulting, contact the maintainers
+- 💖 **[Sponsor pompelmi](https://github.com/sponsors/pompelmi)** — Support ongoing development via GitHub Sponsors
 
 **Supported Frameworks:**
 - ✅ Express
@@ -1157,6 +1159,26 @@ Thanks to all the amazing contributors who have helped make pompelmi better!
 <p align="center">
   <em>Want to contribute? Check out our <a href="./CONTRIBUTING.md">Contributing Guide</a>!</em>
 </p>
+
+---
+
+## 💖 Sponsors
+
+Pompelmi is free and open-source. If it saves you time or helps protect your users, consider supporting its development!
+
+<p align="center">
+  <a href="https://github.com/sponsors/pompelmi">
+    <img src="https://img.shields.io/badge/Sponsor-pompelmi-EA4AAA?style=for-the-badge&logo=githubsponsors&logoColor=white" alt="Sponsor pompelmi on GitHub" />
+  </a>
+</p>
+
+Your sponsorship helps fund:
+- 🧬 New detection engine integrations
+- 🧪 Expanded test coverage and CI infrastructure
+- 📚 Documentation and examples
+- 🔒 Security audits and CVE response
+
+Thank you to all current and future sponsors for keeping this project alive!
 
 ---
 
