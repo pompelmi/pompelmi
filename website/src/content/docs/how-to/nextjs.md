@@ -1,18 +1,5 @@
 ---
 title: Use Pompelmi in Next.js
-description: Add upload malware scanning to a Next.js app (UI + API route helper).
----
-
-This guide shows a concrete task: integrate in a Next.js app.
-
-## Client (App Router)
-
-```tsx
-import { UploadButton } from '@pompelmi/ui-react';
-
-<UploadButton action={`${process.env.NEXT_PUBLIC_POMPELMI_URL?.replace(/\/$/, '')}/scan`} />;
----
-title: Use Pompelmi in Next.js
 description: Add upload malware scanning to a Next.js app (UI component + API Route Handler).
 ---
 

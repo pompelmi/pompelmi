@@ -1,13 +1,5 @@
 ---
 title: Use Pompelmi with Express
-description: Scan uploads in an Express app via middleware.
----
-
-## Install
-```bash
-pnpm add @pompelmi/express-middleware
----
-title: Use Pompelmi with Express
 description: Add a /scan endpoint in Express that validates uploads and forwards them to your scan engine.
 ---
 

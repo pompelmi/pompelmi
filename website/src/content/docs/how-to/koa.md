@@ -1,13 +1,5 @@
 ---
 title: Use Pompelmi with Koa
-description: Scan uploads in a Koa app via middleware.
----
-
-## Install
-```bash
-pnpm add @pompelmi/koa-middleware
----
-title: Use Pompelmi with Koa
 description: Add a /scan endpoint in Koa that validates uploads and forwards them to your scan engine.
 ---
 

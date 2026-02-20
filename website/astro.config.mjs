@@ -69,7 +69,7 @@ export default defineConfig({
     { label: 'Tutorials', autogenerate: { directory: 'tutorials', collapsed: false } },
     { label: 'How-to Guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },
-    { label: 'Explanations', autogenerate: { directory: 'explanations', collapsed: true } }
+    { label: 'Explanations', autogenerate: { directory: 'explaination', collapsed: true } }
   ],
   tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
   pagefind: true
