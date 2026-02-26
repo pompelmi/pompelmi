@@ -230,7 +230,7 @@ async function scanFile(
     file: filePath,
     size: fileSize,
     verdict: result.verdict,
-    findings: result.findings,
+    findings: (result.matches || []).map(m => m.rule),
     durationMs: result.durationMs,
   };
 }

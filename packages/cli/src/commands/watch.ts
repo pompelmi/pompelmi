@@ -53,9 +53,9 @@ export async function watchCommand(directory: string, options: WatchOptions) {
       const timestamp = new Date().toLocaleTimeString();
       console.log(`${pc.dim(timestamp)} ${statusIcon} ${relative(directory, filePath)}`);
 
-      if (result.findings.length > 0) {
-        result.findings.forEach(finding => {
-          console.log(`  ${pc.yellow('→')} ${finding}`);
+      if ((result.matches || []).length > 0) {
+        (result.matches || []).forEach(match => {
+          console.log(`  ${pc.yellow('→')} ${match.rule}`);
         });
       }
     } catch (error) {

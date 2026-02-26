@@ -97,7 +97,7 @@ export class PompelmiInterceptor implements NestInterceptor {
         message: 'Malware detected in uploaded file',
         details: {
           verdict: result.verdict,
-          findings: result.findings,
+          findings: (result.matches || []).map(m => m.rule),
           filename: sanitizedFilename,
           mimetype: file.mimetype,
           size: file.size,
@@ -112,7 +112,7 @@ export class PompelmiInterceptor implements NestInterceptor {
       // In a production system, you might want to log this
       console.warn('Suspicious file detected', {
         filename: sanitizedFilename,
-        findings: result.findings,
+        findings: (result.matches || []).map(m => m.rule),
       });
     }
   }
