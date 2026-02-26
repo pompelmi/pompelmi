@@ -60,4 +60,4 @@ note_mie.txt
 *.map
 
 # nested repo (old submodule)
-pompelmi/
+/pompelmi/
