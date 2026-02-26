@@ -18,7 +18,7 @@ export * from './hipaa-compliance';
 export interface Match {
   rule: string;
   // used by zip-bomb-guard etc. We also keep 'suspicious' for compatibility.
-  severity?: 'low' | 'medium' | 'high' | 'critical' | 'suspicious';
+  severity?: 'info' | 'low' | 'medium' | 'high' | 'critical' | 'suspicious' | 'malicious';
   meta?: Record<string, unknown>;
 }
 

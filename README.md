@@ -287,11 +287,17 @@ Get secure file scanning running in under 5 minutes with pompelmi's zero-config 
 
 ### Step 1: Create Security Policy
 
-Create a reusable security policy and scanner configuration:
+Create a reusable security policy and scanner configuration.
+
+> **`composeScanners` API** — two supported forms:
+> - **Named-scanner array** *(recommended)*: `composeScanners([["name", scanner], ...], opts?)` — supports `parallel`, `stopOn`, `timeoutMsPerScanner`, and `tagSourceName` options.
+> - **Variadic** *(backward-compatible)*: `composeScanners(scannerA, scannerB, ...)` — runs scanners sequentially, no options.
 
 ```ts
 // lib/security.ts
 import { CommonHeuristicsScanner, createZipBombGuard, composeScanners } from 'pompelmi';
+// Optional: import types for explicit annotation
+// import type { NamedScanner, ComposeScannerOptions } from 'pompelmi';
 
 export const policy = {
   includeExtensions: ['zip', 'png', 'jpg', 'jpeg', 'pdf', 'txt'],
