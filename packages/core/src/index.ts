@@ -13,10 +13,6 @@ import { scanBytes, scanFile, type ScanOptions, type ScanReport } from 'pompelmi
 
 export type { ScanOptions, ScanReport };
 
-// Re-export everything else from the root pompelmi package so consumers
-// can import any public API via '@pompelmi/core'.
-export * from 'pompelmi';
-
 /**
  * Scan a Buffer, Readable stream, or file-path string for malware.
  *
