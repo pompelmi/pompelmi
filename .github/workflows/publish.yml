@@ -62,8 +62,12 @@ jobs:
         run: pnpm install --no-frozen-lockfile
 
       - name: Build packages
-        # --if-present skips packages without a build script instead of failing
-        run: pnpm -r --filter '!./examples/*' --if-present run build
+        # Build root package first so its dist/types/ is available for
+        # @pompelmi/core and other packages that import from 'pompelmi'.
+        # pnpm -r excludes the workspace root by default in pnpm v9.
+        run: |
+          pnpm run build
+          pnpm -r --filter '!./examples/*' --if-present run build
 
       - name: Publish packages
         env:
