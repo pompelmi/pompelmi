@@ -1,0 +1,44 @@
+{
+  "name": "@pompelmi/core",
+  "version": "0.32.0",
+  "description": "Core re-export package for pompelmi — provides the canonical scan(), isMalware(), ScanOptions and ScanReport API used by framework adapters and the CLI.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "pompelmi": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "typescript": "^5.6.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/core"
+  },
+  "files": [
+    "dist/**",
+    "README.md",
+    "LICENSE*",
+    "package.json"
+  ],
+  "keywords": ["pompelmi", "malware", "scanner", "security", "file-upload"]
+}
