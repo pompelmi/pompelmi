@@ -9,7 +9,8 @@ const allowedGlobs = [
   /^README(\.md)?$/i,
   /^LICENSE(\..*)?$/i,
   /^CHANGELOG(\..*)?$/i,
-  /^dist\/.*/i
+  /^dist\/.*/i,
+  /^bin\/.*/i
 ];
 const bannedGlobs = [
   /^src\/.*/i,
@@ -82,11 +83,12 @@ function checkPackage(dir) {
 
     // Quick exports sanity
     if (pkg.exports && typeof pkg.exports === "object" && pkg.exports["."]) {
-      const mainTarget = Object.values(pkg.exports["."]).find((v) => typeof v === "string" && v.startsWith("dist/"));
+      const mainTarget = Object.values(pkg.exports["."]).find((v) => typeof v === "string" && (v.startsWith("dist/") || v.startsWith("./dist/")));
       if (!mainTarget) {
         problems.push('exports["."] does not point to dist/*');
       } else {
-        const present = files.includes(mainTarget);
+        const normalised = mainTarget.replace(/^\.\//, "");
+        const present = files.includes(normalised) || files.includes(mainTarget);
         if (!present) problems.push(`exports target missing from tarball: ${mainTarget}`);
       }
     }

@@ -31,8 +31,7 @@
     "LICENSE*",
     "dist",
     "package.json",
-    "CHANGELOG*",
-    "scripts/**/*.py"
+    "CHANGELOG*"
   ],
   "exports": {
     ".": {
