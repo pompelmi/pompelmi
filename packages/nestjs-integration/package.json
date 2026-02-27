@@ -46,17 +46,17 @@
     "@pompelmi/core": "^0.26.0"
   },
   "devDependencies": {
-    "@nestjs/common": "^11.0.0",
-    "@nestjs/core": "^11.0.0",
-    "@nestjs/platform-express": "^11.0.0",
-    "@nestjs/testing": "^11.0.0",
+    "@nestjs/common": "^11.1.14",
+    "@nestjs/core": "^11.1.14",
+    "@nestjs/platform-express": "^11.1.14",
+    "@nestjs/testing": "^11.1.14",
     "@types/express": "^4.17.21",
     "@types/multer": "^1.4.12",
     "@types/node": "^24.3.0",
     "@vitest/coverage-v8": "2.1.9",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1",
-    "tsup": "8.5.0",
+    "tsup": "8.5.1",
     "vitest": "2.1.9"
   },
   "sideEffects": false,
