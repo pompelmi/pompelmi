@@ -1,6 +1,6 @@
 {
   "name": "@pompelmi/core",
-  "version": "0.32.0",
+  "version": "0.32.1",
   "description": "Core re-export package for pompelmi — provides the canonical scan(), isMalware(), ScanOptions and ScanReport API used by framework adapters and the CLI.",
   "license": "MIT",
   "type": "module",
