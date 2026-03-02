@@ -44,8 +44,8 @@
   "devDependencies": {
     "@types/node": "^20.19.10",
     "@vitest/coverage-v8": "2.1.9",
-    "tsup": "^8.5.0",
-    "typescript": "^5.5.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
     "vitest": "2.1.9",
     "@pompelmi/core": "workspace:*"
   },

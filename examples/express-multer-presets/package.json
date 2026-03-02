@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.0",
     "@pompelmi/express-middleware": "workspace:*",
     "pompelmi": "workspace:*"
   }
