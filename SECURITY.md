@@ -18,7 +18,7 @@ We actively support and provide security updates for the following versions:
 To report a security vulnerability, please use one of the following methods:
 
 1. **GitHub Security Advisories** (Recommended): [Report a vulnerability](https://github.com/pompelmi/pompelmi/security/advisories/new)
-2. **Email**: Send details to security@pompelmi.dev
+2. **Email**: Send details to pompelmideveloper@yahoo.com
 3. **Private Disclosure**: Create a private advisory at the repository
 
 ### What to Include
@@ -57,10 +57,7 @@ When reporting a vulnerability, please provide:
 
 pompelmi implements the following security practices:
 
-- 🔒 Automated dependency scanning via Dependabot
-- 🛡️ CodeQL static analysis on all commits
-- 📊 OpenSSF Scorecard monitoring
-- 🔐 Provenance attestation for npm releases
+-  Provenance attestation for npm releases
 - ⚡ Regular security audits and updates
 
 ## Security Best Practices for Users
@@ -81,7 +78,7 @@ https://github.com/pompelmi/pompelmi/security/advisories
 ## Contact
 
 For general security questions or concerns:
-- Email: security@pompelmi.dev
+- Email: pompelmideveloper@yahoo.com
 - GitHub Discussions: https://github.com/pompelmi/pompelmi/discussions
 
 ---
