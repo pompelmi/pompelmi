@@ -35,6 +35,7 @@
   <a href="https://www.producthunt.com/products/pompelmi"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light" alt="pompelmi - Secure File Upload Scanning for Node.js | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
   <br/>
   <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img alt="Featured on HelpNet Security" src="https://img.shields.io/badge/🔒_FEATURED-HelpNet%20Security-FF6B35?style=for-the-badge"></a>
+  <a href="https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/"><img alt="Featured on Stack Overflow Blog" src="https://img.shields.io/badge/📖_FEATURED-Stack%20Overflow%20Blog-F58025?style=for-the-badge&logo=stackoverflow&logoColor=white"></a>
   <a href="https://snyk.io/test/github/pompelmi/pompelmi"><img alt="Secured by Snyk" src="https://img.shields.io/badge/🛡️_SECURED_BY-Snyk-4C4A73?style=for-the-badge&logo=snyk"></a>
   <br/>
   <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
