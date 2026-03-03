@@ -37,7 +37,7 @@
     "@koa/multer": "^4.0.0",
     "@koa/router": "^12.0.0",
     "koa": "^2.14.0 || ^3.0.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.0",
     "@pompelmi/core": "^0.26.0"
   },
   "dependencies": {},
@@ -51,7 +51,7 @@
     "typescript": "^5.5.0",
     "vitest": "2.1.9",
     "@types/koa": "^2.13.9",
-    "multer": "^2.0.2",
+    "multer": "^2.1.0",
     "@pompelmi/core": "workspace:*"
   },
   "license": "MIT",

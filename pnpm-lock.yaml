@@ -126,8 +126,8 @@ importers:
         specifier: ^5.64.0
         version: 5.64.0(@types/node@24.3.0)(typescript@5.9.2)
       multer:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -159,8 +159,8 @@ importers:
         specifier: ^4.19.2
         version: 4.21.2
       multer:
-        specifier: '>=2.0.2'
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       pompelmi:
         specifier: workspace:*
         version: link:../..
@@ -174,8 +174,8 @@ importers:
         specifier: ^5.1.0
         version: 5.2.1
       multer:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       pompelmi:
         specifier: workspace:*
         version: link:../..
@@ -533,8 +533,8 @@ importers:
         specifier: ^4.19.0
         version: 4.21.2
       multer:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       supertest:
         specifier: ^7.0.0
         version: 7.1.4
@@ -586,7 +586,7 @@ importers:
     devDependencies:
       '@koa/multer':
         specifier: ^4.0.0
-        version: 4.0.0(koa@3.1.1)(multer@2.0.2)
+        version: 4.0.0(koa@3.1.1)(multer@2.1.0)
       '@koa/router':
         specifier: ^12.0.2
         version: 12.0.2
@@ -606,8 +606,8 @@ importers:
         specifier: '>=2.16.3'
         version: 3.1.1
       multer:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       tsup:
         specifier: ^8.5.0
         version: 8.5.0(jiti@2.6.0)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.2)(yaml@2.8.1)
@@ -823,8 +823,8 @@ importers:
         specifier: ^5.64.0
         version: 5.64.0(@types/node@24.3.0)(typescript@5.9.2)
       multer:
-        specifier: ^2.0.2
-        version: 2.0.2
+        specifier: ^2.1.0
+        version: 2.1.0
       react:
         specifier: ^19.2.0
         version: 19.2.0
@@ -2421,6 +2421,7 @@ packages:
   '@koa/router@12.0.2':
     resolution: {integrity: sha512-sYcHglGKTxGF+hQ6x67xDfkE9o+NhVlRHBqq6gLywaMc6CojK/5vFZByphdonKinYlMLkEkacm+HEse9HzwgTA==}
     engines: {node: '>= 12'}
+    deprecated: Please upgrade to v15 or higher. All reported bugs in this version are fixed in newer releases, dependencies have been updated, and security has been improved.
 
   '@litko/yara-x-darwin-arm64@0.2.1':
     resolution: {integrity: sha512-HFff7LmlD3+z4YzxKWLtf9bOOZRvlHk/H4+ZQ1QsFNzgNXlaK4qP2aRs14YL8MI0o7tHIMx/GBRfX8xLZ5MzVA==}
@@ -5521,6 +5522,10 @@ packages:
 
   multer@2.0.2:
     resolution: {integrity: sha512-u7f2xaZ/UG8oLXHvtF/oWTRvT44p9ecwBBqTwgJVq0+4BW1g8OW01TyMEGWBHbyMOYVHXslaut7qEQ1meATXgw==}
+    engines: {node: '>= 10.16.0'}
+
+  multer@2.1.0:
+    resolution: {integrity: sha512-TBm6j41rxNohqawsxlsWsNNh/VdV4QFXcBvRcPhXaA05EZ79z0qJ2bQFpync6JBoHTeNY5Q1JpG7AlTjdlfAEA==}
     engines: {node: '>= 10.16.0'}
 
   multimatch@5.0.0:
@@ -8705,10 +8710,10 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@koa/multer@4.0.0(koa@3.1.1)(multer@2.0.2)':
+  '@koa/multer@4.0.0(koa@3.1.1)(multer@2.1.0)':
     dependencies:
       koa: 3.1.1
-      multer: 2.0.2
+      multer: 2.1.0
 
   '@koa/router@12.0.2':
     dependencies:
@@ -12594,6 +12599,13 @@ snapshots:
       object-assign: 4.1.1
       type-is: 1.6.18
       xtend: 4.0.2
+
+  multer@2.1.0:
+    dependencies:
+      append-field: 1.0.0
+      busboy: 1.6.0
+      concat-stream: 2.0.0
+      type-is: 1.6.18
 
   multimatch@5.0.0:
     dependencies:

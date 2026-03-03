@@ -49,7 +49,7 @@
     "@types/node": "^20.19.10",
     "@vitest/coverage-v8": "2.1.9",
     "express": "^4.19.0",
-    "multer": "^2.0.2",
+    "multer": "^2.1.0",
     "supertest": "^7.0.0",
     "tsup": "^8.5.0",
     "typescript": "^5.5.0",
