@@ -15,7 +15,7 @@
     "pompelmi": "workspace:*"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0",
+    "@types/node": "^25.3.5",
     "@types/react": "^19.2.0",
     "typescript": "^5.9.2"
   }

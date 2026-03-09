@@ -28,7 +28,7 @@
     "tsup": "^8.5.0",
     "typescript": "^5.6.3",
     "vitest": "^2.1.9",
-    "@types/node": "^24.3.0"
+    "@types/node": "^25.3.5"
   },
   "type": "module",
   "files": [
