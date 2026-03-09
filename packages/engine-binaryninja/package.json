@@ -20,7 +20,7 @@
     "@vitest/coverage-v8": "2.1.9",
     "tsup": "^8.5.0",
     "typescript": "^5.0.0",
-    "vitest": "2.1.9"
+    "vitest": "4.0.18"
   },
   "peerDependencies": {
     "@pompelmi/core": "^0.26.0"

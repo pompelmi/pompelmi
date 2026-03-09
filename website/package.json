@@ -39,7 +39,7 @@
     "tailwindcss": "^3.4.17",
     "tsup": "8.5.0",
     "unist-util-visit": "^5.0.0",
-    "vitest": "2.1.9",
+    "vitest": "4.0.18",
     "yazl": "^3.3.1"
   }
 }
