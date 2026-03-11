@@ -5,7 +5,7 @@ const BASE = 'https://pompelmi.github.io/pompelmi';
 const TITLE = 'Pompelmi — File upload malware scanning for Node.js (Express, Koa, Next.js) + YARA';
 const DESC =
   'Scan and block malicious file uploads in Node.js. Drop-in adapters for Express, Koa, and Next.js. ZIP deep-inspection, MIME & size policies, optional YARA rules.';
-const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (keep under ~200 KB)
+const OG_IMAGE = `${BASE}/og.png`;
 ---
 
 <html lang="en">
@@ -18,7 +18,7 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
     <meta name="robots" content="index,follow" />
     <meta name="keywords" content="Node.js, Express, Koa, Next.js, file upload, malware scanning, YARA, ZIP bomb, MIME type, security, middleware" />
     <meta name="author" content="Pompelmi" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#1d4ed8" />
     <link rel="alternate" hreflang="en" href={BASE + '/'} />
     <link rel="alternate" hreflang="x-default" href={BASE + '/'} />
     <meta property="og:site_name" content="Pompelmi" />
@@ -26,8 +26,6 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta property="og:image:alt" content="Pompelmi — Node.js file upload malware scanning" />
-
-    <!-- Open Graph / Twitter -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content={BASE + '/'} />
     <meta property="og:title" content={TITLE} />
@@ -38,10 +36,7 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
     <meta name="twitter:description" content={DESC} />
     <meta name="twitter:image" content={OG_IMAGE} />
     <link rel="icon" href="/pompelmi/favicon.svg" />
-
     <script defer data-domain="pompelmi.github.io" src="https://plausible.io/js/script.js"></script>
-
-    <!-- Structured data: Organization + SoftwareApplication + FAQ -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
@@ -50,31 +45,16 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
             "@type": "Organization",
             "name": "Pompelmi",
             "url": "https://github.com/pompelmi/pompelmi",
-            "sameAs": [
-              "https://github.com/pompelmi/pompelmi"
-            ]
+            "sameAs": ["https://github.com/pompelmi/pompelmi"]
           },
           {
             "@type": "SoftwareSourceCode",
             "name": "Pompelmi",
-            "description": "Scan and block malicious file uploads in Node.js. Drop-in adapters for Express, Koa, and Next.js. ZIP deep-inspection, MIME & size policies, optional YARA rules.",
+            "description": "Scan and block malicious file uploads in Node.js.",
             "programmingLanguage": ["TypeScript", "JavaScript"],
             "runtimePlatform": "Node.js",
             "codeRepository": "https://github.com/pompelmi/pompelmi",
-            "license": "https://opensource.org/licenses/MIT",
-            "keywords": [
-              "node.js",
-              "express",
-              "koa",
-              "next.js",
-              "file upload",
-              "malware scanning",
-              "yara",
-              "zip bomb",
-              "mime type",
-              "security",
-              "middleware"
-            ]
+            "license": "https://opensource.org/licenses/MIT"
           },
           {
             "@type": "FAQPage",
@@ -82,34 +62,22 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
               {
                 "@type": "Question",
                 "name": "Does Pompelmi support YARA rules?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes. You can plug in your own YARA rules for advanced detections alongside built-in policies."
-                }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. You can plug in your own YARA rules for advanced detections alongside built-in policies." }
               },
               {
                 "@type": "Question",
                 "name": "Can it inspect ZIP archives and prevent ZIP bombs?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth."
-                }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth." }
               },
               {
                 "@type": "Question",
                 "name": "Which frameworks are supported?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Express and Koa middleware, a Next.js App Router handler, and more adapters planned."
-                }
+                "acceptedAnswer": { "@type": "Answer", "text": "Express and Koa middleware, a Next.js App Router handler, and more adapters planned." }
               },
               {
                 "@type": "Question",
                 "name": "Is commercial support available?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes. Limited commercial support is available on a private, asynchronous, best-effort basis from the maintainer. Support is in writing only and may include integration assistance, configuration review, prioritized troubleshooting, and upload security guidance. Contact: pompelmideveloper@yahoo.com"
-                }
+                "acceptedAnswer": { "@type": "Answer", "text": "Yes. Limited commercial support is available on a private, async, best-effort basis. Email pompelmideveloper@yahoo.com." }
               }
             ]
           }
@@ -118,21 +86,28 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
     </script>
   </head>
 
-  <body class="antialiased bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/30 min-h-screen">
+  <body class="antialiased bg-gradient-to-br from-slate-50 via-blue-50/40 to-sky-50/40 min-h-screen">
     <!-- Animated background blobs -->
-    <div class="fixed inset-0 overflow-hidden pointer-events-none opacity-30">
-      <div class="absolute -top-40 -right-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 0s;"></div>
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 2s;"></div>
-      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
+    <div class="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+      <div class="absolute -top-40 -right-40 w-96 h-96 bg-blue-400 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 0s;"></div>
+      <div class="absolute -bottom-40 -left-40 w-96 h-96 bg-sky-400 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 2s;"></div>
+      <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl animate-float" style="animation-delay: 4s;"></div>
     </div>
 
+    <!-- NAV -->
     <nav class="glass sticky top-0 z-50 shadow-lg">
-      <div class="mx-auto max-w-6xl px-6 py-5 flex justify-between items-center">
+      <div class="mx-auto max-w-6xl px-6 py-4 flex justify-between items-center">
         <a href="/pompelmi/" class="text-2xl font-bold text-gradient">Pompelmi</a>
-        <div class="flex gap-8 text-sm font-semibold">
-          <a href="/pompelmi/getting-started/" class="hover:text-blue-600 transition-colors duration-200 hover:scale-105 transform">Docs</a>
-          <a href="/pompelmi/blog/" class="hover:text-blue-600 transition-colors duration-200 hover:scale-105 transform">Blog</a>
-          <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="hover:text-blue-600 transition-colors duration-200 hover:scale-105 transform flex items-center gap-2">
+        <div class="flex gap-6 text-sm font-semibold items-center">
+          <a href="/pompelmi/getting-started/" class="hover:text-blue-600 transition-colors duration-200">Docs</a>
+          <a href="/pompelmi/blog/" class="hover:text-blue-600 transition-colors duration-200">Blog</a>
+          <a href="/pompelmi/support/" class="inline-flex items-center gap-1.5 bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold hover:bg-blue-700 transition-colors duration-200 shadow-md">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            Support
+          </a>
+          <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="hover:text-blue-600 transition-colors duration-200 flex items-center gap-1.5">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
             </svg>
@@ -142,23 +117,40 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
       </div>
     </nav>
 
-    <header class="relative mx-auto max-w-6xl px-6 py-20 md:py-32">
+    <!-- HERO -->
+    <header class="relative mx-auto max-w-6xl px-6 py-20 md:py-28">
       <div class="text-center relative z-10">
-        <div class="inline-block mb-6 px-4 py-2 rounded-full glass text-sm font-semibold text-blue-600">
-          ✨ Secure File Uploads Made Simple
+        <div class="inline-block mb-6 px-4 py-2 rounded-full glass text-sm font-semibold text-blue-600 border border-blue-200">
+          ✨ Secure File Uploads for Node.js
         </div>
-        <h1 class="text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-8">
+        <h1 class="text-6xl md:text-7xl lg:text-8xl font-extrabold tracking-tight mb-6">
           <span class="block text-gradient animate-glow">Pompelmi</span>
           <span class="block text-4xl md:text-5xl lg:text-6xl mt-4 text-gray-800">File Upload Security</span>
         </h1>
-        <p class="mt-8 text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto leading-relaxed font-light">
+        <p class="mt-6 text-xl md:text-2xl text-gray-600 max-w-4xl mx-auto leading-relaxed font-light">
           {DESC}
         </p>
 
-        <div class="mt-12 flex flex-wrap justify-center items-center gap-6">
+        <!-- install snippet -->
+        <div class="mt-8 inline-flex items-center gap-3 glass rounded-xl px-6 py-3 border border-blue-100 font-mono text-sm text-gray-700">
+          <span class="text-blue-400 select-none">$</span>
+          <span>npm install pompelmi</span>
+          <button
+            onclick="navigator.clipboard.writeText('npm install pompelmi')"
+            class="ml-2 text-blue-400 hover:text-blue-600 transition-colors"
+            title="Copy"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- CTA buttons -->
+        <div class="mt-8 flex flex-wrap justify-center items-center gap-4">
           <a
             href="https://github.com/pompelmi/pompelmi?utm_source=site&utm_medium=header_cta&utm_campaign=stars"
-            class="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 px-8 py-4 text-white text-lg font-bold shadow-2xl hover:shadow-3xl transition-all transform hover:scale-110 animate-glow"
+            class="group inline-flex items-center gap-3 rounded-xl bg-gradient-to-r from-blue-600 to-sky-500 px-8 py-4 text-white text-lg font-bold shadow-xl hover:shadow-2xl transition-all transform hover:scale-105 animate-glow"
             aria-label="Star Pompelmi on GitHub"
             rel="noopener noreferrer"
             target="_blank"
@@ -170,48 +162,87 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
           </a>
           <a
             href="/pompelmi/getting-started/"
-            class="inline-flex items-center gap-2 rounded-xl glass px-8 py-4 text-lg font-bold hover:shadow-xl transition-all transform hover:scale-105 border-2 border-transparent hover:border-blue-500"
+            class="inline-flex items-center gap-2 rounded-xl glass px-8 py-4 text-lg font-bold hover:shadow-xl transition-all transform hover:scale-105 border-2 border-blue-200 hover:border-blue-500 text-blue-700"
           >
             Get Started
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
             </svg>
           </a>
+          <a
+            href="/pompelmi/support/"
+            class="inline-flex items-center gap-2 rounded-xl px-8 py-4 text-lg font-bold border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white transition-all transform hover:scale-105"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            Commercial Support
+          </a>
         </div>
 
-        <div class="mt-16 flex flex-wrap justify-center gap-12 text-sm text-gray-700">
-          <div class="flex items-center gap-3 group">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-emerald-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+        <!-- Badges strip -->
+        <div class="mt-10 flex flex-wrap justify-center gap-3">
+          <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" aria-label="GitHub stars">
+            <img src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=for-the-badge&logo=github&color=1d4ed8&labelColor=1e3a5f" alt="GitHub stars" loading="lazy" />
+          </a>
+          <a href="https://www.npmjs.com/package/pompelmi" target="_blank" rel="noopener" aria-label="npm version">
+            <img src="https://img.shields.io/npm/v/pompelmi?style=for-the-badge&logo=npm&color=0369a1&labelColor=0c4a6e" alt="npm version" loading="lazy" />
+          </a>
+          <a href="https://www.npmjs.com/package/pompelmi" target="_blank" rel="noopener" aria-label="npm downloads">
+            <img src="https://img.shields.io/npm/dm/pompelmi?style=for-the-badge&logo=npm&color=0284c7&labelColor=0c4a6e&label=downloads%2Fmonth" alt="npm downloads" loading="lazy" />
+          </a>
+          <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE" target="_blank" rel="noopener" aria-label="License">
+            <img src="https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge&color=1d4ed8&labelColor=1e3a5f" alt="MIT License" loading="lazy" />
+          </a>
+          <a href="https://github.com/pompelmi/pompelmi/actions" target="_blank" rel="noopener" aria-label="Build status">
+            <img src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?style=for-the-badge&logo=github-actions&color=0284c7&labelColor=0c4a6e&label=CI" alt="CI status" loading="lazy" />
+          </a>
+        </div>
+
+        <!-- Feature pills -->
+        <div class="mt-12 flex flex-wrap justify-center gap-8 text-sm text-gray-700">
+          <div class="flex items-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
             </div>
             <span class="font-semibold">ZIP Bomb Protection</span>
           </div>
-          <div class="flex items-center gap-3 group">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
             </div>
             <span class="font-semibold">YARA Integration</span>
           </div>
-          <div class="flex items-center gap-3 group">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-              <svg class="w-7 h-7 text-white" fill="currentColor" viewBox="0 0 20 20">
+          <div class="flex items-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
               </svg>
             </div>
             <span class="font-semibold">Framework Adapters</span>
+          </div>
+          <div class="flex items-center gap-2 group">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+              <svg class="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <span class="font-semibold">TypeScript Native</span>
           </div>
         </div>
       </div>
     </header>
 
     <main class="relative mx-auto max-w-6xl px-6 pb-20">
-      <section class="glass rounded-3xl shadow-2xl p-10 md:p-12 border-2 border-white/50">
+
+      <!-- DEMO -->
+      <section class="glass rounded-3xl shadow-2xl p-10 md:p-12 border-2 border-blue-100">
         <div class="flex items-center gap-3 mb-6">
-          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+          <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-sky-500 flex items-center justify-center">
             <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
             </svg>
@@ -224,15 +255,40 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
         <DemoUpload client:load />
       </section>
 
+      <!-- FRAMEWORK LOGOS -->
       <section class="mt-24">
         <div class="text-center mb-12">
           <h2 class="text-5xl font-bold text-gradient mb-4">Framework Support</h2>
           <p class="text-xl text-gray-600 max-w-2xl mx-auto">Drop-in adapters for your favorite Node.js frameworks</p>
         </div>
         <div class="grid gap-8 md:grid-cols-3">
+
+          <!-- Next.js -->
           <a href="/pompelmi/how-to/nextjs/" class="group glass rounded-3xl p-8 card-hover border-2 border-transparent hover:border-blue-400">
-            <div class="text-6xl mb-6 transform group-hover:scale-110 transition-transform">▲</div>
-            <h3 class="text-2xl font-bold mb-3 text-gradient">Next.js</h3>
+            <div class="w-16 h-16 mb-6 rounded-2xl bg-black flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <!-- Next.js logo -->
+              <svg class="w-9 h-9 text-white fill-white" viewBox="0 0 180 180">
+                <mask id="nxt-mask" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="180" height="180">
+                  <circle cx="90" cy="90" r="90" fill="black"/>
+                </mask>
+                <g mask="url(#nxt-mask)">
+                  <circle cx="90" cy="90" r="90" fill="black"/>
+                  <path d="M149.508 157.52L69.142 54H54V125.97H66.1755V69.3836L139.999 164.845C143.333 162.614 146.509 160.165 149.508 157.52Z" fill="url(#nxt-grad)"/>
+                  <rect x="115" y="54" width="12" height="72" fill="url(#nxt-grad2)"/>
+                </g>
+                <defs>
+                  <linearGradient id="nxt-grad" x1="109" y1="116.5" x2="144.5" y2="160.5" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0"/>
+                  </linearGradient>
+                  <linearGradient id="nxt-grad2" x1="121" y1="54" x2="120.799" y2="106.875" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="white"/>
+                    <stop offset="1" stop-color="white" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors">Next.js</h3>
             <p class="text-gray-600 leading-relaxed">Secure file uploads in Next.js App Router with streaming support and server actions.</p>
             <div class="mt-6 inline-flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-4 transition-all">
               Learn more
@@ -241,22 +297,36 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
               </svg>
             </div>
           </a>
-          <a href="/pompelmi/how-to/express/" class="group glass rounded-3xl p-8 card-hover border-2 border-transparent hover:border-purple-400">
-            <div class="text-6xl mb-6 transform group-hover:scale-110 transition-transform">⚡</div>
-            <h3 class="text-2xl font-bold mb-3 text-gradient">Express</h3>
+
+          <!-- Express -->
+          <a href="/pompelmi/how-to/express/" class="group glass rounded-3xl p-8 card-hover border-2 border-transparent hover:border-blue-500">
+            <div class="w-16 h-16 mb-6 rounded-2xl bg-gray-900 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <!-- Express wordmark "e" -->
+              <svg class="w-9 h-9" viewBox="0 0 256 256" fill="none">
+                <text x="28" y="190" font-family="Arial, sans-serif" font-size="200" font-weight="bold" fill="white">e</text>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors">Express</h3>
             <p class="text-gray-600 leading-relaxed">Drop-in middleware for Express APIs with seamless Multer integration.</p>
-            <div class="mt-6 inline-flex items-center gap-2 text-purple-600 font-semibold group-hover:gap-4 transition-all">
+            <div class="mt-6 inline-flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-4 transition-all">
               Learn more
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
               </svg>
             </div>
           </a>
-          <a href="/pompelmi/how-to/koa/" class="group glass rounded-3xl p-8 card-hover border-2 border-transparent hover:border-pink-400">
-            <div class="text-6xl mb-6 transform group-hover:scale-110 transition-transform">🌿</div>
-            <h3 class="text-2xl font-bold mb-3 text-gradient">Koa</h3>
+
+          <!-- Koa -->
+          <a href="/pompelmi/how-to/koa/" class="group glass rounded-3xl p-8 card-hover border-2 border-transparent hover:border-sky-400">
+            <div class="w-16 h-16 mb-6 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+              <!-- Koa leaf icon -->
+              <svg class="w-9 h-9 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-5 8Z"/>
+              </svg>
+            </div>
+            <h3 class="text-2xl font-bold mb-3 text-gray-900 group-hover:text-blue-600 transition-colors">Koa</h3>
             <p class="text-gray-600 leading-relaxed">Lightweight middleware for Koa with modern async/await patterns.</p>
-            <div class="mt-6 inline-flex items-center gap-2 text-pink-600 font-semibold group-hover:gap-4 transition-all">
+            <div class="mt-6 inline-flex items-center gap-2 text-blue-600 font-semibold group-hover:gap-4 transition-all">
               Learn more
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
@@ -264,178 +334,291 @@ const OG_IMAGE = `${BASE}/og.png`; // 1200x630 image at website/public/og.png (k
             </div>
           </a>
         </div>
+
+        <!-- Node.js + npm logo row -->
+        <div class="mt-10 flex flex-wrap justify-center items-center gap-6 text-sm text-gray-500">
+          <span class="font-medium text-gray-400 uppercase tracking-widest text-xs">Powered by</span>
+          <!-- Node.js -->
+          <div class="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <svg class="w-6 h-6" viewBox="0 0 256 289" fill="none">
+              <path fill="#539E43" d="M128 288.464c-3.975 0-7.685-1.06-11.13-2.915L81.398 264.78c-5.303-2.915-2.65-3.975-1.06-4.505 8.215-2.915 9.805-3.445 18.555-8.48.795-.53 1.855-.265 2.65.265l28.09 16.6c1.06.53 2.385.53 3.18 0l109.555-63.21c1.06-.53 1.59-1.59 1.59-2.915V85.88c0-1.19-.53-2.25-1.59-2.915L115.77 19.82c-1.06-.53-2.385-.53-3.18 0L3.035 83.03c-1.06.53-1.59 1.72-1.59 2.915v126.42c0 1.19.53 2.25 1.59 2.915l30.09 17.395c16.335 8.215 26.4-1.455 26.4-11.13V97.54c0-1.59 1.19-2.915 2.915-2.915h12.455c1.59 0 2.915 1.19 2.915 2.915v124.035c0 21.845-11.925 34.3-32.68 34.3-6.36 0-11.395 0-25.34-6.89L4.36 233.29C1.71 231.7 0 228.785 0 215.8V89.38c0-2.915 1.59-5.83 4.24-7.42L119.15 14.52c2.65-1.59 6.095-1.59 8.745 0l114.91 57.44c2.65 1.59 4.24 4.505 4.24 7.42v126.42c0 2.915-1.59 5.83-4.24 7.42L136.745 286.08c-2.65 1.06-5.83 1.325-8.745 1.325"/>
+            </svg>
+            <span class="font-semibold text-gray-600">Node.js 18+</span>
+          </div>
+          <!-- npm -->
+          <div class="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <svg class="w-6 h-6" viewBox="0 0 780 250" fill="#CB3837">
+              <path d="M240 250V0H0v250h107.5V62.5h45v125h45V62.5h45V250zm160-250H285v250h107.5v-62.5H400V0zm-45 125h-22.5V62.5H355V125zM560 0H435v250h125c69 0 125-56 125-125S629 0 560 0zm0 187.5h-17.5V62.5H560c34.5 0 62.5 28 62.5 62.5s-28 62.5-62.5 62.5z"/>
+            </svg>
+            <span class="font-semibold text-gray-600">Available on npm</span>
+          </div>
+          <!-- TypeScript -->
+          <div class="flex items-center gap-2 opacity-70 hover:opacity-100 transition-opacity">
+            <svg class="w-6 h-6" viewBox="0 0 400 400" fill="none">
+              <rect width="400" height="400" rx="50" fill="#3178C6"/>
+              <path d="M87.7 242.6v28.5c4.6 2.4 10.1 4.2 16.4 5.4 6.3 1.2 12.9 1.8 19.8 1.8 6.7 0 13.1-.6 19.1-1.9 6-1.3 11.3-3.4 15.8-6.4 4.5-3 8.1-6.9 10.7-11.8 2.6-4.9 3.9-10.9 3.9-18.1 0-5.2-.8-9.8-2.3-13.7-1.5-3.9-3.8-7.5-6.8-10.6-3-3.1-6.6-5.9-11-8.4-4.3-2.5-9.3-4.9-14.8-7.2-4.1-1.7-7.7-3.3-10.8-4.9-3-1.6-5.6-3.3-7.6-5.1-2-1.8-3.5-3.8-4.5-6-1-2.2-1.5-4.7-1.5-7.5 0-2.7.5-5.1 1.4-7.2.9-2.1 2.3-3.9 4.2-5.4 1.8-1.5 4-2.6 6.6-3.4 2.6-.8 5.5-1.2 8.7-1.2 2.3 0 4.7.2 7.2.5 2.5.3 5.1.9 7.6 1.7 2.6.8 5.1 1.8 7.4 3.1 2.4 1.3 4.5 2.8 6.4 4.6v-26.7c-4.2-1.6-8.8-2.8-13.7-3.6-4.9-.8-10.4-1.2-16.4-1.2-6.6 0-12.9.7-18.9 2.2-6 1.5-11.3 3.7-15.9 6.8-4.5 3.1-8.1 7-10.8 11.8-2.6 4.8-4 10.5-4 17.1 0 8.4 2.4 15.6 7.2 21.5 4.8 5.9 12 11 21.5 15.4 4.3 1.9 8.3 3.7 11.9 5.5 3.6 1.8 6.7 3.7 9.2 5.6 2.5 2 4.5 4.1 5.9 6.5 1.4 2.4 2.1 5.1 2.1 8.2 0 2.6-.5 5-1.4 7.1-.9 2.1-2.3 3.9-4.2 5.4-1.9 1.5-4.2 2.6-7 3.4-2.8.8-6 1.2-9.7 1.2-6.3 0-12.6-1.1-18.8-3.4-6.2-2.1-11.9-5.4-17-9.7zm109.9-124.5h-45.8v21.5h45.8v149h25.5v-149h45.8v-21.5h-71.3z" fill="white"/>
+            </svg>
+            <span class="font-semibold text-gray-600">TypeScript</span>
+          </div>
+        </div>
       </section>
 
-      <section class="mt-24 relative overflow-hidden rounded-3xl bg-gradient-animated p-1">
+      <!-- COMMERCIAL SUPPORT BANNER -->
+      <section class="mt-24 relative overflow-hidden rounded-3xl bg-gradient-animated p-[2px]">
+        <div class="rounded-3xl bg-gradient-to-br from-blue-700 via-blue-600 to-sky-500 p-10 md:p-14 text-white relative overflow-hidden">
+          <!-- decorative circles -->
+          <div class="absolute -top-10 -right-10 w-48 h-48 bg-white/10 rounded-full"></div>
+          <div class="absolute -bottom-16 -left-10 w-64 h-64 bg-white/5 rounded-full"></div>
+
+          <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="text-center md:text-left max-w-xl">
+              <div class="inline-flex items-center gap-2 bg-white/20 rounded-full px-4 py-1.5 text-sm font-semibold mb-4">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Maintainer-led support
+              </div>
+              <h2 class="text-4xl md:text-5xl font-extrabold mb-4 leading-tight">Commercial Support Available</h2>
+              <p class="text-blue-100 text-lg leading-relaxed">
+                Need private integration help, a configuration review, or prioritized troubleshooting?
+                Get direct, async, written support from the maintainer.
+              </p>
+              <ul class="mt-5 space-y-2 text-blue-100 text-sm">
+                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-sky-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Integration assistance &amp; configuration review</li>
+                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-sky-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Prioritized troubleshooting</li>
+                <li class="flex items-center gap-2"><svg class="w-4 h-4 text-sky-300 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>Private, written communication only</li>
+              </ul>
+            </div>
+            <div class="flex flex-col items-center gap-4 shrink-0">
+              <a
+                href="/pompelmi/support/"
+                class="inline-flex items-center gap-3 bg-white text-blue-700 font-extrabold text-lg px-10 py-5 rounded-2xl shadow-2xl hover:shadow-3xl transition-all transform hover:scale-105 hover:bg-blue-50"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                </svg>
+                View Support Options
+              </a>
+              <a href="mailto:pompelmideveloper@yahoo.com" class="text-blue-200 hover:text-white text-sm font-medium underline underline-offset-2 transition-colors">
+                pompelmideveloper@yahoo.com
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMMUNITY / BADGES -->
+      <section class="mt-24">
+        <div class="text-center mb-10">
+          <h2 class="text-4xl font-bold text-gradient mb-3">Open Source & Community</h2>
+          <p class="text-lg text-gray-600 max-w-xl mx-auto">Free for everyone. Transparent, MIT-licensed, and actively maintained.</p>
+        </div>
+        <div class="grid gap-6 md:grid-cols-3">
+          <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener"
+             class="group glass rounded-2xl p-7 card-hover border-2 border-transparent hover:border-blue-300 text-center">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
+                <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">GitHub Repository</h3>
+            <p class="text-gray-600 text-sm leading-relaxed">Star the project, report bugs, or contribute. All development happens in the open.</p>
+            <div class="mt-4">
+              <img src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social" alt="GitHub stars" loading="lazy" class="mx-auto" />
+            </div>
+          </a>
+
+          <a href="https://github.com/pompelmi/pompelmi/discussions" target="_blank" rel="noopener"
+             class="group glass rounded-2xl p-7 card-hover border-2 border-transparent hover:border-sky-300 text-center">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">Discussions</h3>
+            <p class="text-gray-600 text-sm leading-relaxed">Ask questions, share ideas, and get community support. Free and open to everyone.</p>
+            <div class="mt-4 inline-flex items-center gap-1.5 text-sky-600 font-semibold text-sm group-hover:gap-2.5 transition-all">
+              Join the discussion
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </div>
+          </a>
+
+          <a href="https://www.npmjs.com/package/pompelmi" target="_blank" rel="noopener"
+             class="group glass rounded-2xl p-7 card-hover border-2 border-transparent hover:border-blue-300 text-center">
+            <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-red-500 to-red-700 flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
+              <svg class="w-8 h-8" viewBox="0 0 780 250" fill="white">
+                <path d="M240 250V0H0v250h107.5V62.5h45v125h45V62.5h45V250zm160-250H285v250h107.5v-62.5H400V0zm-45 125h-22.5V62.5H355V125zM560 0H435v250h125c69 0 125-56 125-125S629 0 560 0zm0 187.5h-17.5V62.5H560c34.5 0 62.5 28 62.5 62.5s-28 62.5-62.5 62.5z"/>
+              </svg>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-800">npm Package</h3>
+            <p class="text-gray-600 text-sm leading-relaxed">Published to npm. Install with a single command and start scanning uploads immediately.</p>
+            <div class="mt-4">
+              <img src="https://img.shields.io/npm/dm/pompelmi?style=social&logo=npm&label=downloads" alt="npm downloads" loading="lazy" class="mx-auto" />
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- BLOG -->
+      <section class="mt-24 relative overflow-hidden rounded-3xl bg-gradient-animated p-[2px]">
         <div class="glass rounded-3xl p-10 md:p-12 bg-white">
           <div class="text-center mb-12">
             <h2 class="text-5xl font-bold text-gradient mb-4">Latest from the Blog</h2>
-            <p class="text-xl text-gray-600">Learn about security best practices and implementation guides</p>
+            <p class="text-xl text-gray-600">Security best practices and implementation guides</p>
           </div>
           <div class="grid gap-8 md:grid-cols-3">
-            <a href="/pompelmi/blog/introducing-pompelmi/" class="group glass rounded-2xl p-7 card-hover">
-              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center mb-5">
+            <a href="/pompelmi/blog/introducing-pompelmi/" class="group glass rounded-2xl p-7 card-hover border hover:border-blue-300">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
                 </svg>
               </div>
               <h3 class="font-bold mb-3 text-xl group-hover:text-blue-600 transition-colors">Introducing Pompelmi</h3>
-              <p class="text-gray-600 mb-4 leading-relaxed">Learn about secure file upload scanning for Node.js applications and why it matters.</p>
+              <p class="text-gray-600 mb-4 leading-relaxed text-sm">Learn about secure file upload scanning for Node.js applications and why it matters.</p>
               <span class="text-sm text-blue-600 font-bold inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-                Read more
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
+                Read more <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
               </span>
             </a>
-            <a href="/pompelmi/blog/preventing-zip-bombs/" class="group glass rounded-2xl p-7 card-hover">
-              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-purple-500 to-purple-600 flex items-center justify-center mb-5">
+            <a href="/pompelmi/blog/preventing-zip-bombs/" class="group glass rounded-2xl p-7 card-hover border hover:border-sky-300">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
                 </svg>
               </div>
-              <h3 class="font-bold mb-3 text-xl group-hover:text-purple-600 transition-colors">Preventing ZIP Bombs</h3>
-              <p class="text-gray-600 mb-4 leading-relaxed">Deep dive into ZIP bomb protection mechanisms and decompression limits.</p>
-              <span class="text-sm text-purple-600 font-bold inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-                Read more
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
+              <h3 class="font-bold mb-3 text-xl group-hover:text-sky-600 transition-colors">Preventing ZIP Bombs</h3>
+              <p class="text-gray-600 mb-4 leading-relaxed text-sm">Deep dive into ZIP bomb protection mechanisms and decompression limits.</p>
+              <span class="text-sm text-sky-600 font-bold inline-flex items-center gap-2 group-hover:gap-3 transition-all">
+                Read more <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
               </span>
             </a>
-            <a href="/pompelmi/blog/yara-integration-guide/" class="group glass rounded-2xl p-7 card-hover">
-              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 flex items-center justify-center mb-5">
+            <a href="/pompelmi/blog/yara-integration-guide/" class="group glass rounded-2xl p-7 card-hover border hover:border-blue-300">
+              <div class="w-14 h-14 rounded-xl bg-gradient-to-br from-blue-600 to-sky-400 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
                 </svg>
               </div>
-              <h3 class="font-bold mb-3 text-xl group-hover:text-pink-600 transition-colors">YARA Integration</h3>
-              <p class="text-gray-600 mb-4 leading-relaxed">Advanced malware detection with custom YARA rules and pattern matching.</p>
-              <span class="text-sm text-pink-600 font-bold inline-flex items-center gap-2 group-hover:gap-3 transition-all">
-                Read more
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
+              <h3 class="font-bold mb-3 text-xl group-hover:text-blue-600 transition-colors">YARA Integration</h3>
+              <p class="text-gray-600 mb-4 leading-relaxed text-sm">Advanced malware detection with custom YARA rules and pattern matching.</p>
+              <span class="text-sm text-blue-600 font-bold inline-flex items-center gap-2 group-hover:gap-3 transition-all">
+                Read more <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
               </span>
             </a>
           </div>
           <div class="text-center mt-10">
             <a href="/pompelmi/blog/" class="inline-flex items-center gap-2 text-lg text-blue-600 font-bold hover:gap-4 transition-all">
-              View all posts
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-              </svg>
+              View all posts <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </a>
           </div>
         </div>
       </section>
 
-      <section class="mt-24 border-t pt-16" aria-labelledby="faq-heading">
+      <!-- FAQ -->
+      <section class="mt-24 border-t border-blue-100 pt-16" aria-labelledby="faq-heading">
         <div class="text-center mb-12">
           <h2 id="faq-heading" class="text-5xl font-bold text-gradient mb-4">Frequently Asked Questions</h2>
           <p class="text-xl text-gray-600">Everything you need to know about Pompelmi</p>
         </div>
         <div class="max-w-3xl mx-auto space-y-5">
-          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-blue-400">
+          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-blue-300">
             <summary class="font-bold text-lg cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-3">
               <svg class="w-6 h-6 text-blue-600 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
               Does Pompelmi support YARA rules?
             </summary>
-            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-blue-500">Yes. You can plug in your own YARA rules for advanced malware detections alongside built-in policies. Perfect for custom threat detection and enterprise security requirements.</p>
+            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-blue-400">Yes. You can plug in your own YARA rules for advanced malware detections alongside built-in policies. Perfect for custom threat detection and enterprise security requirements.</p>
           </details>
-          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-purple-400">
-            <summary class="font-bold text-lg cursor-pointer hover:text-purple-600 transition-colors flex items-center gap-3">
-              <svg class="w-6 h-6 text-purple-600 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-sky-300">
+            <summary class="font-bold text-lg cursor-pointer hover:text-sky-600 transition-colors flex items-center gap-3">
+              <svg class="w-6 h-6 text-sky-500 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
               Can it inspect ZIP archives and prevent ZIP bombs?
             </summary>
-            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-purple-500">Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth to prevent resource exhaustion attacks. Full protection against decompression bombs.</p>
+            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-sky-400">Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth to prevent resource exhaustion attacks.</p>
           </details>
-          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-pink-400">
-            <summary class="font-bold text-lg cursor-pointer hover:text-pink-600 transition-colors flex items-center gap-3">
-              <svg class="w-6 h-6 text-pink-600 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-              </svg>
-              Which frameworks are supported?
-            </summary>
-            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-pink-500">Express and Koa middleware, Next.js App Router handler, and more adapters planned. Works with any Node.js 18+ application. Drop-in integration takes minutes.</p>
-          </details>
-          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-blue-400">
+          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-blue-300">
             <summary class="font-bold text-lg cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-3">
               <svg class="w-6 h-6 text-blue-600 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
               </svg>
+              Which frameworks are supported?
+            </summary>
+            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-blue-400">Express and Koa middleware, Next.js App Router handler, and Nuxt Nitro — Node.js 18+. Drop-in integration takes minutes.</p>
+          </details>
+          <details class="glass rounded-2xl p-6 group card-hover border-2 border-transparent hover:border-blue-400">
+            <summary class="font-bold text-lg cursor-pointer hover:text-blue-700 transition-colors flex items-center gap-3">
+              <svg class="w-6 h-6 text-blue-700 group-open:rotate-90 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
               Is commercial support available?
             </summary>
-            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-blue-500">
-              Yes. Limited commercial support is available on a private, asynchronous, best-effort basis from the maintainer.
-              Support is in writing only and may include integration assistance, configuration review, prioritized troubleshooting, and upload security guidance.
-              To inquire, email <a href="mailto:pompelmideveloper@yahoo.com" class="text-blue-600 hover:underline font-semibold">pompelmideveloper@yahoo.com</a>.
-              See the <a href="/pompelmi/reference/support/" class="text-blue-600 hover:underline font-semibold">support options page</a> for details and an inquiry template.
+            <p class="text-gray-600 mt-5 pl-9 leading-relaxed border-l-4 border-blue-600">
+              Yes. Limited commercial support is available on a private, async, best-effort basis from the maintainer — integration help, configuration review, and prioritized troubleshooting.
+              Email <a href="mailto:pompelmideveloper@yahoo.com" class="text-blue-600 hover:underline font-semibold">pompelmideveloper@yahoo.com</a> or see the
+              <a href="/pompelmi/support/" class="text-blue-600 hover:underline font-semibold">support page</a> for the full inquiry template.
             </p>
           </details>
         </div>
       </section>
-
-      <section class="mt-16 mb-4">
-        <div class="glass rounded-2xl p-8 md:p-10 border border-gray-200 max-w-3xl mx-auto text-center">
-          <h2 class="text-2xl font-bold mb-3 text-gray-800">Need Private Support?</h2>
-          <p class="text-gray-600 leading-relaxed mb-4">
-            Limited commercial support is available on a private, asynchronous, best-effort basis from the maintainer.
-            Support is in writing only and may include integration assistance, configuration review, prioritized troubleshooting, and upload security guidance.
-          </p>
-          <a href="/pompelmi/reference/support/" class="inline-flex items-center gap-2 text-blue-600 font-semibold hover:underline">
-            View support options and inquiry template
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-            </svg>
-          </a>
-        </div>
-      </section>
     </main>
 
-    <footer class="mt-32 glass border-t-2 border-white/50">
+    <!-- FOOTER -->
+    <footer class="mt-24 glass border-t-2 border-blue-100">
       <div class="mx-auto max-w-6xl px-6 py-16">
         <div class="grid gap-12 md:grid-cols-4">
           <div>
             <h3 class="font-bold text-2xl text-gradient mb-4">Pompelmi</h3>
-            <p class="text-gray-600 leading-relaxed">Secure file upload scanning for Node.js applications with enterprise-grade protection.</p>
+            <p class="text-gray-600 leading-relaxed text-sm">Secure file upload scanning for Node.js applications with enterprise-grade protection.</p>
           </div>
           <div>
-            <h4 class="font-bold text-lg mb-4">Documentation</h4>
-            <ul class="space-y-3">
+            <h4 class="font-bold text-base mb-4 text-gray-800">Documentation</h4>
+            <ul class="space-y-3 text-sm">
               <li><a href="/pompelmi/getting-started/" class="text-gray-600 hover:text-blue-600 transition-colors">Getting Started</a></li>
               <li><a href="/pompelmi/how-to/express/" class="text-gray-600 hover:text-blue-600 transition-colors">Express Guide</a></li>
+              <li><a href="/pompelmi/how-to/nextjs/" class="text-gray-600 hover:text-blue-600 transition-colors">Next.js Guide</a></li>
               <li><a href="/pompelmi/reference/ui-react/" class="text-gray-600 hover:text-blue-600 transition-colors">API Reference</a></li>
             </ul>
           </div>
           <div>
-            <h4 class="font-bold text-lg mb-4">Resources</h4>
-            <ul class="space-y-3">
+            <h4 class="font-bold text-base mb-4 text-gray-800">Resources</h4>
+            <ul class="space-y-3 text-sm">
               <li><a href="/pompelmi/blog/" class="text-gray-600 hover:text-blue-600 transition-colors">Blog</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi" class="text-gray-600 hover:text-blue-600 transition-colors">GitHub</a></li>
+              <li><a href="https://www.npmjs.com/package/pompelmi" class="text-gray-600 hover:text-blue-600 transition-colors">npm Package</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi/issues" class="text-gray-600 hover:text-blue-600 transition-colors">Report Issues</a></li>
             </ul>
           </div>
           <div>
-            <h4 class="font-bold text-lg mb-4">Community</h4>
-            <ul class="space-y-3">
+            <h4 class="font-bold text-base mb-4 text-gray-800">Support</h4>
+            <ul class="space-y-3 text-sm">
+              <li>
+                <a href="/pompelmi/support/" class="inline-flex items-center gap-1.5 text-blue-600 font-bold hover:text-blue-800 transition-colors">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+                  </svg>
+                  Commercial Support
+                </a>
+              </li>
               <li><a href="https://github.com/pompelmi/pompelmi/discussions" class="text-gray-600 hover:text-blue-600 transition-colors">Discussions</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi/blob/main/CONTRIBUTING.md" class="text-gray-600 hover:text-blue-600 transition-colors">Contributing</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE" class="text-gray-600 hover:text-blue-600 transition-colors">MIT License</a></li>
-              <li><a href="/pompelmi/reference/support/" class="text-gray-600 hover:text-blue-600 transition-colors">Commercial Support</a></li>
             </ul>
           </div>
         </div>
-        <div class="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row justify-between items-center gap-4">
-          <p class="text-gray-600">© 2024 Pompelmi. Released under the MIT License.</p>
-          <div class="flex gap-6">
-            <a href="https://github.com/pompelmi/pompelmi" class="text-gray-500 hover:text-blue-600 transition-colors transform hover:scale-110" aria-label="GitHub">
-              <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+        <div class="mt-12 pt-8 border-t border-blue-100 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p class="text-gray-500 text-sm">© 2024 Pompelmi. Released under the MIT License.</p>
+          <div class="flex gap-4 items-center">
+            <a href="https://github.com/pompelmi/pompelmi" class="text-gray-400 hover:text-blue-600 transition-colors" aria-label="GitHub">
+              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path fill-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clip-rule="evenodd"/>
+              </svg>
+            </a>
+            <a href="https://www.npmjs.com/package/pompelmi" class="text-gray-400 hover:text-red-500 transition-colors" aria-label="npm">
+              <svg class="w-5 h-5" viewBox="0 0 780 250" fill="currentColor">
+                <path d="M240 250V0H0v250h107.5V62.5h45v125h45V62.5h45V250zm160-250H285v250h107.5v-62.5H400V0zm-45 125h-22.5V62.5H355V125zM560 0H435v250h125c69 0 125-56 125-125S629 0 560 0zm0 187.5h-17.5V62.5H560c34.5 0 62.5 28 62.5 62.5s-28 62.5-62.5 62.5z"/>
               </svg>
             </a>
           </div>
