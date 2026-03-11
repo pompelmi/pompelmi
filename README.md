@@ -182,6 +182,7 @@ npm i pompelmi @pompelmi/express-middleware
 - [Security Notes](#-security-notes)
 - [Releases & Security](#-releases--security)
 - [Community & Recognition](#-community--recognition)
+- [Commercial Support](#-commercial-support)
 - [FAQ](#-faq)
 - [Tests & Coverage](#-tests--coverage)
 - [Contributing](#-contributing)
@@ -1082,7 +1083,7 @@ _Want to share your experience? [Open a discussion](https://github.com/pompelmi/
 - 💬 **[GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)** — Ask questions, share ideas, get community support
 - 🐛 **[Issue Tracker](https://github.com/pompelmi/pompelmi/issues)** — Report bugs, request features
 - 🔒 **[Security Policy](https://github.com/pompelmi/pompelmi/security)** — Report security vulnerabilities privately
-- 💼 **Commercial Support** — For enterprise support and consulting, contact the maintainers
+- 💼 **[Commercial Support](#-commercial-support)** — Private, async support by the maintainer for integration help, troubleshooting, and configuration review
 - 💖 **[Sponsor pompelmi](https://github.com/sponsors/pompelmi)** — Support ongoing development via GitHub Sponsors
 
 **Supported Frameworks:**
@@ -1094,6 +1095,35 @@ _Want to share your experience? [Open a discussion](https://github.com/pompelmi/
 - 🔜 Remix (planned)
 - 🔜 SvelteKit (planned)
 - 🔜 hapi (planned)
+
+---
+
+## 💼 Commercial Support
+
+Limited commercial support is available for teams using pompelmi.
+
+Support is offered on a **private, asynchronous, best-effort basis** by the maintainer and may include:
+
+- Integration assistance
+- Configuration review
+- Prioritized troubleshooting
+- Upload security guidance
+
+Support is provided **in writing only**. Live calls and real-time support are not included.
+
+**To inquire**, email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with the following details:
+
+- Framework / runtime (e.g. Express, Next.js, Koa)
+- Node.js version
+- pompelmi version
+- A short description of the issue or goal
+- Expected behavior
+- Relevant logs or errors — avoid including secrets or sensitive data in your initial message
+- Urgency
+- Whether you need integration help, troubleshooting, or a configuration review
+
+> Community support (GitHub Issues, Discussions, and public docs) remains free and open to everyone.
+> For private vulnerability disclosure, see [SECURITY.md](./SECURITY.md).
 
 ---
 
@@ -1154,8 +1184,11 @@ In the examples, the guard attaches scan data to the request context (e.g. `req.
 **Why 422 for blocked files?**  
 Using **422** to signal a policy violation keeps it distinct from transport errors; it’s a common pattern. Use the codes that best match your API guidelines.
 
-**Are ZIP bombs handled?**  
+**Are ZIP bombs handled?**
 Archives are traversed with limits to reduce archive‑bomb risk. Keep your size limits conservative and prefer `failClosed: true` in production.
+
+**Is commercial support available?**
+Yes. Limited commercial support is available on a private, asynchronous, best-effort basis from the maintainer. Support is in writing only — no live calls or real-time support. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com). See the [Commercial Support](#-commercial-support) section for full details and the inquiry template.
 
 ---
 
