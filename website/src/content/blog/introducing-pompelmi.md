@@ -41,18 +41,24 @@ npm install pompelmi
 
 For Express applications:
 
-```javascript
+```typescript
 import express from 'express';
-import { createExpressAdapter } from 'pompelmi';
+import multer from 'multer';
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import { CommonHeuristicsScanner } from 'pompelmi';
 
 const app = express();
-const scanner = createExpressAdapter({
-  maxFileSize: 10 * 1024 * 1024, // 10MB
-  allowedMimeTypes: ['image/jpeg', 'image/png'],
+const upload = multer({ storage: multer.memoryStorage() });
+
+const guard = createUploadGuard({
+  includeExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+  maxFileSizeBytes: 10 * 1024 * 1024, // 10 MB
+  failClosed: true,
+  scanner: CommonHeuristicsScanner,
 });
 
-app.post('/upload', scanner, (req, res) => {
-  res.json({ success: true });
+app.post('/upload', upload.single('file'), guard, (req, res) => {
+  res.json({ ok: true });
 });
 ```
 
@@ -72,3 +78,6 @@ Join us in making file uploads safer for everyone. Star us on [GitHub](https://g
 - [Documentation](/pompelmi/getting-started/)
 - [GitHub Repository](https://github.com/pompelmi/pompelmi)
 - [API Reference](/pompelmi/reference/ui-react/)
+- [Blog: Securing Express file uploads](/pompelmi/blog/express-file-upload-security/)
+- [Blog: Preventing ZIP bombs](/pompelmi/blog/preventing-zip-bombs/)
+- [Blog: 17 common upload security mistakes](/pompelmi/blog/common-file-upload-mistakes-nodejs/)

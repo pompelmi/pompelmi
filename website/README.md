@@ -69,6 +69,18 @@ The website uses a modern design system with:
 - **Blog** - Articles and tutorials in `src/content/blog/`
 - **Components** - Reusable UI components in `src/components/`
 
+## Optional: Blog Hero Images (Pexels)
+
+To fetch royalty-free cover images for blog posts from [Pexels](https://www.pexels.com/api/):
+
+```bash
+cp .env.example .env
+# Edit .env and set PEXELS_API_KEY=your_key_here
+node scripts/fetch-hero-images.mjs
+```
+
+Images are saved to `public/blog/<slug>.jpg`. The script is idempotent — already-downloaded images are skipped. If `PEXELS_API_KEY` is not set the script exits cleanly, so it is safe to include in CI pipelines.
+
 ## 
 The website is automatically deployed to GitHub Pages via GitHub Actions when changes are pushed to the `main` branch. See `.github/workflows/deploy-pages.yml` for the deployment configuration.
 

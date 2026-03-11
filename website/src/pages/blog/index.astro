@@ -47,7 +47,7 @@ const DESC = 'Security insights, tutorials, and updates about file upload protec
         {blogPosts.map((post) => (
           <article class="bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
             <a href={`/pompelmi/blog/${post.slug}/`}>
-              <h2 class="text-2xl font-semibold mb-2 hover:text-blue-600">
+              <h2 class="text-2xl font-semibold mb-2 hover:text-blue-600 transition-colors">
                 {post.data.title}
               </h2>
             </a>
@@ -60,15 +60,26 @@ const DESC = 'Security insights, tutorials, and updates about file upload protec
               {post.data.author && ` • ${post.data.author}`}
             </div>
             <p class="text-gray-700 mb-4">{post.data.description}</p>
-            {post.data.tags && (
-              <div class="flex flex-wrap gap-2">
-                {post.data.tags.map((tag) => (
-                  <span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              {post.data.tags && (
+                <div class="flex flex-wrap gap-2">
+                  {post.data.tags.map((tag) => (
+                    <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded font-medium">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <a
+                href={`/pompelmi/blog/${post.slug}/`}
+                class="text-sm text-blue-600 font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all shrink-0"
+              >
+                Read more
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </a>
+            </div>
           </article>
         ))}
       </div>
@@ -76,7 +87,7 @@ const DESC = 'Security insights, tutorials, and updates about file upload protec
 
     <footer class="mt-16 border-t bg-white">
       <div class="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-gray-600">
-        <p>© 2024 Pompelmi. MIT License.</p>
+        <p>© {new Date().getFullYear()} Pompelmi. MIT License.</p>
       </div>
     </footer>
   </body>

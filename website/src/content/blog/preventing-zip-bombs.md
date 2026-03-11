@@ -27,13 +27,15 @@ Pompelmi employs several strategies to detect and prevent ZIP bomb attacks:
 
 ### 1. Entry Count Limits
 
-```javascript
-{
-  maxZipEntries: 1000 // Prevent archives with excessive files
-}
-```
+Pass the `maxEntries` option to `createZipBombGuard`:
 
-Most legitimate archives contain a reasonable number of files. By setting limits, we prevent attackers from creating deeply nested structures with thousands of tiny files.
+```typescript
+import { createZipBombGuard } from 'pompelmi';
+
+const zipGuard = createZipBombGuard({
+  maxEntries: 1000, // Prevent archives with excessive files
+});
+```
 
 ### 2. Nesting Depth Control
 
@@ -45,47 +47,43 @@ Most legitimate archives contain a reasonable number of files. By setting limits
 
 ZIP bombs often use nested archives (ZIPs within ZIPs). Pompelmi tracks nesting depth and rejects overly complex structures.
 
-### 3. Uncompressed Size Validation
+### 2. Uncompressed Size Validation
 
-```javascript
-{
-  maxTotalUncompressedSize: 100 * 1024 * 1024 // 100MB total
-}
-```
-
-Before extraction, Pompelmi calculates the total uncompressed size by reading ZIP headers. This prevents expansion attacks without decompressing the entire file.
-
-### 4. Compression Ratio Analysis
-
-Pompelmi monitors the compression ratio. Unusually high ratios (e.g., 1000:1) trigger warnings:
-
-```javascript
-{
-  maxCompressionRatio: 100 // Alert on suspicious compression
-}
-```
-
-## Real-World Example
-
-Here's how Pompelmi protects a Next.js application:
+Before extraction, Pompelmi reads ZIP central-directory headers to calculate the total declared uncompressed size and rejects the file before decompressing a single byte:
 
 ```typescript
-import { createNextHandler } from 'pompelmi';
-
-export const POST = createNextHandler({
-  maxFileSize: 10 * 1024 * 1024,
-  maxZipEntries: 500,
-  maxZipDepth: 2,
-  maxTotalUncompressedSize: 50 * 1024 * 1024,
-  allowedMimeTypes: ['application/zip', 'image/*'],
+const zipGuard = createZipBombGuard({
+  maxTotalUncompressedBytes: 100 * 1024 * 1024, // 100 MB total
 });
 ```
 
-This configuration:
-- Limits uploaded files to 10MB
-- Allows max 500 entries per archive
-- Restricts nesting to 2 levels deep
-- Caps total uncompressed size at 50MB
+### 3. Compression Ratio Guard
+
+```typescript
+const zipGuard = createZipBombGuard({
+  maxCompressionRatio: 100, // Block files compressed > 100x
+});
+```
+
+### 4. Composing with Other Scanners
+
+Wire the ZIP guard alongside content heuristics:
+
+```typescript
+import { composeScanners, CommonHeuristicsScanner } from 'pompelmi';
+
+const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard({
+      maxEntries: 500,
+      maxTotalUncompressedBytes: 50 * 1024 * 1024,
+      maxCompressionRatio: 50,
+    })],
+    ['heuristics', CommonHeuristicsScanner],
+  ],
+  { parallel: false, stopOn: 'malicious', tagSourceName: true }
+);
+```
 
 ## Best Practices
 
@@ -98,5 +96,10 @@ This configuration:
 ## Conclusion
 
 ZIP bombs remain a significant threat, but with proper defenses, they're completely preventable. Pompelmi's comprehensive approach ensures your application stays safe without sacrificing legitimate functionality.
+
+**Related posts:**
+- [MIME sniffing and magic bytes](/pompelmi/blog/mime-sniffing-magic-bytes/)
+- [17 common file upload security mistakes](/pompelmi/blog/common-file-upload-mistakes-nodejs/)
+- [Pompelmi vs ClamAV: choosing the right scanner](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
 
 Ready to protect your application? Check out our [Getting Started guide](/pompelmi/getting-started/).

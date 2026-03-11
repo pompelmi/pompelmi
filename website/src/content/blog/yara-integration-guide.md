@@ -28,18 +28,27 @@ Pompelmi's built-in protections handle common attacks, but YARA adds:
 ### Installation
 
 ```bash
-npm install pompelmi @litko/yara-x
+npm install pompelmi @pompelmi/engine-yara @pompelmi/express-middleware
 ```
 
 ### Basic Configuration
 
-```javascript
-import { createExpressAdapter } from 'pompelmi';
+```typescript
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import { composeScanners, CommonHeuristicsScanner } from 'pompelmi';
+import { createYaraScanner } from '@pompelmi/engine-yara';
 
-const scanner = createExpressAdapter({
-  yaraRules: './rules/malware-detection.yar',
-  yaraEnabled: true,
-});
+const yaraScanner = createYaraScanner({ rulesPath: './rules/malware-detection.yar' });
+
+const scanner = composeScanners(
+  [
+    ['heuristics', CommonHeuristicsScanner],
+    ['yara', yaraScanner],
+  ],
+  { parallel: false, stopOn: 'malicious' }
+);
+
+const guard = createUploadGuard({ scanner, failClosed: true });
 ```
 
 ### Creating YARA Rules
@@ -53,7 +62,9 @@ rule EICAR_Test_File {
     author = "Pompelmi Team"
   
   strings:
-    $eicar = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    // Do not store the literal EICAR string in source — it triggers AV on developer machines.
+    // Obtain the official string from https://www.eicar.org/download-anti-malware-testfile/
+    $eicar = { 58 35 4F 21 50 25 40 41 50 5B 34 5C 50 5A 58 35 34 28 50 5E 29 37 43 43 29 37 7D 24 45 49 43 41 52 2D 53 54 41 4E 44 41 52 44 2D 41 4E 54 49 56 49 52 55 53 2D 54 45 53 54 2D 46 49 4C 45 21 24 48 2B 48 2A }
   
   condition:
     $eicar
@@ -85,36 +96,45 @@ rule Suspicious_PowerShell {
 
 Complete setup for a production Express application:
 
-```javascript
+```typescript
 import express from 'express';
 import multer from 'multer';
-import { createExpressAdapter } from 'pompelmi';
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import { composeScanners, CommonHeuristicsScanner, createZipBombGuard } from 'pompelmi';
+import { createYaraScanner } from '@pompelmi/engine-yara';
 
-const upload = multer({ dest: 'uploads/' });
+const upload = multer({ storage: multer.memoryStorage() });
 const app = express();
 
-const scanner = createExpressAdapter({
-  maxFileSize: 10 * 1024 * 1024,
-  allowedMimeTypes: ['application/pdf', 'image/*'],
-  
-  // YARA configuration
-  yaraEnabled: true,
-  yaraRules: './security-rules/',
-  yaraTimeout: 30000, // 30 seconds max scan time
-  
-  // ZIP protection
-  maxZipEntries: 500,
-  maxZipDepth: 2,
-  
-  onThreatDetected: (result) => {
-    console.error('Threat detected:', result);
-    // Send alert to security team
-    notifySecurityTeam(result);
-  }
+const yaraScanner = createYaraScanner({
+  rulesPath: './security-rules/',
+  timeoutMs: 30_000,
 });
 
-app.post('/upload', upload.single('file'), scanner, (req, res) => {
-  res.json({ success: true, fileId: req.file.filename });
+const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard({ maxEntries: 500 })],
+    ['heuristics', CommonHeuristicsScanner],
+    ['yara', yaraScanner],
+  ],
+  { parallel: false, stopOn: 'malicious', tagSourceName: true }
+);
+
+const guard = createUploadGuard({
+  includeExtensions: ['pdf', 'jpg', 'png'],
+  maxFileSizeBytes: 10 * 1024 * 1024,
+  failClosed: true,
+  scanner,
+  onScanEvent: (ev: unknown) => {
+    const event = ev as Record<string, unknown>;
+    if (event.verdict !== 'clean') {
+      console.error('Threat detected:', event);
+    }
+  },
+});
+
+app.post('/upload', upload.single('file'), guard, (req, res) => {
+  res.json({ ok: true });
 });
 ```
 
@@ -145,9 +165,10 @@ Prevent slow scans from blocking your application:
 }
 ```
 
-### 3. Async Processing
-
-For high-volume applications, scan asynchronously:
+**Related posts:**
+- [Pompelmi vs ClamAV: choosing the right scanner](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
+- [Reason codes and security observability](/pompelmi/blog/reason-codes-security-observability/)
+- [CI/CD: scanning build artifacts with Pompelmi](/pompelmi/blog/cicd-scan-build-artifacts/)
 
 ```javascript
 app.post('/upload', upload.single('file'), async (req, res) => {

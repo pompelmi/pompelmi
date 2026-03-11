@@ -14,6 +14,14 @@ const { post } = Astro.props;
 const { Content } = await post.render();
 
 const BASE = 'https://pompelmi.github.io/pompelmi';
+
+// Related posts: same tags, exclude self, up to 3
+const allPosts = await getCollection('blog');
+const postTags = new Set(post.data.tags ?? []);
+const relatedPosts = allPosts
+  .filter((p) => p.slug !== post.slug && (p.data.tags ?? []).some((t) => postTags.has(t)))
+  .sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf())
+  .slice(0, 3);
 ---
 
 <html lang="en">
@@ -70,6 +78,31 @@ const BASE = 'https://pompelmi.github.io/pompelmi';
         font-style: italic;
         color: #6b7280;
       }
+      .prose hr {
+        border: none;
+        border-top: 1px solid #e5e7eb;
+        margin: 2rem 0;
+      }
+      .prose table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.5rem 0;
+        font-size: 0.9em;
+      }
+      .prose thead { background: #f9fafb; }
+      .prose th {
+        text-align: left;
+        padding: 0.625rem 0.875rem;
+        font-weight: 600;
+        border: 1px solid #e5e7eb;
+        color: #111827;
+      }
+      .prose td {
+        padding: 0.5rem 0.875rem;
+        border: 1px solid #e5e7eb;
+        vertical-align: top;
+      }
+      .prose tr:nth-child(even) td { background: #f9fafb; }
     </style>
   </head>
 
@@ -115,6 +148,27 @@ const BASE = 'https://pompelmi.github.io/pompelmi';
         </div>
       </article>
 
+      {relatedPosts.length > 0 && (
+        <aside class="mt-12">
+          <h2 class="text-xl font-bold mb-4 text-gray-800">Related posts</h2>
+          <div class="grid gap-4 sm:grid-cols-3">
+            {relatedPosts.map((rp) => (
+              <a
+                href={`/pompelmi/blog/${rp.slug}/`}
+                class="block bg-white rounded-lg border p-4 hover:shadow-md transition-shadow hover:border-blue-300"
+              >
+                <p class="text-xs text-gray-400 mb-1">
+                  {rp.data.pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                </p>
+                <h3 class="font-semibold text-sm text-gray-800 hover:text-blue-600 leading-snug">
+                  {rp.data.title}
+                </h3>
+              </a>
+            ))}
+          </div>
+        </aside>
+      )}
+
       <div class="mt-8 text-center">
         <a href="/pompelmi/blog/" class="text-blue-600 hover:underline">
           ← Back to Blog
@@ -124,7 +178,7 @@ const BASE = 'https://pompelmi.github.io/pompelmi';
 
     <footer class="mt-16 border-t bg-white">
       <div class="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-gray-600">
-        <p>© 2024 Pompelmi. MIT License.</p>
+        <p>© {new Date().getFullYear()} Pompelmi. MIT License.</p>
       </div>
     </footer>
   </body>

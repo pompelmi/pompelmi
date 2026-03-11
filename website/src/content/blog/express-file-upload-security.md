@@ -21,63 +21,61 @@ Before diving into implementation, let's understand the threat landscape:
 
 ## Quick Start: Basic Express Setup
 
-Let's start with a basic Express application and progressively enhance its security:
-
-```javascript
-const express = require('express');
-const multer = require('multer');
-const { expressFileScanner } = require('pompelmi');
+```typescript
+import express from 'express';
+import multer from 'multer';
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import {
+  composeScanners,
+  CommonHeuristicsScanner,
+  createZipBombGuard,
+} from 'pompelmi';
 
 const app = express();
 
-// Basic multer setup (INSECURE)
-const upload = multer({ 
-  dest: 'uploads/',
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB
+// Always buffer in memory — never write to disk before scanning
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB hard cap at parser
 });
 
-// Secured with Pompelmi
-const secureUpload = upload.single('file');
-const scanner = expressFileScanner({
-  // Basic security policies
-  maxFileSize: 10 * 1024 * 1024, // 10MB
-  allowedMimeTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-  
-  // ZIP bomb protection
-  zipLimits: {
-    maxEntries: 100,
-    maxDepth: 5,
-    maxTotalSize: 50 * 1024 * 1024 // 50MB uncompressed
-  },
-  
-  // Advanced threat detection
-  enableHeuristics: true,
-  quarantineThreats: true
+const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard({
+      maxEntries: 100,
+      maxTotalUncompressedBytes: 50 * 1024 * 1024,
+      maxCompressionRatio: 100,
+    })],
+    ['heuristics', CommonHeuristicsScanner],
+  ],
+  { parallel: false, stopOn: 'malicious', tagSourceName: true }
+);
+
+const guard = createUploadGuard({
+  includeExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+  maxFileSizeBytes: 10 * 1024 * 1024,
+  stopOn: 'suspicious',
+  failClosed: true,
+  scanner,
 });
 
-// Secure upload endpoint
-app.post('/upload', secureUpload, scanner, (req, res) => {
+app.post('/upload', upload.single('file'), guard, (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No file uploaded' });
   }
-  
-  // File passed all security checks
-  const scanResult = req.scanResult;
-  
-  if (scanResult.verdict === 'clean') {
-    res.json({ 
-      message: 'File uploaded successfully',
-      filename: req.file.filename,
-      scanSummary: scanResult.summary
-    });
+
+  const { verdict } = (req as any).pompelmi;
+
+  if (verdict === 'clean') {
+    // Move to permanent storage
+    res.json({ ok: true, filename: req.file.originalname });
   } else {
-    // File flagged as malicious
-    res.status(422).json({
-      error: 'File failed security scan',
-      verdict: scanResult.verdict,
-      threats: scanResult.findings
-    });
+    res.status(422).json({ error: 'File failed security scan', verdict });
   }
+});
+
+app.listen(3000);
+```
 });
 
 app.listen(3000, () => {
