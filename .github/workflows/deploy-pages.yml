@@ -53,18 +53,18 @@ jobs:
       - name: Build website
         id: build
         run: |
-          if [ -d "site/site" ] && [ -f "site/site/package.json" ]; then
-            echo "Building from site/site directory..."
-            cd site/site
-            pnpm build
-            cd ../..
-            echo "path=site/site/.vitepress/dist" >> $GITHUB_OUTPUT
-          elif [ -d "website" ] && [ -f "website/package.json" ]; then
+          if [ -d "website" ] && [ -f "website/package.json" ]; then
             echo "Building from website directory..."
             cd website
             pnpm build
             cd ..
             echo "path=website/dist" >> $GITHUB_OUTPUT
+          elif [ -d "site/site" ] && [ -f "site/site/package.json" ]; then
+            echo "Building from site/site directory..."
+            cd site/site
+            pnpm build
+            cd ../..
+            echo "path=site/site/.vitepress/dist" >> $GITHUB_OUTPUT
           elif [ -d "site" ] && [ -f "site/.vitepress/config.ts" ]; then
             echo "Building from site directory..."
             cd site
