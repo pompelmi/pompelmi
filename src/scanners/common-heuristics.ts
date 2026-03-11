@@ -1,11 +1,11 @@
 /**
- * CommonHeuristicsScanner (no EICAR)
+ * CommonHeuristicsScanner
  * Lightweight, no-deps heuristics for common risky file patterns.
  * Returns matches as [{ rule, severity?, meta? }].
  */
 export type HeuristicMatch = {
   rule: string;
-  severity?: 'info' | 'suspicious' | 'malicious';
+  severity?: 'info' | 'low' | 'medium' | 'high' | 'critical' | 'suspicious' | 'malicious';
   meta?: Record<string, unknown>;
 };
 
@@ -81,6 +81,12 @@ export const CommonHeuristicsScanner: SimpleScanner = {
     // Executable header
     if (isPeExecutable(buf)) {
       matches.push({ rule: 'pe_executable_signature', severity: 'suspicious' });
+    }
+
+    // EICAR test file
+    const EICAR_NEEDLE = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!";
+    if (hasAsciiToken(buf, EICAR_NEEDLE)) {
+      matches.push({ rule: 'eicar_test_file', severity: 'high', meta: { note: 'EICAR standard antivirus test file detected' } });
     }
 
     return matches;

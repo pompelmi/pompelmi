@@ -25,3 +25,33 @@ describe('smoke', () => {
     expect(true).toBe(true)
   })
 })
+
+describe('EICAR detection', () => {
+  it('detects the EICAR test string as high severity', async () => {
+    const scanner = mod.createHeuristicsScanner()
+    // EICAR standard antivirus test string constructed in memory (not stored as a file)
+    const eicarStr = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    const bytes = Buffer.from(eicarStr, 'latin1')
+    const matches = await scanner.scan(new Uint8Array(bytes))
+    const eicarMatch = matches.find(m => m.rule === 'eicar_test_file')
+    expect(eicarMatch).toBeDefined()
+    expect(eicarMatch?.severity).toBe('high')
+  })
+
+  it('returns clean for benign content', async () => {
+    const scanner = mod.createHeuristicsScanner()
+    const bytes = Buffer.from('Hello, world!', 'utf8')
+    const matches = await scanner.scan(new Uint8Array(bytes))
+    const eicarMatch = matches.find(m => m.rule === 'eicar_test_file')
+    expect(eicarMatch).toBeUndefined()
+  })
+
+  it('CommonHeuristicsScanner also detects EICAR', async () => {
+    const eicarStr = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*"
+    const bytes = Buffer.from(eicarStr, 'latin1')
+    const matches = await mod.CommonHeuristicsScanner.scan(new Uint8Array(bytes))
+    const eicarMatch = matches.find(m => m.rule === 'eicar_test_file')
+    expect(eicarMatch).toBeDefined()
+    expect(eicarMatch?.severity).toBe('high')
+  })
+})

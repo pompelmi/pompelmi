@@ -1,4 +1,5 @@
 import type { Scanner, ScanFn, Match, Verdict, DecompilationScanner, AnalysisDepth } from "./types";
+import { CommonHeuristicsScanner } from "./scanners/common-heuristics";
 
 export type PresetName = 'basic' | 'advanced' | 'malware-analysis' | 'decompilation-basic' | 'decompilation-deep' | string;
 
@@ -206,7 +207,10 @@ export function composeScanners(...args: any[]): ScanFn {
 
 export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}): Scanner {
   const scanners: Scanner[] = [];
-  
+
+  // Always include heuristics (EICAR, PHP webshells, JS obfuscation, PE hints, etc.)
+  scanners.push(CommonHeuristicsScanner);
+
   // Add decompilation scanners based on preset
   if (preset === 'decompilation-basic' || preset === 'decompilation-deep' || 
       preset === 'malware-analysis' || opts.enableDecompilation) {
@@ -258,15 +262,9 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
   
   // Add other scanners for advanced presets
   if (preset === 'advanced' || preset === 'malware-analysis') {
-    // Add heuristics scanner
-    try {
-      const { CommonHeuristicsScanner } = require('./scanners/common-heuristics');
-      scanners.push(new CommonHeuristicsScanner());
-    } catch {
-      // Heuristics not available
-    }
+    // CommonHeuristicsScanner is already added above for all presets
   }
-  
+
   if (scanners.length === 0) {
     // Fallback scanner that returns no matches
     return async (_input: any, _ctx?: any) => {

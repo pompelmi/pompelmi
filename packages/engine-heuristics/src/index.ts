@@ -59,6 +59,12 @@ export function createHeuristicsScanner(opts: HeuristicsOptions = {}) {
         }
       }
 
+      // --- EICAR test file ---
+      const eicarNeedle = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!";
+      if (findAscii(bytes, eicarNeedle)) {
+        m.push({ rule: 'eicar_test_file', severity: 'high', meta: { note: 'EICAR standard antivirus test file detected' } });
+      }
+
       return m;
     }
   };
