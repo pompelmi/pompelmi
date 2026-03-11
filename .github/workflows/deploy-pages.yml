@@ -6,6 +6,7 @@ on:
     paths:
       - 'website/**'
       - 'site/**'
+      - 'packages/**'
   workflow_dispatch:
 
 permissions:
@@ -49,6 +50,12 @@ jobs:
           if [ -d "site/site" ]; then
             cd site/site && pnpm install && cd ../..
           fi
+
+      - name: Build ui-react package
+        run: |
+          cd packages/ui-react
+          pnpm build
+          cd ../..
 
       - name: Build website
         id: build
