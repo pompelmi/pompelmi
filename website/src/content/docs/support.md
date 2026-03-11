@@ -60,3 +60,4 @@ Not at this time. All support is asynchronous and in writing only.
 
 **Is community support still free?**
 Yes. GitHub Issues, Discussions, and the public docs are always free and open to everyone.
+
