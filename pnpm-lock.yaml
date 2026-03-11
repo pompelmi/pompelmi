@@ -78,7 +78,7 @@ importers:
         specifier: workspace:*
         version: link:packages/engine
       '@pompelmi/engine-heuristics':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.2.0
         version: link:packages/engine-heuristics
       '@rollup/plugin-commonjs':
         specifier: ^28.0.6
@@ -775,7 +775,7 @@ importers:
         specifier: workspace:*
         version: link:../packages/engine
       '@pompelmi/engine-heuristics':
-        specifier: workspace:^0.1.0
+        specifier: workspace:^0.2.0
         version: link:../packages/engine-heuristics
       '@rollup/plugin-commonjs':
         specifier: ^28.0.6

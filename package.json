@@ -110,7 +110,7 @@
     "@biomejs/biome": "^2.2.4",
     "@pompelmi/core": "workspace:*",
     "@pompelmi/engine": "workspace:*",
-    "@pompelmi/engine-heuristics": "workspace:^0.1.0",
+    "@pompelmi/engine-heuristics": "workspace:^0.2.0",
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-node-resolve": "^16.0.1",
     "@rollup/plugin-typescript": "^12.1.4",
