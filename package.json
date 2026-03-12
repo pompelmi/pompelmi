@@ -1,13 +1,18 @@
 {
   "name": "pompelmi",
-  "version": "0.33.0",
+  "version": "0.34.0",
   "description": "Fast, private malware scanner for Node.js file uploads. TypeScript-first library with Express, Koa, Fastify, Next.js & Nuxt/Nitro adapters. Features deep ZIP inspection, YARA integration, ZIP bomb protection, and real-time threat detection. Zero cloud dependencies - scan files in-process before they hit disk. Works well for privacy-sensitive and regulated environments.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
   "type": "module",
   "browser": {
     "yara": false,
-    "util": false
+    "util": false,
+    "crypto": false,
+    "os": false,
+    "path": false,
+    "unzipper": false,
+    "child_process": false
   },
   "repository": {
     "type": "git",
@@ -140,6 +145,10 @@
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0"
   },
+  "peerDependenciesMeta": {
+    "react": { "optional": true },
+    "react-dom": { "optional": true }
+  },
   "optionalDependencies": {
     "@litko/yara-x": "^0.2.1"
   },
@@ -149,6 +158,48 @@
       "import": "./dist/pompelmi.esm.js",
       "require": "./dist/pompelmi.cjs",
       "default": "./dist/pompelmi.esm.js"
+    },
+    "./node": {
+      "types": "./dist/types/index.d.ts",
+      "import": "./dist/pompelmi.esm.js",
+      "require": "./dist/pompelmi.cjs",
+      "default": "./dist/pompelmi.esm.js"
+    },
+    "./browser": {
+      "types": "./dist/types/browser-index.d.ts",
+      "import": "./dist/pompelmi.browser.esm.js",
+      "require": "./dist/pompelmi.browser.cjs",
+      "default": "./dist/pompelmi.browser.esm.js"
+    },
+    "./react": {
+      "types": "./dist/types/react-index.d.ts",
+      "import": "./dist/pompelmi.react.esm.js",
+      "require": "./dist/pompelmi.react.cjs",
+      "default": "./dist/pompelmi.react.esm.js"
+    },
+    "./quarantine": {
+      "types": "./dist/types/quarantine/index.d.ts",
+      "import": "./dist/pompelmi.quarantine.esm.js",
+      "require": "./dist/pompelmi.quarantine.cjs",
+      "default": "./dist/pompelmi.quarantine.esm.js"
+    },
+    "./hooks": {
+      "types": "./dist/types/hooks.d.ts",
+      "import": "./dist/pompelmi.hooks.esm.js",
+      "require": "./dist/pompelmi.hooks.cjs",
+      "default": "./dist/pompelmi.hooks.esm.js"
+    },
+    "./audit": {
+      "types": "./dist/types/audit.d.ts",
+      "import": "./dist/pompelmi.audit.esm.js",
+      "require": "./dist/pompelmi.audit.cjs",
+      "default": "./dist/pompelmi.audit.esm.js"
+    },
+    "./policy-packs": {
+      "types": "./dist/types/policy-packs.d.ts",
+      "import": "./dist/pompelmi.policy-packs.esm.js",
+      "require": "./dist/pompelmi.policy-packs.cjs",
+      "default": "./dist/pompelmi.policy-packs.esm.js"
     },
     "./package.json": "./package.json"
   },
