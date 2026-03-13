@@ -258,14 +258,156 @@ All adapters accept the same options:
 
 ---
 
-## ✅ Production checklist
+## 📦 Import entrypoints
 
+pompelmi ships multiple named entrypoints so you only bundle what you need:
+
+| Entrypoint | Import | Environment | What it includes |
+|---|---|---|---|
+| **Default (Node.js)** | `import ... from 'pompelmi'` | Node.js | Full API — HIPAA, cache, threat-intel, ZIP streaming, YARA |
+| **Browser-safe** | `import ... from 'pompelmi/browser'` | Browser / bundler | Core scan API, scanners, policy — no Node.js built-ins |
+| **React** | `import ... from 'pompelmi/react'` | Browser / React | All browser-safe + `useFileScanner` hook (peer: react ≥18) |
+| **Quarantine** | `import ... from 'pompelmi/quarantine'` | Node.js | Quarantine lifecycle — hold/review/promote/delete |
+| **Hooks** | `import ... from 'pompelmi/hooks'` | Both | `onScanStart`, `onScanComplete`, `onThreatDetected`, `onQuarantine` |
+| **Audit** | `import ... from 'pompelmi/audit'` | Node.js | Structured NDJSON audit trail for compliance/SIEM |
+| **Policy packs** | `import ... from 'pompelmi/policy-packs'` | Both | Named pre-configured policies (`documents-only`, `images-only`, …) |
+
+---
+
+## 🔒 Policy packs
+
+Named, pre-configured policies for common upload scenarios:
+
+```ts
+import { POLICY_PACKS, getPolicyPack } from 'pompelmi/policy-packs';
+
+// Use a built-in pack:
+const policy = POLICY_PACKS['strict-public-upload'];
+
+// Or retrieve by name:
+const policy = getPolicyPack('documents-only');
+```
+
+| Pack | Extensions | Max size | Best for |
+|---|---|---|---|
+| `documents-only` | PDF, Word, Excel, PowerPoint, CSV, TXT, MD | 25 MB | Document portals, data import |
+| `images-only` | JPEG, PNG, GIF, WebP, AVIF, TIFF | 10 MB | Avatars, product images (SVG excluded) |
+| `strict-public-upload` | JPEG, PNG, WebP, PDF only | 5 MB | Anonymous/untrusted upload surfaces |
+| `conservative-default` | ZIP, images, PDF, CSV, DOCX, XLSX | 10 MB | General hardened default |
+| `archives` | ZIP, tar, gz, 7z, rar | 100 MB | Archive endpoints (pair with `createZipBombGuard`) |
+
+All packs are built on `definePolicy` and are fully overridable.
+
+---
+
+## 🗄️ Quarantine workflow
+
+Hold suspicious files for manual review before accepting or permanently deleting them.
+
+```ts
+import { scanBytes } from 'pompelmi';
+import { QuarantineManager, FilesystemQuarantineStorage } from 'pompelmi/quarantine';
+
+// One-time setup — store quarantined files locally.
+const quarantine = new QuarantineManager({
+  storage: new FilesystemQuarantineStorage({ dir: './quarantine' }),
+});
+
+// In your upload handler:
+const report = await scanBytes(fileBytes, { ctx: { filename: 'upload.pdf' } });
+
+if (report.verdict !== 'clean') {
+  const entry = await quarantine.quarantine(fileBytes, report, {
+    originalName: 'upload.pdf',
+    sizeBytes: fileBytes.length,
+    uploadedBy: req.user?.id,
+  });
+  return res.status(202).json({ quarantineId: entry.id });
+}
+```
+
+**Review API:**
+
+```ts
+// List pending entries:
+const pending = await quarantine.listPending();
+
+// Approve (promote to storage):
+await quarantine.resolve(entryId, { decision: 'promote', reviewedBy: 'ops-team' });
+
+// Delete permanently:
+await quarantine.resolve(entryId, { decision: 'delete', reviewedBy: 'ops-team', reviewNote: 'Confirmed malware' });
+
+// Generate an audit report:
+const report = await quarantine.report({ status: 'pending' });
+```
+
+The `QuarantineStorage` interface is pluggable — implement it for S3, GCS, a database, or any other backend.  `FilesystemQuarantineStorage` is the local reference implementation.
+
+---
+
+## 🪝 Scan hooks
+
+Observe the scan lifecycle without modifying the pipeline:
+
+```ts
+import { scanBytes } from 'pompelmi';
+import { createScanHooks, withHooks } from 'pompelmi/hooks';
+
+const hooks = createScanHooks({
+  onScanComplete(ctx, report) {
+    metrics.increment('scans.total');
+    metrics.histogram('scan.duration_ms', report.durationMs ?? 0);
+  },
+  onThreatDetected(ctx, report) {
+    alerting.notify({ file: ctx.filename, verdict: report.verdict });
+  },
+  onScanError(ctx, error) {
+    logger.error({ file: ctx.filename, error });
+  },
+});
+
+// Wrap your scan function once, then use it everywhere:
+const scan = withHooks(scanBytes, hooks);
+const report = await scan(fileBytes, { ctx: { filename: 'upload.zip' } });
+```
+
+---
+
+## 🔍 Audit trail
+
+Write a structured NDJSON audit record for every scan and quarantine event:
+
+```ts
+import { AuditTrail } from 'pompelmi/audit';
+
+const audit = new AuditTrail({
+  output: { dest: 'file', path: './audit.jsonl' },
+});
+
+// After each scan:
+audit.logScanComplete(report, { filename: 'upload.pdf', uploadedBy: req.user?.id });
+
+// After quarantine:
+audit.logQuarantine(entry);
+
+// After resolution:
+audit.logQuarantineResolved(entry);
+```
+
+Each record is a single JSON line with `timestamp`, `event`, `verdict`, `matchCount`, `durationMs`, `sha256`, and more — ready for your SIEM or compliance tools.
+
+---
+
+## ✅ Production checklist
 - [ ] Set `maxFileSizeBytes` — reject oversized files before scanning.
-- [ ] Restrict `includeExtensions` and `allowedMimeTypes` to what your app truly needs.
+- [ ] Restrict `includeExtensions` and `allowedMimeTypes` to what your app truly needs (or use a [policy pack](#-policy-packs)).
 - [ ] Set `failClosed: true` to block uploads on timeouts or scanner errors.
 - [ ] Enable deep ZIP inspection; keep nesting depth low.
 - [ ] Use `composeScanners` with `stopOn` to fail fast on early detections.
-- [ ] Log scan events with `onScanEvent` and monitor for anomaly spikes.
+- [ ] Log scan events with [scan hooks](#-scan-hooks) and monitor for anomaly spikes.
+- [ ] Wire up the [quarantine workflow](#-quarantine-workflow) for suspicious files rather than silently dropping them.
+- [ ] Write an [audit trail](#-audit-trail) for compliance and incident response.
 - [ ] Consider running scans in a separate process or container for defense-in-depth.
 - [ ] Sanitize file names and paths before persisting uploads.
 - [ ] Keep files in memory until policy passes — avoid writing untrusted bytes to disk first.
@@ -354,6 +496,61 @@ Scan files or build artifacts in CI with a single step:
 - **Internal tooling and wikis** — protect collaboration tools from lateral-movement attacks.
 - **Privacy-sensitive environments** — healthcare, legal, and finance platforms where files must stay on-prem.
 - **CI/CD pipelines** — catch malicious artifacts before they enter your build or release chain.
+
+---
+
+## 🏢 Pompelmi Enterprise
+
+> The open-source `pompelmi` core is **MIT-licensed and always will be** — actively maintained, freely available, no strings attached. Enterprise is a drop-in commercial plugin for teams that need compliance evidence, production observability, and operational tooling on top.
+
+### What Enterprise adds
+
+| Feature | Core (Free, MIT) | Enterprise |
+|---|---|---|
+| File scanning, heuristics, YARA | ✅ | ✅ |
+| Framework adapters (Express, Next.js, NestJS…) | ✅ | ✅ |
+| Quarantine workflow | ✅ | ✅ |
+| Basic NDJSON audit trail | ✅ | ✅ |
+| Policy packs & scan hooks | ✅ | ✅ |
+| **SIEM-compatible structured audit logs** | — | ✅ |
+| **Prometheus / Grafana metrics endpoint** | — | ✅ |
+| **Embedded Web GUI dashboard** | — | ✅ |
+| **Priority support & response SLA** | — | ✅ |
+
+### Who it's for
+
+- **Compliance teams** — produce tamper-evident, structured audit archives that satisfy SOC 2, HIPAA, ISO 27001, and PCI-DSS evidence requirements without exporting file bytes to any external service.
+- **Security operations** — expose a live Prometheus metrics endpoint (blocked files, YARA hit rate, scan latency p99) and feed it directly into your existing Grafana dashboards.
+- **Platform / DevSecOps teams** — spin up a zero-config local web GUI to monitor upload scan activity across deployments. No SaaS, no data egress, no configuration files.
+
+### Drop-in integration (30 seconds)
+
+```bash
+npm install @myusername/pompelmi-enterprise
+```
+
+```ts
+import { scanBytes } from 'pompelmi';
+import { withEnterprise } from '@myusername/pompelmi-enterprise';
+
+// Wraps your existing scan function — same API, enterprise features layered on top.
+const scan = withEnterprise(scanBytes, {
+  audit:     { dest: 'file', path: '/var/log/pompelmi/audit.jsonl' },
+  metrics:   { endpoint: '/metrics' },   // Prometheus-scrape endpoint
+  dashboard: { port: 4000 },             // Web GUI → http://localhost:4000
+});
+
+// Use exactly as before — no changes to the rest of your code.
+const report = await scan(fileBytes, { ctx: { filename: 'upload.pdf' } });
+```
+
+<div align="center">
+
+[![Get Pompelmi Enterprise](https://img.shields.io/badge/Pompelmi%20Enterprise-Upgrade%20Now%20%E2%86%92-0a7ea4?style=for-the-badge)](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+
+**[View full feature comparison and pricing →](https://pompelmi.github.io/pompelmi/enterprise)**
+
+</div>
 
 ---
 
