@@ -1,48 +1,67 @@
-// src/index.ts — Browser / React entry point for pompelmi
+/**
+ * src/index.ts — Primary Node.js entry point for Pompelmi.
+ *
+ * This is the full API including Node.js-only modules (HIPAA compliance,
+ * crypto-based caching and hashing, ZIP streaming, YARA native bindings).
+ *
+ * For browser-safe usage, import from 'pompelmi/browser'.
+ * For React hooks, import from 'pompelmi/react'.
+ */
 
-// Re-export browser API
-export { scanFiles } from './scan';
+// ── Core scan API ─────────────────────────────────────────────────────────────
+export { scanFiles, scanBytes, scanFile, type ScanOptions } from './scan';
 export { validateFile } from './validate';
-export { useFileScanner } from './useFileScanner';
-
-// (If you added the YARA function for browser-side scanning)
-// New API: heuristics (magic bytes, SVG/script, JPEG trailer) + optional YARA
-
-// Re-export TYPES (no local redeclaration)
-export type { YaraMatch } from './yara/index';
-export type { NodeScanOptions, NodeFileEntry } from './node/scanDir'; // optional
 export { scanFilesWithRemoteYara } from './scan/remote';
 
-export * from './types';
-export { mapMatchesToVerdict } from './verdict';
-
-
+// ── Built-in scanners ─────────────────────────────────────────────────────────
 export { CommonHeuristicsScanner } from './scanners/common-heuristics';
-
 export { createZipBombGuard } from './scanners/zip-bomb-guard';
 
+// ── Policy and preset composition ─────────────────────────────────────────────
 export { definePolicy, DEFAULT_POLICY } from './policy';
+export {
+  POLICY_PACKS,
+  DOCUMENTS_ONLY,
+  IMAGES_ONLY,
+  STRICT_PUBLIC_UPLOAD,
+  CONSERVATIVE_DEFAULT,
+  ARCHIVES,
+  getPolicyPack,
+  type PolicyPackName,
+} from './policy-packs';
+export {
+  composeScanners,
+  createPresetScanner,
+  type PresetName,
+  type PresetOptions,
+  type NamedScanner,
+  type ComposeScannerOptions,
+} from './presets';
 
-export { createPresetScanner, composeScanners, type PresetName, type PresetOptions, type NamedScanner, type ComposeScannerOptions } from './presets';
+// ── Verdict helpers ───────────────────────────────────────────────────────────
+export { mapMatchesToVerdict } from './verdict';
 
-export { scanBytes, scanFile, type ScanOptions } from './scan';
-export * from "./presets";
+// ── Shared types ──────────────────────────────────────────────────────────────
+export * from './types';
+export type { YaraMatch } from './yara/index';
+export type { NodeScanOptions, NodeFileEntry } from './node/scanDir';
 
-// Export new utilities
-export { 
-  PerformanceTracker, 
+// ── Performance tracking ──────────────────────────────────────────────────────
+export {
+  PerformanceTracker,
   aggregateScanStats,
   type PerformanceMetrics,
   type ScanStatistics,
 } from './utils/performance-metrics';
 
+// ── Advanced detection (polyglot, obfuscation) ────────────────────────────────
 export {
   detectPolyglot,
   detectObfuscatedScripts,
   analyzeNestedArchives,
 } from './utils/advanced-detection';
 
-// Export cache management
+// ── Cache management (Node.js — uses crypto for content hashing) ──────────────
 export {
   ScanCacheManager,
   getDefaultCache,
@@ -52,7 +71,7 @@ export {
   type CacheStats,
 } from './utils/cache-manager';
 
-// Export batch scanning
+// ── Batch scanning ────────────────────────────────────────────────────────────
 export {
   BatchScanner,
   batchScan,
@@ -61,7 +80,7 @@ export {
   type ScanTask,
 } from './utils/batch-scanner';
 
-// Export threat intelligence
+// ── Threat intelligence (Node.js — uses crypto) ───────────────────────────────
 export {
   ThreatIntelligenceAggregator,
   LocalThreatIntelligence,
@@ -72,7 +91,7 @@ export {
   type EnhancedScanReport,
 } from './utils/threat-intelligence';
 
-// Export export utilities
+// ── Export utilities ──────────────────────────────────────────────────────────
 export {
   ScanResultExporter,
   exportScanResults,
@@ -80,7 +99,7 @@ export {
   type ExportOptions,
 } from './utils/export';
 
-// Export configuration
+// ── Configuration ─────────────────────────────────────────────────────────────
 export {
   ConfigManager,
   createConfig,
@@ -89,3 +108,14 @@ export {
   CONFIG_PRESETS,
   type ScannerConfig,
 } from './config';
+
+// ── HIPAA compliance (Node.js — uses crypto/os/path) ─────────────────────────
+export {
+  initializeHipaaCompliance,
+  getHipaaManager,
+  createHipaaError,
+  HipaaTemp,
+  type HipaaConfig,
+  type AuditEvent,
+} from './hipaa-compliance';
+

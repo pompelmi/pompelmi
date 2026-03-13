@@ -9,7 +9,7 @@ Pompelmi is open-source, MIT-licensed, and always will be. **Pompelmi Enterprise
 
 ---
 
-## Who this is for
+## Who Enterprise is for
 
 ### CISOs and compliance leads
 
@@ -22,6 +22,20 @@ You already have Grafana. You already have Prometheus. Enterprise exposes a `/me
 ### Lead developers and platform teams
 
 You want a low-friction way to give stakeholders visibility into what your upload pipeline is blocking — without building a reporting UI from scratch. Enterprise ships an embedded, zero-config web dashboard served from your existing process. Open a browser, see your scan activity in real time. Nothing to deploy.
+
+---
+
+## Who can stay on the free core
+
+Enterprise is not necessary for every use case. The free MIT-licensed core handles:
+
+- Heuristic scanning, ZIP bomb protection, magic-byte MIME validation
+- Custom YARA rules via `composeScanners`
+- Quarantine workflow and audit trail (using the built-in `pompelmi/audit` module)
+- Scan hooks for custom logging and metrics
+- Policy packs for common upload scenarios
+
+If your application does not need SIEM-compatible signed logs, Prometheus metrics, premium YARA rules, or a built-in dashboard, the open-source core is sufficient.
 
 ---
 
@@ -395,7 +409,16 @@ Yes. The audit module writes to stdout or a file path you control. The metrics e
 Your existing build continues to work until you update the package. The Enterprise module will log a license warning after the grace period. The `pompelmi` core and all open-source features remain fully functional indefinitely.
 
 **Is there a free trial?**
-A 14-day trial is available. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) to request access.
+A 14-day trial is available. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with your organization name and use case to request access.
+
+**What is the support SLA?**
+Priority email support with a 1 business-day first-response target is included. All communication is private and asynchronous.
 
 **What Node.js versions are supported?**
 Node.js 18 and above — matching the open-source core requirement.
+
+**Can I use Enterprise in Docker or Kubernetes?**
+Yes. The audit module writes to stdout or a configurable file path. The metrics endpoint integrates with any Prometheus scrape config. The dashboard binds to a configurable host and port. All standard deployment patterns work without modification.
+
+**Do you offer volume pricing?**
+Yes, for multi-subsidiary enterprises or MSPs. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with your organization name and deployment scale.

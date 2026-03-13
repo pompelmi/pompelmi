@@ -1,6 +1,7 @@
 {
   "name": "@pompelmi/engine-clamav",
   "version": "0.1.0",
+  "description": "ClamAV engine adapter for Pompelmi — delegates scanning to a locally installed ClamAV daemon (clamd) via the clamscan npm package.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",

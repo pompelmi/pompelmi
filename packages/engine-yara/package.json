@@ -1,6 +1,7 @@
 {
   "name": "@pompelmi/engine-yara",
   "version": "0.1.0",
+  "description": "YARA engine adapter for Pompelmi — wraps the @pompelmi/yara package and exposes a scanner-compatible interface.",
   "license": "MIT",
   "type": "module",
   "main": "./dist/index.cjs",

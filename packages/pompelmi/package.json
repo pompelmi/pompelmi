@@ -1,11 +1,9 @@
 {
-  "name": "@pompelmi/core",
+  "name": "@pompelmi/core-legacy",
   "version": "0.26.0",
-  "description": "Lightweight file scanning core with optional YARA rules (Node + Remote Engine)",
+  "description": "Legacy standalone core implementation of Pompelmi (pre-monorepo). Contains MagicBytesDetector, ReasonCode system, applyPreset, and streams-first scanning API. Superseded by 'pompelmi' (root package) + '@pompelmi/core'. Kept for reference; not published.",
+  "private": true,
   "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
   "engines": {
     "node": ">=18.17"
   },

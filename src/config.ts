@@ -5,6 +5,7 @@
 
 import type { PresetName, PresetOptions } from './presets';
 import type { CacheOptions } from './utils/cache-manager';
+import type { ScanReport } from './types';
 
 export interface ScannerConfig {
   /** Default preset to use */
@@ -61,12 +62,12 @@ export interface ScannerConfig {
     enableStats?: boolean;
   };
   
-  /** Callbacks */
+  /** Callbacks — use 'pompelmi/hooks' for a richer, typed hook interface */
   callbacks?: {
     /** Called before scan starts */
     onScanStart?: (filename?: string) => void;
     /** Called when scan completes */
-    onScanComplete?: (report: any) => void;
+    onScanComplete?: (report: ScanReport) => void;
     /** Called on scan error */
     onScanError?: (error: Error, filename?: string) => void;
   };

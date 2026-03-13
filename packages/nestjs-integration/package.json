@@ -1,7 +1,7 @@
 {
-  "name": "@pompelmi/nestjs",
+  "name": "@pompelmi/nestjs-integration",
   "version": "0.1.0",
-  "description": "NestJS integration module for Pompelmi malware scanner",
+  "description": "NestJS module for Pompelmi in-process file upload security — PompelmiModule, PompelmiService, and PompelmiInterceptor for automatic upload scanning without cloud dependencies.",
   "license": "MIT",
   "publishConfig": {
     "access": "public"

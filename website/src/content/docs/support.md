@@ -1,63 +1,85 @@
 ---
-title: Commercial Support
-description: Limited commercial support is available for teams using pompelmi — private, asynchronous, and maintainer-led.
+title: Support
+description: Community support is free and open. Commercial support and priority SLAs are available through the Enterprise plan.
 ---
 
-Limited commercial support is available for teams using pompelmi.
+Pompelmi has three support tiers. Each is described below so you can find the right path for your situation.
 
-Support is offered on a **private, asynchronous, best-effort basis** by the maintainer and may include:
+---
 
-- Integration assistance
-- Configuration review
-- Prioritized troubleshooting
+## Community support (free)
+
+Available to everyone. No account or subscription required.
+
+| Channel | Best for |
+|---|---|
+| **[GitHub Issues](https://github.com/pompelmi/pompelmi/issues)** | Bug reports and reproducible problems |
+| **[GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)** | Questions, integration help, general discussion |
+| **[Documentation](https://pompelmi.github.io/pompelmi/)** | Guides, API reference, tutorials, architecture overview |
+| **[SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)** | Private vulnerability reporting (not a public issue) |
+
+For most integration questions, checking the docs or opening a Discussion is the fastest path to an answer.
+
+---
+
+## Commercial support (ad hoc)
+
+Limited private support is available directly from the maintainer. This is best suited for teams who need private, specific help that is not appropriate for a public forum.
+
+**What it includes:**
+
+- Integration assistance for your specific framework and setup
+- Configuration and policy review
+- Prioritized troubleshooting for edge cases
 - Upload security guidance
 
-Support is provided **in writing only**. Live calls and real-time support are not included at this time.
+**What it does not include:**
 
----
+- Guaranteed response times or SLAs
+- Live calls or synchronous support
+- Ongoing retainer or dedicated account management
 
-## How to Inquire
+**How to request:** Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with:
 
-Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with the following information:
-
-| Field | Details |
+| Field | Example |
 |---|---|
-| Framework / runtime | e.g. Express, Next.js, Koa |
-| Node.js version | e.g. 20.x |
-| pompelmi version | e.g. 0.17.0 |
-| Description | Short description of the issue or goal |
+| Framework / runtime | Express 5.x on Node 22 |
+| Pompelmi version | 0.34.1 |
+| Description | One paragraph describing your issue or goal |
 | Expected behavior | What you expected to happen |
-| Logs / errors | Relevant output — omit secrets and sensitive data |
-| Urgency | Low / medium / high |
-| Support type | Integration help, troubleshooting, or configuration review |
+| Relevant output | Logs or error messages — omit credentials and sensitive data |
 
 :::caution[Privacy note]
-Do not include API keys, credentials, or other sensitive data in your initial email. If logs or config files are needed, the maintainer will advise how to share them safely.
+Do not include API keys, credentials, or sensitive data in your initial message. The maintainer will advise how to share additional context safely if needed.
 :::
 
 ---
 
-## Community Support
+## Enterprise support (included with Enterprise plan)
 
-Community support is free and open to everyone:
+[Pompelmi Enterprise](./enterprise/) subscribers receive **priority email support with a 1 business-day first-response SLA**.
 
-- **[GitHub Issues](https://github.com/pompelmi/pompelmi/issues)** — Bug reports and feature requests
-- **[GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)** — Questions, ideas, and general help
-- **[Documentation](https://pompelmi.github.io/pompelmi/)** — Guides, API reference, and tutorials
-- **[SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)** — Private vulnerability disclosure
+Enterprise support covers:
 
-For most questions, checking the docs or opening a Discussion is the fastest path to an answer. Commercial support is most useful for private, team-specific integration or review scenarios.
+- All open-source core questions
+- `@pompelmi/enterprise` integration and configuration
+- Audit logging, SIEM connectivity, and compliance evidence questions
+- Prometheus metrics and dashboard configuration
+- Premium YARA rules questions
+- License and billing inquiries
+
+To access Enterprise support, email using the address associated with your Polar.sh subscription.
+
+[Learn more about Enterprise →](./enterprise/)
 
 ---
 
-## FAQ
+## Choosing the right channel
 
-**Is there a guaranteed response time?**
-No. Support is best-effort with no SLAs or guaranteed turnaround.
-
-**Can I get a support call or live session?**
-Not at this time. All support is asynchronous and in writing only.
-
-**Is community support still free?**
-Yes. GitHub Issues, Discussions, and the public docs are always free and open to everyone.
-
+| Situation | Recommended channel |
+|---|---|
+| Bug or unexpected behavior | GitHub Issues (public) |
+| Integration question with no sensitive details | GitHub Discussions (public) |
+| Private integration help, one-time review | Commercial support (email) |
+| Ongoing priority support with SLA | Enterprise plan |
+| Security vulnerability | SECURITY.md (private advisory) |

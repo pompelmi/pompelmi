@@ -12,8 +12,10 @@ export interface YaraMatch {
 // Re-export decompilation types
 export * from './types/decompilation';
 
-// Re-export HIPAA compliance types
-export * from './hipaa-compliance';
+// NOTE: HIPAA compliance types are exported from 'pompelmi' (full Node.js entry)
+// and from 'pompelmi/node'. They are Node.js-only (uses crypto/os/path) and
+// are NOT available in the browser or React bundles.
+// Import directly: import type { HipaaConfig } from 'pompelmi/node';
 
 export interface Match {
   rule: string;

@@ -1,6 +1,6 @@
 ---
 title: Pompelmi
-description: File upload malware scanning for Node.js (Express/Koa/Next.js/Nuxt) with ZIP deep-inspection, MIME/size guards & optional YARA.
+description: In-process file upload security for Node.js — no cloud API, no daemon, no data egress. Drop-in scanning for Express, Next.js, NestJS, Fastify, and Koa with ZIP inspection, MIME/magic-byte validation, and optional YARA.
 ---
 
 import CodeTabs from "../../components/CodeTabs.astro";
@@ -42,40 +42,49 @@ import CodeTabs from "../../components/CodeTabs.astro";
 </p>
 
 
-Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
+Pompelmi is a **TypeScript library** that adds a security layer to file upload endpoints in Node.js applications. It scans file bytes **in-process** — no HTTP call to a cloud API, no ClamAV daemon required, no file data leaving your infrastructure.
 
-- **UI** — Ready‑made upload button & dropzone for **React/Next.js**.
-- **Server** — Lightweight middlewares for **Express/Koa** and helpers for **Next.js/Nuxt API routes**.
-- **Safety** — Size & MIME guards, optional **YARA** rules, and clear **CLEAN / SUSPICIOUS / MALICIOUS** verdicts.
+It gives you layered, composable scanning: size and MIME guards, magic-byte validation, ZIP bomb protection, structural heuristics, and optional YARA rules — all returning a consistent `clean | suspicious | malicious` verdict your application can act on immediately.
 
-> 🧪 **Live demo:** on the homepage drag a clean JPG → **CLEAN**; try the **EICAR** test string → **MALICIOUS**.
+**Built for teams who cannot or choose not to send user files to a third-party scanning service** — healthcare, legal, finance, self-hosted SaaS, and privacy-first applications.
+
+> 🧪 **Live demo:** drag a clean JPG → **CLEAN**; try the EICAR test string → **MALICIOUS**.
 
 ## Quickstart
 
 <CodeTabs />
 
-## Highlights
+## Why Pompelmi
 
-- ✅ **Developer‑friendly**: copy‑paste examples, sensible defaults.
-- ⚡ **Fast path**: avoids heavy engines unless needed; instant verdicts for common cases.
-- 🛡️ **Defense‑in‑depth**: layered checks (extension, MIME, size, optional YARA).
-- 🧩 **Modular**: UI and server parts work together or stand‑alone.
-- 🔍 **Transparent results**: simple JSON verdict with reasons.
+- **No cloud dependency** — scanning runs entirely in your Node.js process. Files never leave your infrastructure.
+- **No daemon** — install like any npm package. No ClamAV setup, no sidecar process, no config files.
+- **Defense-in-depth** — layered checks: size limits, extension allowlist, magic-byte MIME validation, structural heuristics, ZIP bomb protection, and optional YARA rules.
+- **Framework-ready** — drop-in adapters for Express, Next.js, NestJS, Fastify, Koa, and Nuxt/Nitro.
+- **Composable** — chain built-in scanners with your own using `composeScanners`. Control order, timeouts, and stop conditions.
+- **Privacy-safe by design** — no bytes are written, forwarded, or logged unless you explicitly configure it.
 
 ## Quick links
 
-- Tutorial: **[Getting started](./tutorials/quick-start/)** (≈ 5 min)
-- How‑to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[Koa](./how-to/koa/)** · **[Nuxt/Nitro](./how-to/nuxt-nitro/)** · **[Fastify](./how-to/fastify/)**
+- Tutorial: **[Getting started](./getting-started/)** (≈ 5 min)
+- How‑to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[NestJS](./how-to/nestjs/)** · **[Fastify](./how-to/fastify/)** · **[Koa](./how-to/koa/)** · **[Nuxt/Nitro](./how-to/nuxt-nitro/)**
 - Reference: **[@pompelmi/ui-react](./reference/ui-react/)**
 - Deep dive: **[Architecture & threat model](./explaination/architecture/)**
+- Commercial: **[Enterprise features](./enterprise/)** · **[Support](./support/)**
 
-## What you get
+## Who this is for
 
-- **Beautiful uploads** out of the box (button & dropzone).
-- **Server peace of mind** (simple middlewares; clear allow/deny).
-- **Copy‑pastable examples** and a **live playground**.
+Pompelmi is the right choice when:
 
-> 💡 **Tip:** Testing locally? Use the standard **EICAR** test file. It’s safe and widely used to verify malware scanners.
+- Your app accepts file uploads from users or external systems.
+- You need to block malicious uploads **without routing files through a cloud API**.
+- You are in a **self-hosted, on-premises, or regulated environment** where data residency matters.
+- You want a **composable, testable security layer** that integrates naturally with your existing Node.js middleware stack.
+
+It may not be the right choice when:
+- You need full antivirus coverage with daily signature updates (consider adding ClamAV via `@pompelmi/engine-clamav` alongside the heuristic layer).
+- Your environment already has a trusted cloud scanning service and data residency is not a concern.
+
+> 💡 **Testing tip:** The [EICAR test file](https://www.eicar.org/download-anti-malware-testfile/) is a safe, standard way to verify your scanner is working in development and CI. Pompelmi detects EICAR out of the box.
 
 ## Stars trend
 
@@ -94,14 +103,14 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
   "applicationCategory":"DeveloperApplication",
   "operatingSystem":"Linux, macOS, Windows",
   "offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},
-  "softwareVersion":"0.17.0",
+  "softwareVersion":"0.34.1",
   "url":"https://pompelmi.github.io/pompelmi/",
   "downloadUrl":"https://www.npmjs.com/package/pompelmi",
   "author":{"@type":"Organization","name":"Pompelmi"}
 }
 `}</script>
 
-{/* JSON-LD: FAQPage (align with your actual FAQ content if you add one here) */}
+{/* JSON-LD: FAQPage */}
 <script type="application/ld+json">{`
 {
   "@context":"https://schema.org",
@@ -109,26 +118,37 @@ Pompelmi adds **safe, blazing‑fast scanning** to your file uploads.
   "mainEntity":[
     {
       "@type":"Question",
-      "name":"Does Pompelmi support YARA rules?",
-      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules; use built-in policies alongside."}
+      "name":"Does Pompelmi send files to a cloud API?",
+      "acceptedAnswer":{"@type":"Answer","text":"No. All scanning runs in-process inside your Node.js application. File bytes never leave your infrastructure."}
     },
     {
       "@type":"Question",
-      "name":"Can it inspect ZIP archives and prevent ZIP bombs?",
-      "acceptedAnswer":{"@type":"Answer","text":"Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth."}
+      "name":"Does Pompelmi require a ClamAV daemon?",
+      "acceptedAnswer":{"@type":"Answer","text":"No. The heuristic scanner and ZIP bomb protection work without any external daemon. ClamAV support is available as an optional adapter (@pompelmi/engine-clamav) if you want signature-based scanning."}
+    },
+    {
+      "@type":"Question",
+      "name":"Does Pompelmi support YARA rules?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules via the composeScanners API. Starter rules are included for common threats."}
+    },
+    {
+      "@type":"Question",
+      "name":"Can it detect ZIP bombs?",
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth before the archive is fully extracted."}
     }
   ]
 }
 `}</script>
 ---
 
-## What’s new (0.17.0 dev)
+## Trust & maintenance
 
-- **Reference scan engine**: `@pompelmi/engine` with streaming hashing and builtin EICAR detection.
-- **Magic-bytes MIME sniffing**: server validates real file signatures.
-- **Docker image on GHCR**: run it anywhere and connect the UI with `engineUrl`.
+Pompelmi is actively maintained, MIT-licensed, and designed for long-term reliability. Each release includes:
 
-**Start here:**  
-- Reference → **Engine HTTP API**  
-- How-to → **Run the engine via Docker (GHCR)**  
-- Guides → **Connect the UI to the Engine**
+- **Continuous integration** — tests run on every push across Node.js 18, 20, and 22.
+- **CodeQL analysis** — static security analysis integrated into the main branch workflow.
+- **SBOM** — a Software Bill of Materials is generated on every release.
+- **OpenSSF Scorecard** — supply chain security posture is publicly tracked.
+- **Provenance attestation** — npm releases include GitHub Actions provenance for supply chain verification.
+
+See [SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md) for the vulnerability reporting policy and response timeline.

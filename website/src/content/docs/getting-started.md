@@ -1,128 +1,200 @@
 ---
-title: Getting started (5 minutes)
-description: Install the UI package, point it to your scan engine, and verify CLEAN/MALICIOUS end‑to‑end.
+title: Getting started
+description: Secure your first file upload endpoint with Pompelmi in under 5 minutes. No daemon, no cloud API, no external services required.
 ---
 
-This short tutorial gets you from zero to a working upload scan in minutes. Minimal choices, copy‑paste friendly.
+This guide takes you from zero to a working, secure upload endpoint. No external services required — Pompelmi scans files in your Node.js process.
 
 ## Prerequisites
 
-- Node.js 18+
-- A running Pompelmi scan engine (HTTP endpoint) with CORS allowing your app origin
+- Node.js 18 or higher
+- An existing Node.js app, or a new project (`npm init -y`)
 
 ---
 
-## 1) Install the UI package
+## 1. Install
 
 ```bash
-pnpm add @pompelmi/ui-react
+npm install pompelmi
 ```
 
-> Monorepo/workspace? You can also depend on your local `@pompelmi/ui-react` build.
+That is the only required dependency. No daemon to start, no API key to configure.
 
 ---
 
-## 2) Configure the engine URL
+## 2. Scan your first file
 
-Create `.env.local` in your app:
+Create a file named `scan-test.mjs`:
+
+```js
+import { scanBytes } from 'pompelmi';
+import { readFileSync } from 'node:fs';
+
+// Read any file you have locally
+const buffer = readFileSync('./package.json');
+
+const result = await scanBytes(buffer, {
+  filename: 'package.json',
+  mimeType: 'application/json',
+});
+
+console.log('Verdict:', result.verdict);     // 'clean' | 'suspicious' | 'malicious'
+console.log('Reasons:', result.reasons);
+console.log('Duration:', result.durationMs, 'ms');
+```
+
+Run it:
 
 ```bash
-NEXT_PUBLIC_POMPELMI_URL=https://your-engine.example
+node scan-test.mjs
 ```
 
-> The UI posts to the `/scan` endpoint. We’ll build the final `action` as `${NEXT_PUBLIC_POMPELMI_URL}/scan`.
+You should see `Verdict: clean` for a normal JSON file. Try the [EICAR test string](https://www.eicar.org/download-anti-malware-testfile/) to see a `malicious` verdict.
 
 ---
 
-## 3) Use the components (Next.js App Router example)
+## 3. Add scanning to an Express endpoint
 
-Create a page like `app/page.tsx` (or any React component):
+Install Express (if you do not already have it):
 
-```tsx
-'use client';
+```bash
+npm install express multer
+```
 
-import React, { useState } from 'react';
-import { UploadButton, UploadDropzone } from '@pompelmi/ui-react';
+Create `server.mjs`:
 
-const ENGINE = (process.env.NEXT_PUBLIC_POMPELMI_URL || '').replace(/\/$/, '');
-const ACTION = ENGINE ? `${ENGINE}/scan` : '';
+```js
+import express from 'express';
+import multer from 'multer';
+import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
-export default function Page() {
-  const [log, setLog] = useState<string[]>([]);
-  const push = (msg: string) => setLog((L) => [msg, ...L]);
+const app = express();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+});
 
-  return (
-    <main className="max-w-3xl mx-auto py-10 space-y-6">
-      <h1 className="text-2xl font-semibold">Pompelmi — Quick demo</h1>
+app.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided' });
+  }
 
-      <div className="flex items-center gap-4">
-        <UploadButton
-          action={ACTION}
-          maxSize={50 * 1024 * 1024}
-          onResult={(res: any) => {
-            const verdict = res?.result?.malicious ? 'MALICIOUS' : 'CLEAN';
-            push(`Button → ${verdict}`);
-          }}
-          onError={(e: Error) => push(`Button ERROR → ${e.message}`)}
-          onProgress={(p: number) => push(`Button progress → ${Math.round(p)}%`)}
-          label="Choose file & scan"
-        />
-      </div>
+  const result = await scanBytes(req.file.buffer, {
+    policy: STRICT_PUBLIC_UPLOAD,
+    filename: req.file.originalname,
+    mimeType: req.file.mimetype,
+  });
 
-      <UploadDropzone
-        action={ACTION}
-        maxSize={50 * 1024 * 1024}
-        onResult={(res: any) => {
-          const verdict = res?.result?.malicious ? 'MALICIOUS' : 'CLEAN';
-          push(`Dropzone → ${verdict}`);
-        }}
-        onError={(e: Error) => push(`Dropzone ERROR → ${e.message}`)}
-        onProgress={(p: number) => push(`Dropzone progress → ${Math.round(p)}%`)}
-        className="mt-2"
-      />
+  if (result.verdict === 'malicious') {
+    return res.status(422).json({
+      error: 'Upload rejected',
+      reasons: result.reasons,
+    });
+  }
 
-      <section>
-        <h2 className="font-medium mb-2">Log</h2>
-        <ul className="text-sm space-y-1">
-          {log.map((l, i) => (
-            <li key={i} className="font-mono">{l}</li>
-          ))}
-        </ul>
-      </section>
-    </main>
-  );
+  // File passed — proceed to storage
+  res.json({ ok: true, verdict: result.verdict });
+});
+
+app.listen(3000, () => console.log('Listening on http://localhost:3000'));
+```
+
+Start the server:
+
+```bash
+node server.mjs
+```
+
+Test it:
+
+```bash
+# Should return { ok: true, verdict: 'clean' }
+curl -F "file=@package.json;type=application/json" http://localhost:3000/upload
+
+# Try with a disallowed content type — returns 422
+curl -F "file=@/path/to/anything.exe;type=application/octet-stream" http://localhost:3000/upload
+```
+
+---
+
+## 4. Understand the verdict
+
+`scanBytes` returns a `ScanReport`:
+
+```ts
+{
+  verdict: 'clean' | 'suspicious' | 'malicious',
+  ok: boolean,           // true if verdict is 'clean'
+  matches: Match[],      // individual rule matches
+  reasons: string[],     // human-readable reasons for non-clean verdicts
+  durationMs: number,    // scan time
+  file: {
+    name?: string,
+    mimeType?: string,
+    size?: number,
+    sha256?: string,
+  },
 }
 ```
 
-**Notes**
+Your application should:
 
-- `action` is the full scan URL, e.g. `https://your-engine.example/scan`.
-- Use `onResult`, `onError`, `onProgress` to update your UI or analytics.
-- Tailwind is optional; classes above are just for quick styling.
-
----
-
-## 4) Test the flow
-
-1. Upload a **clean JPG** → expect **CLEAN**  
-2. Try the **EICAR test file** → expect **MALICIOUS**  
-3. Verify that both the button and dropzone callbacks fire as expected.
-
-> If your engine is on a different origin, ensure CORS allows your site (e.g., `Access-Control-Allow-Origin: https://yourapp.example`).
+- `clean` → proceed to storage or processing.
+- `suspicious` → hold for review, quarantine, or reject depending on your tolerance.
+- `malicious` → reject the upload, log the event, return an appropriate error to the user.
 
 ---
 
-## Troubleshooting
+## 5. Tighten the policy
 
-- **No result / network error** → Check `ACTION` is correct and the engine is reachable. Open DevTools → Network → request to `/scan`.
-- **CORS error** → Allow your site origin in the engine’s CORS config.
-- **Big files rejected** → Increase `maxSize` prop or server limits.
-- **Props not applied** → Make sure you’re importing from `@pompelmi/ui-react` and not a stale local build.
+The `STRICT_PUBLIC_UPLOAD` policy pack restricts uploads to images and PDFs with a 5 MB limit. Other built-in packs:
+
+| Policy | Best for |
+|---|---|
+| `STRICT_PUBLIC_UPLOAD` | Anonymous or untrusted uploaders |
+| `CONSERVATIVE_DEFAULT` | General-purpose hardened default |
+| `DOCUMENTS_ONLY` | PDF, Word, Excel, CSV portals |
+| `IMAGES_ONLY` | Avatar or image-only endpoints |
+| `ARCHIVES` | Archive handling with ZIP bomb protection |
+
+```js
+import { scanBytes, IMAGES_ONLY } from 'pompelmi';
+
+const result = await scanBytes(buffer, { policy: IMAGES_ONLY });
+```
+
+You can also configure manually:
+
+```js
+import { scanBytes } from 'pompelmi';
+
+const result = await scanBytes(buffer, {
+  maxFileSizeBytes: 5 * 1024 * 1024,
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
+  includeExtensions: ['jpg', 'jpeg', 'png', 'webp'],
+  filename: file.originalname,
+});
+```
+
+---
+
+## What Pompelmi checks
+
+By default, every scan runs:
+
+1. **Size limit** — rejects oversized files before reading bytes.
+2. **Extension check** — rejects extensions not in the allowlist.
+3. **MIME type check** — compares declared vs. actual magic-byte signature.
+4. **Structural heuristics** — PE/ELF headers, embedded scripts, polyglot files.
+5. **ZIP bomb protection** — entry count, per-entry size, nesting depth limits.
+
+Optional: add YARA rules for custom signature-based detection.
 
 ---
 
 ## Next steps
 
-- **How-to → Next.js / Express / Koa** for framework-specific recipes.  
-- **Reference → `@pompelmi/ui-react`** for complete props & events.  
-- **Explanations → Architecture & threat model** for deeper understanding.
+- **Framework integration:** [Express](./how-to/express/) · [Next.js](./how-to/nextjs/) · [NestJS](./how-to/nestjs/) · [Fastify](./how-to/fastify/) · [Koa](./how-to/koa/)
+- **React upload UI:** [React components reference](./reference/ui-react/)
+- **Security model:** [Architecture & threat model](./explaination/architecture/)
+- **Production hardening:** [Enterprise features](./enterprise/)

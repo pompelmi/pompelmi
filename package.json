@@ -1,7 +1,7 @@
 {
   "name": "pompelmi",
   "version": "0.34.1",
-  "description": "Fast, private malware scanner for Node.js file uploads. TypeScript-first library with Express, Koa, Fastify, Next.js & Nuxt/Nitro adapters. Features deep ZIP inspection, YARA integration, ZIP bomb protection, and real-time threat detection. Zero cloud dependencies - scan files in-process before they hit disk. Works well for privacy-sensitive and regulated environments.",
+  "description": "In-process file upload security for Node.js — no cloud API, no daemon, no data egress. TypeScript-first library with Express, Next.js, NestJS, Fastify, Koa, and Nuxt/Nitro adapters. Features magic-byte MIME validation, ZIP bomb protection, YARA integration, and layered heuristic scanning. Built for privacy-sensitive and self-hosted environments.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
   "type": "module",
@@ -217,6 +217,8 @@
   "keywords": [
     "malware-scanner",
     "file-upload-security",
+    "secure-file-upload",
+    "upload-security",
     "virus-scanner",
     "antivirus",
     "malware-detection",
@@ -232,11 +234,14 @@
     "fastify-plugin",
     "nextjs",
     "next-js",
+    "nestjs",
+    "nuxt",
     "nodejs-security",
     "typescript-security",
     "file-validation",
     "upload-sanitization",
     "mime-type-validation",
+    "magic-bytes",
     "security",
     "cybersecurity",
     "devsecops",
@@ -245,6 +250,7 @@
     "privacy-first",
     "in-process-scanning",
     "zero-cloud",
+    "self-hosted",
     "node",
     "nodejs",
     "typescript",
@@ -255,7 +261,7 @@
   "directories": {
     "example": "examples"
   },
-  "author": "",
+  "author": "Tommaso Bertocchi",
   "packageManager": "pnpm@9.12.0",
   "resolutions": {
     "process": "0.11.10"
