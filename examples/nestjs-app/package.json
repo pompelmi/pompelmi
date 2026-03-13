@@ -13,7 +13,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "@pompelmi/nestjs": "workspace:*",
+    "@pompelmi/nestjs-integration": "workspace:*",
     "@pompelmi/core": "workspace:*",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"

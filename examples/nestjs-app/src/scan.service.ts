@@ -1,5 +1,5 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
-import { PompelmiService } from '@pompelmi/nestjs';
+import { PompelmiService } from '@pompelmi/nestjs-integration';
 import type { ScanReport } from '@pompelmi/core';
 
 @Injectable()

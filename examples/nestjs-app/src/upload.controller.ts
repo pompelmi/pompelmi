@@ -8,7 +8,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
-import { PompelmiInterceptor } from '@pompelmi/nestjs';
+import { PompelmiInterceptor } from '@pompelmi/nestjs-integration';
 import { ScanService } from './scan.service';
 
 @Controller('upload')
