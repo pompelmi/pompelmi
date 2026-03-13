@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.34.0",
+  "version": "0.34.1",
   "description": "Fast, private malware scanner for Node.js file uploads. TypeScript-first library with Express, Koa, Fastify, Next.js & Nuxt/Nitro adapters. Features deep ZIP inspection, YARA integration, ZIP bomb protection, and real-time threat detection. Zero cloud dependencies - scan files in-process before they hit disk. Works well for privacy-sensitive and regulated environments.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
@@ -146,8 +146,12 @@
     "react-dom": "^18.0.0 || ^19.0.0"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "react-dom": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "optionalDependencies": {
     "@litko/yara-x": "^0.2.1"
