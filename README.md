@@ -501,47 +501,53 @@ Scan files or build artifacts in CI with a single step:
 
 ## 🏢 Pompelmi Enterprise
 
-> The open-source `pompelmi` core is **MIT-licensed and always will be** — actively maintained, freely available, no strings attached. Enterprise is a drop-in commercial plugin for teams that need compliance evidence, production observability, and operational tooling on top.
+> The open-source `pompelmi` core is **MIT-licensed and always will be** — actively maintained, freely available, no strings attached. `@pompelmi/enterprise` is an optional commercial plugin for teams that need compliance evidence, production observability, and operational tooling on top.
 
 ### What Enterprise adds
 
 | Feature | Core (Free, MIT) | Enterprise |
-|---|---|---|
+|---|:---:|:---:|
 | File scanning, heuristics, YARA | ✅ | ✅ |
 | Framework adapters (Express, Next.js, NestJS…) | ✅ | ✅ |
-| Quarantine workflow | ✅ | ✅ |
-| Basic NDJSON audit trail | ✅ | ✅ |
-| Policy packs & scan hooks | ✅ | ✅ |
-| **SIEM-compatible structured audit logs** | — | ✅ |
-| **Prometheus / Grafana metrics endpoint** | — | ✅ |
-| **Embedded Web GUI dashboard** | — | ✅ |
+| Quarantine workflow & policy packs | ✅ | ✅ |
+| **Advanced Audit Logging (SIEM-compatible)** | — | ✅ |
+| **HMAC-signed tamper-evident log entries** | — | ✅ |
+| **File / Webhook / Console log sinks** | — | ✅ |
+| **On-disk audit log query API** | — | ✅ |
+| **Premium YARA Rules** (WannaCry, Cobalt Strike, XMRig, Mimikatz, LOLBAS) | — | ✅ |
+| **Prometheus Metrics endpoint** | — | ✅ |
+| **Embedded Web GUI Dashboard** | — | ✅ |
 | **Priority support & response SLA** | — | ✅ |
 
 ### Who it's for
 
-- **Compliance teams** — produce tamper-evident, structured audit archives that satisfy SOC 2, HIPAA, ISO 27001, and PCI-DSS evidence requirements without exporting file bytes to any external service.
-- **Security operations** — expose a live Prometheus metrics endpoint (blocked files, YARA hit rate, scan latency p99) and feed it directly into your existing Grafana dashboards.
-- **Platform / DevSecOps teams** — spin up a zero-config local web GUI to monitor upload scan activity across deployments. No SaaS, no data egress, no configuration files.
+- **Compliance teams** — HMAC-signed NDJSON audit logs satisfy SOC 2, HIPAA, ISO 27001, and PCI-DSS evidence requirements. Routes to file, console, or a SIEM webhook — no file bytes ever leave your infrastructure.
+- **Security operations** — live Prometheus metrics (blocked files, YARA hits by category, p95 scan latency) feed directly into your existing Grafana dashboards, zero custom instrumentation required.
+- **Platform / DevSecOps teams** — zero-config embedded web GUI shows scan activity in real time. No build step, no SaaS, no data egress. Five curated premium YARA rules (ransomware, APT, miner, LOLBAS) loaded automatically.
 
 ### Drop-in integration (30 seconds)
 
 ```bash
-npm install @myusername/pompelmi-enterprise
+npm install @pompelmi/enterprise
 ```
 
 ```ts
-import { scanBytes } from 'pompelmi';
-import { withEnterprise } from '@myusername/pompelmi-enterprise';
+import Pompelmi from 'pompelmi';
+import { PompelmiEnterprise } from '@pompelmi/enterprise';
 
-// Wraps your existing scan function — same API, enterprise features layered on top.
-const scan = withEnterprise(scanBytes, {
-  audit:     { dest: 'file', path: '/var/log/pompelmi/audit.jsonl' },
-  metrics:   { endpoint: '/metrics' },   // Prometheus-scrape endpoint
-  dashboard: { port: 4000 },             // Web GUI → http://localhost:4000
+const enterprise = await PompelmiEnterprise.create({
+  licenseKey: process.env.POMPELMI_LICENSE_KEY,
+  auditLogger: { sinks: ['file'], hmac: true, hmacSecret: process.env.AUDIT_HMAC_SECRET },
+  dashboard:   { enabled: true, port: 3742 },
 });
 
-// Use exactly as before — no changes to the rest of your code.
-const report = await scan(fileBytes, { ctx: { filename: 'upload.pdf' } });
+const scanner = new Pompelmi();
+enterprise.injectInto(scanner); // loads premium YARA rules + hooks all scan events
+
+const results = await scanner.scan('/srv/uploads');
+// → audit log → ./pompelmi-audit/audit-YYYY-MM-DD.ndjson
+// → metrics   → http://localhost:3742/metrics
+// → dashboard → http://localhost:3742
 ```
 
 <div align="center">

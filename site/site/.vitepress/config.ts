@@ -67,6 +67,7 @@ export default defineConfig({
     nav: [
       { text: 'Docs', link: '/docs/' },
       { text: 'Demo', link: '/demo/' },
+      { text: 'Enterprise', link: '/docs/enterprise' },
       { text: 'GitHub', link: 'https://github.com/pompelmi/pompelmi' },
     ],
     sidebar: {
@@ -79,6 +80,12 @@ export default defineConfig({
             { text: 'Policy', link: '/docs/policy' },
             { text: 'ZIP Deep-Inspection', link: '/docs/zip-inspection' },
             { text: 'Adapters Overview', link: '/docs/adapters' }
+          ]
+        },
+        {
+          text: 'Enterprise',
+          items: [
+            { text: 'Pompelmi Enterprise', link: '/docs/enterprise' }
           ]
         }
       ]
