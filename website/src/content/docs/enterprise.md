@@ -1,11 +1,46 @@
 ---
 title: Pompelmi Enterprise
-description: SIEM-compatible audit logs, HMAC-signed tamper-evident records, premium YARA rules, Prometheus metrics, and an embedded Web GUI dashboard — layered on top of the open-source core. Built for compliance, security operations, and production-grade observability.
+description: SIEM-compatible audit logs, HMAC-signed tamper-evident records, premium YARA rules, Prometheus metrics, and an embedded Web GUI dashboard. Built for compliance-driven engineering teams in regulated industries.
 ---
 
-Pompelmi is open-source, MIT-licensed, and always will be. **Pompelmi Enterprise** is an optional commercial plugin (`@pompelmi/enterprise`) that adds the compliance evidence, live observability, and operational tooling that engineering teams in regulated industries need — without replacing a single line of your existing implementation.
+<p align="center" style="font-size:1.3rem;font-weight:600;margin:1.5rem 0 0.5rem">
+  Everything the open-source core gives you,<br/>plus the compliance evidence your auditors will actually ask for.
+</p>
+
+<div align="center" style="margin:1.5rem 0">
+
+[![Buy Enterprise License](https://img.shields.io/badge/Buy%20Enterprise%20License-Polar.sh-0a7ea4?style=for-the-badge)](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+
+</div>
+
+---
+
+Pompelmi is open-source, MIT-licensed, and always will be. **Pompelmi Enterprise** (`@pompelmi/enterprise`) is an optional commercial plugin that layers the compliance evidence, live observability, and operational tooling that regulated-industry engineering teams need — on top of the core they already use.
 
 `PompelmiEnterprise.create()` wraps your scanner once. Your framework adapters, YARA rules, quarantine workflows, and policy packs keep working unchanged.
+
+---
+
+## What Enterprise solves
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin:1.5rem 0">
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Your SOC 2 / HIPAA auditor asks for evidence</strong><br/><br/>
+You need a tamper-evident, structured log of every file scanned — who uploaded it, when, what verdict was reached, what action was taken. Not a custom logging solution you built yourself.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Your security team wants dashboards, not log-grepping</strong><br/><br/>
+Blocked-file counts, YARA hit rates by threat category, P95 scan latency — already in Grafana. Not a project to instrument, just an endpoint to add to your scrape config.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Stakeholders want visibility without a custom UI</strong><br/><br/>
+A live security dashboard served from your existing process with zero deployment overhead. Open a browser, see what your upload pipeline is blocking in real time.
+</div>
+
+</div>
 
 ---
 
@@ -13,47 +48,31 @@ Pompelmi is open-source, MIT-licensed, and always will be. **Pompelmi Enterprise
 
 ### CISOs and compliance leads
 
-Your SOC 2, HIPAA, ISO 27001, or PCI-DSS audit requires a tamper-evident, structured log of every file your platform processed — who uploaded it, when it was scanned, what verdict was reached, and what action was taken. The Enterprise audit module produces exactly that, optionally signed with HMAC-SHA256 so tampering is detectable, in a format your SIEM can ingest on day one.
+Your SOC 2, HIPAA, ISO 27001, or PCI-DSS audit requires a tamper-evident, structured log of every file your platform processed. The Enterprise audit module produces exactly that — every event signed with HMAC-SHA256 so tampering is detectable, in a format your SIEM can ingest on day one.
+
+**Compatible with:** Splunk, Elastic SIEM, Microsoft Sentinel, Datadog, and any SIEM that ingests NDJSON or structured syslog.
 
 ### Security engineers and detection teams
 
-You already have Grafana. You already have Prometheus. Enterprise exposes a `/metrics` endpoint that sends blocked-file counts, YARA hit rates by threat category, scan latency (avg and p95), and error rates directly into your existing dashboards — no custom instrumentation, no third-party agents.
+You already have Grafana. You already have Prometheus. Enterprise exposes a `/metrics` endpoint with blocked-file counts, YARA hit rates by threat category, scan latency (avg and p95), and error rates — wired to your existing dashboards from one scrape config line.
 
 ### Lead developers and platform teams
 
-You want a low-friction way to give stakeholders visibility into what your upload pipeline is blocking — without building a reporting UI from scratch. Enterprise ships an embedded, zero-config web dashboard served from your existing process. Open a browser, see your scan activity in real time. Nothing to deploy.
+Enterprise ships an embedded, zero-config web dashboard served from your existing process. No build step, no extra deployment, no separate service. Mount it as Express/Fastify middleware or run it on its own port.
 
 ---
 
 ## Who can stay on the free core
 
-Enterprise is not necessary for every use case. The free MIT-licensed core handles:
+Enterprise is not necessary for every use case. The **free MIT-licensed core** handles:
 
 - Heuristic scanning, ZIP bomb protection, magic-byte MIME validation
 - Custom YARA rules via `composeScanners`
-- Quarantine workflow and audit trail (using the built-in `pompelmi/audit` module)
+- Quarantine workflow and audit trail (via the built-in `pompelmi/audit` module)
 - Scan hooks for custom logging and metrics
 - Policy packs for common upload scenarios
 
-If your application does not need SIEM-compatible signed logs, Prometheus metrics, premium YARA rules, or a built-in dashboard, the open-source core is sufficient.
-
----
-
-## Architecture
-
-`PompelmiEnterprise` is a thin orchestrator. Call `create()` once, then `injectInto(scanner)` — everything else is automatic.
-
-```
-PompelmiEnterprise.create()
-│
-├── LicenseValidator   — verifies Polar.sh key at startup, re-checks every 24h
-├── AuditLogger        — HMAC-signed NDJSON → file / webhook / console
-├── YaraPremium        — 5 curated YARA rules loaded into the core scanner
-├── PrometheusMetrics  — in-memory counters / gauges exposed as /metrics
-└── DashboardServer    — embedded HTTP server serving the live Web Dashboard
-```
-
-Every `scan:start`, `scan:threat`, `scan:complete`, and `scan:error` event emitted by the Pompelmi core is automatically captured and routed to the logger and metrics engine — no manual instrumentation required.
+If you do not need SIEM-compatible signed logs, Prometheus metrics, premium YARA rules, or a built-in dashboard, the open-source core is sufficient.
 
 ---
 
@@ -63,11 +82,13 @@ Every `scan:start`, `scan:threat`, `scan:complete`, and `scan:error` event emitt
 npm install @pompelmi/enterprise
 ```
 
-Requires Node.js ≥ 18 and an active [Enterprise license](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn).
+Requires Node.js >= 18 and an active [Enterprise license](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn).
 
 ---
 
 ## Quick Start
+
+Add Enterprise to your existing Pompelmi setup in ~10 lines:
 
 ```js
 import Pompelmi from 'pompelmi';
@@ -82,16 +103,237 @@ const scanner = new Pompelmi();
 enterprise.injectInto(scanner); // loads premium YARA rules + hooks all scan events
 
 const results = await scanner.scan('/srv/uploads');
-// → threats automatically logged to ./pompelmi-audit/audit-YYYY-MM-DD.ndjson
-// → metrics available at http://localhost:3742/metrics
-// → live dashboard at  http://localhost:3742
+// → threats logged to ./pompelmi-audit/audit-YYYY-MM-DD.ndjson
+// → Prometheus metrics at  http://localhost:3742/metrics
+// → live dashboard at      http://localhost:3742
+```
+
+Your existing scanner configuration, framework adapters, and business logic are unchanged.
+
+---
+
+## Architecture
+
+`PompelmiEnterprise` is a thin orchestrator. Call `create()` once, then `injectInto(scanner)` — everything else is automatic.
+
+```
+PompelmiEnterprise.create()
+│
+├── LicenseValidator   — verifies Polar.sh key at startup, re-checks every 24h
+├── AuditLogger        — HMAC-signed NDJSON → file / webhook / console
+├── YaraPremium        — 5+ curated YARA rules loaded into the core scanner
+├── PrometheusMetrics  — in-memory counters / gauges exposed as /metrics
+└── DashboardServer    — embedded HTTP server serving the live Web Dashboard
+```
+
+Every `scan:start`, `scan:threat`, `scan:complete`, and `scan:error` event emitted by the core is automatically captured and routed to the logger and metrics engine — no manual instrumentation required.
+
+---
+
+## Features
+
+### Advanced Audit Logger
+
+Every scan lifecycle event is written as a structured NDJSON record with a full context payload — file path, SHA-256, matched rules, scan duration — optionally signed with HMAC-SHA256 to detect tampering. Roll the log daily. Query it programmatically.
+
+**Log entry shape:**
+
+```json
+{
+  "timestamp": "2026-03-13T14:22:01.443Z",
+  "event": "threat_detected",
+  "version": "1",
+  "filePath": "/srv/uploads/payload.exe",
+  "sha256": "e3b0c44298fc1c149afb",
+  "matchedRules": ["pompelmi_wannacry", "pompelmi_cobalt_strike_beacon"],
+  "severity": "critical",
+  "_sig": "a3f9d2...c8b1"
+}
+```
+
+**Output sinks:**
+
+| Sink | Description |
+|---|---|
+| `'file'` (default) | Daily rolling files → `audit-YYYY-MM-DD.ndjson` |
+| `'console'` | Formatted stdout — useful in development |
+| `'webhook'` | Fire-and-forget POST to your SIEM / log aggregator |
+
+Multiple sinks can be active simultaneously. Ingest directly into Splunk, Elastic SIEM, Microsoft Sentinel, or Datadog.
+
+**Audit logger configuration:**
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `sinks` | `string[]` | `['file']` | Active output sinks |
+| `logDir` | `string` | `'./pompelmi-audit'` | Directory for rolling log files |
+| `hmac` | `boolean` | `true` | Sign each entry with HMAC-SHA256 |
+| `hmacSecret` | `string` | — | Required when `hmac: true` |
+| `webhookUrl` | `string` | — | Required when `'webhook'` is in sinks |
+
+**Programmatic log queries:**
+
+```js
+// Returns all critical threat entries from on-disk log files
+const threats = await enterprise.auditLogger.query(
+  (entry) => entry.event === 'threat_detected' && entry.severity === 'critical'
+);
 ```
 
 ---
 
-## Configuration
+### Premium YARA Rules
 
-### `PompelmiEnterprise.create(options)`
+A curated, production-hardened rule set covering the most impactful threat categories. Rules are loaded into the core scanner automatically by `injectInto()`.
+
+| ID | Name | Category | Severity |
+|---|---|---|---|
+| `pmp-r001` | WannaCry Ransomware Family | ransomware | critical |
+| `pmp-r002` | Cobalt Strike Beacon Detection | apt | critical |
+| `pmp-r003` | XMRig Crypto-Miner | miner | high |
+| `pmp-r004` | Mimikatz Credential Dumper | apt | critical |
+| `pmp-r005` | Suspicious PowerShell LOLBAS | lolbas | medium |
+
+```js
+// Filtered by category
+const ransomware = enterprise.yaraPremium.getRules({ category: 'ransomware' });
+
+// Combined YARA source string — load into any YARA-compatible tool
+const yaraSource = enterprise.yaraPremium.getRuleSource();
+```
+
+---
+
+### Prometheus Metrics
+
+Zero external dependencies. Feed the `/metrics` output directly into Prometheus and visualize in your existing Grafana dashboards.
+
+| Metric | Type | Description |
+|---|---|---|
+| `pompelmi_scans_total` | counter | Total scans initiated |
+| `pompelmi_scans_clean_total` | counter | Scans with zero threats |
+| `pompelmi_threats_total` | counter | Individual threats detected |
+| `pompelmi_blocked_files_total` | counter | Total blocked files |
+| `pompelmi_yara_hits_total{category="…"}` | counter | YARA hits by threat category |
+| `pompelmi_scan_latency_avg_ms` | gauge | Rolling average scan latency |
+| `pompelmi_scan_latency_p95_ms` | gauge | P95 latency over last 1,000 scans |
+| `pompelmi_uptime_seconds` | gauge | Seconds since module initialisation |
+
+```js
+// Express endpoint
+app.get('/metrics', (_req, res) => {
+  res.setHeader('Content-Type', 'text/plain; version=0.0.4');
+  res.send(enterprise.metrics.export());
+});
+
+// JSON snapshot for custom dashboards
+const snap = enterprise.metrics.snapshot();
+// { totalScans, cleanScans, threatsDetected, blockedFiles,
+//   avgLatencyMs, p95LatencyMs, yaraHitsByCategory, recentThreats }
+```
+
+---
+
+### Embedded Web Dashboard
+
+A self-contained dark-mode security dashboard served by an embedded Node.js HTTP server. No build step, no bundler, no separate deployment.
+
+**Dashboard includes:**
+- Stat cards: total scans, clean, blocked, avg/P95 latency
+- YARA distribution chart: hits by threat category
+- System health panel: uptime, live threat count, last scan time
+- Blocked files table: live feed with severity badges, category pills, SHA-256, matched rule names
+- Auto-refresh every 5 seconds
+
+**Mode 1 — Standalone server (own port):**
+
+```js
+const enterprise = await PompelmiEnterprise.create({
+  licenseKey: process.env.POMPELMI_LICENSE_KEY,
+  dashboard:  { enabled: true, port: 3742 },
+});
+// → http://localhost:3742
+```
+
+**Mode 2 — Middleware (share your app's port):**
+
+```js
+// Express
+app.use('/security', enterprise.dashboard.middleware('/security'));
+
+// Fastify (via middie or @fastify/express)
+fastify.use('/security', enterprise.dashboard.middleware('/security'));
+```
+
+| Route | Description |
+|---|---|
+| `GET /` | Live Web Dashboard |
+| `GET /metrics` | Prometheus scrape endpoint |
+| `GET /api/status` | JSON metrics snapshot |
+
+---
+
+## Free vs. Enterprise
+
+| Capability | Open Source | Enterprise |
+|---|:---:|:---:|
+| YARA file scanning | ✅ | ✅ |
+| Magic-bytes detection | ✅ | ✅ |
+| ZIP bomb & archive guards | ✅ | ✅ |
+| Heuristic scanner | ✅ | ✅ |
+| `composeScanners` pipeline | ✅ | ✅ |
+| Framework adapters | ✅ | ✅ |
+| Quarantine workflow | ✅ | ✅ |
+| Scan hooks & `onScanEvent` | ✅ | ✅ |
+| Policy packs | ✅ | ✅ |
+| React / browser scanner hook | ✅ | ✅ |
+| Zero-cloud, fully local | ✅ | ✅ |
+| **Advanced Audit Logging (SIEM-compatible)** | — | ✅ |
+| **HMAC-signed tamper-evident log entries** | — | ✅ |
+| **File / Webhook / Console log sinks** | — | ✅ |
+| **On-disk audit log query API** | — | ✅ |
+| **Premium YARA Rule Set** | — | ✅ |
+| **Ransomware / APT / Miner / LOLBAS detections** | — | ✅ |
+| **Prometheus `/metrics` endpoint** | — | ✅ |
+| **Embedded Web Dashboard** | — | ✅ |
+| **Priority support** | — | ✅ |
+| **License** | MIT | Commercial |
+
+---
+
+## Pricing
+
+<div style="border:2px solid #0a7ea4;border-radius:10px;padding:1.75rem;margin:1.5rem 0;max-width:520px">
+
+### $49.99 / month per organization
+
+**Unlimited** nodes · **Unlimited** scans · **Unlimited** seats
+
+**What's included:**
+- `@pompelmi/enterprise` npm package + all modules
+- Advanced Audit Logger (file, webhook, console sinks)
+- 5+ curated YARA rules (WannaCry, Cobalt Strike, XMRig, Mimikatz, LOLBAS)
+- Prometheus metrics endpoint
+- Embedded live security dashboard
+- Priority email support — 1 business-day response SLA
+- All future feature releases at no additional cost
+- License for any number of production environments in your organization
+
+<div style="margin-top:1.25rem">
+
+[![Get Pompelmi Enterprise](https://img.shields.io/badge/Subscribe%20via%20Polar.sh-%2449.99%2Fmo-0a7ea4?style=for-the-badge)](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+
+</div>
+
+</div>
+
+Subscriptions are managed through [Polar.sh](https://polar.sh). Your npm token and license key are delivered immediately after checkout. Cancel anytime.
+
+**Volume pricing** for multi-subsidiary enterprises or MSPs — email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com?subject=Volume%20pricing).
+
+---
+
+## Full configuration reference
 
 ```js
 const enterprise = await PompelmiEnterprise.create({
@@ -118,233 +360,7 @@ const enterprise = await PompelmiEnterprise.create({
 
 ---
 
-## Features
-
-### 1. Advanced Audit Logger
-
-Every scan lifecycle event is written as a structured, newline-delimited JSON (NDJSON) record. Each entry carries a full context payload — file path, SHA-256, matched rules, scan duration — and can optionally be signed with HMAC-SHA256 to detect tampering.
-
-**Sinks:**
-
-| Sink | Description |
-|---|---|
-| `'file'` (default) | Daily rolling files in `logDir` → `audit-YYYY-MM-DD.ndjson` |
-| `'console'` | Formatted output to stdout (useful in development) |
-| `'webhook'` | Fire-and-forget POST to a SIEM / log aggregator endpoint |
-
-Multiple sinks can be active simultaneously.
-
-**Log entry shape:**
-
-```json
-{
-  "timestamp": "2026-03-13T14:22:01.443Z",
-  "event": "threat_detected",
-  "version": "1",
-  "filePath": "/srv/uploads/payload.exe",
-  "sha256": "e3b0c44298fc1c149afb",
-  "matchedRules": ["pompelmi_wannacry", "pompelmi_cobalt_strike_beacon"],
-  "severity": "critical",
-  "_sig": "a3f9d2...c8b1"
-}
-```
-
-The format is compatible with Splunk, Elastic SIEM, Microsoft Sentinel, Datadog, and any SIEM that ingests NDJSON or structured syslog.
-
-**Audit logger options:**
-
-| Option | Type | Default | Description |
-|---|---|---|---|
-| `sinks` | `string[]` | `['file']` | Active output sinks |
-| `logDir` | `string` | `'./pompelmi-audit'` | Directory for rolling log files |
-| `hmac` | `boolean` | `true` | Sign each entry with HMAC-SHA256 |
-| `hmacSecret` | `string` | — | Required when `hmac: true` |
-| `webhookUrl` | `string` | — | Required when `'webhook'` is in sinks |
-
-**Querying logs:**
-
-```js
-// Returns all threat entries from all on-disk log files
-const threats = await enterprise.auditLogger.query(
-  (entry) => entry.event === 'threat_detected' && entry.severity === 'critical'
-);
-```
-
----
-
-### 2. Premium YARA Rules
-
-A curated, production-hardened rule set loaded into the core scanner automatically by `injectInto()`. Rules are sourced from internal research and vetted threat-intelligence feeds.
-
-| ID | Name | Category | Severity |
-|---|---|---|---|
-| `pmp-r001` | WannaCry Ransomware Family | ransomware | critical |
-| `pmp-r002` | Cobalt Strike Beacon Detection | apt | critical |
-| `pmp-r003` | XMRig Crypto-Miner | miner | high |
-| `pmp-r004` | Mimikatz Credential Dumper | apt | critical |
-| `pmp-r005` | Suspicious PowerShell LOLBAS | lolbas | medium |
-
-**Manual access:**
-
-```js
-// All rules
-const rules = enterprise.yaraPremium.getRules();
-
-// Filtered (ransomware only)
-const ransomware = enterprise.yaraPremium.getRules({ category: 'ransomware' });
-
-// Combined YARA source string — load into any YARA-compatible tool
-const yaraSource = enterprise.yaraPremium.getRuleSource();
-
-// Specific rule by ID
-const r = enterprise.yaraPremium.getRuleById('pmp-r002');
-```
-
----
-
-### 3. Prometheus Metrics
-
-An in-memory metrics engine with zero external dependencies. Feed its `/metrics` output directly into Prometheus and visualize in Grafana.
-
-**Exposed metric families:**
-
-| Metric | Type | Description |
-|---|---|---|
-| `pompelmi_scans_total` | counter | Total scans initiated |
-| `pompelmi_scans_clean_total` | counter | Scans with zero threats |
-| `pompelmi_threats_total` | counter | Individual threats detected |
-| `pompelmi_blocked_files_total` | counter | Total blocked files |
-| `pompelmi_yara_hits_total{category="…"}` | counter | YARA hits labelled by threat category |
-| `pompelmi_scan_latency_avg_ms` | gauge | Rolling average latency (ms) |
-| `pompelmi_scan_latency_p95_ms` | gauge | P95 latency over last 1,000 scans |
-| `pompelmi_uptime_seconds` | gauge | Seconds since module initialisation |
-
-**Exposing via Express:**
-
-```js
-app.get('/metrics', (_req, res) => {
-  res.setHeader('Content-Type', 'text/plain; version=0.0.4');
-  res.send(enterprise.metrics.export());
-});
-```
-
-**JSON snapshot (for custom dashboards):**
-
-```js
-const snap = enterprise.metrics.snapshot();
-// {
-//   totalScans: 1024, cleanScans: 1012, threatsDetected: 12, blockedFiles: 12,
-//   avgLatencyMs: 38, p95LatencyMs: 91,
-//   yaraHitsByCategory: { ransomware: 3, apt: 6, miner: 3 },
-//   uptimeMs: 86400000, lastScanAt: '2026-03-13T14:22:01.443Z',
-//   recentThreats: [ … ]   // last 20 entries
-// }
-```
-
----
-
-### 4. Embedded Web Dashboard
-
-A self-contained dark-mode security dashboard served by an embedded Node.js HTTP server — no build step, no bundler, no extra process. Frontend assets are delivered via CDN (Tailwind CSS + Chart.js).
-
-**Dashboard UI includes:**
-
-- **Stat cards** — Total Scans, Clean, Blocked, Avg/P95 Latency
-- **YARA distribution chart** — doughnut chart of hits by threat category
-- **System health panel** — uptime, live threat count, last scan time
-- **Blocked files table** — live feed of recent threats with severity badges, category pills, truncated SHA-256, and matched rule names
-- **Auto-refresh** — polls `/api/status` every 5 seconds
-
-**Mode 1 — Standalone server (own port):**
-
-```js
-// Auto-start via create() options
-const enterprise = await PompelmiEnterprise.create({
-  licenseKey: process.env.POMPELMI_LICENSE_KEY,
-  dashboard:  { enabled: true, port: 3742 },
-});
-// → http://localhost:3742
-
-// Or start manually
-await enterprise.dashboard.start(3742);
-```
-
-**Mode 2 — Middleware (share your app's port):**
-
-```js
-// Express
-app.use('/security', enterprise.dashboard.middleware('/security'));
-// → http://localhost:4000/security
-
-// Fastify (via middie or @fastify/express)
-fastify.use('/security', enterprise.dashboard.middleware('/security'));
-```
-
-**HTTP routes served by the dashboard:**
-
-| Route | Content-Type | Description |
-|---|---|---|
-| `GET /` | `text/html` | Live Web Dashboard |
-| `GET /metrics` | `text/plain; version=0.0.4` | Prometheus scrape endpoint |
-| `GET /api/status` | `application/json` | Metrics snapshot (polled by dashboard) |
-
----
-
-## Free vs. Enterprise
-
-| Capability | Core (Free, MIT) | Enterprise |
-|---|:---:|:---:|
-| In-process file scanning | ✅ | ✅ |
-| Magic-byte MIME sniffing | ✅ | ✅ |
-| ZIP bomb & archive guards | ✅ | ✅ |
-| Heuristic scanner | ✅ | ✅ |
-| YARA engine adapter | ✅ | ✅ |
-| `composeScanners` pipeline | ✅ | ✅ |
-| Framework adapters | ✅ | ✅ |
-| Quarantine workflow | ✅ | ✅ |
-| Scan hooks & `onScanEvent` | ✅ | ✅ |
-| Policy packs | ✅ | ✅ |
-| React / browser scanner hook | ✅ | ✅ |
-| **Advanced Audit Logging (SIEM-compatible)** | — | ✅ |
-| **HMAC-signed tamper-evident log entries** | — | ✅ |
-| **File / Webhook / Console log sinks** | — | ✅ |
-| **On-disk audit log query API** | — | ✅ |
-| **Premium YARA Rules** (Ransomware / APT / Miner / LOLBAS) | — | ✅ |
-| **Prometheus Metrics endpoint** | — | ✅ |
-| **Embedded Web GUI Dashboard** | — | ✅ |
-| **Priority email support** | — | ✅ |
-| **Response SLA** | — | ✅ |
-| **License** | MIT | Commercial |
-
----
-
-## Pricing
-
-Pompelmi Enterprise is **$49.99/month** per organization — unlimited nodes, unlimited scans, unlimited seats.
-
-No per-node fees. No per-scan metering. One subscription covers your entire deployment.
-
-**Includes:**
-
-- `@pompelmi/enterprise` npm package access
-- All four enterprise modules (audit, YARA rules, metrics, dashboard)
-- Future feature releases at no additional cost
-- Priority email support with a 1 business-day response SLA
-- License for use in any number of production environments within your organization
-
-<div align="center" style="margin: 2rem 0">
-
-[![Get Pompelmi Enterprise — $49.99/mo](https://img.shields.io/badge/Get%20Pompelmi%20Enterprise-%2449.99%2Fmo-0a7ea4?style=for-the-badge)](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
-
-</div>
-
-Subscriptions are managed through [Polar.sh](https://polar.sh). You will receive your npm token and license key immediately after checkout. Cancel anytime.
-
-> **Volume pricing** for multi-subsidiary enterprises or MSPs is available. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with your organization name and deployment scale.
-
----
-
-## Environment Variables
+## Environment variables
 
 | Variable | Required | Description |
 |---|:---:|---|
@@ -354,9 +370,9 @@ Subscriptions are managed through [Polar.sh](https://polar.sh). You will receive
 
 ---
 
-## Graceful Shutdown
+## Graceful shutdown
 
-`enterprise.close()` flushes the audit log file stream and stops the standalone dashboard server. Call it on process exit to avoid truncated log writes.
+`enterprise.close()` flushes the audit log stream and stops the dashboard server. Call it on process exit to avoid truncated log writes.
 
 ```js
 process.on('SIGTERM', async () => {
@@ -367,9 +383,7 @@ process.on('SIGTERM', async () => {
 
 ---
 
-## License Errors
-
-`PompelmiEnterprise.create()` throws typed errors that you can catch and handle:
+## License error handling
 
 ```js
 import {
@@ -390,35 +404,29 @@ try {
 }
 ```
 
-The license is silently re-validated every 24 hours in the background. The timer is `unref()`-ed so it will not keep the Node process alive.
+The license is silently re-validated every 24 hours in the background. The timer is `unref()`-ed so it will not keep your Node process alive.
 
 ---
 
 ## FAQ
 
-**Does Enterprise replace or fork the open-source core?**
-No. Enterprise is a wrapper package that depends on the open-source `pompelmi` core. It adds no replacement scanning logic. The MIT-licensed core continues to receive updates regardless of Enterprise adoption.
+**Does Enterprise replace the open-source core?**
+No. It is a wrapper package that depends on the open-source `pompelmi` core. The MIT-licensed core continues to receive updates regardless of Enterprise adoption.
 
 **Does the dashboard or audit logger send data anywhere?**
-Never. All Enterprise modules operate entirely in-process. Audit logs are written to your configured file path, stdout, or a webhook you control. The metrics endpoint and dashboard are served from within your own process. No data leaves your infrastructure.
-
-**Can I use Enterprise in Docker / Kubernetes?**
-Yes. The audit module writes to stdout or a file path you control. The metrics endpoint integrates with any Prometheus scrape config. The dashboard binds to a configurable host and port. All standard deployment patterns work without modification.
-
-**What happens if I cancel my subscription?**
-Your existing build continues to work until you update the package. The Enterprise module will log a license warning after the grace period. The `pompelmi` core and all open-source features remain fully functional indefinitely.
-
-**Is there a free trial?**
-A 14-day trial is available. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with your organization name and use case to request access.
-
-**What is the support SLA?**
-Priority email support with a 1 business-day first-response target is included. All communication is private and asynchronous.
-
-**What Node.js versions are supported?**
-Node.js 18 and above — matching the open-source core requirement.
+Never. All Enterprise modules operate entirely in-process. Audit logs are written to your configured file path, stdout, or a webhook you control. The metrics endpoint and dashboard are served from within your own process.
 
 **Can I use Enterprise in Docker or Kubernetes?**
 Yes. The audit module writes to stdout or a configurable file path. The metrics endpoint integrates with any Prometheus scrape config. The dashboard binds to a configurable host and port. All standard deployment patterns work without modification.
 
+**What happens if I cancel my subscription?**
+Your existing build continues to work until you next update the package, at which point a license warning is logged. The `pompelmi` core and all open-source features remain fully functional indefinitely.
+
+**What is the support SLA?**
+Priority email support with a 1 business-day first-response target. All communication is private and asynchronous.
+
+**What Node.js versions are supported?**
+Node.js 18 and above — matching the open-source core requirement.
+
 **Do you offer volume pricing?**
-Yes, for multi-subsidiary enterprises or MSPs. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with your organization name and deployment scale.
+Yes — for multi-subsidiary enterprises or MSPs. Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com?subject=Volume%20pricing) with your organization name and deployment scale.

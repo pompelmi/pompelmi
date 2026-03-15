@@ -70,7 +70,8 @@ export default defineConfig({
     { label: 'How-to Guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },
     { label: 'Explanations', autogenerate: { directory: 'explaination', collapsed: true } },
-    { label: 'Commercial Support', slug: 'support' }
+    { label: 'Enterprise', slug: 'enterprise', badge: { text: '$49.99/mo', variant: 'caution' } },
+    { label: 'Support', slug: 'support' }
   ],
   tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
   pagefind: true

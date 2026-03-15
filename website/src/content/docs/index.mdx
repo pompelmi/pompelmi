@@ -5,26 +5,11 @@ description: In-process file upload security for Node.js — no cloud API, no da
 
 import CodeTabs from "../../components/CodeTabs.astro";
 
-<p align="center">
-  <img
-    src="og.png"
-    alt="Pompelmi overview"
-    width="1200"
-    height="630"
-    loading="eager"
-    decoding="async"
-    style="max-width:100%;height:auto;border-radius:12px;box-shadow:0 6px 30px rgba(0,0,0,.08)"
-  />
-</p>
-
-# Scan & block malicious file uploads in Node.js
-
 <script type="module" is:inline>{`
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   mermaid.initialize({ startOnLoad: true, securityLevel: 'loose', theme: prefersDark ? 'dark' : 'default' });
 `}</script>
-
 
 <p align="center">
   <a href="https://github.com/pompelmi/pompelmi/stargazers">
@@ -34,65 +19,204 @@ import CodeTabs from "../../components/CodeTabs.astro";
     <img alt="Open Issues" src="https://img.shields.io/github/issues/pompelmi/pompelmi?style=for-the-badge" />
   </a>
   <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE">
-    <img alt="License" src="https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge" />
+    <img alt="MIT License" src="https://img.shields.io/github/license/pompelmi/pompelmi?style=for-the-badge" />
   </a>
-  <a href="https://github.com/pompelmi/pompelmi/deployments">
-    <img alt="GitHub Pages" src="https://img.shields.io/github/deployments/pompelmi/pompelmi/github-pages?label=github%20pages&style=for-the-badge" />
-  </a>
+  <img alt="npm" src="https://img.shields.io/npm/v/pompelmi?style=for-the-badge&color=0a7ea4" />
 </p>
 
+<p align="center" style="font-size:1.35rem;font-weight:600;margin:1.5rem 0 0.5rem">
+  File upload security that lives inside your Node.js process.
+</p>
+<p align="center" style="color:var(--sl-color-gray-2);margin:0 0 1.5rem">
+  No cloud API. No daemon. No data egress. One <code>npm install</code> away.
+</p>
 
-Pompelmi is a **TypeScript library** that adds a security layer to file upload endpoints in Node.js applications. It scans file bytes **in-process** — no HTTP call to a cloud API, no ClamAV daemon required, no file data leaving your infrastructure.
+<p align="center">
+  <a href="./getting-started/" style="display:inline-block;padding:0.65rem 1.6rem;background:#0a7ea4;color:#fff;border-radius:6px;font-weight:600;text-decoration:none;margin-right:0.75rem">Get started — 5 min</a>
+  <a href="./enterprise/" style="display:inline-block;padding:0.65rem 1.6rem;border:2px solid #0a7ea4;color:#0a7ea4;border-radius:6px;font-weight:600;text-decoration:none">Enterprise features</a>
+</p>
 
-It gives you layered, composable scanning: size and MIME guards, magic-byte validation, ZIP bomb protection, structural heuristics, and optional YARA rules — all returning a consistent `clean | suspicious | malicious` verdict your application can act on immediately.
+---
 
-**Built for teams who cannot or choose not to send user files to a third-party scanning service** — healthcare, legal, finance, self-hosted SaaS, and privacy-first applications.
+Pompelmi is a **TypeScript library** that adds a layered security layer to file upload endpoints. It scans file bytes **in-process** — no HTTP call to a cloud API, no ClamAV daemon, no file data leaving your infrastructure.
 
-> 🧪 **Live demo:** drag a clean JPG → **CLEAN**; try the EICAR test string → **MALICIOUS**.
+Give it a `Buffer`, get back a `clean | suspicious | malicious` verdict in milliseconds. Your middleware, your storage, your rules.
+
+**Made for teams that cannot or choose not to route user files through a third-party service** — healthcare, legal, finance, self-hosted SaaS, and privacy-first products.
+
+> **Live demo:** drag a clean JPG → **CLEAN**. Try the EICAR test string → **MALICIOUS**.
+
+---
 
 ## Quickstart
 
+```bash
+npm install pompelmi
+```
+
 <CodeTabs />
+
+---
+
+## What Pompelmi checks
+
+Every file passes through a configurable chain of guards before your handler ever touches it:
+
+| Layer | What it catches |
+|---|---|
+| **Size limit** | Files over your configured threshold |
+| **Extension allowlist** | Unexpected file types for your context |
+| **Magic-byte MIME validation** | Extensions that lie about their content |
+| **Structural heuristics** | PE/ELF headers, embedded scripts, polyglot files |
+| **ZIP bomb protection** | Entry count, per-entry size, nesting depth |
+| **YARA rules** *(optional)* | Custom or [premium](./enterprise/) signature matching |
+
+All checks return a single `ScanReport` — `verdict`, `reasons`, `durationMs`, SHA-256 — that you act on immediately.
+
+---
 
 ## Why Pompelmi
 
-- **No cloud dependency** — scanning runs entirely in your Node.js process. Files never leave your infrastructure.
-- **No daemon** — install like any npm package. No ClamAV setup, no sidecar process, no config files.
-- **Defense-in-depth** — layered checks: size limits, extension allowlist, magic-byte MIME validation, structural heuristics, ZIP bomb protection, and optional YARA rules.
-- **Framework-ready** — drop-in adapters for Express, Next.js, NestJS, Fastify, Koa, and Nuxt/Nitro.
-- **Composable** — chain built-in scanners with your own using `composeScanners`. Control order, timeouts, and stop conditions.
-- **Privacy-safe by design** — no bytes are written, forwarded, or logged unless you explicitly configure it.
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1rem;margin:1.5rem 0">
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>No cloud dependency</strong><br/>
+Scanning runs entirely in your Node.js process. File bytes never leave your infrastructure.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>No daemon</strong><br/>
+Install like any npm package. No ClamAV setup, no sidecar process, no config files at all.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Defense-in-depth</strong><br/>
+Six layered checks in a single call. Adjust per endpoint with built-in policy packs.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Framework-ready</strong><br/>
+Drop-in adapters for Express, Next.js, NestJS, Fastify, Koa, and Nuxt/Nitro.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Composable</strong><br/>
+Chain built-in scanners with your own using <code>composeScanners</code>. Control order and stop conditions.
+</div>
+
+<div style="border:1px solid var(--sl-color-hairline);border-radius:8px;padding:1.25rem">
+<strong>Privacy-safe by design</strong><br/>
+No bytes are written, forwarded, or logged unless you explicitly configure it.
+</div>
+
+</div>
+
+---
 
 ## Quick links
 
-- Tutorial: **[Getting started](./getting-started/)** (≈ 5 min)
-- How‑to: **[Next.js](./how-to/nextjs/)** · **[Express](./how-to/express/)** · **[NestJS](./how-to/nestjs/)** · **[Fastify](./how-to/fastify/)** · **[Koa](./how-to/koa/)** · **[Nuxt/Nitro](./how-to/nuxt-nitro/)**
-- Reference: **[@pompelmi/ui-react](./reference/ui-react/)**
-- Deep dive: **[Architecture & threat model](./explaination/architecture/)**
-- Commercial: **[Enterprise features](./enterprise/)** · **[Support](./support/)**
+| | |
+|---|---|
+| **Start here** | [Getting started](./getting-started/) — 5 min tutorial |
+| **Framework guides** | [Next.js](./how-to/nextjs/) · [Express](./how-to/express/) · [NestJS](./how-to/nestjs/) · [Fastify](./how-to/fastify/) · [Koa](./how-to/koa/) · [Nuxt/Nitro](./how-to/nuxt-nitro/) |
+| **React UI** | [@pompelmi/ui-react](./reference/ui-react/) — drop-in upload component |
+| **Architecture** | [Threat model & internals](./explaination/architecture/) |
+| **Enterprise** | [Audit logs, YARA rules, Prometheus metrics, dashboard](./enterprise/) |
+| **Support** | [Community & commercial options](./support/) |
 
-## Who this is for
+---
 
-Pompelmi is the right choice when:
+## Is Pompelmi right for your project?
 
-- Your app accepts file uploads from users or external systems.
-- You need to block malicious uploads **without routing files through a cloud API**.
-- You are in a **self-hosted, on-premises, or regulated environment** where data residency matters.
-- You want a **composable, testable security layer** that integrates naturally with your existing Node.js middleware stack.
+**Yes — if:**
+- Your app accepts user-uploaded files and you need to block malicious ones.
+- You are in a **regulated or self-hosted environment** where data residency matters (HIPAA, SOC 2, ISO 27001, GDPR).
+- You want a composable, testable security layer integrated into your existing Node.js middleware.
+- Your team prefers owning the dependency over calling a cloud API.
 
-It may not be the right choice when:
-- You need full antivirus coverage with daily signature updates (consider adding ClamAV via `@pompelmi/engine-clamav` alongside the heuristic layer).
-- Your environment already has a trusted cloud scanning service and data residency is not a concern.
+**Consider alternatives if:**
+- You need full AV coverage with live signature updates → pair Pompelmi with `@pompelmi/engine-clamav`.
+- You already use a trusted cloud scanning service and data residency is not a concern.
 
-> 💡 **Testing tip:** The [EICAR test file](https://www.eicar.org/download-anti-malware-testfile/) is a safe, standard way to verify your scanner is working in development and CI. Pompelmi detects EICAR out of the box.
+---
+
+## Policy packs — sensible defaults in one line
+
+```js
+import { scanBytes, STRICT_PUBLIC_UPLOAD, IMAGES_ONLY, DOCUMENTS_ONLY } from 'pompelmi';
+
+// Anonymous uploads from the public internet
+const result = await scanBytes(buffer, { policy: STRICT_PUBLIC_UPLOAD });
+
+// Avatar endpoint
+const result = await scanBytes(buffer, { policy: IMAGES_ONLY });
+
+// Document portal
+const result = await scanBytes(buffer, { policy: DOCUMENTS_ONLY });
+```
+
+| Policy | Best for |
+|---|---|
+| `STRICT_PUBLIC_UPLOAD` | Anonymous or untrusted uploaders |
+| `CONSERVATIVE_DEFAULT` | General-purpose hardened default |
+| `DOCUMENTS_ONLY` | PDF, Word, Excel, CSV portals |
+| `IMAGES_ONLY` | Avatar or image-only endpoints |
+| `ARCHIVES` | Archive handling with ZIP bomb protection |
+
+---
+
+## Ready for production-grade compliance?
+
+The open-source core blocks threats. **Pompelmi Enterprise** gives your security and compliance teams the evidence trail, dashboards, and threat intelligence they need to run it in regulated environments.
+
+<div style="border:2px solid #0a7ea4;border-radius:10px;overflow:hidden;margin:1rem 0">
+
+<div style="background:#0a7ea4;color:#fff;padding:1rem 1.5rem">
+  <span style="font-size:1.15rem;font-weight:700">Pompelmi Enterprise</span>
+  <span style="float:right;font-size:1.15rem;font-weight:700">$49.99 / month</span>
+</div>
+
+<div style="padding:1.25rem 1.5rem">
+
+Everything in the open-source core, plus:
+
+| | |
+|---|---|
+| **SIEM audit logs** | HMAC-signed NDJSON → Splunk, Elastic, Sentinel, Datadog |
+| **Premium YARA rules** | 5+ rules: WannaCry, Cobalt Strike, XMRig, Mimikatz, LOLBAS |
+| **Prometheus metrics** | `/metrics` endpoint — drop into your existing Grafana dashboards |
+| **Live dashboard** | Embedded security UI, zero extra deployment |
+| **Priority support** | Email support, 1 business-day response SLA |
+| **Unlimited** | Nodes, scans, seats — one flat price |
+
+<div style="margin-top:1.25rem">
+
+[![Buy Enterprise License](https://img.shields.io/badge/Buy%20Enterprise%20License-Polar.sh-0a7ea4?style=for-the-badge)](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+&nbsp; [Full feature details →](./enterprise/)
+
+</div>
+
+</div>
+</div>
+
+---
+
+## Trust & maintenance
+
+Each release includes automated CI across Node.js 18/20/22, CodeQL static analysis, SBOM generation, OpenSSF Scorecard tracking, and GitHub Actions provenance attestation.
+
+- MIT licensed — free forever for the core library.
+- See [SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md) for the vulnerability reporting policy.
+
+> **Testing tip:** The [EICAR test file](https://www.eicar.org/download-anti-malware-testfile/) is the standard safe way to verify your scanner works. Pompelmi detects it out of the box.
+
+---
 
 ## Stars trend
 
 <p align="center">
   <img alt="Star history" src="https://starchart.cc/pompelmi/pompelmi.svg" width="640" height="320" />
 </p>
-
-<sub>Badges are powered by Shields.io and update automatically.</sub>
 
 {/* JSON-LD: SoftwareApplication */}
 <script type="application/ld+json">{`
@@ -129,26 +253,18 @@ It may not be the right choice when:
     {
       "@type":"Question",
       "name":"Does Pompelmi support YARA rules?",
-      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules via the composeScanners API. Starter rules are included for common threats."}
+      "acceptedAnswer":{"@type":"Answer","text":"Yes. Bring your own YARA rules via the composeScanners API. Starter rules are included for common threats. Premium rules covering WannaCry, Cobalt Strike, XMRig, Mimikatz, and LOLBAS are available via Pompelmi Enterprise."}
     },
     {
       "@type":"Question",
       "name":"Can it detect ZIP bombs?",
       "acceptedAnswer":{"@type":"Answer","text":"Yes. It enforces limits on entries, per-entry size, total uncompressed size, and nesting depth before the archive is fully extracted."}
+    },
+    {
+      "@type":"Question",
+      "name":"Is Pompelmi suitable for HIPAA or SOC 2 compliance?",
+      "acceptedAnswer":{"@type":"Answer","text":"The open-source core provides scanning without any data leaving your environment. Pompelmi Enterprise adds HMAC-signed tamper-evident audit logs in NDJSON format compatible with Splunk, Elastic SIEM, and Microsoft Sentinel — which is what most compliance audits require."}
     }
   ]
 }
 `}</script>
----
-
-## Trust & maintenance
-
-Pompelmi is actively maintained, MIT-licensed, and designed for long-term reliability. Each release includes:
-
-- **Continuous integration** — tests run on every push across Node.js 18, 20, and 22.
-- **CodeQL analysis** — static security analysis integrated into the main branch workflow.
-- **SBOM** — a Software Bill of Materials is generated on every release.
-- **OpenSSF Scorecard** — supply chain security posture is publicly tracked.
-- **Provenance attestation** — npm releases include GitHub Actions provenance for supply chain verification.
-
-See [SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md) for the vulnerability reporting policy and response timeline.
