@@ -1,20 +1,37 @@
-name: "✨ Feature request"
-description: Suggest an idea for pompelmi
+name: Feature request
+description: Propose a change to the API, docs, examples, or framework support
 labels: [enhancement]
 body:
   - type: textarea
-    id: summary
+    id: problem
     attributes:
-      label: Summary
-      placeholder: What problem does this solve?
+      label: Problem
+      description: What practical problem are you trying to solve?
+      placeholder: Describe the upload flow, framework, and why the current behavior is not enough.
     validations:
       required: true
   - type: textarea
     id: proposal
     attributes:
-      label: Proposed solution
-      placeholder: API/UX, examples, trade-offs...
+      label: Proposed change
+      description: Describe the API, docs change, or behavior you would like to see.
+      placeholder: Keep it concrete if you can.
+  - type: textarea
+    id: use_case
+    attributes:
+      label: Real-world use case
+      description: When would this matter in production or evaluation?
+      placeholder: Public uploads, internal document portals, quarantine workflows, framework integration, and so on.
   - type: textarea
     id: alternatives
     attributes:
       label: Alternatives considered
+      description: What are you doing today instead?
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched for related issues and discussions.
+          required: true
+        - label: I am open to contributing or validating a solution.

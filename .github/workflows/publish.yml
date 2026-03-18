@@ -59,7 +59,10 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        # Keep publish aligned with CI: this repo cuts releases from package
+        # version bumps, and a stricter install mode here can fail after CI is
+        # already green on the same commit.
+        run: pnpm install --no-frozen-lockfile
 
       - name: Build packages
         # Build root package first so its dist/types/ is available for

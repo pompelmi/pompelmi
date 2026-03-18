@@ -1,21 +1,17 @@
 blank_issues_enabled: false
 contact_links:
-  - name: "💬 Community Discussions"
+  - name: Community discussions
     url: "https://github.com/pompelmi/pompelmi/discussions"
-    about: "Ask questions, share ideas, and connect with the community"
-    
-  - name: "📚 Documentation"
-    url: "https://pompelmi.github.io"
-    about: "Complete documentation, guides, and API reference"
-    
-  - name: "🔧 Stack Overflow"
-    url: "https://stackoverflow.com/questions/tagged/pompelmi"
-    about: "Get help from the broader developer community"
-    
-  - name: "🐦 Twitter Updates" 
-    url: "https://twitter.com/search?q=pompelmi"
-    about: "Follow project updates and community discussions"
-    
-  - name: "💼 Commercial Support"
-    url: "https://github.com/pompelmi/pompelmi/discussions/categories/general"
-    about: "Enterprise support and consulting services discussions"
+    about: "Ask usage questions, share architecture ideas, and compare integration approaches."
+  - name: Documentation
+    url: "https://pompelmi.github.io/pompelmi/"
+    about: "Read the docs, quick start, and framework guides before opening an issue."
+  - name: Roadmap and good first issues
+    url: "https://github.com/pompelmi/pompelmi/blob/main/ROADMAP.md"
+    about: "See current priorities and small starter tasks."
+  - name: Security reporting
+    url: "https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md"
+    about: "Use the private security process for vulnerabilities."
+  - name: Private or commercial support
+    url: "https://pompelmi.github.io/pompelmi/support/"
+    about: "Use this path when the request cannot be handled well in public."

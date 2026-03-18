@@ -1,27 +1,68 @@
-name: "🐛 Bug report"
-description: Report a problem with pompelmi
+name: Bug report
+description: Report a reproducible problem in the core package, adapter, docs, or examples
 labels: [bug]
 body:
-  - type: textarea
-    id: what-happened
+  - type: markdown
     attributes:
-      label: What happened?
-      description: Tell us what you expected vs what happened.
-      placeholder: Clear steps to reproduce...
+      value: |
+        Use the security process in `SECURITY.md` for vulnerabilities. Public issues are for non-sensitive bugs.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Where did you hit the problem?
+      options:
+        - Core package
+        - Express adapter
+        - Next.js adapter
+        - NestJS adapter
+        - Fastify adapter
+        - Koa adapter
+        - Docs or website
+        - Example app
+        - Other
     validations:
       required: true
-  - type: input
-    id: version
-    attributes:
-      label: Version
-      description: Output of `node -v`, `pnpm -v`, and the pompelmi package version.
   - type: textarea
-    id: repro
+    id: summary
     attributes:
-      label: Reproduction
-      description: Minimal repo/code to reproduce (link or gist).
+      label: What happened?
+      description: Tell us what you expected and what actually happened.
+      placeholder: Clear steps to reproduce, the route or package involved, and the observed result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Link a repo, gist, or paste the smallest code sample that shows the bug.
+      placeholder: Include the relevant upload policy, file type, and framework setup if possible.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Share package versions, Node.js version, package manager, and OS.
+      placeholder: |
+        pompelmi:
+        related adapter:
+        node:
+        pnpm/npm:
+        os:
+    validations:
+      required: true
   - type: textarea
     id: logs
     attributes:
-      label: Logs
+      label: Logs or output
       render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched for existing issues and discussions.
+          required: true
+        - label: I can share a minimal reproduction or the issue is clearly described.
+          required: true

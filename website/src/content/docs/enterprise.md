@@ -1,69 +1,34 @@
 ---
-title: '@pompelmi/enterprise'
-description: Enterprise options for teams that need advanced auditability, premium rules, or rollout support alongside the open-source core.
+title: Enterprise support
+description: Private rollout help and commercial support for teams whose needs cannot be handled through the public OSS support surface.
 ---
 
-The open-source Pompelmi core remains the primary path. `@pompelmi/enterprise` is the licensed add-on for teams that need stronger operational visibility, incident-response tooling, or commercial rollout support.
+The open-source MIT core remains the primary path. Start with the public docs, GitHub Discussions, and GitHub Issues whenever your question can be handled in public.
 
-The MIT-licensed core remains public. The enterprise package adds higher-assurance features without changing the local-first model: scanning still runs inside your infrastructure.
+This page describes the private and commercial path for teams that need help beyond the public support surface.
 
-## What it adds
+## What private support can cover
 
-- Advanced audit logging with structured events and tamper-evident signing.
-- Premium YARA rule packs for higher-signal detections.
-- Prometheus metrics for monitoring and alerting.
-- Embedded dashboard for local visibility and review.
-- Priority enterprise support for rollout and production blockers.
+- Architecture and threat-model review for upload flows.
+- Rollout planning across multiple services or frameworks.
+- Policy tuning for real traffic and quarantine workflows.
+- Review of logging, auditability, and operational needs.
+- Prioritization of blockers affecting adoption or production rollout.
 
-## Open source vs enterprise
+## What to expect
 
-| Feature | Open source core | `@pompelmi/enterprise` |
-| --- | --- | --- |
-| In-process scanning | Yes | Yes |
-| Magic-byte validation and heuristics | Yes | Yes |
-| Local-first, no required cloud API | Yes | Yes |
-| Advanced audit logging | No | Yes |
-| Tamper-evident signed logs | No | Yes |
-| Premium YARA rules | No | Yes |
-| Prometheus metrics | No | Yes |
-| Embedded dashboard | No | Yes |
-| Priority support | No | Yes |
+- Scope is agreed before work starts.
+- Support is async unless another arrangement is made.
+- There is no implied SLA or 24/7 response unless explicitly contracted.
+- Public bugs, docs fixes, and reproducible feature requests should still go through the public repo when possible.
 
-## Open source core
+## If you need advanced operational capabilities
 
-- In-process scanning APIs and policy packs.
-- Framework adapters.
-- Quarantine and audit utilities.
-- Public docs, examples, issues, and discussions.
+Some teams want capabilities beyond the current OSS surface, such as stronger audit trails, review workflows, or deeper observability. Treat those conversations as roadmap and commercial-scoping discussions first, not as currently promised product features.
 
-## Installation
+## Contact
 
-```bash
-npm install @pompelmi/enterprise
-```
+- Private or commercial inquiry: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
+- Purchase or evaluation inquiry: [Polar](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
 
-Requires Node.js 18+ and an active enterprise license.
-
-## Best fit
-
-- Teams handling sensitive document workflows.
-- Platform teams standardizing upload controls across services.
-- Security teams that need stronger observability and response tooling.
-- Organizations that want a licensed add-on plus priority support.
-
-## Evaluation and licensing
-
-- License options: [Purchase or evaluate a license](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
-- Email: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
-- Include: stack, version, expected traffic profile, and timeline.
-
-## Rollout support
-
-Licensed teams can also use the enterprise path for:
-
-- Private rollout guidance.
-- Architecture and threat-model review.
-- Policy tuning for real traffic patterns.
-- Troubleshooting for production blockers.
-
-If your request can be public, prefer GitHub Discussions first so the answer helps others.
+Include your stack, version, upload profile, timeline, and whether the issue can be reproduced publicly.

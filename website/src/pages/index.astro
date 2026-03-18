@@ -2,9 +2,9 @@
 import '../styles/global.css';
 
 const BASE = 'https://pompelmi.github.io/pompelmi';
-const TITLE = 'Pompelmi — In-process file upload security for Node.js';
+const TITLE = 'Pompelmi — Secure file uploads for Node.js';
 const DESC =
-  'Scan and block risky uploads before storage or downstream processing. No cloud API, no daemon. Works with Express, Next.js, NestJS, Fastify, and Koa.';
+  'Open-source upload security for Node.js. Scan untrusted files before storage with in-process, local-first checks for spoofed files, archive bombs, and risky document structures.';
 const OG_IMAGE = `${BASE}/og.png`;
 const quickStartSnippet = `import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
@@ -40,7 +40,7 @@ if (report.verdict !== 'clean') {
     <meta property="og:locale" content="en_US" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Pompelmi - in-process file upload security for Node.js" />
+    <meta property="og:image:alt" content="Pompelmi - secure file uploads for Node.js" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={BASE + '/'} />
     <meta property="og:title" content={TITLE} />
@@ -71,7 +71,7 @@ if (report.verdict !== 'clean') {
           {
             "@type": "SoftwareSourceCode",
             "name": "Pompelmi",
-            "description": "In-process file upload security for Node.js.",
+            "description": "Secure file uploads for Node.js.",
             "programmingLanguage": ["TypeScript", "JavaScript"],
             "runtimePlatform": "Node.js",
             "codeRepository": "https://github.com/pompelmi/pompelmi",
@@ -255,17 +255,17 @@ if (report.verdict !== 'clean') {
       <div class="container hero-inner">
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          Open source core · MIT · Node.js 18+
+          Open-source core · MIT · Node.js 18+
         </div>
-        <h1 class="hero-title">Your file upload endpoint is part of your attack surface.</h1>
+        <h1 class="hero-title">Secure file uploads before storage.</h1>
         <p class="hero-sub">
-          Pompelmi is in-process file upload security for Node.js. Scan and block risky uploads before storage or downstream processing. No cloud API. No daemon.
+          Pompelmi is the open-source upload gate for Node.js. Inspect bytes, MIME claims, archives, and risky structures in-process. No cloud API. No daemon.
         </p>
         <div class="hero-points">
-          <span class="hero-point">Scan before storage</span>
-          <span class="hero-point">In-process</span>
+          <span class="hero-point">Inspect bytes and structure</span>
+          <span class="hero-point">Local-first</span>
           <span class="hero-point">No cloud API</span>
-          <span class="hero-point">Express · Next.js · NestJS · Fastify · Koa</span>
+          <span class="hero-point">Express · Next.js · NestJS · Fastify · Koa · Nuxt</span>
         </div>
         <div class="hero-install mono">
           <span class="prompt">$</span>
@@ -284,15 +284,15 @@ if (report.verdict !== 'clean') {
               <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5m5-5H6" />
             </svg>
           </a>
-          <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="btn-outline">
+          <a href="https://github.com/pompelmi/pompelmi/stargazers" target="_blank" rel="noopener" class="btn-outline">
             <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
             </svg>
-            View on GitHub
+            Star on GitHub
           </a>
         </div>
         <p class="hero-note">
-          Most upload handlers stop at extension checks or client-provided MIME types. Pompelmi adds a layered upload gate before files hit storage or downstream processing.
+          Most upload handlers still trust filenames, extensions, or client-provided MIME types. Pompelmi turns that into a policy decision before storage.
         </p>
         <div class="hero-badges">
           <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener">
@@ -312,9 +312,9 @@ if (report.verdict !== 'clean') {
       <section class="section">
         <div class="container">
           <p class="section-eyebrow">Why this matters</p>
-          <h2 class="section-heading">A safer upload flow should be obvious in one glance.</h2>
+          <h2 class="section-heading">Make the safer upload path obvious.</h2>
           <p class="section-sub">
-            Before storage or downstream processing, inspect the bytes, structure, and declared type. That turns file uploads from a trust problem into a policy decision.
+            Inspect the file before storage or downstream processing. That turns uploads from blind trust into an allow, quarantine, or reject decision.
           </p>
           <div class="flow-grid">
             <div class="flow-card">
@@ -346,7 +346,7 @@ if (report.verdict !== 'clean') {
       <section class="section">
         <div class="container">
           <p class="section-eyebrow">Protections</p>
-          <h2 class="section-heading">What Pompelmi helps you block</h2>
+          <h2 class="section-heading">What it helps you catch at the upload gate</h2>
           <p class="section-sub">
             The core library focuses on the upload gate itself: check what the file claims to be, what the bytes actually show, and whether the structure looks risky before it hits storage.
           </p>
@@ -389,9 +389,9 @@ if (report.verdict !== 'clean') {
       <section class="section">
         <div class="container">
           <p class="section-eyebrow">Quick start</p>
-          <h2 class="section-heading">One route, one upload gate</h2>
+          <h2 class="section-heading">One route, one decision</h2>
           <p class="section-sub">
-            The core value should be easy to explain out loud: scan the upload in-process, get a verdict, and stop risky files before storage.
+            Add one check before storage: inspect the upload, get a verdict, and continue only when the route should trust the file.
           </p>
           <div class="code-card">
             <div class="code-head">
@@ -416,9 +416,9 @@ if (report.verdict !== 'clean') {
       <section class="section">
         <div class="container">
           <p class="section-eyebrow">Framework support</p>
-          <h2 class="section-heading">Works with the Node.js stacks people actually deploy</h2>
+          <h2 class="section-heading">Framework support without hiding the core package</h2>
           <p class="section-sub">
-            Start with the core package or reach for an adapter. The public docs cover the common framework paths first.
+            Start with the core package or reach for an adapter. The public docs cover the main framework paths first.
           </p>
           <div class="fw-grid">
             <a href="/pompelmi/how-to/nextjs/" class="fw-card">
@@ -466,14 +466,14 @@ if (report.verdict !== 'clean') {
       <section class="section">
         <div class="container">
           <p class="section-eyebrow">Trust</p>
-          <h2 class="section-heading">Serious OSS-first positioning, without hype</h2>
+          <h2 class="section-heading">What helps teams evaluate it quickly</h2>
           <p class="section-sub">
-            The public repo is the main product surface: code, docs, examples, tests, architecture notes, and production-readiness guidance all live here.
+            The public repo includes the surfaces engineers usually look for before adopting a security control.
           </p>
           <div class="trust-list">
             <div class="trust-item">
               <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-              <span>MIT-licensed core with typed APIs, composable policies, and framework adapters in the public repo.</span>
+              <span>MIT-licensed core with typed APIs, composable policies, framework adapters, and public source code.</span>
             </div>
             <div class="trust-item">
               <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
@@ -481,11 +481,15 @@ if (report.verdict !== 'clean') {
             </div>
             <div class="trust-item">
               <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-              <span>Local-first scanning is easier to evaluate in privacy-sensitive environments because file bytes do not need to leave your infrastructure.</span>
+              <span>Public docs, examples, tests, architecture notes, and production-readiness guidance all live in the repo.</span>
             </div>
             <div class="trust-item">
               <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
-              <span>Pompelmi is an upload gate and risk-reduction layer. It is not presented as a full antivirus replacement or compliance certification.</span>
+              <span>Local-first scanning means file bytes do not need to leave your infrastructure.</span>
+            </div>
+            <div class="trust-item">
+              <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>Clear scope: Pompelmi is an upload gate and risk-reduction layer, not a full antivirus replacement or compliance claim.</span>
             </div>
           </div>
           <div class="link-row">
@@ -502,6 +506,10 @@ if (report.verdict !== 'clean') {
           <h2 class="section-heading">Common questions</h2>
           <div style="max-width:760px;margin-top:28px">
             <details class="faq">
+              <summary>Why not just MIME checks or file extensions?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">They still help, but they only reflect metadata the client controls or a filename the client chose. Pompelmi adds byte-level and structural inspection before storage.</p>
+            </details>
+            <details class="faq">
               <summary>Does Pompelmi send files to a cloud API?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
               <p class="faq-body">No. Scanning runs in-process inside your Node.js application. File bytes do not need to leave your infrastructure.</p>
             </details>
@@ -514,8 +522,8 @@ if (report.verdict !== 'clean') {
               <p class="faq-body">No. Pompelmi is a defense-in-depth upload gate and risk-reduction layer. It should sit inside a broader security design.</p>
             </details>
             <details class="faq">
-              <summary>Where do enterprise options fit?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
-              <p class="faq-body">The MIT-licensed core remains the primary path. Commercial support and enterprise options exist for teams that need rollout help, advanced auditability, or additional operational features. <a href="/pompelmi/support/">Support options</a> and <a href="/pompelmi/enterprise/">enterprise details</a> are available when needed.</p>
+              <summary>Where does private or commercial support fit?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">The MIT-licensed core remains the primary path. Private support exists for rollout help or commercial arrangements when public channels are not a fit. See <a href="/pompelmi/support/">support options</a> and <a href="/pompelmi/enterprise/">enterprise support</a>.</p>
             </details>
           </div>
         </div>
@@ -524,10 +532,10 @@ if (report.verdict !== 'clean') {
       <section class="section" style="border-bottom:none">
         <div class="container">
           <p class="section-eyebrow">Support</p>
-          <h2 class="section-heading">Keep the open-source core front and center</h2>
+          <h2 class="section-heading">Public by default, private when needed</h2>
           <div class="enterprise-note">
             <p>
-              Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features. The open-source MIT core remains the primary path. See <a href="/pompelmi/support/">support options</a> or <a href="/pompelmi/enterprise/">enterprise details</a>.
+              Start with docs, Issues, and Discussions whenever the question can be public. Private rollout help and commercial support are available when needed. See <a href="/pompelmi/support/">support options</a> or <a href="/pompelmi/enterprise/">enterprise support</a>.
             </p>
           </div>
         </div>
@@ -552,7 +560,7 @@ if (report.verdict !== 'clean') {
               </svg>
               Pompelmi
             </div>
-            <p class="footer-tagline">In-process file upload security for Node.js. Open-source core first, with no required cloud scanning path.</p>
+            <p class="footer-tagline">Secure file uploads for Node.js. Open-source, local-first, and designed for real upload routes.</p>
           </div>
           <div>
             <p class="footer-col-title">Docs</p>
@@ -578,14 +586,14 @@ if (report.verdict !== 'clean') {
             <p class="footer-col-title">Support</p>
             <ul class="footer-links">
               <li><a href="/pompelmi/support/" class="fl">Support options</a></li>
-              <li><a href="/pompelmi/enterprise/" class="fl">Enterprise details</a></li>
+              <li><a href="/pompelmi/enterprise/" class="fl">Enterprise support</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi/discussions" class="fl" target="_blank" rel="noopener">GitHub Discussions</a></li>
               <li><a href="https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md" class="fl" target="_blank" rel="noopener">Security reporting</a></li>
             </ul>
           </div>
         </div>
         <div class="footer-bottom">
-          <p class="footer-copy">© 2024 Pompelmi. Released under the MIT License.</p>
+          <p class="footer-copy">Pompelmi. Released under the MIT License.</p>
           <div class="footer-icons">
             <a href="https://github.com/pompelmi/pompelmi" class="fi" aria-label="GitHub" target="_blank" rel="noopener">
               <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>

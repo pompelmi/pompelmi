@@ -1,62 +1,48 @@
 ---
 title: Support
-description: Community-first support options, security reporting, and enterprise help when needed.
+description: Public support first. Use docs, Discussions, and Issues whenever possible; use private support when the request cannot be handled publicly.
 ---
 
-Start with the public path whenever possible: docs, GitHub Issues, and GitHub Discussions. Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features.
+Start with the public path whenever possible. Public questions improve the docs, surface real adoption friction, and help other teams solving the same upload problems.
+
+## Best channel for each request
+
+| Situation | Best path |
+| --- | --- |
+| Usage question or design discussion | [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions) |
+| Reproducible bug | [GitHub Issues](https://github.com/pompelmi/pompelmi/issues) |
+| Docs gap or unclear example | GitHub Issues or a docs pull request |
+| Vulnerability disclosure | [SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md) |
+| Private rollout help or commercial discussion | Contact path below |
 
 ## Community support
 
-Best for general usage questions, bug reports, and reproducible issues.
+Useful public entry points:
 
-- [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)
-- [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
 - [Documentation](https://pompelmi.github.io/pompelmi/)
-- [Security reporting](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
+- [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
+- [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)
+- [Roadmap](https://github.com/pompelmi/pompelmi/blob/main/ROADMAP.md)
+- [Good first issue ideas](https://github.com/pompelmi/pompelmi/blob/main/docs/good-first-issues.md)
 
-## Security reporting
+## Private or commercial support
 
-If you need to disclose a vulnerability, use the security process instead of a public issue:
+Use the private path when the work cannot be handled well in public, for example:
 
-- [SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
+- Rollout guidance for a production deployment.
+- Architecture review for a multi-service upload workflow.
+- Policy tuning for a sensitive or high-volume endpoint.
+- A commercial support relationship.
 
-## Commercial support and enterprise options
+What to expect:
 
-Best for teams that need rollout help, private integration guidance, advanced auditability, or additional operational features.
-
-Includes:
-
-- Enterprise package setup and licensing help when applicable.
-- Private integration guidance.
-- Policy and scanner review for your endpoints.
-- Deployment and operational hardening guidance.
-- Follow-up on blockers discovered during rollout.
-
-Model:
-
-- Async, email-based support.
-- Scope agreed in advance.
-- Response timing depends on engagement terms.
-- No implied 24/7 support or guaranteed SLA unless explicitly contracted.
-
-Useful links:
-
-- [Pompelmi Enterprise](./enterprise/)
-- [License options](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
-
-## Which channel to use
-
-| Situation | Recommended path |
-| --- | --- |
-| Public bug report | GitHub Issues |
-| Public integration question | GitHub Discussions |
-| Private rollout blocker or commercial support need | Enterprise help (email) |
-| Vulnerability disclosure | SECURITY.md process |
+- Scope is agreed in advance.
+- Support is async unless another arrangement is made.
+- There is no implied SLA unless explicitly contracted.
 
 ## Contact
 
-Commercial support and licensing inquiries:
+- Private or commercial inquiry: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
+- Commercial details: [Enterprise support](./enterprise/)
 
-- [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
-
-Please include your stack, versions, a concise problem statement, and sanitized logs.
+Include your stack, versions, upload profile, and a concise description of the blocker.

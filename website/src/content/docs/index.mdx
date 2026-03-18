@@ -1,25 +1,21 @@
 ---
 title: Pompelmi
-description: In-process file upload security for Node.js. Scan and block risky uploads before storage with no cloud API or daemon.
+description: Secure file uploads for Node.js. Scan untrusted files before storage with in-process, local-first checks for spoofed files, archive bombs, and risky document structures.
 ---
 
 # Pompelmi
 
-Your file upload endpoint is part of your attack surface.
+Secure file uploads for Node.js.
 
-Pompelmi is the open-source, in-process upload security layer for Node.js. It scans and blocks risky uploads before storage or downstream processing, with no cloud API and no daemon.
+Pompelmi is the open-source upload gate for Node.js. It inspects untrusted files before storage or downstream processing with in-process, local-first checks. Start here if filenames, extensions, or client-provided MIME types are not enough for your upload flow.
 
-Works with Express, Next.js, NestJS, Fastify, and Koa. The MIT-licensed core is the primary path.
+## Why teams use it
 
-## Why this matters
-
-Most upload handlers stop at extension checks or client-provided MIME types. Pompelmi adds a layered upload gate before files hit storage or downstream processing.
-
-Without Pompelmi:
+Most upload handlers still do some version of:
 
 `upload -> trust filename/MIME -> store -> parse or serve later`
 
-With Pompelmi:
+Pompelmi changes that to:
 
 `upload -> inspect bytes + structure -> allow | quarantine | reject -> store/process`
 
@@ -40,11 +36,11 @@ const report = await scanBytes(fileBytes, {
 });
 
 if (report.verdict !== 'clean') {
-  // block, quarantine, or escalate based on your policy
+  // reject, quarantine, or escalate based on your policy
 }
 ```
 
-## What it helps block
+## What it checks
 
 | Risk | What Pompelmi checks |
 | --- | --- |
@@ -52,6 +48,23 @@ if (report.verdict !== 'clean') {
 | Archive bombs and traversal | Entry count, total extracted size, nesting depth, and archive path guards |
 | Risky document structures | Heuristics for polyglots, executable signatures, and script-bearing documents |
 | Environment-specific threats | Optional YARA rules in a composed scanner pipeline |
+
+## Who it is for
+
+- Public or semi-trusted upload endpoints.
+- Privacy-sensitive or self-hosted environments.
+- Teams that want a typed upload-security layer rather than a chain of ad hoc checks.
+
+## Why not just MIME checks or a daemon-based scanner?
+
+| Approach | Useful for | Gap |
+| --- | --- | --- |
+| MIME or extension checks only | Basic allowlists and cheap filtering | They still rely on metadata or filenames the client controls. |
+| DIY validation | Full control over your own rules | Archive handling, structured verdicts, and fail-closed behavior are easy to underbuild. |
+| Cloud scanning APIs | Managed detection | Adds data egress, network latency, and a hard external dependency. |
+| Daemon-based AV | Signature scanning and existing security tooling | Solves a different layer from the application-level upload gate before storage. |
+
+Pompelmi focuses on the upload gate itself. It can complement YARA or daemon-based scanners. It is not presented as a full antivirus replacement.
 
 ## Framework guides
 
@@ -62,29 +75,14 @@ if (report.verdict !== 'clean') {
 - [Koa](./how-to/koa/)
 - [Nuxt/Nitro](./how-to/nuxt-nitro/)
 
-## Trust and evaluation resources
+## Evaluate it
 
+- [Getting started guide](./getting-started/)
 - [Threat model and architecture](./explaination/architecture/)
 - [Production-readiness notes](./production-readiness/)
-- [Getting started guide](./getting-started/)
-- [GitHub repository](https://github.com/pompelmi/pompelmi)
-- Security reporting policy: https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md
+- [Examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)
+- [Security policy](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
 
-## Support and enterprise options
+## Support
 
-Start with docs, GitHub Issues, and GitHub Discussions whenever your question can be public.
-
-Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features.
-
-See:
-
-- [Support options](./support/)
-- [Enterprise details](./enterprise/)
-
-## Suggested evaluation flow
-
-1. Integrate one upload endpoint with strict defaults.
-2. Observe verdicts in staging traffic.
-3. Add quarantine handling for suspicious files.
-4. Review threat model assumptions before full rollout.
-5. Expand policy gradually across services.
+Start with docs, GitHub Issues, and GitHub Discussions whenever the question can be public. If you need private rollout help or a commercial relationship, see [Support](./support/) and [Enterprise support](./enterprise/).

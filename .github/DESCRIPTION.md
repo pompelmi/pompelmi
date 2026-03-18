@@ -1,53 +1,41 @@
 # GitHub Repository Description
 
-## Recommended Description (160 characters max for SEO)
+## Recommended Description
 
-```
-Fast, private malware scanner for Node.js. TypeScript library with Express/Koa/Next.js/Nuxt adapters. YARA, ZIP bomb protection, GDPR/HIPAA compliant.
-```
+Use the shortest version that still says what the project does:
 
-## Alternative Shorter Version (100 characters)
-
-```
-Private malware scanner for Node.js file uploads. Express, Koa, Next.js, Nuxt middleware. YARA + ZIP protection.
+```text
+Secure file uploads for Node.js. Open-source, in-process scanning for spoofed files, archive bombs, and risky document structures.
 ```
 
-## Alternative Longer Version
+## Alternative Shorter Version
 
-```
-Free, open-source malware scanner for Node.js file uploads. TypeScript-first with framework adapters (Express, Koa, Fastify, Next.js, Nuxt/Nitro). Features: YARA integration, ZIP bomb protection, in-process scanning, zero cloud dependencies. Perfect for GDPR/HIPAA compliance.
+```text
+Open-source upload security for Node.js. Scan untrusted files before storage with no cloud API or daemon.
 ```
 
 ## Suggested GitHub Topics
 
-```
-malware-scanner
+```text
+secure-file-upload
 file-upload-security
+upload-scanning
 nodejs
 typescript
-express-middleware
+express
+nextjs
+nestjs
+fastify
+koa
+nuxt
 yara
 zip-bomb-protection
-antivirus
-security-scanner
-devsecops
-gdpr-compliance
-hipaa-compliance
-threat-detection
-file-validation
-nodejs-security
+mime-sniffing
+magic-bytes
 ```
 
-## How to Update on GitHub
+## Notes
 
-1. Go to: https://github.com/pompelmi/pompelmi
-2. Click **Settings** tab
-3. In **General** section, update **Description**
-4. Scroll down to **Topics** and add the suggested topics above
-5. Save changes
-
-The description and topics will improve:
-- GitHub search visibility
-- Google search rankings
-- Developer discoverability
-- Social media previews
+- Keep the description specific to upload security, not generic malware scanning.
+- Avoid compliance or performance claims that are not proven directly in the repo.
+- Prefer topics that match real developer search intent over broad security buzzwords.

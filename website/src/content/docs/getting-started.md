@@ -3,7 +3,9 @@ title: Getting started
 description: Secure your first file upload endpoint with Pompelmi in under 5 minutes. No daemon, no cloud API, no external services required.
 ---
 
-This guide takes you from zero to a working, secure upload endpoint. No external services required — Pompelmi scans files in your Node.js process.
+Start with one upload route and one policy. This guide gets you from zero to a working upload gate in a few minutes.
+
+Pompelmi is most useful when you treat uploaded files as untrusted input and decide what to do with them before storage or downstream processing.
 
 ## Prerequisites
 
@@ -18,11 +20,11 @@ This guide takes you from zero to a working, secure upload endpoint. No external
 npm install pompelmi
 ```
 
-That is the only required dependency. No daemon to start, no API key to configure.
+That is the only required dependency. No daemon to start and no API key to configure.
 
 ---
 
-## 2. Scan your first file
+## 2. Scan one file locally
 
 Create a file named `scan-test.mjs`:
 
@@ -30,7 +32,6 @@ Create a file named `scan-test.mjs`:
 import { scanBytes } from 'pompelmi';
 import { readFileSync } from 'node:fs';
 
-// Read any file you have locally
 const buffer = readFileSync('./package.json');
 
 const result = await scanBytes(buffer, {
@@ -38,7 +39,7 @@ const result = await scanBytes(buffer, {
   mimeType: 'application/json',
 });
 
-console.log('Verdict:', result.verdict);     // 'clean' | 'suspicious' | 'malicious'
+console.log('Verdict:', result.verdict);
 console.log('Reasons:', result.reasons);
 console.log('Duration:', result.durationMs, 'ms');
 ```
@@ -49,13 +50,13 @@ Run it:
 node scan-test.mjs
 ```
 
-You should see `Verdict: clean` for a normal JSON file. Try the [EICAR test string](https://www.eicar.org/download-anti-malware-testfile/) to see a `malicious` verdict.
+You should see `Verdict: clean` for a normal JSON file. Try the [EICAR test string](https://www.eicar.org/download-anti-malware-testfile/) if you want a safe way to exercise a malicious verdict.
 
 ---
 
-## 3. Add scanning to an Express endpoint
+## 3. Put it in an Express upload route
 
-Install Express (if you do not already have it):
+Install Express and Multer if needed:
 
 ```bash
 npm install express multer
@@ -71,7 +72,7 @@ import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 }, // 10 MB
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -83,16 +84,17 @@ app.post('/upload', upload.single('file'), async (req, res) => {
     policy: STRICT_PUBLIC_UPLOAD,
     filename: req.file.originalname,
     mimeType: req.file.mimetype,
+    failClosed: true,
   });
 
-  if (result.verdict === 'malicious') {
+  if (result.verdict !== 'clean') {
     return res.status(422).json({
       error: 'Upload rejected',
+      verdict: result.verdict,
       reasons: result.reasons,
     });
   }
 
-  // File passed — proceed to storage
   res.json({ ok: true, verdict: result.verdict });
 });
 
@@ -108,12 +110,12 @@ node server.mjs
 Test it:
 
 ```bash
-# Should return { ok: true, verdict: 'clean' }
 curl -F "file=@package.json;type=application/json" http://localhost:3000/upload
 
-# Try with a disallowed content type — returns 422
 curl -F "file=@/path/to/anything.exe;type=application/octet-stream" http://localhost:3000/upload
 ```
+
+In a real system, `suspicious` uploads often go to quarantine or manual review instead of an immediate permanent reject.
 
 ---
 
@@ -124,10 +126,10 @@ curl -F "file=@/path/to/anything.exe;type=application/octet-stream" http://local
 ```ts
 {
   verdict: 'clean' | 'suspicious' | 'malicious',
-  ok: boolean,           // true if verdict is 'clean'
-  matches: Match[],      // individual rule matches
-  reasons: string[],     // human-readable reasons for non-clean verdicts
-  durationMs: number,    // scan time
+  ok: boolean,
+  matches: Match[],
+  reasons: string[],
+  durationMs: number,
   file: {
     name?: string,
     mimeType?: string,
@@ -137,23 +139,23 @@ curl -F "file=@/path/to/anything.exe;type=application/octet-stream" http://local
 }
 ```
 
-Your application should:
+Recommended handling:
 
-- `clean` → proceed to storage or processing.
-- `suspicious` → hold for review, quarantine, or reject depending on your tolerance.
-- `malicious` → reject the upload, log the event, return an appropriate error to the user.
+- `clean` -> continue to storage or downstream processing.
+- `suspicious` -> quarantine, hold for review, or reject based on your tolerance.
+- `malicious` -> reject, log, and investigate as needed.
 
 ---
 
-## 5. Tighten the policy
+## 5. Tighten or change the policy
 
-The `STRICT_PUBLIC_UPLOAD` policy pack restricts uploads to images and PDFs with a 5 MB limit. Other built-in packs:
+`STRICT_PUBLIC_UPLOAD` is a good starting point for untrusted uploads. Other built-in packs include:
 
 | Policy | Best for |
 | --- | --- |
 | `STRICT_PUBLIC_UPLOAD` | Anonymous or untrusted uploaders |
 | `CONSERVATIVE_DEFAULT` | General-purpose hardened default |
-| `DOCUMENTS_ONLY` | PDF, Word, Excel, CSV portals |
+| `DOCUMENTS_ONLY` | PDF, Word, Excel, and CSV portals |
 | `IMAGES_ONLY` | Avatar or image-only endpoints |
 | `ARCHIVES` | Archive handling with ZIP bomb protection |
 
@@ -163,7 +165,7 @@ import { scanBytes, IMAGES_ONLY } from 'pompelmi';
 const result = await scanBytes(buffer, { policy: IMAGES_ONLY });
 ```
 
-You can also configure manually:
+You can also configure rules manually:
 
 ```js
 import { scanBytes } from 'pompelmi';
@@ -178,24 +180,21 @@ const result = await scanBytes(buffer, {
 
 ---
 
-## What Pompelmi checks
+## What runs during a scan
 
-By default, every scan runs:
+By default, Pompelmi can combine:
 
-1. **Size limit** — rejects oversized files before reading bytes.
-2. **Extension check** — rejects extensions not in the allowlist.
-3. **MIME type check** — compares declared vs. actual magic-byte signature.
-4. **Structural heuristics** — PE/ELF headers, embedded scripts, polyglot files.
-5. **ZIP bomb protection** — entry count, per-entry size, nesting depth limits.
-
-Optional: add YARA rules for custom signature-based detection.
+1. Size and extension checks.
+2. Declared MIME and magic-byte validation.
+3. Structural heuristics for suspicious file content.
+4. Archive protections for ZIP expansion and traversal cases.
+5. Optional YARA matching when you add it.
 
 ---
 
 ## Next steps
 
-- **Framework integration:** [Express](./how-to/express/) · [Next.js](./how-to/nextjs/) · [NestJS](./how-to/nestjs/) · [Fastify](./how-to/fastify/) · [Koa](./how-to/koa/)
-- **React upload UI:** [React components reference](./reference/ui-react/)
-- **Security model:** [Architecture and threat model](./explaination/architecture/)
-- **Production readiness:** [Production-readiness checklist](./production-readiness/)
-- **Support:** [Community support and enterprise options](./support/)
+- [Framework integration guides](./how-to/express/)
+- [Threat model and architecture](./explaination/architecture/)
+- [Production-readiness checklist](./production-readiness/)
+- [Support options](./support/)
