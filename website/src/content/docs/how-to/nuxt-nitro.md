@@ -393,7 +393,7 @@ If you prefer the pre-built React component, you'll need to set up Nuxt with Rea
 ### Supported Platforms
 
 | Platform | Supported | Notes |
-|----------|-----------|-------|
+| --- | --- | --- |
 | **Vercel** | ✅ Yes | Use Node.js runtime (not Edge) |
 | **Netlify** | ✅ Yes | Use Node.js functions |
 | **AWS Lambda** | ✅ Yes | Ensure `/tmp` has write access |
@@ -432,27 +432,33 @@ Remember to set `POMPELMI_ENGINE_URL` in your deployment platform if using remot
 
 ### Common Issues
 
-**415 Unsupported content-type**
+#### 415 Unsupported content-type
+
 - Add the needed MIME type to `ALLOWED_TYPES`
 - Or remove the MIME guard for testing
 
-**413 File too large**
+#### 413 File too large
+
 - Increase `MAX_FILE_SIZE` if needed
 - Check reverse proxy limits (Nginx, Cloudflare)
 
-**CORS errors**
+#### CORS errors
+
 - Not applicable since API route is same-origin
 - If using separate frontend, add CORS headers to Nitro route
 
-**Temp file errors**
+#### Temp file errors
+
 - Ensure `os.tmpdir()` is writable: `node -p "require('os').tmpdir()"`
 - Check disk space on server
 
-**Scan timeouts**
+#### Scan timeouts
+
 - Increase the timeout in `scanFile()` options
 - For large files, consider async processing with queues
 
-**Engine 5xx / connection errors** (remote engine)
+#### Engine 5xx / connection errors (remote engine)
+
 - Verify `POMPELMI_ENGINE_URL` is correct and reachable
 - Check engine service logs
 - Add retry logic with exponential backoff
@@ -503,6 +509,7 @@ pnpm install && pnpm dev
 ```
 
 This example includes:
+
 - Full Vue 3 + Nuxt 3 implementation
 - Production-ready error handling
 - Comprehensive documentation
@@ -512,16 +519,7 @@ This example includes:
 
 ## Next Steps
 
-- Explore [YARA integration](/pompelmi/detection/yara/getting-started) for custom malware signatures
-- Learn about [presets and reason codes](/pompelmi/reference/presets) for detailed scan results
-- Check out [security best practices](/pompelmi/guides/security) for production deployments
-- Join our [Discord community](https://discord.gg/pompelmi) for support
-
----
-
-## Need Help?
-
-- 📖 [Documentation](https://pompelmi.dev)
-- 💬 [Discord Community](https://discord.gg/pompelmi)
-- 🐛 [Report Issues](https://github.com/pompelmi/pompelmi/issues)
-- 💼 [Enterprise Support](https://pompelmi.dev/enterprise)
+- Review the [architecture and threat model](../explaination/architecture/)
+- Use the [production-readiness checklist](../production-readiness/)
+- Explore [support options](../support/)
+- Report bugs via [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)

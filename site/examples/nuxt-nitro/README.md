@@ -4,7 +4,7 @@
 
 # 🛡️ Nuxt/Nitro + pompelmi
 
-### **Enterprise-Grade Malware Scanning for Your Nuxt Applications — Zero Configuration Required**
+### **Layered Malware Scanning for Nuxt Applications**
 
 [![Nuxt](https://img.shields.io/badge/Nuxt-3.x-00DC82?style=for-the-badge&logo=nuxt.js&logoColor=white)](https://nuxt.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)

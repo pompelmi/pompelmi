@@ -150,7 +150,7 @@ Your application should:
 The `STRICT_PUBLIC_UPLOAD` policy pack restricts uploads to images and PDFs with a 5 MB limit. Other built-in packs:
 
 | Policy | Best for |
-|---|---|
+| --- | --- |
 | `STRICT_PUBLIC_UPLOAD` | Anonymous or untrusted uploaders |
 | `CONSERVATIVE_DEFAULT` | General-purpose hardened default |
 | `DOCUMENTS_ONLY` | PDF, Word, Excel, CSV portals |
@@ -196,5 +196,6 @@ Optional: add YARA rules for custom signature-based detection.
 
 - **Framework integration:** [Express](./how-to/express/) · [Next.js](./how-to/nextjs/) · [NestJS](./how-to/nestjs/) · [Fastify](./how-to/fastify/) · [Koa](./how-to/koa/)
 - **React upload UI:** [React components reference](./reference/ui-react/)
-- **Security model:** [Architecture & threat model](./explaination/architecture/)
-- **Production hardening:** [Enterprise features](./enterprise/)
+- **Security model:** [Architecture and threat model](./explaination/architecture/)
+- **Production readiness:** [Production-readiness checklist](./production-readiness/)
+- **Commercial help:** [Support options](./support/)

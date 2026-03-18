@@ -1,6 +1,6 @@
 ---
 title: "Building Secure File Uploads in Next.js with App Router and Pompelmi"
-description: "Master secure file uploads in Next.js 13+ using App Router, Server Actions, and Pompelmi's advanced security features for enterprise-grade protection."
+description: "Master secure file uploads in Next.js 13+ using App Router, Server Actions, and Pompelmi's layered scanning approach."
 pubDate: 2024-03-15
 author: "Pompelmi Team"
 tags: ["nextjs", "app-router", "security", "react", "server-actions"]
@@ -8,7 +8,7 @@ tags: ["nextjs", "app-router", "security", "react", "server-actions"]
 
 # Building Secure File Uploads in Next.js with App Router and Pompelmi
 
-Next.js 13's App Router revolutionized how we handle server interactions, and file uploads are no exception. With Server Actions and the new routing paradigm, we can build incredibly secure and user-friendly file upload experiences. In this comprehensive guide, we'll explore how to implement bulletproof file upload security using Pompelmi with Next.js.
+Next.js 13's App Router changed how we handle server interactions, including file uploads. With Server Actions and the new routing paradigm, we can build secure and user-friendly upload flows. In this comprehensive guide, we'll explore how to implement layered file upload security using Pompelmi with Next.js.
 
 ## Why File Upload Security Matters in Next.js Apps
 
@@ -762,7 +762,7 @@ export function middleware(request: NextRequest) {
 
 ## Conclusion
 
-Implementing secure file uploads in Next.js with Pompelmi provides enterprise-grade protection while maintaining excellent developer experience. The combination of Server Actions, client-side validation, and Pompelmi's advanced scanning creates multiple layers of defense against file-based attacks.
+Implementing secure file uploads in Next.js with Pompelmi gives you practical layered defenses while maintaining a solid developer experience. The combination of Server Actions, client-side validation, and Pompelmi scanning helps reduce file-based attack risk.
 
 Key takeaways:
 - Always validate files server-side, even with client-side checks

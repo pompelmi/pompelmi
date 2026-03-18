@@ -138,7 +138,7 @@ The pompelmi community is rapidly growing:
 
 ### Roadmap for v0.21
 
-- **ClamAV integration** for enterprise-grade detection
+- **ClamAV integration** for broader detection coverage
 - **Binary Ninja HLIL analysis** engine for advanced static analysis
 - **Machine learning** threat classification
 - **GraphQL** and **tRPC** adapters

@@ -7,6 +7,6 @@ import { LinkCard } from '@astrojs/starlight/components';
 
 <LinkCard
   title="Commercial Support"
-  description="Community and commercial support options for pompelmi."
+  description="Community and commercial support options for Pompelmi."
   href="/pompelmi/support/"
 />

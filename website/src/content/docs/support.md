@@ -1,85 +1,50 @@
 ---
 title: Support
-description: Community support is free and open. Commercial support and priority SLAs are available through the Enterprise plan.
+description: Community and paid support options for teams adopting Pompelmi.
 ---
 
-Pompelmi has three support tiers. Each is described below so you can find the right path for your situation.
-
----
+Use the support path that matches your use case and sensitivity requirements.
 
 ## Community support (free)
 
-Available to everyone. No account or subscription required.
+Best for general usage questions, bug reports, and reproducible issues.
 
-| Channel | Best for |
-|---|---|
-| **[GitHub Issues](https://github.com/pompelmi/pompelmi/issues)** | Bug reports and reproducible problems |
-| **[GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)** | Questions, integration help, general discussion |
-| **[Documentation](https://pompelmi.github.io/pompelmi/)** | Guides, API reference, tutorials, architecture overview |
-| **[SECURITY.md](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)** | Private vulnerability reporting (not a public issue) |
+- [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)
+- [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
+- [Documentation](https://pompelmi.github.io/pompelmi/)
+- [Security reporting](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
 
-For most integration questions, checking the docs or opening a Discussion is the fastest path to an answer.
+## Commercial support (paid)
 
----
+Best for private rollout work, architecture review, and troubleshooting that should not be discussed publicly.
 
-## Commercial support (ad hoc)
+Includes:
 
-Limited private support is available directly from the maintainer. This is best suited for teams who need private, specific help that is not appropriate for a public forum.
+- Private integration guidance.
+- Policy and scanner review for your endpoints.
+- Deployment and operational hardening guidance.
+- Follow-up on blockers discovered during rollout.
 
-**What it includes:**
+Model:
 
-- Integration assistance for your specific framework and setup
-- Configuration and policy review
-- Prioritized troubleshooting for edge cases
-- Upload security guidance
+- Async, email-based support.
+- Scope agreed in advance.
+- Response timing depends on engagement terms.
+- No implied 24/7 support or guaranteed SLA unless explicitly contracted.
 
-**What it does not include:**
+## Which channel to use
 
-- Guaranteed response times or SLAs
-- Live calls or synchronous support
-- Ongoing retainer or dedicated account management
+| Situation | Recommended path |
+| --- | --- |
+| Public bug report | GitHub Issues |
+| Public integration question | GitHub Discussions |
+| Private rollout blocker | Commercial support (email) |
+| Vulnerability disclosure | SECURITY.md process |
 
-**How to request:** Email [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com) with:
+## Contact
 
-| Field | Example |
-|---|---|
-| Framework / runtime | Express 5.x on Node 22 |
-| Pompelmi version | 0.34.1 |
-| Description | One paragraph describing your issue or goal |
-| Expected behavior | What you expected to happen |
-| Relevant output | Logs or error messages — omit credentials and sensitive data |
+Commercial support and enterprise inquiries:
 
-:::caution[Privacy note]
-Do not include API keys, credentials, or sensitive data in your initial message. The maintainer will advise how to share additional context safely if needed.
-:::
+- [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
 
----
-
-## Enterprise support (included with Enterprise plan)
-
-[Pompelmi Enterprise](./enterprise/) subscribers receive **priority email support with a 1 business-day first-response SLA**.
-
-Enterprise support covers:
-
-- All open-source core questions
-- `@pompelmi/enterprise` integration and configuration
-- Audit logging, SIEM connectivity, and compliance evidence questions
-- Prometheus metrics and dashboard configuration
-- Premium YARA rules questions
-- License and billing inquiries
-
-To access Enterprise support, email using the address associated with your Polar.sh subscription.
-
-[Learn more about Enterprise →](./enterprise/)
-
----
-
-## Choosing the right channel
-
-| Situation | Recommended channel |
-|---|---|
-| Bug or unexpected behavior | GitHub Issues (public) |
-| Integration question with no sensitive details | GitHub Discussions (public) |
-| Private integration help, one-time review | Commercial support (email) |
-| Ongoing priority support with SLA | Enterprise plan |
-| Security vulnerability | SECURITY.md (private advisory) |
+Please include your stack, versions, a concise problem statement, and sanitized logs.

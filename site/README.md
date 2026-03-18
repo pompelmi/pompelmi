@@ -26,19 +26,14 @@
 <p align="center">
 
 <br/>
-<a href="https://www.producthunt.com/products/pompelmi?embed=true&utm_source=badge-pompelmi&utm_medium=badge" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1010722&theme=light&t=1756653468504" alt="pompelmi - free&#0044;&#0032;open&#0045;source&#0032;file&#0032;scanner | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
-<br/>
   <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener noreferrer">
     <img src="https://raw.githubusercontent.com/pompelmi/pompelmi/refs/heads/main/assets/logo.svg" alt="pompelmi logo" width="360" />
   </a>
+
   <br/>
-  <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly-0A84FF?logo=substack"></a>
-  <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-FF6600?logo=node.js"></a>
-  <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
-  <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe"><img alt="Featured on DEV.to" src="https://img.shields.io/badge/featured-DEV.to-0A0A0A?logo=devdotto"></a>
-  <br/>
-  <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://awesome.re/mentioned-badge.svg"></a>
-  <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://awesome.re/mentioned-badge-flat.svg"></a>
+  <a href="https://github.com/pompelmi/pompelmi/releases">Releases</a> •
+  <a href="https://github.com/pompelmi/pompelmi/discussions">Discussions</a> •
+  <a href="https://pompelmi.github.io/pompelmi/">Documentation</a>
   <br/>
   
 </p>
@@ -861,13 +856,13 @@ You should see an HTTP **422 Unprocessable Entity** (blocked by policy). Clean f
 
 ## 🏆 Community & Recognition
 
-pompelmi has been featured in leading developer publications and is trusted by teams worldwide for secure file upload handling.
+pompelmi is an open-source project used by developers building secure file upload workflows.
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Featured%20in-Detection%20Engineering%20Weekly-0A84FF?style=for-the-badge&logo=substack" alt="Detection Engineering">
-  <img src="https://img.shields.io/badge/Featured%20in-Node%20Weekly-FF6600?style=for-the-badge&logo=node.js" alt="Node Weekly">
-  <img src="https://img.shields.io/badge/Featured%20in-Bytes-111111?style=for-the-badge" alt="Bytes">
-</p>
+See repository activity and community updates:
+
+- [GitHub Releases](https://github.com/pompelmi/pompelmi/releases)
+- [Changelog](./CHANGELOG.md)
+- [Mentions index](./mentions/MENTIONS.md)
 
 ### 🤝 Join the Community
 
