@@ -1,60 +1,69 @@
 ---
-title: Commercial and enterprise engagements
-description: Practical paid support options for teams adopting Pompelmi in production and higher-assurance environments.
+title: '@pompelmi/enterprise'
+description: Licensed enterprise add-on for Pompelmi with audit logging, premium YARA, metrics, dashboard, and priority support.
 ---
 
-Pompelmi is open source first. The core scanner, adapters, and docs are public and MIT licensed.
+`@pompelmi/enterprise` extends the open source Pompelmi core for teams that need stronger operational visibility, incident-response tooling, and a licensed enterprise path.
 
-For teams that need private rollout help or deeper review, paid engagements are available directly from the maintainer.
+The MIT-licensed core remains public. The enterprise package adds higher-assurance features without changing the local-first model: scanning still runs inside your infrastructure.
 
-## What is free
+## What it adds
 
-The open source core includes:
+- Advanced audit logging with structured events and tamper-evident signing.
+- Premium YARA rule packs for higher-signal detections.
+- Prometheus metrics for monitoring and alerting.
+- Embedded dashboard for local visibility and review.
+- Priority enterprise support for rollout and production blockers.
+
+## Open source vs enterprise
+
+| Feature | Open source core | `@pompelmi/enterprise` |
+| --- | --- | --- |
+| In-process scanning | Yes | Yes |
+| Magic-byte validation and heuristics | Yes | Yes |
+| Local-first, no required cloud API | Yes | Yes |
+| Advanced audit logging | No | Yes |
+| Tamper-evident signed logs | No | Yes |
+| Premium YARA rules | No | Yes |
+| Prometheus metrics | No | Yes |
+| Embedded dashboard | No | Yes |
+| Priority support | No | Yes |
+
+## Open source core
 
 - In-process scanning APIs and policy packs.
 - Framework adapters.
 - Quarantine and audit utilities.
 - Public docs, examples, issues, and discussions.
 
-## What is paid
+## Installation
 
-Commercial work is delivered as support or scoped advisory, not as a separate closed-source runtime in this repository.
+```bash
+npm install @pompelmi/enterprise
+```
 
-Typical paid scope:
+Requires Node.js 18+ and an active enterprise license.
 
-- Integration planning for your upload architecture.
-- Policy and scanner composition review for specific endpoints.
-- Threat-model review for your deployment assumptions.
-- Production hardening guidance for quarantine and logging flows.
-- Private troubleshooting for rollout blockers.
-
-## Engagement model
-
-- Primary channel: asynchronous email.
-- Scope: agreed up front, with clear deliverables.
-- Response expectations: discussed per engagement and documented in writing.
-- No implied 24/7 support, hotline, or always-on SLA unless explicitly contracted.
-
-## Who usually asks for this
+## Best fit
 
 - Teams handling sensitive document workflows.
 - Platform teams standardizing upload controls across services.
-- Security teams preparing internal reviews before broader rollout.
-- Organizations that need private guidance instead of public issue threads.
+- Security teams that need stronger observability and response tooling.
+- Organizations that want a licensed add-on plus priority support.
 
-## Evaluation path for serious buyers
+## Buy or evaluate
 
-1. Pilot one upload path with strict policy defaults.
-2. Capture verdicts and false-positive patterns for real traffic.
-3. Add quarantine and audit flow for suspicious results.
-4. Run an architecture review and threat-model check.
-5. Expand to other services with shared policy templates.
-
-## Contact
-
-For commercial support or enterprise evaluation:
-
+- License: [Buy Enterprise License](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
 - Email: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
 - Include: stack, version, expected traffic profile, and timeline.
+
+## Rollout support
+
+Licensed teams can also use the enterprise path for:
+
+- Private rollout guidance.
+- Architecture and threat-model review.
+- Policy tuning for real traffic patterns.
+- Troubleshooting for production blockers.
 
 If your request can be public, prefer GitHub Discussions first so the answer helps others.

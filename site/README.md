@@ -973,7 +973,7 @@ Need help? We're here for you!
 - 🐛 [Issue Tracker](https://github.com/pompelmi/pompelmi/issues)
 - 🔒 [Security](https://github.com/pompelmi/pompelmi/security) (for vulnerabilities)
 
-For commercial support and consulting, contact the maintainers.
+For `@pompelmi/enterprise` licensing, enterprise support, and rollout help, contact the maintainers.
 
 ---
 

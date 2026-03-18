@@ -9,6 +9,8 @@ Pompelmi is a TypeScript-first upload security layer for Node.js applications.
 
 It helps teams block risky uploads before they hit durable storage, with controls that are straightforward to test, observe, and tune.
 
+Enterprise teams can start with the open source core and add [`@pompelmi/enterprise`](./enterprise/) when they need advanced audit logging, premium YARA rules, Prometheus metrics, an embedded dashboard, and priority support.
+
 ## Why teams evaluate it
 
 - In-process scan path with no required cloud dependency.
@@ -55,14 +57,15 @@ if (report.verdict !== 'clean') {
 - [Koa](./how-to/koa/)
 - [Nuxt/Nitro](./how-to/nuxt-nitro/)
 
-## Open source and commercial
+## Open source and enterprise
 
 - Open source core (MIT): scanner APIs, adapters, policy packs, examples.
-- Paid support: private integration help, rollout guidance, and architecture review.
+- `@pompelmi/enterprise`: advanced audit logging, premium YARA rules, Prometheus metrics, embedded dashboard.
+- Enterprise support: rollout guidance, architecture review, and production help for licensed teams.
 
 Details:
 
-- [Commercial and enterprise engagements](./enterprise/)
+- [Pompelmi Enterprise](./enterprise/)
 - [Support channels](./support/)
 
 ## Trust and evaluation resources

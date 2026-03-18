@@ -58,4 +58,4 @@ Pompelmi validates file bytes and metadata you provide. Your application remains
 
 - [Threat model and architecture](./explaination/architecture/)
 - [Support options](./support/)
-- [Commercial and enterprise engagements](./enterprise/)
+- [Pompelmi Enterprise](./enterprise/)

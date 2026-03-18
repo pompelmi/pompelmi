@@ -1,6 +1,6 @@
 ---
 title: Support
-description: Community and paid support options for teams adopting Pompelmi.
+description: Community support and enterprise help for teams adopting Pompelmi.
 ---
 
 Use the support path that matches your use case and sensitivity requirements.
@@ -14,12 +14,13 @@ Best for general usage questions, bug reports, and reproducible issues.
 - [Documentation](https://pompelmi.github.io/pompelmi/)
 - [Security reporting](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
 
-## Commercial support (paid)
+## Enterprise help
 
-Best for private rollout work, architecture review, and troubleshooting that should not be discussed publicly.
+Best for licensed `@pompelmi/enterprise` teams or teams evaluating the enterprise add-on for production use.
 
 Includes:
 
+- Enterprise package setup and licensing help.
 - Private integration guidance.
 - Policy and scanner review for your endpoints.
 - Deployment and operational hardening guidance.
@@ -32,18 +33,23 @@ Model:
 - Response timing depends on engagement terms.
 - No implied 24/7 support or guaranteed SLA unless explicitly contracted.
 
+Related:
+
+- [Pompelmi Enterprise](./enterprise/)
+- [Buy Enterprise License](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+
 ## Which channel to use
 
 | Situation | Recommended path |
 | --- | --- |
 | Public bug report | GitHub Issues |
 | Public integration question | GitHub Discussions |
-| Private rollout blocker | Commercial support (email) |
+| Enterprise setup or private rollout blocker | Enterprise help (email) |
 | Vulnerability disclosure | SECURITY.md process |
 
 ## Contact
 
-Commercial support and enterprise inquiries:
+Enterprise support and licensing inquiries:
 
 - [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
 

@@ -1,8 +1,16 @@
+![Pompelmi banner](./assets/readme-banner.png)
+
 # Pompelmi
+
+[![npm version](https://img.shields.io/npm/v/pompelmi?label=version&logo=npm)](https://www.npmjs.com/package/pompelmi)
+[![CI](https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?branch=main&label=CI&logo=github)](https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml)
+[![License](https://img.shields.io/github/license/pompelmi/pompelmi)](https://github.com/pompelmi/pompelmi/blob/main/LICENSE)
 
 In-process file upload security for Node.js applications.
 
 Pompelmi helps teams block risky uploads before they are written to storage or passed downstream. It runs inside your app process, with no cloud API and no daemon requirement.
+
+Need more than the MIT core? [`@pompelmi/enterprise`](https://pompelmi.github.io/pompelmi/enterprise/) is the licensed add-on with advanced audit logging, premium YARA rules, Prometheus metrics, an embedded dashboard, and priority enterprise support.
 
 ## Why Pompelmi
 
@@ -25,6 +33,7 @@ Typical use cases:
 - Internal document workflows that require stricter upload hygiene.
 - Privacy-sensitive deployments where cloud scanning is not acceptable.
 - Teams that want a practical control layer before storage, indexing, or processing.
+- Platform and enterprise teams standardizing upload controls across services.
 
 ## Core Security Capabilities
 
@@ -78,9 +87,9 @@ Next steps:
 | Fastify | `@pompelmi/fastify-plugin` |
 | Nuxt/Nitro | guide in docs |
 
-## Open Source vs Paid Support
+## Open Source and Enterprise
 
-### Open Source (MIT)
+### Open Source Core (MIT)
 
 Included in this repository and npm packages:
 
@@ -90,24 +99,25 @@ Included in this repository and npm packages:
 - Audit trail utilities and scan hooks.
 - Public documentation, issues, and discussions.
 
-### Commercial Support
+### `@pompelmi/enterprise`
 
-Paid support is available directly from the maintainer for teams that need private assistance.
+`@pompelmi/enterprise` is the licensed add-on for teams that need more than the public core.
 
-Typical scope:
+It extends Pompelmi with:
 
-- Integration and rollout guidance for production environments.
-- Policy and threat-model review for specific upload surfaces.
-- Troubleshooting for edge cases and scanner behavior.
-- Advice for observability and quarantine operations.
+- Advanced audit logging with tamper-evident entries and multiple sinks.
+- Premium YARA rules for higher-signal threat detection.
+- Prometheus metrics for operational visibility.
+- An embedded dashboard for local monitoring and review.
+- Priority enterprise support for rollout and production blockers.
 
-Support model:
+Enterprise path:
 
-- Asynchronous email-based support.
-- No guaranteed SLA unless explicitly agreed in writing.
-- Scoped engagements for larger teams and regulated environments.
+- Install: `npm install @pompelmi/enterprise`
+- License: [Buy Enterprise License](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+- Details: [Pompelmi Enterprise](https://pompelmi.github.io/pompelmi/enterprise/)
 
-Contact for commercial support: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
+Enterprise inquiries: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
 
 ## Trust And Production Readiness
 
@@ -124,7 +134,7 @@ Security-sensitive teams usually evaluate boundaries before adoption. Start here
 - [Docs home](https://pompelmi.github.io/pompelmi/)
 - [Getting started](https://pompelmi.github.io/pompelmi/getting-started/)
 - [Support options](https://pompelmi.github.io/pompelmi/support/)
-- [Commercial and enterprise engagements](https://pompelmi.github.io/pompelmi/enterprise/)
+- [Pompelmi Enterprise](https://pompelmi.github.io/pompelmi/enterprise/)
 - [Examples directory](./examples)
 
 ## FAQ
@@ -158,4 +168,4 @@ MIT License: ./LICENSE
 
 - [GitHub](https://github.com/pompelmi/pompelmi)
 - [npm](https://www.npmjs.com/package/pompelmi)
-- [Commercial inquiries](mailto:pompelmideveloper@yahoo.com)
+- [Enterprise inquiries](mailto:pompelmideveloper@yahoo.com)
