@@ -1,22 +1,27 @@
 ---
 title: Pompelmi
-description: In-process file upload security for Node.js. No cloud API, no daemon, and no required data egress.
+description: In-process file upload security for Node.js. Scan and block risky uploads before storage with no cloud API or daemon.
 ---
 
 # Pompelmi
 
-Pompelmi is a TypeScript-first upload security layer for Node.js applications.
+Your file upload endpoint is part of your attack surface.
 
-It helps teams block risky uploads before they hit durable storage, with controls that are straightforward to test, observe, and tune.
+Pompelmi is the open-source, in-process upload security layer for Node.js. It scans and blocks risky uploads before storage or downstream processing, with no cloud API and no daemon.
 
-Enterprise teams can start with the open source core and add [`@pompelmi/enterprise`](./enterprise/) when they need advanced audit logging, premium YARA rules, Prometheus metrics, an embedded dashboard, and priority support.
+Works with Express, Next.js, NestJS, Fastify, and Koa. The MIT-licensed core is the primary path.
 
-## Why teams evaluate it
+## Why this matters
 
-- In-process scan path with no required cloud dependency.
-- Layered checks for common upload attack patterns.
-- Framework adapters for common Node.js stacks.
-- Structured scan outcomes that fit operational workflows.
+Most upload handlers stop at extension checks or client-provided MIME types. Pompelmi adds a layered upload gate before files hit storage or downstream processing.
+
+Without Pompelmi:
+
+`upload -> trust filename/MIME -> store -> parse or serve later`
+
+With Pompelmi:
+
+`upload -> inspect bytes + structure -> allow | quarantine | reject -> store/process`
 
 ## Quick start
 
@@ -39,14 +44,14 @@ if (report.verdict !== 'clean') {
 }
 ```
 
-## Core capabilities
+## What it helps block
 
-- Size limits and extension policy checks.
-- Magic-byte validation to detect disguised files.
-- Structural heuristics for high-risk payload patterns.
-- Archive risk controls for ZIP-heavy attack classes.
-- Optional YARA integration.
-- Composable scanner orchestration.
+| Risk | What Pompelmi checks |
+| --- | --- |
+| Spoofed or renamed files | Extension policy, declared MIME checks, and magic-byte validation |
+| Archive bombs and traversal | Entry count, total extracted size, nesting depth, and archive path guards |
+| Risky document structures | Heuristics for polyglots, executable signatures, and script-bearing documents |
+| Environment-specific threats | Optional YARA rules in a composed scanner pipeline |
 
 ## Framework guides
 
@@ -57,22 +62,24 @@ if (report.verdict !== 'clean') {
 - [Koa](./how-to/koa/)
 - [Nuxt/Nitro](./how-to/nuxt-nitro/)
 
-## Open source and enterprise
-
-- Open source core (MIT): scanner APIs, adapters, policy packs, examples.
-- `@pompelmi/enterprise`: advanced audit logging, premium YARA rules, Prometheus metrics, embedded dashboard.
-- Enterprise support: rollout guidance, architecture review, and production help for licensed teams.
-
-Details:
-
-- [Pompelmi Enterprise](./enterprise/)
-- [Support channels](./support/)
-
 ## Trust and evaluation resources
 
 - [Threat model and architecture](./explaination/architecture/)
 - [Production-readiness notes](./production-readiness/)
+- [Getting started guide](./getting-started/)
+- [GitHub repository](https://github.com/pompelmi/pompelmi)
 - Security reporting policy: https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md
+
+## Support and enterprise options
+
+Start with docs, GitHub Issues, and GitHub Discussions whenever your question can be public.
+
+Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features.
+
+See:
+
+- [Support options](./support/)
+- [Enterprise details](./enterprise/)
 
 ## Suggested evaluation flow
 

@@ -2,83 +2,68 @@
 
 # Pompelmi
 
+[![GitHub stars](https://img.shields.io/github/stars/pompelmi/pompelmi?style=flat-square&logo=github)](https://github.com/pompelmi/pompelmi/stargazers)
 [![npm version](https://img.shields.io/npm/v/pompelmi?label=version&logo=npm)](https://www.npmjs.com/package/pompelmi)
 [![CI](https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?branch=main&label=CI&logo=github)](https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml)
-[![License](https://img.shields.io/github/license/pompelmi/pompelmi)](https://github.com/pompelmi/pompelmi/blob/main/LICENSE)
 
-In-process file upload security for Node.js applications.
+In-process file upload security for Node.js.
 
-Pompelmi helps teams block risky uploads before they are written to storage or passed downstream. It runs inside your app process, with no cloud API and no daemon requirement.
+Your file upload endpoint is part of your attack surface.
 
-Need more than the MIT core? [`@pompelmi/enterprise`](https://pompelmi.github.io/pompelmi/enterprise/) is the licensed add-on with advanced audit logging, premium YARA rules, Prometheus metrics, an embedded dashboard, and priority enterprise support.
+Pompelmi is an open-source Node.js library that scans and blocks risky uploads before they hit storage or downstream processing. It runs in-process, with no cloud API, no daemon, and no required data egress.
 
-## Why Pompelmi
+Works with Express, Next.js, NestJS, Fastify, and Koa. The MIT-licensed core is the primary path in this repo.
+
+## Why this matters
 
 Most upload handlers stop at extension checks or client-provided MIME types. That leaves gaps for spoofed files, archive bombs, polyglots, and script-bearing documents.
 
-Pompelmi gives you a layered upload gate that is:
+Without Pompelmi:
 
-- In-process: no file bytes leave your infrastructure as part of scanning.
-- TypeScript-first: composable scanners and typed reports.
-- Operationally simple: install from npm and integrate in route handlers.
-- Framework-ready: adapters for Express, Next.js, NestJS, Koa, and Fastify.
+`upload -> trust filename/MIME -> store -> parse or serve later`
 
-## Who It Is For
+With Pompelmi:
 
-Pompelmi is designed for engineering teams that accept user uploads and need predictable controls around untrusted files, especially when privacy or data residency matter.
+`upload -> inspect bytes + structure -> allow | quarantine | reject -> store/process`
 
-Typical use cases:
+## Key protections
 
-- Public upload endpoints where attackers control file content.
-- Internal document workflows that require stricter upload hygiene.
-- Privacy-sensitive deployments where cloud scanning is not acceptable.
-- Teams that want a practical control layer before storage, indexing, or processing.
-- Platform and enterprise teams standardizing upload controls across services.
+- Extension, size, and declared MIME policy checks.
+- Magic-byte validation for renamed or disguised files.
+- Archive controls for ZIP bombs, traversal, and nesting depth.
+- Heuristics for risky structures such as executables, polyglots, and script-bearing documents.
+- Optional YARA matching when you need signature-based rules.
 
-## Core Security Capabilities
-
-- Extension allowlists and MIME policy checks.
-- Magic-byte format detection to catch renamed/disguised files.
-- Heuristic scanning for common risky structures.
-- ZIP risk controls: entry count, size limits, traversal and nesting constraints.
-- Optional YARA-based matching using your own rules.
-- Composable scanner pipeline with per-scanner timeout and stop conditions.
-- Structured scan output with verdict, reasons, and rule matches.
-
-## Quick Start
-
-Install:
+## Quick start
 
 ```bash
 npm install pompelmi
 ```
 
-Scan bytes:
-
 ```ts
 import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
-const result = await scanBytes(fileBuffer, {
+const report = await scanBytes(file.buffer, {
+  filename: file.originalname,
+  mimeType: file.mimetype,
   policy: STRICT_PUBLIC_UPLOAD,
-  filename: 'upload.pdf',
-  mimeType: 'application/pdf',
   failClosed: true,
 });
 
-if (result.verdict !== 'clean') {
-  throw new Error(`Upload blocked: ${result.verdict}`);
+if (report.verdict !== 'clean') {
+  return res.status(422).json({ error: 'Upload blocked', reasons: report.reasons });
 }
 ```
 
 Next steps:
 
-- [Docs quick start](https://pompelmi.github.io/pompelmi/getting-started/)
+- [Getting started](https://pompelmi.github.io/pompelmi/getting-started/)
 - [Framework guides](https://pompelmi.github.io/pompelmi/how-to/express/)
-- [Production readiness](https://pompelmi.github.io/pompelmi/production-readiness/)
+- [Threat model and architecture](https://pompelmi.github.io/pompelmi/explaination/architecture/)
 
-## Framework Support
+## Framework support
 
-| Framework | Package |
+| Framework | Package or guide |
 | --- | --- |
 | Express | `@pompelmi/express-middleware` |
 | Next.js | `@pompelmi/next-upload` |
@@ -87,85 +72,48 @@ Next steps:
 | Fastify | `@pompelmi/fastify-plugin` |
 | Nuxt/Nitro | guide in docs |
 
-## Open Source and Enterprise
+## Trust / production readiness
 
-### Open Source Core (MIT)
+- MIT-licensed core, typed APIs, framework adapters, and composable policy packs.
+- Structured verdicts, reasons, and rule matches for logging, quarantine, and review flows.
+- Public docs, examples, changelog, tests, and a security disclosure policy.
+- Local-first deployment model with no required cloud scanning dependency.
+- Built as a defense-in-depth upload gate, not a full antivirus replacement.
 
-Included in this repository and npm packages:
+Start here:
 
-- Core scanner APIs and policy packs.
-- Framework adapters and examples.
-- Quarantine workflow primitives.
-- Audit trail utilities and scan hooks.
-- Public documentation, issues, and discussions.
-
-### `@pompelmi/enterprise`
-
-`@pompelmi/enterprise` is the licensed add-on for teams that need more than the public core.
-
-It extends Pompelmi with:
-
-- Advanced audit logging with tamper-evident entries and multiple sinks.
-- Premium YARA rules for higher-signal threat detection.
-- Prometheus metrics for operational visibility.
-- An embedded dashboard for local monitoring and review.
-- Priority enterprise support for rollout and production blockers.
-
-Enterprise path:
-
-- Install: `npm install @pompelmi/enterprise`
-- License: [Buy Enterprise License](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
-- Details: [Pompelmi Enterprise](https://pompelmi.github.io/pompelmi/enterprise/)
-
-Enterprise inquiries: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
-
-## Trust And Production Readiness
-
-Security-sensitive teams usually evaluate boundaries before adoption. Start here:
-
+- [Production readiness](https://pompelmi.github.io/pompelmi/production-readiness/)
 - [Threat model and architecture](https://pompelmi.github.io/pompelmi/explaination/architecture/)
-- [Production readiness notes](https://pompelmi.github.io/pompelmi/production-readiness/)
-- Security disclosure policy: ./SECURITY.md
-- Changelog and releases: ./CHANGELOG.md
-- Tests: ./tests
-
-## Documentation Links
-
-- [Docs home](https://pompelmi.github.io/pompelmi/)
-- [Getting started](https://pompelmi.github.io/pompelmi/getting-started/)
-- [Support options](https://pompelmi.github.io/pompelmi/support/)
-- [Pompelmi Enterprise](https://pompelmi.github.io/pompelmi/enterprise/)
 - [Examples directory](./examples)
+- [Security policy](./SECURITY.md)
+- [Tests](./tests)
 
 ## FAQ
 
 ### Does Pompelmi send files to a cloud API?
 
-No. Scanning runs in-process by default.
+No. Scanning runs in-process by default. File bytes do not need to leave your infrastructure.
 
-### Does it require ClamAV or another daemon?
+### Does it require ClamAV, a sidecar, or another daemon?
 
 No. Built-in heuristics work without a daemon. ClamAV and YARA integrations are optional.
 
+### What does it help block?
+
+It adds a layered upload gate before storage or downstream processing. That helps catch spoofed files, archive bombs, polyglots, and common risky document structures.
+
 ### Is this a complete antivirus replacement?
 
-No. Pompelmi is an upload gate and risk-reduction layer. It should be part of a broader defense-in-depth design.
+No. Pompelmi is an upload security layer and risk-reduction control. It should sit inside a broader defense-in-depth design.
 
-### Can it help in regulated environments?
+### Can it help in privacy-sensitive or regulated environments?
 
-It can support internal control objectives by reducing upload risk and producing structured scan outcomes. It does not provide legal or compliance certification by itself.
+It can support internal control objectives by reducing upload risk and producing structured scan outcomes. It is not itself a compliance certification.
 
-### How do we start an evaluation?
+## Commercial / enterprise
 
-1. Integrate one endpoint with a strict policy pack.
-2. Log verdicts and reasons for real traffic.
-3. Add quarantine flow for suspicious files.
-4. Tighten policy based on observed false positives and business requirements.
+Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features. The open-source MIT core remains the default path. See [Support options](https://pompelmi.github.io/pompelmi/support/) and [`@pompelmi/enterprise`](https://pompelmi.github.io/pompelmi/enterprise/).
 
-## License And Contact
+## License
 
-MIT License: ./LICENSE
-
-- [GitHub](https://github.com/pompelmi/pompelmi)
-- [npm](https://www.npmjs.com/package/pompelmi)
-- [Enterprise inquiries](mailto:pompelmideveloper@yahoo.com)
+MIT. See [LICENSE](./LICENSE). Also: [Docs](https://pompelmi.github.io/pompelmi/), [GitHub](https://github.com/pompelmi/pompelmi), [npm](https://www.npmjs.com/package/pompelmi).

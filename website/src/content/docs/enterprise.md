@@ -1,9 +1,9 @@
 ---
 title: '@pompelmi/enterprise'
-description: Licensed enterprise add-on for Pompelmi with audit logging, premium YARA, metrics, dashboard, and priority support.
+description: Enterprise options for teams that need advanced auditability, premium rules, or rollout support alongside the open-source core.
 ---
 
-`@pompelmi/enterprise` extends the open source Pompelmi core for teams that need stronger operational visibility, incident-response tooling, and a licensed enterprise path.
+The open-source Pompelmi core remains the primary path. `@pompelmi/enterprise` is the licensed add-on for teams that need stronger operational visibility, incident-response tooling, or commercial rollout support.
 
 The MIT-licensed core remains public. The enterprise package adds higher-assurance features without changing the local-first model: scanning still runs inside your infrastructure.
 
@@ -51,9 +51,9 @@ Requires Node.js 18+ and an active enterprise license.
 - Security teams that need stronger observability and response tooling.
 - Organizations that want a licensed add-on plus priority support.
 
-## Buy or evaluate
+## Evaluation and licensing
 
-- License: [Buy Enterprise License](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
+- License options: [Purchase or evaluate a license](https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn)
 - Email: [pompelmideveloper@yahoo.com](mailto:pompelmideveloper@yahoo.com)
 - Include: stack, version, expected traffic profile, and timeline.
 

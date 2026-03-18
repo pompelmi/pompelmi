@@ -1,12 +1,12 @@
 ---
-title: Support Options
-description: See the Support page for community support and enterprise help options.
+title: Support
+description: See the Support page for community support, security reporting, and enterprise options when needed.
 ---
 
 import { LinkCard } from '@astrojs/starlight/components';
 
 <LinkCard
-  title="Support and Enterprise"
-  description="Community support, enterprise add-on details, and licensing help for Pompelmi."
+  title="Support options"
+  description="Start with docs, issues, and discussions. Commercial support and enterprise options are also available."
   href="/pompelmi/support/"
 />

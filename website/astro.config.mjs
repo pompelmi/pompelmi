@@ -37,7 +37,7 @@ export default defineConfig({
     starlight({
   title: 'Pompelmi Docs',
   description:
-    'File upload malware scanning for Node.js apps. React/Next UI, Express/Koa middleware, size & MIME guards, optional YARA.',
+    'In-process file upload security for Node.js. Scan and block risky uploads before storage with no cloud API or daemon.',
 
   // v0.33+ => social is an ARRAY of links
   social: [
@@ -47,8 +47,8 @@ export default defineConfig({
   // head must use objects { tag, attrs, content? }
   head: [
     { tag: 'link', attrs: { rel: 'canonical', href: 'https://pompelmi.github.io/pompelmi/' } },
-    { tag: 'meta', attrs: { property: 'og:title', content: 'Pompelmi — File upload malware scanning for Node.js' } },
-    { tag: 'meta', attrs: { property: 'og:description', content: 'Scan & block malicious uploads with ZIP deep-inspection, MIME/size guards, optional YARA.' } },
+    { tag: 'meta', attrs: { property: 'og:title', content: 'Pompelmi Docs — in-process file upload security for Node.js' } },
+    { tag: 'meta', attrs: { property: 'og:description', content: 'Scan and block risky uploads before storage with no cloud API, no daemon, and a local-first deployment model.' } },
     { tag: 'meta', attrs: { property: 'og:url', content: 'https://pompelmi.github.io/pompelmi/' } },
     { tag: 'meta', attrs: { property: 'og:image', content: 'https://pompelmi.github.io/pompelmi/og.png' } },
     { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
@@ -61,18 +61,15 @@ export default defineConfig({
   },
   sidebar: [
     { label: 'Overview', slug: 'index' },
-    { 
-      label: 'Blog', 
-      link: '/pompelmi/blog/',
-      badge: { text: 'New', variant: 'success' }
-    },
+    { label: 'Getting started', slug: 'getting-started' },
+    { label: 'Framework guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Tutorials', autogenerate: { directory: 'tutorials', collapsed: false } },
-    { label: 'How-to Guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },
     { label: 'Explanations', autogenerate: { directory: 'explaination', collapsed: true } },
     { label: 'Production readiness', slug: 'production-readiness' },
-    { label: 'Commercial', slug: 'enterprise' },
-    { label: 'Support', slug: 'support' }
+    { label: 'Blog', link: '/pompelmi/blog/' },
+    { label: 'Support', slug: 'support' },
+    { label: 'Enterprise options', slug: 'enterprise' }
   ],
   tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
   pagefind: true

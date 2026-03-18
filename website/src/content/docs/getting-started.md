@@ -198,4 +198,4 @@ Optional: add YARA rules for custom signature-based detection.
 - **React upload UI:** [React components reference](./reference/ui-react/)
 - **Security model:** [Architecture and threat model](./explaination/architecture/)
 - **Production readiness:** [Production-readiness checklist](./production-readiness/)
-- **Enterprise help:** [Support options](./support/)
+- **Support:** [Community support and enterprise options](./support/)

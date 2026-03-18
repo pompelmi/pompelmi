@@ -1,10 +1,23 @@
 ---
-import DemoUpload from '../components/DemoUpload';
 import '../styles/global.css';
+
 const BASE = 'https://pompelmi.github.io/pompelmi';
-const TITLE = 'Pompelmi — File upload malware scanning for Node.js';
-const DESC = 'In-process file upload security for Node.js. No cloud API, no daemon. Drop-in scanning for Express, Next.js, NestJS, Fastify, and Koa.';
+const TITLE = 'Pompelmi — In-process file upload security for Node.js';
+const DESC =
+  'Scan and block risky uploads before storage or downstream processing. No cloud API, no daemon. Works with Express, Next.js, NestJS, Fastify, and Koa.';
 const OG_IMAGE = `${BASE}/og.png`;
+const quickStartSnippet = `import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
+
+const report = await scanBytes(file.buffer, {
+  filename: file.originalname,
+  mimeType: file.mimetype,
+  policy: STRICT_PUBLIC_UPLOAD,
+  failClosed: true,
+});
+
+if (report.verdict !== 'clean') {
+  return res.status(422).json({ error: 'Upload blocked', reasons: report.reasons });
+}`;
 ---
 
 <html lang="en">
@@ -15,7 +28,10 @@ const OG_IMAGE = `${BASE}/og.png`;
     <link rel="canonical" href={BASE + '/'} />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="index,follow" />
-    <meta name="keywords" content="Node.js, Express, Koa, Next.js, NestJS, Fastify, file upload, malware scanning, YARA, ZIP bomb, MIME type, security, middleware" />
+    <meta
+      name="keywords"
+      content="Node.js, file upload security, upload scanning, upload validation, Express, Next.js, NestJS, Fastify, Koa, YARA, ZIP bomb, MIME sniffing, security"
+    />
     <meta name="author" content="Pompelmi" />
     <meta name="theme-color" content="#0f172a" />
     <link rel="alternate" hreflang="en" href={BASE + '/'} />
@@ -24,7 +40,7 @@ const OG_IMAGE = `${BASE}/og.png`;
     <meta property="og:locale" content="en_US" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Pompelmi — Node.js file upload malware scanning" />
+    <meta property="og:image:alt" content="Pompelmi - in-process file upload security for Node.js" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content={BASE + '/'} />
     <meta property="og:title" content={TITLE} />
@@ -37,7 +53,10 @@ const OG_IMAGE = `${BASE}/og.png`;
     <link rel="icon" href="/pompelmi/favicon.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <script defer data-domain="pompelmi.github.io" src="https://plausible.io/js/script.js"></script>
     <script type="application/ld+json">
       {
@@ -70,12 +89,14 @@ const OG_IMAGE = `${BASE}/og.png`;
       h1, h2, h3, h4 { margin: 0; font-weight: 700; letter-spacing: -0.02em; }
       p { margin: 0; }
       ul { margin: 0; padding: 0; list-style: none; }
+      table { border-collapse: collapse; }
 
-      .container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+      .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-      /* NAV */
       .nav {
-        position: sticky; top: 0; z-index: 50;
+        position: sticky;
+        top: 0;
+        z-index: 50;
         background: rgba(255,255,255,0.92);
         backdrop-filter: blur(12px);
         border-bottom: 1px solid #e2e8f0;
@@ -86,159 +107,143 @@ const OG_IMAGE = `${BASE}/og.png`;
       .nav-links { display: flex; align-items: center; gap: 4px; }
       .nav-link { padding: 6px 12px; font-size: .875rem; font-weight: 500; color: #475569; border-radius: 6px; transition: background .15s, color .15s; }
       .nav-link:hover { background: #f1f5f9; color: #0f172a; }
-      .nav-link-ent { padding: 6px 14px; font-size: .875rem; font-weight: 600; background: #0f172a; color: #fff; border-radius: 6px; transition: background .15s; }
-      .nav-link-ent:hover { background: #1e293b; }
-      .nav-gh { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: .875rem; font-weight: 500; color: #475569; border-radius: 6px; transition: background .15s, color .15s; }
-      .nav-gh:hover { background: #f1f5f9; color: #0f172a; }
+      .nav-gh { display: flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: .875rem; font-weight: 600; color: #0f172a; border-radius: 6px; border: 1px solid #e2e8f0; transition: border-color .15s, background .15s; }
+      .nav-gh:hover { background: #f8fafc; border-color: #cbd5e1; }
 
-      /* HERO */
-      .hero { padding: 96px 0 72px; text-align: center; border-bottom: 1px solid #f1f5f9; }
-      .hero-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 100px; font-size: .8rem; font-weight: 500; color: #475569; background: #f8fafc; margin-bottom: 28px; }
+      .hero {
+        padding: 88px 0 72px;
+        border-bottom: 1px solid #f1f5f9;
+        background:
+          radial-gradient(circle at top left, rgba(37,99,235,0.08), transparent 28%),
+          radial-gradient(circle at top right, rgba(15,23,42,0.06), transparent 24%),
+          linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+      }
+      .hero-inner { max-width: 860px; margin: 0 auto; text-align: center; }
+      .hero-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 999px; font-size: .8rem; font-weight: 500; color: #475569; background: rgba(255,255,255,0.92); margin-bottom: 24px; }
       .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
-      .hero-title { font-size: clamp(2.4rem, 6vw, 4.5rem); font-weight: 700; letter-spacing: -.04em; line-height: 1.05; color: #0f172a; margin-bottom: 20px; }
-      .hero-sub { font-size: 1.1rem; color: #64748b; max-width: 540px; margin: 0 auto 36px; line-height: 1.7; font-weight: 400; }
-      .hero-install { display: inline-flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 18px; font-size: .875rem; color: #334155; margin-bottom: 32px; }
+      .hero-title { font-size: clamp(2.7rem, 6vw, 4.9rem); line-height: 1.03; letter-spacing: -.05em; margin-bottom: 18px; color: #0f172a; }
+      .hero-sub { font-size: 1.1rem; color: #475569; max-width: 720px; margin: 0 auto 24px; line-height: 1.7; }
+      .hero-points { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 28px; }
+      .hero-point { padding: 7px 12px; border-radius: 999px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.94); font-size: .82rem; color: #475569; }
+      .hero-install { display: inline-flex; align-items: center; gap: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 18px; font-size: .875rem; color: #334155; margin-bottom: 26px; }
       .hero-install .prompt { color: #94a3b8; user-select: none; }
       .copy-btn { background: none; border: none; padding: 0; color: #94a3b8; display: flex; align-items: center; cursor: pointer; transition: color .15s; }
       .copy-btn:hover { color: #2563eb; }
       .hero-ctas { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
-      .hero-note { margin-top: 18px; font-size: .95rem; color: #475569; line-height: 1.6; }
-      .hero-note a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; }
-      .btn-dark { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: #0f172a; color: #fff; font-size: .9375rem; font-weight: 600; border-radius: 8px; transition: background .15s; }
+      .btn-dark { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; background: #0f172a; color: #fff; font-size: .9375rem; font-weight: 600; border-radius: 8px; transition: background .15s; }
       .btn-dark:hover { background: #1e293b; }
-      .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: #fff; color: #0f172a; font-size: .9375rem; font-weight: 600; border-radius: 8px; border: 1px solid #e2e8f0; transition: border-color .15s, background .15s; }
+      .btn-outline { display: inline-flex; align-items: center; gap: 8px; padding: 11px 22px; background: #fff; color: #0f172a; font-size: .9375rem; font-weight: 600; border-radius: 8px; border: 1px solid #e2e8f0; transition: border-color .15s, background .15s; }
       .btn-outline:hover { border-color: #cbd5e1; background: #f8fafc; }
-      .btn-purple { display: inline-flex; align-items: center; gap: 8px; padding: 10px 22px; background: #7c3aed; color: #fff; font-size: .9375rem; font-weight: 600; border-radius: 8px; transition: background .15s; }
-      .btn-purple:hover { background: #6d28d9; }
-      .hero-badges { margin-top: 32px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+      .hero-note { margin-top: 18px; font-size: .95rem; color: #475569; line-height: 1.65; }
+      .hero-badges { margin-top: 28px; display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 
-      /* SECTIONS */
-      .section { padding: 80px 0; border-bottom: 1px solid #f1f5f9; }
-      .section-eyebrow { font-size: .75rem; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
-      .section-heading { font-size: clamp(1.5rem, 3vw, 2.1rem); letter-spacing: -.03em; color: #0f172a; margin-bottom: 10px; }
-      .section-sub { font-size: 1rem; color: #64748b; max-width: 480px; line-height: 1.65; }
-      .text-center { text-align: center; }
-      .mx-auto { margin-left: auto; margin-right: auto; }
+      .section { padding: 76px 0; border-bottom: 1px solid #f1f5f9; }
+      .section-eyebrow { font-size: .75rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 10px; }
+      .section-heading { font-size: clamp(1.7rem, 3vw, 2.4rem); letter-spacing: -.03em; color: #0f172a; margin-bottom: 12px; }
+      .section-sub { font-size: 1rem; color: #64748b; max-width: 720px; line-height: 1.7; }
 
-      /* FEATURE GRID */
-      .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top: 48px; }
-      .feature-item { background: #fff; padding: 28px; }
-      .feature-icon { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; margin-bottom: 14px; color: #2563eb; }
-      .feature-name { font-size: .9375rem; font-weight: 600; color: #0f172a; margin-bottom: 6px; }
-      .feature-desc { font-size: .875rem; color: #64748b; line-height: 1.6; }
+      .flow-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 34px; }
+      .flow-card { border: 1px solid #e2e8f0; border-radius: 18px; padding: 28px; background: #fff; }
+      .flow-label { font-size: .75rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 12px; }
+      .flow-label-muted { color: #94a3b8; }
+      .flow-label-strong { color: #2563eb; }
+      .flow-title { font-size: 1.1rem; margin-bottom: 16px; }
+      .flow-list { display: flex; flex-direction: column; gap: 12px; }
+      .flow-step { display: flex; align-items: flex-start; gap: 12px; color: #475569; line-height: 1.55; }
+      .flow-index { width: 26px; height: 26px; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .8rem; font-weight: 700; background: #f8fafc; border: 1px solid #e2e8f0; color: #0f172a; }
+      .flow-note { margin-top: 18px; font-size: .9rem; line-height: 1.65; color: #64748b; }
 
-      /* FRAMEWORK GRID */
-      .fw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 40px; }
-      .fw-card { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; font-size: .9rem; font-weight: 500; color: #334155; transition: border-color .15s, box-shadow .15s; }
+      .table-wrap { margin-top: 34px; border: 1px solid #e2e8f0; border-radius: 18px; overflow: auto; background: #fff; }
+      .protection-table { width: 100%; min-width: 720px; }
+      .protection-table th,
+      .protection-table td { padding: 18px 20px; border-bottom: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+      .protection-table tr:last-child td { border-bottom: none; }
+      .protection-table th { font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: #64748b; background: #f8fafc; }
+      .protection-table td strong { display: block; margin-bottom: 6px; font-size: .95rem; color: #0f172a; }
+      .protection-table td { font-size: .92rem; line-height: 1.65; color: #475569; }
+
+      .code-card { margin-top: 34px; border-radius: 18px; overflow: hidden; border: 1px solid #1e293b; background: #0f172a; color: #e2e8f0; }
+      .code-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px; border-bottom: 1px solid #1e293b; background: rgba(15,23,42,0.95); }
+      .code-title { font-size: .82rem; font-weight: 600; color: #cbd5e1; }
+      .code-copy { display: inline-flex; align-items: center; gap: 6px; background: transparent; border: 1px solid #334155; color: #cbd5e1; border-radius: 8px; padding: 7px 10px; cursor: pointer; font-size: .8rem; transition: border-color .15s, color .15s, background .15s; }
+      .code-copy:hover { border-color: #475569; color: #fff; background: rgba(255,255,255,0.04); }
+      .code-card pre { margin: 0; padding: 22px; overflow: auto; font-size: .9rem; line-height: 1.65; }
+
+      .fw-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 34px; }
+      .fw-card { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; font-size: .9rem; font-weight: 500; color: #334155; transition: border-color .15s, box-shadow .15s; }
       .fw-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(37,99,235,.08); color: #1e40af; }
       .fw-icon { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+      .framework-note { margin-top: 16px; font-size: .92rem; color: #64748b; }
 
-      /* DEMO */
-      .demo-wrap { border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; margin-top: 40px; }
-      .demo-header { padding: 12px 18px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 7px; font-size: .8rem; font-weight: 500; color: #64748b; }
-      .demo-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-      .demo-body { padding: 28px; }
+      .trust-list { display: grid; gap: 12px; margin-top: 22px; }
+      .trust-item { display: flex; align-items: flex-start; gap: 10px; font-size: .95rem; line-height: 1.65; color: #475569; }
+      .trust-check { color: #2563eb; flex-shrink: 0; margin-top: 2px; }
+      .link-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 
-      /* ENTERPRISE */
-      .ent-wrap { border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; margin-top: 48px; display: grid; grid-template-columns: 1fr 1fr; }
-      .ent-left { padding: 44px; background: #fff; border-right: 1px solid #e2e8f0; }
-      .ent-right { padding: 44px; background: #0f172a; color: #fff; }
-      .plan-badge { font-size: .7rem; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 14px; }
-      .plan-badge-free { color: #64748b; }
-      .plan-badge-ent { color: #a78bfa; }
-      .plan-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 14px; }
-      .plan-price { font-size: 2.6rem; font-weight: 700; letter-spacing: -.04em; }
-      .plan-period { font-size: .875rem; color: #94a3b8; margin: 6px 0 28px; }
-      .plan-features { display: flex; flex-direction: column; gap: 10px; }
-      .pf { display: flex; align-items: flex-start; gap: 9px; font-size: .875rem; line-height: 1.5; }
-      .pf-check { flex-shrink: 0; margin-top: 2px; }
-      .check-gray { color: #94a3b8; }
-      .check-violet { color: #a78bfa; }
-      .text-muted { color: #64748b; }
-      .text-light { color: #e2e8f0; }
-      .text-dim { color: #94a3b8; }
-      .ent-cta { display: inline-flex; align-items: center; gap: 8px; margin-top: 32px; padding: 11px 22px; background: #7c3aed; color: #fff; font-size: .9375rem; font-weight: 600; border-radius: 8px; transition: background .15s; }
-      .ent-cta:hover { background: #6d28d9; }
-      .ent-note { margin-top: 10px; font-size: .8rem; color: #64748b; }
-
-      /* BLOG */
-      .blog-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; margin-top: 40px; }
-      .blog-card { padding: 22px; border: 1px solid #e2e8f0; border-radius: 10px; background: #fff; transition: border-color .15s, box-shadow .15s; }
-      .blog-card:hover { border-color: #93c5fd; box-shadow: 0 2px 8px rgba(37,99,235,.08); }
-      .blog-title { font-size: .9375rem; font-weight: 600; color: #0f172a; margin-bottom: 7px; line-height: 1.4; }
-      .blog-desc { font-size: .8125rem; color: #64748b; line-height: 1.55; margin-bottom: 14px; }
-      .blog-link { font-size: .8125rem; font-weight: 600; color: #2563eb; display: inline-flex; align-items: center; gap: 4px; }
-      .all-posts { display: inline-flex; align-items: center; gap: 6px; font-size: .875rem; font-weight: 600; color: #2563eb; margin-top: 24px; transition: gap .15s; }
-      .all-posts:hover { gap: 10px; }
-
-      /* FAQ */
-      details.faq { border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
-      details.faq summary { padding: 17px 20px; font-size: .9375rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: #0f172a; user-select: none; }
+      details.faq { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; margin-bottom: 10px; background: #fff; }
+      details.faq summary { padding: 17px 20px; font-size: .95rem; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; color: #0f172a; user-select: none; }
       details.faq summary::-webkit-details-marker { display: none; }
       .faq-chev { transition: transform .2s; flex-shrink: 0; color: #94a3b8; }
       details[open] .faq-chev { transform: rotate(180deg); }
-      .faq-body { padding: 0 20px 16px; font-size: .875rem; color: #475569; line-height: 1.65; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+      .faq-body { padding: 0 20px 16px; font-size: .9rem; color: #475569; line-height: 1.7; border-top: 1px solid #f1f5f9; padding-top: 12px; }
+      .faq-body a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; }
 
-      /* FOOTER */
+      .enterprise-note { padding: 26px 30px; border: 1px solid #e2e8f0; border-radius: 18px; background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%); }
+      .enterprise-note p { font-size: 1rem; line-height: 1.75; color: #475569; }
+      .enterprise-note a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; }
+
       .footer { background: #0f172a; color: #94a3b8; padding: 56px 0 36px; }
       .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 44px; }
       .footer-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 10px; }
-      .footer-tagline { font-size: .8125rem; line-height: 1.6; }
+      .footer-tagline { font-size: .8125rem; line-height: 1.7; }
       .footer-col-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
       .footer-links { display: flex; flex-direction: column; gap: 9px; }
       .fl { font-size: .8125rem; color: #64748b; transition: color .15s; }
-      .fl:hover { color: #94a3b8; }
-      .fl-ent { font-size: .8125rem; color: #a78bfa; font-weight: 600; transition: color .15s; }
-      .fl-ent:hover { color: #c4b5fd; }
+      .fl:hover { color: #cbd5e1; }
       .footer-bottom { border-top: 1px solid #1e293b; padding-top: 22px; display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap; }
       .footer-copy { font-size: .8rem; color: #475569; }
       .footer-icons { display: flex; gap: 14px; }
       .fi { color: #475569; transition: color .15s; }
-      .fi:hover { color: #94a3b8; }
+      .fi:hover { color: #cbd5e1; }
 
-      @media (max-width: 800px) {
-        .ent-wrap { grid-template-columns: 1fr; }
-        .ent-left { border-right: none; border-bottom: 1px solid #1e293b; }
+      @media (max-width: 860px) {
+        .flow-grid { grid-template-columns: 1fr; }
         .footer-grid { grid-template-columns: 1fr 1fr; }
-        .nav-link-ent { display: none; }
       }
-      @media (max-width: 480px) {
+
+      @media (max-width: 640px) {
+        .nav-inner { height: auto; padding: 14px 0; align-items: flex-start; gap: 10px; flex-direction: column; }
+        .nav-links { width: 100%; justify-content: space-between; }
+        .hero { padding-top: 72px; }
+        .hero-title { font-size: clamp(2.2rem, 10vw, 3.2rem); }
         .footer-grid { grid-template-columns: 1fr; }
       }
     </style>
   </head>
 
   <body>
-
-    <!-- NAV -->
     <nav class="nav">
       <div class="container nav-inner">
         <a href="/pompelmi/" class="nav-logo">
           <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-            <!-- Grapefruit: outer rind -->
-            <circle cx="14" cy="14" r="14" fill="#F5B211"/>
-            <!-- Pith ring -->
-            <circle cx="14" cy="14" r="11" fill="#FAE3A2"/>
-            <!-- Red flesh -->
-            <circle cx="14" cy="14" r="9" fill="#E83A1D"/>
-            <!-- 10 segments (5 lines through center) -->
-            <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1"/>
-            <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1"/>
-            <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1"/>
-            <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1"/>
-            <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1"/>
-            <!-- Center pip -->
-            <circle cx="14" cy="14" r="1.8" fill="white"/>
+            <circle cx="14" cy="14" r="14" fill="#F5B211" />
+            <circle cx="14" cy="14" r="11" fill="#FAE3A2" />
+            <circle cx="14" cy="14" r="9" fill="#E83A1D" />
+            <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1" />
+            <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1" />
+            <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1" />
+            <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1" />
+            <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1" />
+            <circle cx="14" cy="14" r="1.8" fill="white" />
           </svg>
           Pompelmi
         </a>
         <div class="nav-links">
           <a href="/pompelmi/getting-started/" class="nav-link">Docs</a>
           <a href="/pompelmi/blog/" class="nav-link">Blog</a>
-          <a href="/pompelmi/enterprise/" class="nav-link-ent">Enterprise</a>
           <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="nav-gh">
             <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
             </svg>
             GitHub
           </a>
@@ -246,46 +251,55 @@ const OG_IMAGE = `${BASE}/og.png`;
       </div>
     </nav>
 
-    <!-- HERO -->
     <header class="hero">
-      <div class="container">
+      <div class="container hero-inner">
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          Open source · MIT · Node.js 18+
+          Open source core · MIT · Node.js 18+
         </div>
-        <h1 class="hero-title">File upload security<br/>that stays in your process</h1>
-        <p class="hero-sub">Scan and block malicious uploads in Express, Next.js, NestJS, Fastify, and Koa. No cloud API. No daemon. One <code class="mono">npm install</code>.</p>
+        <h1 class="hero-title">Your file upload endpoint is part of your attack surface.</h1>
+        <p class="hero-sub">
+          Pompelmi is in-process file upload security for Node.js. Scan and block risky uploads before storage or downstream processing. No cloud API. No daemon.
+        </p>
+        <div class="hero-points">
+          <span class="hero-point">Scan before storage</span>
+          <span class="hero-point">In-process</span>
+          <span class="hero-point">No cloud API</span>
+          <span class="hero-point">Express · Next.js · NestJS · Fastify · Koa</span>
+        </div>
         <div class="hero-install mono">
           <span class="prompt">$</span>
           <span>npm install pompelmi</span>
           <button class="copy-btn" title="Copy" onclick="navigator.clipboard.writeText('npm install pompelmi')">
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <rect x="9" y="9" width="13" height="13" rx="2" />
+              <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+            </svg>
           </button>
         </div>
         <div class="hero-ctas">
           <a href="/pompelmi/getting-started/" class="btn-dark">
             Get started
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5m5-5H6"/></svg>
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5m5-5H6" />
+            </svg>
           </a>
           <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="btn-outline">
-            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            <svg width="15" height="15" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+            </svg>
             View on GitHub
           </a>
-          <a href="/pompelmi/enterprise/" class="btn-purple">
-            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-            Explore enterprise
-          </a>
         </div>
-        <p class="hero-note">Need advanced audit logging, premium YARA rules, Prometheus metrics, or an embedded dashboard? <a href="/pompelmi/enterprise/">Explore <code class="mono">@pompelmi/enterprise</code></a>.</p>
+        <p class="hero-note">
+          Most upload handlers stop at extension checks or client-provided MIME types. Pompelmi adds a layered upload gate before files hit storage or downstream processing.
+        </p>
         <div class="hero-badges">
           <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener">
             <img src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=flat-square&logo=github&color=e2e8f0&labelColor=f8fafc&logoColor=475569" alt="GitHub stars" loading="lazy" style="height:22px" />
           </a>
           <a href="https://www.npmjs.com/package/pompelmi" target="_blank" rel="noopener">
             <img src="https://img.shields.io/npm/v/pompelmi?style=flat-square&color=e2e8f0&labelColor=f8fafc" alt="npm version" loading="lazy" style="height:22px" />
-          </a>
-          <a href="https://www.npmjs.com/package/pompelmi" target="_blank" rel="noopener">
-            <img src="https://img.shields.io/npm/dm/pompelmi?style=flat-square&color=e2e8f0&labelColor=f8fafc&label=downloads%2Fmo" alt="npm downloads" loading="lazy" style="height:22px" />
           </a>
           <a href="https://github.com/pompelmi/pompelmi/blob/main/LICENSE" target="_blank" rel="noopener">
             <img src="https://img.shields.io/github/license/pompelmi/pompelmi?style=flat-square&color=e2e8f0&labelColor=f8fafc" alt="MIT License" loading="lazy" style="height:22px" />
@@ -295,57 +309,133 @@ const OG_IMAGE = `${BASE}/og.png`;
     </header>
 
     <main>
-
-      <!-- FEATURES -->
       <section class="section">
         <div class="container">
-          <p class="section-eyebrow">How it works</p>
-          <h2 class="section-heading">Six layers of protection in one call</h2>
-          <p class="section-sub">Pass a Buffer, get a <code class="mono" style="font-size:.85em">clean | suspicious | malicious</code> verdict. Compose scanners, apply policies per endpoint, act immediately.</p>
-          <div class="feature-grid">
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 14h18M10 3v18M14 3v18"/><rect x="3" y="3" width="18" height="18" rx="2" stroke-opacity=".3"/></svg></div>
-              <p class="feature-name">Size &amp; extension guards</p>
-              <p class="feature-desc">Reject files over your size limit or outside your allowed extension list before any deeper scan.</p>
+          <p class="section-eyebrow">Why this matters</p>
+          <h2 class="section-heading">A safer upload flow should be obvious in one glance.</h2>
+          <p class="section-sub">
+            Before storage or downstream processing, inspect the bytes, structure, and declared type. That turns file uploads from a trust problem into a policy decision.
+          </p>
+          <div class="flow-grid">
+            <div class="flow-card">
+              <p class="flow-label flow-label-muted">Typical flow</p>
+              <p class="flow-title">Without Pompelmi</p>
+              <div class="flow-list">
+                <div class="flow-step"><span class="flow-index">1</span><span>Upload arrives at your endpoint.</span></div>
+                <div class="flow-step"><span class="flow-index">2</span><span>Trust the extension or client-provided MIME type.</span></div>
+                <div class="flow-step"><span class="flow-index">3</span><span>Write the file to storage.</span></div>
+                <div class="flow-step"><span class="flow-index">4</span><span>Parse, index, transform, or serve it later.</span></div>
+              </div>
+              <p class="flow-note">Spoofed files, archive bombs, and risky document structures can slip through this path.</p>
             </div>
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-3-3v6m-7 4h14a2 2 0 002-2V7a2 2 0 00-2-2h-4l-2-2H7a2 2 0 00-2 2v13a2 2 0 002 2z"/></svg></div>
-              <p class="feature-name">Magic-byte MIME sniffing</p>
-              <p class="feature-desc">Catches uploads that rename a .exe to .jpg by comparing the declared MIME type against actual file bytes.</p>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 3H5a2 2 0 00-2 2v4m6-6h10a2 2 0 012 2v4M9 3v18m0 0h10a2 2 0 002-2V9M9 21H5a2 2 0 01-2-2V9m0 0h18"/></svg></div>
-              <p class="feature-name">ZIP bomb protection</p>
-              <p class="feature-desc">Enforces entry count, per-entry size, total decompressed size, and nesting depth limits before full extraction.</p>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg></div>
-              <p class="feature-name">Structural heuristics</p>
-              <p class="feature-desc">Detects PE/ELF headers, embedded scripts, and polyglot files — even when extensions and MIME are correct.</p>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg></div>
-              <p class="feature-name">Composable scanners</p>
-              <p class="feature-desc">Chain built-in guards with your own YARA rules using <code class="mono" style="font-size:.85em">composeScanners</code>. Different policies per endpoint.</p>
-            </div>
-            <div class="feature-item">
-              <div class="feature-icon"><svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.75" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg></div>
-              <p class="feature-name">No data egress</p>
-              <p class="feature-desc">All scanning is in-process. File bytes stay in your infrastructure by default. Suitable for privacy-sensitive and regulated deployment models when combined with your own controls.</p>
+            <div class="flow-card">
+              <p class="flow-label flow-label-strong">Protected flow</p>
+              <p class="flow-title">With Pompelmi</p>
+              <div class="flow-list">
+                <div class="flow-step"><span class="flow-index">1</span><span>Upload arrives at your endpoint.</span></div>
+                <div class="flow-step"><span class="flow-index">2</span><span>Inspect bytes, MIME claims, and risky structures in-process.</span></div>
+                <div class="flow-step"><span class="flow-index">3</span><span>Allow, quarantine, or reject based on policy.</span></div>
+                <div class="flow-step"><span class="flow-index">4</span><span>Store only what passed the gate.</span></div>
+              </div>
+              <p class="flow-note">This is defense-in-depth for file uploads, not a claim that one library replaces the rest of your security stack.</p>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- FRAMEWORKS -->
       <section class="section">
         <div class="container">
-          <p class="section-eyebrow">Integrations</p>
-          <h2 class="section-heading">Drop into the framework you already use</h2>
-          <p class="section-sub">Adapters for every major Node.js framework. Each guide is under 10 minutes.</p>
+          <p class="section-eyebrow">Protections</p>
+          <h2 class="section-heading">What Pompelmi helps you block</h2>
+          <p class="section-sub">
+            The core library focuses on the upload gate itself: check what the file claims to be, what the bytes actually show, and whether the structure looks risky before it hits storage.
+          </p>
+          <div class="table-wrap">
+            <table class="protection-table">
+              <thead>
+                <tr>
+                  <th>Risk</th>
+                  <th>Why it matters</th>
+                  <th>What Pompelmi checks</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Spoofed files</strong><span>Renamed or mislabeled uploads can bypass basic extension filters.</span></td>
+                  <td>Client-provided MIME types and filenames are easy to fake.</td>
+                  <td>Extension policy, declared MIME checks, and magic-byte validation.</td>
+                </tr>
+                <tr>
+                  <td><strong>Archive bombs and traversal</strong><span>ZIP uploads can hide oversized expansion or unsafe paths.</span></td>
+                  <td>Archive handling is a common place for resource exhaustion and path abuse.</td>
+                  <td>Entry count, total extracted size, nesting depth, and traversal-oriented archive guards.</td>
+                </tr>
+                <tr>
+                  <td><strong>Risky document structures</strong><span>Some files look normal on the surface but carry active or suspicious content.</span></td>
+                  <td>PDF actions, active SVG content, embedded executables, and polyglot files are not visible from the extension alone.</td>
+                  <td>Layered heuristics for risky structures, executable signatures, polyglots, and script-bearing documents.</td>
+                </tr>
+                <tr>
+                  <td><strong>Custom threat patterns</strong><span>Your environment may need narrower or higher-signal detection.</span></td>
+                  <td>Generic defaults are useful, but some teams need environment-specific rules.</td>
+                  <td>Optional YARA matching as part of a composed scanner pipeline.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <p class="section-eyebrow">Quick start</p>
+          <h2 class="section-heading">One route, one upload gate</h2>
+          <p class="section-sub">
+            The core value should be easy to explain out loud: scan the upload in-process, get a verdict, and stop risky files before storage.
+          </p>
+          <div class="code-card">
+            <div class="code-head">
+              <span class="code-title">Copyable value snippet</span>
+              <button class="code-copy" onclick={`navigator.clipboard.writeText(${JSON.stringify(quickStartSnippet)})`}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="9" y="9" width="13" height="13" rx="2" />
+                  <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
+                </svg>
+                Copy
+              </button>
+            </div>
+            <pre><code>{quickStartSnippet}</code></pre>
+          </div>
+          <div class="link-row">
+            <a href="/pompelmi/getting-started/" class="btn-outline">Read the quick start</a>
+            <a href="/pompelmi/how-to/express/" class="btn-outline">See the Express guide</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="container">
+          <p class="section-eyebrow">Framework support</p>
+          <h2 class="section-heading">Works with the Node.js stacks people actually deploy</h2>
+          <p class="section-sub">
+            Start with the core package or reach for an adapter. The public docs cover the common framework paths first.
+          </p>
           <div class="fw-grid">
             <a href="/pompelmi/how-to/nextjs/" class="fw-card">
-              <div class="fw-icon" style="background:#000"><svg width="17" height="17" viewBox="0 0 180 180" fill="white"><mask id="nm" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="180" height="180"><circle cx="90" cy="90" r="90" fill="black"/></mask><g mask="url(#nm)"><circle cx="90" cy="90" r="90" fill="black"/><path d="M149.508 157.52L69.142 54H54V125.97H66.1755V69.3836L139.999 164.845C143.333 162.614 146.509 160.165 149.508 157.52Z" fill="url(#ng)"/><rect x="115" y="54" width="12" height="72" fill="url(#ng2)"/></g><defs><linearGradient id="ng" x1="109" y1="116.5" x2="144.5" y2="160.5" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient><linearGradient id="ng2" x1="121" y1="54" x2="120.799" y2="106.875" gradientUnits="userSpaceOnUse"><stop stop-color="white"/><stop offset="1" stop-color="white" stop-opacity="0"/></linearGradient></defs></svg></div>
+              <div class="fw-icon" style="background:#000">
+                <svg width="17" height="17" viewBox="0 0 180 180" fill="white">
+                  <mask id="nm" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="0" y="0" width="180" height="180"><circle cx="90" cy="90" r="90" fill="black" /></mask>
+                  <g mask="url(#nm)">
+                    <circle cx="90" cy="90" r="90" fill="black" />
+                    <path d="M149.508 157.52L69.142 54H54V125.97H66.1755V69.3836L139.999 164.845C143.333 162.614 146.509 160.165 149.508 157.52Z" fill="url(#ng)" />
+                    <rect x="115" y="54" width="12" height="72" fill="url(#ng2)" />
+                  </g>
+                  <defs>
+                    <linearGradient id="ng" x1="109" y1="116.5" x2="144.5" y2="160.5" gradientUnits="userSpaceOnUse"><stop stop-color="white" /><stop offset="1" stop-color="white" stop-opacity="0" /></linearGradient>
+                    <linearGradient id="ng2" x1="121" y1="54" x2="120.799" y2="106.875" gradientUnits="userSpaceOnUse"><stop stop-color="white" /><stop offset="1" stop-color="white" stop-opacity="0" /></linearGradient>
+                  </defs>
+                </svg>
+              </div>
               Next.js
             </a>
             <a href="/pompelmi/how-to/express/" class="fw-card">
@@ -353,178 +443,125 @@ const OG_IMAGE = `${BASE}/og.png`;
               Express
             </a>
             <a href="/pompelmi/how-to/nestjs/" class="fw-card">
-              <div class="fw-icon" style="background:#e0234e"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16.2c-3.97 0-7.2-3.23-7.2-7.2S8.03 4.8 12 4.8 19.2 8.03 19.2 12 15.97 19.2 12 19.2z"/></svg></div>
+              <div class="fw-icon" style="background:#e0234e"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M12 3C7.03 3 3 7.03 3 12s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16.2c-3.97 0-7.2-3.23-7.2-7.2S8.03 4.8 12 4.8 19.2 8.03 19.2 12 15.97 19.2 12 19.2z" /></svg></div>
               NestJS
             </a>
             <a href="/pompelmi/how-to/fastify/" class="fw-card">
-              <div class="fw-icon" style="background:#000"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M13 2L3 14h8v8l10-12h-8z"/></svg></div>
+              <div class="fw-icon" style="background:#000"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M13 2L3 14h8v8l10-12h-8z" /></svg></div>
               Fastify
             </a>
             <a href="/pompelmi/how-to/koa/" class="fw-card">
-              <div class="fw-icon" style="background:#2d6a4f"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-5 8Z"/></svg></div>
+              <div class="fw-icon" style="background:#2d6a4f"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M17 8C8 10 5.9 16.17 3.82 21.34L5.71 22l1-2.3A4.49 4.49 0 0 0 8 20C19 20 22 3 22 3c-1 2-8 2-5 8Z" /></svg></div>
               Koa
             </a>
             <a href="/pompelmi/how-to/nuxt-nitro/" class="fw-card">
-              <div class="fw-icon" style="background:#00bd7e"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M12.5 2L2 20h9L12.5 2zM22 20L16.25 9l-2.75 5.5 2 3.5H22z"/></svg></div>
+              <div class="fw-icon" style="background:#00bd7e"><svg width="17" height="17" viewBox="0 0 24 24" fill="white"><path d="M12.5 2L2 20h9L12.5 2zM22 20L16.25 9l-2.75 5.5 2 3.5H22z" /></svg></div>
               Nuxt / Nitro
             </a>
           </div>
+          <p class="framework-note">Adapters exist for Express, Next.js, NestJS, Fastify, and Koa. The docs also cover a Nuxt/Nitro path.</p>
         </div>
       </section>
 
-      <!-- DEMO -->
       <section class="section">
         <div class="container">
-          <p class="section-eyebrow">Live demo</p>
-          <h2 class="section-heading">Try the scanner in your browser</h2>
-          <p class="section-sub">Drop a clean JPG → <strong style="color:#16a34a">CLEAN</strong>. Upload the EICAR test string → <strong style="color:#dc2626">MALICIOUS</strong>. No server involved.</p>
-          <div class="demo-wrap">
-            <div class="demo-header">
-              <span class="demo-dot" style="background:#ef4444"></span>
-              <span class="demo-dot" style="background:#f59e0b"></span>
-              <span class="demo-dot" style="background:#22c55e"></span>
-              <span style="margin-left:6px">pompelmi — browser scanner</span>
+          <p class="section-eyebrow">Trust</p>
+          <h2 class="section-heading">Serious OSS-first positioning, without hype</h2>
+          <p class="section-sub">
+            The public repo is the main product surface: code, docs, examples, tests, architecture notes, and production-readiness guidance all live here.
+          </p>
+          <div class="trust-list">
+            <div class="trust-item">
+              <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>MIT-licensed core with typed APIs, composable policies, and framework adapters in the public repo.</span>
             </div>
-            <div class="demo-body">
-              <DemoUpload client:load />
+            <div class="trust-item">
+              <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>Structured verdicts, reasons, and rule matches for logging, quarantine, and review workflows.</span>
             </div>
+            <div class="trust-item">
+              <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>Local-first scanning is easier to evaluate in privacy-sensitive environments because file bytes do not need to leave your infrastructure.</span>
+            </div>
+            <div class="trust-item">
+              <svg class="trust-check" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
+              <span>Pompelmi is an upload gate and risk-reduction layer. It is not presented as a full antivirus replacement or compliance certification.</span>
+            </div>
+          </div>
+          <div class="link-row">
+            <a href="/pompelmi/production-readiness/" class="btn-outline">Production readiness</a>
+            <a href="/pompelmi/explaination/architecture/" class="btn-outline">Architecture</a>
+            <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="btn-outline">Repository</a>
           </div>
         </div>
       </section>
 
-      <!-- ENTERPRISE -->
       <section class="section">
-        <div class="container">
-          <p class="section-eyebrow text-center">Enterprise</p>
-          <h2 class="section-heading text-center">Open source core, enterprise add-on when needed</h2>
-          <p class="section-sub text-center mx-auto" style="margin-top:10px;margin-bottom:0">Use the MIT core in production, then add <code class="mono">@pompelmi/enterprise</code> when you need stronger auditability, observability, and a licensed enterprise path.</p>
-          <div class="ent-wrap">
-            <!-- Free -->
-            <div class="ent-left">
-              <p class="plan-badge plan-badge-free">Open Source</p>
-              <p class="plan-name">Core</p>
-              <p class="plan-price" style="color:#0f172a">Free</p>
-              <p class="plan-period">MIT licensed · forever</p>
-              <div class="plan-features">
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">In-process scanning — no cloud API</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">Magic-byte MIME sniffing &amp; heuristics</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">ZIP bomb protection</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">Custom YARA rules via composeScanners</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">Express, Next.js, NestJS, Fastify, Koa adapters</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">Policy packs, quarantine workflow, scan hooks</span></div>
-                <div class="pf"><svg class="pf-check check-gray" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-muted">Community support via GitHub Discussions</span></div>
-              </div>
-              <a href="/pompelmi/getting-started/" class="btn-outline" style="margin-top:30px;display:inline-flex">Get started free</a>
-            </div>
-            <!-- Enterprise -->
-            <div class="ent-right">
-              <p class="plan-badge plan-badge-ent">Enterprise</p>
-              <p class="plan-name" style="color:#fff">@pompelmi/enterprise</p>
-              <p class="plan-price" style="color:#fff">Licensed</p>
-              <p class="plan-period">Node.js 18+ · enterprise add-on</p>
-              <div class="plan-features">
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-dim">Everything in the free core</span></div>
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-light">Advanced audit logging with tamper-evident signing</span></div>
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-light">Premium YARA rules for higher-signal detections</span></div>
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-light">Prometheus metrics and embedded dashboard</span></div>
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-light">Priority enterprise support for rollout blockers</span></div>
-                <div class="pf"><svg class="pf-check check-violet" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg><span class="text-light">Licensed add-on with a local-first deployment model</span></div>
-              </div>
-              <a href="https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn" class="ent-cta" target="_blank" rel="noopener">
-                Buy enterprise license
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5-5 5m5-5H6"/></svg>
-              </a>
-              <p class="ent-note">Need architecture review or rollout help too? <a href="/pompelmi/enterprise/" style="color:#a78bfa;text-decoration:underline">Enterprise details →</a></p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- BLOG -->
-      <section class="section">
-        <div class="container">
-          <p class="section-eyebrow">Blog</p>
-          <h2 class="section-heading">Security guides &amp; best practices</h2>
-          <div class="blog-grid">
-            <a href="/pompelmi/blog/upload-quarantine-review-flows/" class="blog-card">
-              <p class="blog-title">Upload Quarantine &amp; Review Flows</p>
-              <p class="blog-desc">Stage suspicious uploads, build async review queues, and promote clean files without overblocking.</p>
-              <span class="blog-link">Read more <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8l4 4-4 4m4-4H3"/></svg></span>
-            </a>
-            <a href="/pompelmi/blog/common-file-upload-mistakes-nodejs/" class="blog-card">
-              <p class="blog-title">17 Upload Security Mistakes in Node.js</p>
-              <p class="blog-desc">The most common file upload security gaps and how to close each one.</p>
-              <span class="blog-link">Read more <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8l4 4-4 4m4-4H3"/></svg></span>
-            </a>
-            <a href="/pompelmi/blog/secure-upload-architecture-regulated-industries/" class="blog-card">
-              <p class="blog-title">Upload Architecture for Regulated Industries</p>
-              <p class="blog-desc">Quarantine flows, audit trails, and role-based policies for healthcare, legal, and finance.</p>
-              <span class="blog-link">Read more <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8l4 4-4 4m4-4H3"/></svg></span>
-            </a>
-          </div>
-          <div class="text-center">
-            <a href="/pompelmi/blog/" class="all-posts">View all articles <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 8l4 4-4 4m4-4H3"/></svg></a>
-          </div>
-        </div>
-      </section>
-
-      <!-- FAQ -->
-      <section class="section" style="border-bottom:none">
         <div class="container">
           <p class="section-eyebrow">FAQ</p>
           <h2 class="section-heading">Common questions</h2>
-          <div style="max-width:680px;margin-top:28px">
+          <div style="max-width:760px;margin-top:28px">
             <details class="faq">
-              <summary>Does Pompelmi send files to a cloud API?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></summary>
-              <p class="faq-body">No. All scanning runs in-process inside your Node.js application. File bytes never leave your infrastructure — by design.</p>
+              <summary>Does Pompelmi send files to a cloud API?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">No. Scanning runs in-process inside your Node.js application. File bytes do not need to leave your infrastructure.</p>
             </details>
             <details class="faq">
-              <summary>Does it require a ClamAV daemon or sidecar?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></summary>
-              <p class="faq-body">No. The heuristic scanner and ZIP bomb protection run with zero external dependencies. ClamAV is available as an optional adapter for signature-based scanning.</p>
+              <summary>Does it require ClamAV, a sidecar, or another daemon?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">No. The built-in heuristics and archive protections work without a daemon. ClamAV and YARA are optional integrations.</p>
             </details>
             <details class="faq">
-              <summary>Can it detect ZIP bombs and nested archives?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></summary>
-              <p class="faq-body">Yes. Entry count, per-entry size, total decompressed bytes, and nesting depth are all enforced before the archive is fully extracted.</p>
+              <summary>Is this a full antivirus replacement?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">No. Pompelmi is a defense-in-depth upload gate and risk-reduction layer. It should sit inside a broader security design.</p>
             </details>
             <details class="faq">
-              <summary>What does Pompelmi Enterprise add?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg></summary>
-              <p class="faq-body"><code class="mono">@pompelmi/enterprise</code> adds advanced audit logging, premium YARA rules, Prometheus metrics, an embedded dashboard, and priority support for teams with higher-assurance operational requirements. <a href="/pompelmi/enterprise/" style="color:#2563eb;text-decoration:underline">Full details →</a></p>
+              <summary>Where do enterprise options fit?<svg class="faq-chev" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" /></svg></summary>
+              <p class="faq-body">The MIT-licensed core remains the primary path. Commercial support and enterprise options exist for teams that need rollout help, advanced auditability, or additional operational features. <a href="/pompelmi/support/">Support options</a> and <a href="/pompelmi/enterprise/">enterprise details</a> are available when needed.</p>
             </details>
           </div>
         </div>
       </section>
 
+      <section class="section" style="border-bottom:none">
+        <div class="container">
+          <p class="section-eyebrow">Support</p>
+          <h2 class="section-heading">Keep the open-source core front and center</h2>
+          <div class="enterprise-note">
+            <p>
+              Commercial support and enterprise options are available for teams that need rollout help, advanced auditability, or additional operational features. The open-source MIT core remains the primary path. See <a href="/pompelmi/support/">support options</a> or <a href="/pompelmi/enterprise/">enterprise details</a>.
+            </p>
+          </div>
+        </div>
+      </section>
     </main>
 
-    <!-- FOOTER -->
     <footer class="footer">
       <div class="container">
         <div class="footer-grid">
           <div>
             <div class="footer-brand">
               <svg width="20" height="20" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                <circle cx="14" cy="14" r="14" fill="#F5B211"/>
-                <circle cx="14" cy="14" r="11" fill="#FAE3A2"/>
-                <circle cx="14" cy="14" r="9" fill="#E83A1D"/>
-                <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1"/>
-                <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1"/>
-                <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1"/>
-                <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1"/>
-                <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1"/>
-                <circle cx="14" cy="14" r="1.8" fill="white"/>
+                <circle cx="14" cy="14" r="14" fill="#F5B211" />
+                <circle cx="14" cy="14" r="11" fill="#FAE3A2" />
+                <circle cx="14" cy="14" r="9" fill="#E83A1D" />
+                <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1" />
+                <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1" />
+                <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1" />
+                <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1" />
+                <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1" />
+                <circle cx="14" cy="14" r="1.8" fill="white" />
               </svg>
               Pompelmi
             </div>
-            <p class="footer-tagline">In-process file upload security for Node.js. MIT licensed.</p>
+            <p class="footer-tagline">In-process file upload security for Node.js. Open-source core first, with no required cloud scanning path.</p>
           </div>
           <div>
             <p class="footer-col-title">Docs</p>
             <ul class="footer-links">
-              <li><a href="/pompelmi/getting-started/" class="fl">Getting Started</a></li>
+              <li><a href="/pompelmi/getting-started/" class="fl">Getting started</a></li>
               <li><a href="/pompelmi/how-to/express/" class="fl">Express</a></li>
               <li><a href="/pompelmi/how-to/nextjs/" class="fl">Next.js</a></li>
-              <li><a href="/pompelmi/how-to/nestjs/" class="fl">NestJS</a></li>
-              <li><a href="/pompelmi/reference/ui-react/" class="fl">API Reference</a></li>
+              <li><a href="/pompelmi/production-readiness/" class="fl">Production readiness</a></li>
+              <li><a href="/pompelmi/explaination/architecture/" class="fl">Architecture</a></li>
             </ul>
           </div>
           <div>
@@ -538,12 +575,12 @@ const OG_IMAGE = `${BASE}/og.png`;
             </ul>
           </div>
           <div>
-            <p class="footer-col-title">Enterprise</p>
+            <p class="footer-col-title">Support</p>
             <ul class="footer-links">
-              <li><a href="/pompelmi/enterprise/" class="fl-ent">Pompelmi Enterprise</a></li>
-              <li><a href="https://buy.polar.sh/polar_cl_sTQdCkfdsz6D0lyLRIKKB7MJCnmBm6mfsOmTr2l2fqn" class="fl" target="_blank" rel="noopener">Buy license</a></li>
-              <li><a href="/pompelmi/support/" class="fl">Support</a></li>
-              <li><a href="mailto:pompelmideveloper@yahoo.com?subject=Pompelmi%20enterprise%20evaluation" class="fl">Enterprise evaluation</a></li>
+              <li><a href="/pompelmi/support/" class="fl">Support options</a></li>
+              <li><a href="/pompelmi/enterprise/" class="fl">Enterprise details</a></li>
+              <li><a href="https://github.com/pompelmi/pompelmi/discussions" class="fl" target="_blank" rel="noopener">GitHub Discussions</a></li>
+              <li><a href="https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md" class="fl" target="_blank" rel="noopener">Security reporting</a></li>
             </ul>
           </div>
         </div>
@@ -551,15 +588,14 @@ const OG_IMAGE = `${BASE}/og.png`;
           <p class="footer-copy">© 2024 Pompelmi. Released under the MIT License.</p>
           <div class="footer-icons">
             <a href="https://github.com/pompelmi/pompelmi" class="fi" aria-label="GitHub" target="_blank" rel="noopener">
-              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" /></svg>
             </a>
             <a href="https://www.npmjs.com/package/pompelmi" class="fi" aria-label="npm" target="_blank" rel="noopener">
-              <svg width="19" height="19" viewBox="0 0 780 250" fill="currentColor"><path d="M240 250V0H0v250h107.5V62.5h45v125h45V62.5h45V250zm160-250H285v250h107.5v-62.5H400V0zm-45 125h-22.5V62.5H355V125zM560 0H435v250h125c69 0 125-56 125-125S629 0 560 0zm0 187.5h-17.5V62.5H560c34.5 0 62.5 28 62.5 62.5s-28 62.5-62.5 62.5z"/></svg>
+              <svg width="19" height="19" viewBox="0 0 780 250" fill="currentColor"><path d="M240 250V0H0v250h107.5V62.5h45v125h45V62.5h45V250zm160-250H285v250h107.5v-62.5H400V0zm-45 125h-22.5V62.5H355V125zM560 0H435v250h125c69 0 125-56 125-125S629 0 560 0zm0 187.5h-17.5V62.5H560c34.5 0 62.5 28 62.5 62.5s-28 62.5-62.5 62.5z" /></svg>
             </a>
           </div>
         </div>
       </div>
     </footer>
-
   </body>
 </html>
