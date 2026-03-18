@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "0.34.2",
+  "version": "0.34.3",
   "description": "In-process file upload security for Node.js — no cloud API, no daemon, no data egress. TypeScript-first library with Express, Next.js, NestJS, Fastify, Koa, and Nuxt/Nitro adapters. Features magic-byte MIME validation, ZIP bomb protection, YARA integration, and layered heuristic scanning. Built for privacy-sensitive and self-hosted environments.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
