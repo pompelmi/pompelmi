@@ -67,9 +67,9 @@ Actions release flow.
 
 - Renovate runs once per day at `03:17 UTC` and can also be started manually
   from the `Renovate` workflow in GitHub Actions.
-- The repo automation expects a `RENOVATE_TOKEN` secret with enough scope to
-  open PRs and push the post-merge version bump / release tag commits that fan
-  out into the existing release workflows.
+- The repo automation expects either a `RENOVATE_TOKEN` or `GH_TOKEN` secret
+  with enough scope to open PRs and push the post-merge version bump / release
+  tag commits that fan out into the existing release workflows.
 - Safe patch/minor `devDependencies` may automerge after all required checks are
   green.
 - If a dependency PR grows beyond the repo guardrails, GitHub Actions removes it

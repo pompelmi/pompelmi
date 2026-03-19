@@ -71,8 +71,8 @@ it:
 5. The existing `release.yml` workflow creates the tag/release from that version
    bump, and `publish.yml` continues to publish from the tag.
 
-`RENOVATE_TOKEN` is also reused by the post-merge bump and tag-push steps so the
-resulting pushes can fan out into downstream workflows.
+`RENOVATE_TOKEN` or `GH_TOKEN` is also reused by the post-merge bump and
+tag-push steps so the resulting pushes can fan out into downstream workflows.
 
 ## Migration Notes
 

@@ -17,7 +17,7 @@ jobs:
     name: Create Dependency PRs
     runs-on: ubuntu-latest
     env:
-      RENOVATE_TOKEN: ${{ secrets.RENOVATE_TOKEN }}
+      AUTOMATION_TOKEN: ${{ secrets.RENOVATE_TOKEN || secrets.GH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
@@ -26,8 +26,8 @@ jobs:
 
       - name: Validate Renovate token
         run: |
-          if [ -z "$RENOVATE_TOKEN" ]; then
-            echo "::error::Missing GitHub Actions secret RENOVATE_TOKEN. Add a classic PAT with public_repo (or repo for private repos) plus workflow scope."
+          if [ -z "$AUTOMATION_TOKEN" ]; then
+            echo "::error::Missing GitHub Actions secret RENOVATE_TOKEN or GH_TOKEN. Add a classic PAT with public_repo (or repo for private repos) plus workflow scope."
             exit 1
           fi
 
@@ -35,4 +35,4 @@ jobs:
         uses: renovatebot/github-action@v44.0.2
         with:
           configurationFile: .github/renovate.json5
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ secrets.RENOVATE_TOKEN || secrets.GH_TOKEN }}

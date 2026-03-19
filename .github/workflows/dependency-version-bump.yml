@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
           # Use the automation PAT so this push can trigger the existing
           # release workflow on main after the version bump commit lands.
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ secrets.RENOVATE_TOKEN || secrets.GH_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
