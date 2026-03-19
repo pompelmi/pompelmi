@@ -3,17 +3,28 @@ name: CI
 on:
   push:
     branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'site/**'
-      - 'blog/**'
+    paths:
+      - '**'
+      - '!**.md'
+      - '!docs/**'
+      - '!site/**'
+      - '!blog/**'
+      # Keep CI running for dependency changes in the nested site workspace.
+      - 'site/package.json'
+      - 'site/pnpm-lock.yaml'
+      - 'site/site/package.json'
   pull_request:
     branches: [ main ]
-    paths-ignore:
-      - '**.md'
-      - 'docs/**'
-      - 'site/**'
+    paths:
+      - '**'
+      - '!**.md'
+      - '!docs/**'
+      - '!site/**'
+      - '!blog/**'
+      # Keep CI running for dependency changes in the nested site workspace.
+      - 'site/package.json'
+      - 'site/pnpm-lock.yaml'
+      - 'site/site/package.json'
   workflow_dispatch:
 
 permissions:

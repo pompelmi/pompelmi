@@ -60,6 +60,29 @@ Strong PRs usually include:
 
 Maintainers may ask to split broad PRs into smaller pieces if review risk is high.
 
+## Automated dependency updates
+
+Dependency maintenance is automated with Renovate and the existing GitHub
+Actions release flow.
+
+- Renovate runs once per day at `03:17 UTC` and can also be started manually
+  from the `Renovate` workflow in GitHub Actions.
+- The repo automation expects a `RENOVATE_TOKEN` secret with enough scope to
+  open PRs and push the post-merge version bump / release tag commits that fan
+  out into the existing release workflows.
+- Safe patch/minor `devDependencies` may automerge after all required checks are
+  green.
+- If a dependency PR grows beyond the repo guardrails, GitHub Actions removes it
+  from automerge and leaves it for manual review instead of posting noisy
+  comments.
+- Major updates, toolchain/framework updates, package-manager changes, and
+  security-sensitive upload/runtime dependencies always require manual review.
+- When a Renovate dependency PR is merged into `main`, GitHub Actions bumps the
+  root package patch version and the existing release/tag workflows handle the
+  GitHub Release and npm publish path.
+- Maintainers should keep branch protection enabled on `main` so dependency PRs
+  cannot merge with failing or missing checks.
+
 ## Copy and docs guidelines
 
 - Prefer precise, minimal language over marketing language.

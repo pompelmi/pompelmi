@@ -1,0 +1,52 @@
+name: Dependency PR Guard
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, labeled, unlabeled, ready_for_review]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+env:
+  MAX_CHANGED_FILES: '12'
+  MAX_LINE_CHANGES: '250'
+
+jobs:
+  guard:
+    name: Guard Dependency PR Size
+    if: >
+      startsWith(github.event.pull_request.head.ref, 'renovate/') &&
+      contains(github.event.pull_request.labels.*.name, 'dependencies')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate PR size
+        id: size
+        env:
+          CHANGED_FILES: ${{ github.event.pull_request.changed_files }}
+          ADDITIONS: ${{ github.event.pull_request.additions }}
+          DELETIONS: ${{ github.event.pull_request.deletions }}
+        run: |
+          TOTAL_LINE_CHANGES=$((ADDITIONS + DELETIONS))
+
+          if [ "$CHANGED_FILES" -gt "$MAX_CHANGED_FILES" ] || [ "$TOTAL_LINE_CHANGES" -gt "$MAX_LINE_CHANGES" ]; then
+            echo "too_large=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "too_large=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fall back to manual review for oversized dependency PRs
+        if: steps.size.outputs.too_large == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_NODE_ID: ${{ github.event.pull_request.node_id }}
+        run: |
+          # Keep this workflow quiet: label the PR and disable auto-merge rather
+          # than posting comments. Manual merges remain available after review.
+          gh pr edit "$PR_NUMBER" --add-label manual-review || true
+          gh pr edit "$PR_NUMBER" --remove-label automerge || true
+          gh api graphql \
+            -f query='mutation($pullRequestId:ID!) { disablePullRequestAutoMerge(input:{pullRequestId:$pullRequestId}) { clientMutationId } }' \
+            -F pullRequestId="$PR_NODE_ID" || true
