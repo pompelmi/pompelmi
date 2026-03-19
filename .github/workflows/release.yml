@@ -59,9 +59,6 @@ jobs:
         uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           submodules: false
-          # Tag pushes created with the default GITHUB_TOKEN do not trigger
-          # downstream workflows like publish.yml, so reuse the automation PAT.
-          token: ${{ secrets.RENOVATE_TOKEN || secrets.GH_TOKEN }}
 
       - name: Check if tag exists
         id: check_tag
