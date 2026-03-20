@@ -1,0 +1,119 @@
+[
+  {
+    "title": "Awesome JavaScript",
+    "url": "https://github.com/sorrycc/awesome-javascript",
+    "sourceType": "awesome-list",
+    "publisher": "sorrycc",
+    "date": null,
+    "snippet": "Listed in the Security section.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "The README lists pompelmi in the Security section."
+    }
+  },
+  {
+    "title": "Awesome TypeScript",
+    "url": "https://github.com/dzharii/awesome-typescript",
+    "sourceType": "awesome-list",
+    "publisher": "dzharii",
+    "date": null,
+    "snippet": "Listed under libraries built with TypeScript.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "The README lists pompelmi in the Built with TypeScript section."
+    }
+  },
+  {
+    "title": "The Overflow Issue 319: Dogfooding your SDLC",
+    "url": "https://stackoverflow.blog/newsletter/issue-319-dogfooding-your-sdlc/",
+    "sourceType": "newsletter",
+    "publisher": "Stack Overflow",
+    "date": "2026-03-04",
+    "snippet": "The newsletter calls out the pompelmi Q&A as a featured read.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Issue 319 links to the pompelmi interview in the intro and article list."
+    }
+  },
+  {
+    "title": "Hottest cybersecurity open-source tools of the month: February 2026",
+    "url": "https://www.helpnetsecurity.com/2026/02/26/hottest-cybersecurity-open-source-tools-of-the-month-february-2026/",
+    "sourceType": "newsletter",
+    "publisher": "Help Net Security",
+    "date": "2026-02-26",
+    "snippet": "Included in Help Net Security's monthly open-source roundup.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "The roundup includes a dedicated Pompelmi entry."
+    }
+  },
+  {
+    "title": "Bytes #429",
+    "url": "https://bytes.dev/archives/429",
+    "sourceType": "newsletter",
+    "publisher": "Bytes",
+    "date": "2025-10-03",
+    "snippet": "Included in the Cool Bits roundup.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Issue 429 lists pompelmi in the Cool Bits section."
+    }
+  },
+  {
+    "title": "Node Weekly Issue 594",
+    "url": "https://nodeweekly.com/issues/594",
+    "sourceType": "newsletter",
+    "publisher": "Node Weekly",
+    "date": "2025-09-30",
+    "snippet": "Featured in the Code & Tools section.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Issue 594 includes 'Pompelmi: Scan File Uploads for Malware'."
+    }
+  },
+  {
+    "title": "Det. Eng. Weekly Issue #124 - The DEFCON hangover is real",
+    "url": "https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon",
+    "sourceType": "newsletter",
+    "publisher": "Detection Engineering",
+    "date": "2025-08-13",
+    "snippet": "Featured in the open-source section.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Issue 124 includes pompelmi in the open-source links."
+    }
+  },
+  {
+    "title": "Defense against uploads: Q&A with OSS file scanner, pompelmi",
+    "url": "https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/",
+    "sourceType": "other",
+    "publisher": "Stack Overflow",
+    "date": "2026-02-23",
+    "snippet": "Interview with Tommaso Bertocchi by Ryan Donovan.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Published on the Stack Overflow blog with Ryan Donovan credited as author."
+    }
+  },
+  {
+    "title": "Pompelmi: Open-source secure file upload scanning for Node.js",
+    "url": "https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/",
+    "sourceType": "other",
+    "publisher": "Help Net Security",
+    "date": "2026-02-02",
+    "snippet": "Dedicated coverage of the project and its Node.js adapters.",
+    "evidence": {
+      "kind": "manual_web_verification",
+      "verifiedAt": "2026-03-20",
+      "note": "Standalone Help Net Security write-up focused on Pompelmi."
+    }
+  }
+]

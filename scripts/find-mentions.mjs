@@ -19,6 +19,7 @@ const __dirname = dirname(__filename);
 const ROOT = join(__dirname, '..');
 const OUTPUT_DIR = join(ROOT, 'mentions');
 const OUTPUT_FILE = join(OUTPUT_DIR, 'mentions.json');
+const MANUAL_INPUT_FILE = join(OUTPUT_DIR, 'manual-mentions.json');
 
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN;
 const USER_AGENT = 'pompelmi-mentions-finder/1.0';
@@ -30,6 +31,33 @@ const GITHUB_QUERIES = [
   '"npm i pompelmi"',
   '"npm install pompelmi"',
 ];
+
+/**
+ * Load manually curated mentions from disk so verified web mentions survive
+ * future refreshes even when API/code search misses them.
+ */
+async function loadManualMentions() {
+  try {
+    const { readFile } = await import('node:fs/promises');
+    const content = await readFile(MANUAL_INPUT_FILE, 'utf-8');
+    const parsed = JSON.parse(content);
+    const items = Array.isArray(parsed) ? parsed : parsed.items;
+    
+    if (!Array.isArray(items)) {
+      console.warn(`⚠️  Ignoring ${MANUAL_INPUT_FILE}: expected an array or { items: [] }`);
+      return [];
+    }
+    
+    return items;
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      return [];
+    }
+    
+    console.warn(`⚠️  Could not load ${MANUAL_INPUT_FILE}: ${error.message}`);
+    return [];
+  }
+}
 
 /**
  * Fetch from GitHub Search API
@@ -211,6 +239,15 @@ async function main() {
   }
   
   const allItems = [];
+  const sources = [];
+  
+  console.log('🗂  Loading curated web mentions...');
+  const manualItems = await loadManualMentions();
+  console.log(`   Found: ${manualItems.length} manual mention${manualItems.length === 1 ? '' : 's'}`);
+  if (manualItems.length > 0) {
+    allItems.push(...manualItems);
+    sources.push('manual_mentions_file');
+  }
   
   // Search GitHub
   console.log('📦 Searching GitHub...');
@@ -225,6 +262,7 @@ async function main() {
     // Rate limiting: small delay between requests
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
+  sources.push('github_code_search');
   
   console.log(`\n📊 Total raw results: ${allItems.length}`);
   
@@ -239,8 +277,9 @@ async function main() {
   const output = {
     generatedAt: new Date().toISOString(),
     query: {
-      sources: ['github_code_search'],
+      sources,
       github_queries: GITHUB_QUERIES,
+      manual_mentions_file: manualItems.length > 0 ? 'mentions/manual-mentions.json' : null,
     },
     items: sortedItems,
     dedupedCount: dedupedItems.length,
