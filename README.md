@@ -26,6 +26,10 @@ Pompelmi inspects untrusted files before storage and helps you decide whether to
 
 It is built for upload endpoints that cannot rely on filenames, extensions, or client-provided MIME types alone.
 
+## Demo
+
+![Pompelmi demo](assets/malware-detection-node-demo.gif)
+
 ## Install
 
 ```bash
