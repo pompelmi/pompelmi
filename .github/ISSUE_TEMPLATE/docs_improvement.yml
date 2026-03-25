@@ -1,0 +1,30 @@
+name: Docs improvement
+description: Suggest a clearer explanation, missing example, or onboarding improvement
+labels: [documentation]
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Page or file
+      description: Which README section, docs page, or example should we look at?
+      placeholder: README quick start, website/src/content/docs/getting-started.md, examples/README.md
+    validations:
+      required: true
+  - type: textarea
+    id: issue
+    attributes:
+      label: What is unclear or missing?
+      placeholder: Describe the confusing step, gap, or wording that slowed you down.
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      placeholder: A small example, comparison note, rewording, or missing link would help because...
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Tell us what you were trying to do when you hit the docs issue.
+      placeholder: Which framework, what type of uploads, and whether this blocked evaluation or production work.
