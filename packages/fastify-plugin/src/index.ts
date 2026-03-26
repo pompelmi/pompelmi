@@ -1,4 +1,6 @@
 import * as path from 'node:path';
+import type { FastifyPluginAsync } from 'fastify';
+import fp from 'fastify-plugin';
 
 type Severity = 'clean' | 'suspicious' | 'malicious';
 
@@ -107,7 +109,7 @@ export function createUploadGuard(opts: UploadGuardOptions) {
 
         let result: ScanResult = { severity: 'clean' };
         if (scan) {
-          result = await Promise.resolve(scan(buf, meta));
+          result = await scan(buf, meta);
           onScanEvent?.({ type: 'scan_result', file: meta, result });
         }
 
@@ -137,3 +139,23 @@ export function createUploadGuard(opts: UploadGuardOptions) {
     }
   };
 }
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    createUploadGuard: typeof createUploadGuard;
+  }
+}
+
+const registerUploadGuardFactory: FastifyPluginAsync = async (fastify) => {
+  if (!fastify.hasDecorator('createUploadGuard')) {
+    fastify.decorate('createUploadGuard', createUploadGuard);
+  }
+};
+
+export const pompelmiFastifyPlugin = fp(registerUploadGuardFactory, {
+  name: '@pompelmi/fastify-plugin',
+  fastify: '5.x',
+  dependencies: ['@fastify/multipart'],
+});
+
+export default pompelmiFastifyPlugin;

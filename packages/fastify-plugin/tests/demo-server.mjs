@@ -1,27 +1,28 @@
 import Fastify from 'fastify';
 import multipart from '@fastify/multipart';
-import { createFastifyUploadGuard } from '../dist/index.js';
+import pompelmiFastifyPlugin from '../dist/index.js';
 
-// Scanner fittizio per EICAR (puoi sostituire con 'rules' se preferisci usare YARA reale)
+// Scanner fittizio per EICAR (puoi sostituire con scanner reale/YARA)
 const SimpleEicarScanner = {
   async scan(bytes) {
     const text = Buffer.from(bytes).toString('utf8');
-    if (text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE')) return [{ rule: 'eicar_test' }];
-    return [];
+    if (text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE')) {
+      return { severity: 'malicious', ruleId: 'eicar_test' };
+    }
+    return { severity: 'clean' };
   }
 };
 
 const app = Fastify();
 await app.register(multipart);
+await app.register(pompelmiFastifyPlugin);
 
 app.post('/upload',
-  { preHandler: createFastifyUploadGuard({
+  { preHandler: app.createUploadGuard({
       scanner: SimpleEicarScanner,
       includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
       allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip','application/octet-stream'],
       maxFileSizeBytes: 20 * 1024 * 1024,
-      timeoutMs: 5000,
-      concurrency: 4,
       failClosed: true,
       onScanEvent: ev => console.log('[scan]', ev)
     })
