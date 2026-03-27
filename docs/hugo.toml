@@ -9,6 +9,7 @@ theme = "relearn"
   github_repo   = "https://github.com/pompelmi/pompelmi"
   github_branch = "gh-pages"
   description   = "Fast file upload malware scanning for Node.js with YARA integration, ZIP inspection, and Express/Koa/Next.js adapters. Private by design."
+  images        = ["og.png"]
   keywords      = "file upload security, malware detection, YARA, Node.js, Express, Koa, Next.js, TypeScript, cybersecurity"
   author        = "pompelmi contributors"
   
