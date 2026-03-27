@@ -1,0 +1,14 @@
+{
+  "name": "@pompelmi/demo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node server.mjs",
+    "start": "node server.mjs"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "multer": "^2.0.2",
+    "pompelmi": "workspace:*"
+  }
+}
