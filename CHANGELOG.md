@@ -5,6 +5,22 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased (main)
+
+### Highlights
+
+- Fixed `@pompelmi/fastify-plugin` multipart dependency wiring and removed an unnecessary promise hop.
+- Refined the root README layout for faster first-run onboarding and clearer repo entry points.
+- Refreshed README badges and demo media so the public repo surface is easier to scan quickly.
+- Added verified mention badges to strengthen the top-level trust signals around adoption.
+- Tightened onboarding copy across the repo surfaces to make the docs-and-examples path easier to follow.
+
+### Notes
+
+This section summarizes changes since the last tag: `v0.34.8`.
+Post-tag activity is currently limited, so the highlights above also surface the most recent user-visible commits from the current `v0.34.x` line for context.
+For full details, see GitHub Releases / tag diffs.
+
 ## [0.27.1] - 2026-01-26
 
 ### Security
