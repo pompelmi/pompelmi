@@ -7,6 +7,7 @@ import { scanBytes, STRICT_PUBLIC_UPLOAD } from "pompelmi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
+const indexHtml = readFileSync(join(__dirname, "index.html"), "utf8");
 
 const app = express();
 const upload = multer({
@@ -15,9 +16,8 @@ const upload = multer({
 });
 
 app.get("/", (_req, res) => {
-  const html = readFileSync(join(__dirname, "index.html"), "utf8");
   res.setHeader("content-type", "text/html; charset=utf-8");
-  res.send(html);
+  res.send(indexHtml);
 });
 
 app.post("/upload", upload.single("file"), async (req, res) => {
