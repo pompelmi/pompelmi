@@ -2,6 +2,10 @@
 
 This directory contains runnable examples for evaluating Pompelmi in real application flows.
 
+## Start here
+
+- `demo/`: Small end-to-end upload demo with a browser form and JSON scan response.
+
 ## High-signal examples for production evaluation
 
 - `express/production.ts`: Express upload endpoint with fail-closed policy and production scanner composition.

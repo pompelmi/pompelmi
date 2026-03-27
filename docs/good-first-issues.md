@@ -2,6 +2,14 @@
 
 This file is a queue of small, high-value tasks maintainers can turn into issues. Each item should fit in a modest PR with clear acceptance criteria.
 
+## Ready-to-file issues
+
+- [Add a minimal Fastify upload example (mirrors Express quick start)](./good-first-issues/01-fastify-minimal-example.md)
+- [Add snippet validation for README + Getting Started code blocks](./good-first-issues/02-readme-snippet-validation.md)
+- [Add a lightweight link checker for README + docs/site links](./good-first-issues/03-link-checker-public-surfaces.md)
+- [Clarify archive limits, nesting depth, and ZIP-bomb tuning in docs](./good-first-issues/04-archive-limits-docs-clarity.md)
+- [Document recommended handling for suspicious verdicts per framework](./good-first-issues/05-suspicious-verdict-handling.md)
+
 ## Docs and onboarding
 
 - Add a short "how to handle `suspicious` verdicts" section to each framework guide.

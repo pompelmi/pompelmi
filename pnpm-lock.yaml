@@ -153,6 +153,18 @@ importers:
         specifier: 2.1.9
         version: 2.1.9(@types/node@24.3.0)
 
+  examples/demo:
+    dependencies:
+      express:
+        specifier: ^5.1.0
+        version: 5.2.1
+      multer:
+        specifier: ^2.0.2
+        version: 2.0.2
+      pompelmi:
+        specifier: workspace:*
+        version: link:../..
+
   examples/express-minimal:
     dependencies:
       express:

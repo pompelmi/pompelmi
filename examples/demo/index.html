@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pompelmi Demo</title>
+  </head>
+  <body>
+    <h1>Pompelmi Demo</h1>
+    <p>Select a file and upload it. The server will scan it before accepting storage.</p>
+
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <input type="file" name="file" required />
+      <button type="submit">Upload + Scan</button>
+    </form>
+
+    <p>Tip: open DevTools Network tab to inspect JSON response.</p>
+  </body>
+</html>

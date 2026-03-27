@@ -10,12 +10,22 @@
     "enabled": true
   },
   "assist": { "actions": { "source": { "organizeImports": "on" } } },
+  "javascript": {
+    "parser": {
+      "unsafeParameterDecoratorsEnabled": true
+    }
+  },
   "files": {
     "includes": [
       "**",
       "!**/node_modules/**",
       "!**/dist/**",
       "!**/coverage/**",
+      "!**/.next/**",
+      "!**/docs/docs-dist/**",
+      "!**/docs/public/**",
+      "!**/docs/resources/**",
+      "!pompelmi/**",
       "!**/samples/**",
       "!**/website/**",
       "!**/site/**",
