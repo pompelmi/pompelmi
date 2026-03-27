@@ -1,7 +1,7 @@
 <div align="center">
   <img src="assets/logo.svg" alt="Pompelmi logo" width="160" />
-  <h1>Pompelmi</h1>
-  <p>Local-first file upload scanning for Node.js.</p>
+  <h1>Pompelmi — in-process file upload security for Node.js</h1>
+  <p>Scan and block risky uploads before storage — no cloud API, no daemon, no required data egress.</p>
   <p>
     <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi"></a>
     <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?label=ci"></a>
@@ -22,9 +22,9 @@
   </p>
 </div>
 
-Pompelmi inspects untrusted files before storage and helps you decide whether to allow, reject, or quarantine them before they reach downstream systems.
-
-It is built for upload endpoints that cannot rely on filenames, extensions, or client-provided MIME types alone.
+> **Why:** Upload endpoints are part of your attack surface. Pompelmi inspects untrusted files _before_ they hit storage or downstream processors.
+> **How:** in-process scanning + policy packs (MIME sniffing, archive abuse checks, risky structures) with optional YARA.
+> **Works with:** Express, Next.js, NestJS, Fastify, Koa (plus adapters in `packages/`).
 
 ## Demo
 
@@ -38,27 +38,69 @@ npm install pompelmi
 
 Requires Node.js 18+.
 
+## Try in 5 minutes
+
+1. Install:
+
+```bash
+npm install pompelmi
+```
+
+2. Create `scan-test.mjs`:
+
+```js
+import { scanBytes } from "pompelmi";
+import { readFileSync } from "node:fs";
+
+const buffer = readFileSync("./package.json");
+
+const report = await scanBytes(buffer, {
+  filename: "package.json",
+  mimeType: "application/json",
+});
+
+console.log("Verdict:", report.verdict);
+console.log("Reasons:", report.reasons);
+console.log("Duration:", report.durationMs, "ms");
+```
+
+3. Run it:
+
+```bash
+node scan-test.mjs
+```
+
+Next: see the demo under [examples/demo](./examples/demo) (upload route) or the docs [Getting started](https://pompelmi.github.io/pompelmi/getting-started/) guide.
+
 ## Quick Start
 
 ```ts
-import { scanBytes } from 'pompelmi';
+import { scanBytes, STRICT_PUBLIC_UPLOAD } from "pompelmi";
 
 const report = await scanBytes(file.buffer, {
-  ctx: {
-    filename: file.originalname,
-    mimeType: file.mimetype,
-    size: file.size,
-  },
+  filename: file.originalname,
+  mimeType: file.mimetype,
+  policy: STRICT_PUBLIC_UPLOAD,
+  failClosed: true,
 });
 
-if (!report.ok) {
+if (report.verdict !== "clean") {
   return res.status(422).json({
-    error: 'Upload blocked',
+    error: "Upload blocked",
     verdict: report.verdict,
     reasons: report.reasons,
   });
 }
 ```
+
+## Next steps
+
+- [Documentation](https://pompelmi.github.io/pompelmi/)
+- [Examples index](./examples/README.md)
+- [Demo example](./examples/demo)
+- [Contributing](./CONTRIBUTING.md)
+- [Security](./SECURITY.md)
+- [Roadmap](./ROADMAP.md)
 
 ## What Problem It Solves
 
@@ -105,14 +147,6 @@ pnpm install
 pnpm test
 pnpm build
 ```
-
-## Links
-
-- [Documentation](https://pompelmi.github.io/pompelmi/)
-- [Examples](./examples)
-- [Contributing](./CONTRIBUTING.md)
-- [Security](./SECURITY.md)
-- [Roadmap](./ROADMAP.md)
 
 <!-- MENTIONS:START -->
 
