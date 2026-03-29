@@ -2,10 +2,12 @@
 import '../styles/global.css';
 
 const BASE = 'https://pompelmi.github.io/pompelmi';
+const BASE_PATH = import.meta.env.BASE_URL || '/';
 const TITLE = 'Pompelmi — Secure file uploads for Node.js';
 const DESC =
   'Open-source upload security for Node.js. Scan untrusted files before storage with in-process, local-first checks for spoofed files, archive bombs, and risky document structures.';
 const OG_IMAGE = `${BASE}/og.png`;
+const LOGO_PATH = `${BASE_PATH}logo.svg`;
 const quickStartSnippet = `import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
 const report = await scanBytes(file.buffer, {
@@ -102,8 +104,10 @@ if (report.verdict !== 'clean') {
         border-bottom: 1px solid #e2e8f0;
       }
       .nav-inner { display: flex; align-items: center; justify-content: space-between; height: 60px; }
-      .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; color: #0f172a; transition: opacity .15s; }
+      .nav-logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.05rem; line-height: 1; color: #0f172a; transition: opacity .15s; }
       .nav-logo:hover { opacity: .75; }
+      .brand-logo { display: block; width: auto; flex-shrink: 0; }
+      .nav-logo .brand-logo { height: 26px; }
       .nav-links { display: flex; align-items: center; gap: 4px; }
       .nav-link { padding: 6px 12px; font-size: .875rem; font-weight: 500; color: #475569; border-radius: 6px; transition: background .15s, color .15s; }
       .nav-link:hover { background: #f1f5f9; color: #0f172a; }
@@ -121,7 +125,10 @@ if (report.verdict !== 'clean') {
       .hero-inner { max-width: 860px; margin: 0 auto; text-align: center; }
       .hero-badge { display: inline-flex; align-items: center; gap: 7px; padding: 4px 14px; border: 1px solid #e2e8f0; border-radius: 999px; font-size: .8rem; font-weight: 500; color: #475569; background: rgba(255,255,255,0.92); margin-bottom: 24px; }
       .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
-      .hero-title { font-size: clamp(2.7rem, 6vw, 4.9rem); line-height: 1.03; letter-spacing: -.05em; margin-bottom: 18px; color: #0f172a; }
+      .hero-brand { display: flex; width: fit-content; max-width: 100%; align-items: center; justify-content: center; gap: 16px; margin: 0 auto 24px; color: #0f172a; text-align: left; }
+      .hero-brand .brand-logo { width: auto; height: clamp(78px, 13vw, 110px); }
+      .hero-brand-text { display: block; font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 700; letter-spacing: -.05em; line-height: .92; white-space: nowrap; }
+      .hero-title { font-size: clamp(1.85rem, 4vw, 3rem); line-height: 1.03; letter-spacing: -.05em; margin-bottom: 18px; color: #0f172a; }
       .hero-sub { font-size: 1.1rem; color: #475569; max-width: 720px; margin: 0 auto 24px; line-height: 1.7; }
       .hero-points { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-bottom: 28px; }
       .hero-point { padding: 7px 12px; border-radius: 999px; border: 1px solid #e2e8f0; background: rgba(255,255,255,0.94); font-size: .82rem; color: #475569; }
@@ -194,7 +201,8 @@ if (report.verdict !== 'clean') {
 
       .footer { background: #0f172a; color: #94a3b8; padding: 56px 0 36px; }
       .footer-grid { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 40px; margin-bottom: 44px; }
-      .footer-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; color: #fff; margin-bottom: 10px; }
+      .footer-brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 1rem; line-height: 1; color: #fff; margin-bottom: 10px; }
+      .footer-brand .brand-logo { height: 20px; }
       .footer-tagline { font-size: .8125rem; line-height: 1.7; }
       .footer-col-title { font-size: .8rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: #94a3b8; margin-bottom: 14px; }
       .footer-links { display: flex; flex-direction: column; gap: 9px; }
@@ -215,7 +223,10 @@ if (report.verdict !== 'clean') {
         .nav-inner { height: auto; padding: 14px 0; align-items: flex-start; gap: 10px; flex-direction: column; }
         .nav-links { width: 100%; justify-content: space-between; }
         .hero { padding-top: 72px; }
-        .hero-title { font-size: clamp(2.2rem, 10vw, 3.2rem); }
+        .hero-brand { gap: 10px; }
+        .hero-brand .brand-logo { height: clamp(64px, 18vw, 82px); }
+        .hero-brand-text { font-size: clamp(2.1rem, 9vw, 3rem); }
+        .hero-title { font-size: clamp(1.6rem, 6.8vw, 2.2rem); }
         .footer-grid { grid-template-columns: 1fr; }
       }
     </style>
@@ -225,18 +236,8 @@ if (report.verdict !== 'clean') {
     <nav class="nav">
       <div class="container nav-inner">
         <a href="/pompelmi/" class="nav-logo">
-          <svg width="26" height="26" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-            <circle cx="14" cy="14" r="14" fill="#F5B211" />
-            <circle cx="14" cy="14" r="11" fill="#FAE3A2" />
-            <circle cx="14" cy="14" r="9" fill="#E83A1D" />
-            <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1" />
-            <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1" />
-            <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1" />
-            <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1" />
-            <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1" />
-            <circle cx="14" cy="14" r="1.8" fill="white" />
-          </svg>
-          Pompelmi
+          <img src={LOGO_PATH} alt="" class="brand-logo" />
+          <span>Pompelmi</span>
         </a>
         <div class="nav-links">
           <a href="/pompelmi/getting-started/" class="nav-link">Docs</a>
@@ -256,6 +257,10 @@ if (report.verdict !== 'clean') {
         <div class="hero-badge">
           <span class="badge-dot"></span>
           Open-source core · MIT · Node.js 18+
+        </div>
+        <div class="hero-brand">
+          <img src={LOGO_PATH} alt="" class="brand-logo" />
+          <span class="hero-brand-text">Pompelmi</span>
         </div>
         <h1 class="hero-title">Secure file uploads before storage.</h1>
         <p class="hero-sub">
@@ -547,18 +552,8 @@ if (report.verdict !== 'clean') {
         <div class="footer-grid">
           <div>
             <div class="footer-brand">
-              <svg width="20" height="20" viewBox="0 0 28 28" fill="none" aria-hidden="true">
-                <circle cx="14" cy="14" r="14" fill="#F5B211" />
-                <circle cx="14" cy="14" r="11" fill="#FAE3A2" />
-                <circle cx="14" cy="14" r="9" fill="#E83A1D" />
-                <line x1="14" y1="5" x2="14" y2="23" stroke="white" stroke-width="1.1" />
-                <line x1="19.3" y1="6.7" x2="8.7" y2="21.3" stroke="white" stroke-width="1.1" />
-                <line x1="22.6" y1="11.2" x2="5.4" y2="16.8" stroke="white" stroke-width="1.1" />
-                <line x1="22.6" y1="16.8" x2="5.4" y2="11.2" stroke="white" stroke-width="1.1" />
-                <line x1="19.3" y1="21.3" x2="8.7" y2="6.7" stroke="white" stroke-width="1.1" />
-                <circle cx="14" cy="14" r="1.8" fill="white" />
-              </svg>
-              Pompelmi
+              <img src={LOGO_PATH} alt="" class="brand-logo" />
+              <span>Pompelmi</span>
             </div>
             <p class="footer-tagline">Secure file uploads for Node.js. Open-source, local-first, and designed for real upload routes.</p>
           </div>
