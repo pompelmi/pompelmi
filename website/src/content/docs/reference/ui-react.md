@@ -221,5 +221,5 @@ module.exports = {
 
 - Tutorial: [Getting started](../getting-started/)
 - How‑to guides: [Next.js](../how-to/nextjs/), [Express](../how-to/express/), [Koa](../how-to/koa/)
-- Engine contract: [Scan Engine HTTP API](../reference/example/)
+- Scan results: [Scan report and verdicts](../reference/example/)
 - Explanations: [Architecture & threat model](../explaination/architecture/)

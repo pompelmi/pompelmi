@@ -71,7 +71,7 @@ Maintainers may ask to split broad PRs into smaller pieces if review risk is hig
 
 - [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
 - [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)
-- [Discussion prompts](./docs/community-prompts.md)
+- [Discussion prompts](./.github/maintainers/strategy/community-prompts.md)
 - [Good first issue ideas](./docs/good-first-issues.md)
 
 ## Code of conduct

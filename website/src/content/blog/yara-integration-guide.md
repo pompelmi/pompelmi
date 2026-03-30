@@ -55,7 +55,7 @@ const guard = createUploadGuard({ scanner, failClosed: true });
 
 Here's a simple rule to detect EICAR test files:
 
-```yara
+```txt
 rule EICAR_Test_File {
   meta:
     description = "EICAR test file"
@@ -75,7 +75,7 @@ rule EICAR_Test_File {
 
 Detect suspicious PowerShell scripts in uploaded files:
 
-```yara
+```txt
 rule Suspicious_PowerShell {
   meta:
     description = "Detects potentially malicious PowerShell"
@@ -146,7 +146,7 @@ YARA scanning is computationally intensive. Optimize performance with:
 
 Group related rules and use fast conditions first:
 
-```yara
+```txt
 rule Optimized_Detection {
   condition:
     filesize < 10MB and  // Fast check first

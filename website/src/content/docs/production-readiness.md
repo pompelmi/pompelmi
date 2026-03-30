@@ -57,5 +57,8 @@ Pompelmi validates file bytes and metadata you provide. Your application remains
 ## Related docs
 
 - [Threat model and architecture](./explaination/architecture/)
+- [Use cases](./use-cases/)
+- [Comparisons](./comparisons/)
+- [Tutorials](./tutorials/)
 - [Support options](./support/)
 - [Enterprise support](./enterprise/)

@@ -94,16 +94,30 @@ if (report.verdict !== "clean") {
 }
 ```
 
-## Next steps
+## Start Here
 
-- [Documentation](https://pompelmi.github.io/pompelmi/)
+- Express: [Docs](https://pompelmi.github.io/pompelmi/how-to/express/) · [Examples](./examples/express-minimal)
+- Next.js: [Docs](https://pompelmi.github.io/pompelmi/how-to/nextjs/) · [Examples](./examples/next-app-router)
+- NestJS: [Docs](https://pompelmi.github.io/pompelmi/how-to/nestjs/) · [Example app](./examples/nestjs-app)
+- Fastify: [Docs](https://pompelmi.github.io/pompelmi/how-to/fastify/) · [Package](./packages/fastify-plugin)
+- Koa: [Docs](https://pompelmi.github.io/pompelmi/how-to/koa/) · [Package](./packages/koa-middleware)
+- CI/CD: [Use case](https://pompelmi.github.io/pompelmi/use-cases/cicd-artifact-scanning/) · [Blog](https://pompelmi.github.io/pompelmi/blog/cicd-scan-build-artifacts/)
+- S3 / object storage: [Tutorial](https://pompelmi.github.io/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/) · [Use case](https://pompelmi.github.io/pompelmi/use-cases/s3-presigned-upload-security/)
+
+## Go Deeper
+
+- [Docs home](https://pompelmi.github.io/pompelmi/)
+- [Use cases](https://pompelmi.github.io/pompelmi/use-cases/)
+- [Comparisons](https://pompelmi.github.io/pompelmi/comparisons/)
+- [Tutorials](https://pompelmi.github.io/pompelmi/tutorials/)
+- [Featured in](https://pompelmi.github.io/pompelmi/featured-in/)
+- [Translations](https://pompelmi.github.io/pompelmi/translations/)
 - [Examples index](./examples/README.md)
-- [Demo example](./examples/demo)
 - [Contributing](./CONTRIBUTING.md)
 - [Security](./SECURITY.md)
 - [Roadmap](./ROADMAP.md)
 
-## What Problem It Solves
+## What It Checks
 
 Upload endpoints are part of your attack surface. A renamed executable, a risky PDF, or a hostile archive can look harmless until it is stored, unpacked, served, or parsed by another system.
 
@@ -115,12 +129,6 @@ Pompelmi adds checks at the upload boundary for:
 - Optional YARA-based signature matching
 
 The goal is simple: inspect first, store later.
-
-## Why This Shape
-
-- Plain Markdown, readable in GitHub and in a terminal
-- Fast path first: install, example, then deeper links
-- Minimal top-level detail, with docs and examples for everything else
 
 ## Ecosystem
 
@@ -139,7 +147,7 @@ The goal is simple: inspect first, store later.
 - `packages/` framework adapters and supporting packages
 - `examples/` runnable examples
 - `tests/` test coverage
-- `website/` documentation site
+- `website/` public docs, blog, and discovery site
 
 ## Development
 
@@ -151,16 +159,18 @@ pnpm build
 
 <!-- MENTIONS:START -->
 
-## 🌟 Featured In
+## Featured In
+
+Full page: [pompelmi.github.io/pompelmi/featured-in](https://pompelmi.github.io/pompelmi/featured-in/)
 
 *Last updated: March 20, 2026*
 
-### 📋 Awesome Lists & Curated Collections
+### Awesome Lists & Curated Collections
 
 - [Awesome JavaScript](https://github.com/sorrycc/awesome-javascript) — sorrycc
 - [Awesome TypeScript](https://github.com/dzharii/awesome-typescript) — dzharii
 
-### 📰 Newsletters & Roundups
+### Newsletters & Roundups
 
 - [The Overflow Issue 319: Dogfooding your SDLC](https://stackoverflow.blog/newsletter/issue-319-dogfooding-your-sdlc/) — Stack Overflow (2026-03-04)
 - [Hottest cybersecurity open-source tools of the month: February 2026](https://www.helpnetsecurity.com/2026/02/26/hottest-cybersecurity-open-source-tools-of-the-month-february-2026/) — Help Net Security (2026-02-26)
@@ -168,7 +178,7 @@ pnpm build
 - [Node Weekly Issue 594](https://nodeweekly.com/issues/594) — Node Weekly (2025-09-30)
 - [Det. Eng. Weekly Issue #124 - The DEFCON hangover is real](https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon) — Detection Engineering (2025-08-13)
 
-### 🔗 Other Mentions
+### Other Mentions
 
 - [Defense against uploads: Q&A with OSS file scanner, pompelmi](https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/) — Stack Overflow (2026-02-23)
 - [Pompelmi: Open-source secure file upload scanning for Node.js](https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/) — Help Net Security (2026-02-02)

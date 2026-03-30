@@ -1,94 +1,92 @@
 ---
 import { getCollection } from 'astro:content';
-import '../../styles/global.css';
+import PublicLayout from '../../components/PublicLayout.astro';
 
-const blogPosts = (await getCollection('blog')).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf()
-);
+const blogPosts = (await getCollection('blog'))
+  .sort((a, b) => {
+    const aDate = a.data.updatedDate ?? a.data.pubDate;
+    const bDate = b.data.updatedDate ?? b.data.pubDate;
+    return bDate.valueOf() - aDate.valueOf();
+  });
 
-const BASE = 'https://pompelmi.github.io/pompelmi';
-const TITLE = 'Blog — Pompelmi';
-const DESC = 'Security insights, tutorials, and updates about file upload protection for Node.js applications.';
+const featuredLinks = [
+  {
+    href: '/pompelmi/use-cases/',
+    title: 'Use cases',
+    description: 'Document, image, PDF, archive, S3, CI/CD, and quarantine workflows.',
+  },
+  {
+    href: '/pompelmi/comparisons/',
+    title: 'Comparisons',
+    description: 'Extension checks vs MIME sniffing, Pompelmi vs ClamAV, and cloud API tradeoffs.',
+  },
+  {
+    href: '/pompelmi/getting-started/',
+    title: 'Start here',
+    description: 'Install the core package, pick a framework guide, and test the upload gate locally.',
+  },
+];
+
+const formatDate = (date) =>
+  date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>{TITLE}</title>
-    <meta name="description" content={DESC} />
-    <link rel="canonical" href={BASE + '/blog/'} />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta property="og:title" content={TITLE} />
-    <meta property="og:description" content={DESC} />
-    <meta property="og:url" content={BASE + '/blog/'} />
-    <meta name="twitter:card" content="summary" />
-    <link rel="icon" href="/pompelmi/favicon.svg" />
-  </head>
+<PublicLayout
+  title="Blog — Pompelmi"
+  description="Technical guides, decision pages, and upload-security deep dives for Node.js teams."
+>
+  <section class="mx-auto max-w-6xl px-4 py-12">
+    <div class="max-w-3xl">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Blog</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">Technical guides for real upload routes</h1>
+      <p class="mt-4 text-base leading-7 text-slate-600">
+        The docs are the canonical integration surface. The blog covers decision pages, search-intent tutorials, and deeper explanations that help teams evaluate file upload security in Node.js without losing the privacy-first, in-process context.
+      </p>
+    </div>
 
-  <body class="antialiased bg-gray-50">
-    <header class="bg-white border-b">
-      <div class="mx-auto max-w-5xl px-4 py-6">
-        <nav class="flex items-center justify-between">
-          <a href="/pompelmi/" class="text-xl font-bold">Pompelmi</a>
-          <div class="flex gap-4 text-sm">
-            <a href="/pompelmi/" class="hover:underline">Home</a>
-            <a href="/pompelmi/getting-started/" class="hover:underline">Docs</a>
-            <a href="/pompelmi/blog/" class="font-medium hover:underline">Blog</a>
-          </div>
-        </nav>
-      </div>
-    </header>
+    <div class="mt-8 grid gap-4 lg:grid-cols-3">
+      {featuredLinks.map((link) => (
+        <a href={link.href} class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
+          <h2 class="text-lg font-semibold tracking-tight text-slate-950">{link.title}</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">{link.description}</p>
+        </a>
+      ))}
+    </div>
 
-    <main class="mx-auto max-w-5xl px-4 py-12">
-      <h1 class="text-4xl font-bold mb-2">Blog</h1>
-      <p class="text-gray-600 mb-12">Security insights, tutorials, and project updates.</p>
-
-      <div class="space-y-8">
-        {blogPosts.map((post) => (
-          <article class="bg-white rounded-lg border p-6 hover:shadow-md transition-shadow">
-            <a href={`/pompelmi/blog/${post.slug}/`}>
-              <h2 class="text-2xl font-semibold mb-2 hover:text-blue-600 transition-colors">
-                {post.data.title}
-              </h2>
-            </a>
-            <div class="text-sm text-gray-500 mb-3">
-              {post.data.pubDate.toLocaleDateString('en-US', { 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}
-              {post.data.author && ` • ${post.data.author}`}
+    <div class="mt-10 grid gap-6">
+      {blogPosts.map((post) => {
+        const freshness = post.data.updatedDate ?? post.data.pubDate;
+        return (
+          <article class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div class="flex flex-wrap items-center gap-3 text-sm text-slate-500">
+              <span>{formatDate(post.data.pubDate)}</span>
+              {post.data.updatedDate && <span>Updated {formatDate(post.data.updatedDate)}</span>}
+              {post.data.category && <span>{post.data.category}</span>}
             </div>
-            <p class="text-gray-700 mb-4">{post.data.description}</p>
-            <div class="flex flex-wrap items-center justify-between gap-3">
-              {post.data.tags && (
-                <div class="flex flex-wrap gap-2">
-                  {post.data.tags.map((tag) => (
-                    <span class="px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded font-medium">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-              <a
-                href={`/pompelmi/blog/${post.slug}/`}
-                class="text-sm text-blue-600 font-semibold inline-flex items-center gap-1 hover:gap-2 transition-all shrink-0"
-              >
-                Read more
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
-                </svg>
+            <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+              <a href={`/pompelmi/blog/${post.slug}/`} class="hover:text-blue-700">
+                {post.data.title}
+              </a>
+            </h2>
+            <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-600">{post.data.description}</p>
+            <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex flex-wrap gap-2">
+                {(post.data.tags ?? []).slice(0, 4).map((tag) => (
+                  <span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">{tag}</span>
+                ))}
+              </div>
+              <a href={`/pompelmi/blog/${post.slug}/`} class="text-sm font-medium text-blue-700 hover:text-blue-800">
+                Read article
               </a>
             </div>
+            <div class="sr-only">{freshness.toISOString()}</div>
           </article>
-        ))}
-      </div>
-    </main>
-
-    <footer class="mt-16 border-t bg-white">
-      <div class="mx-auto max-w-5xl px-4 py-8 text-center text-sm text-gray-600">
-        <p>© {new Date().getFullYear()} Pompelmi. MIT License.</p>
-      </div>
-    </footer>
-  </body>
-</html>
+        );
+      })}
+    </div>
+  </section>
+</PublicLayout>

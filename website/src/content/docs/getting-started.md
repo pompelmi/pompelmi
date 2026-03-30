@@ -1,200 +1,95 @@
 ---
 title: Getting started
-description: Secure your first file upload endpoint with Pompelmi in under 5 minutes. No daemon, no cloud API, no external services required.
+description: Install Pompelmi, scan one file locally, and choose the right integration path for your Node.js upload route.
 ---
 
-Start with one upload route and one policy. This guide gets you from zero to a working upload gate in a few minutes.
+Start with one upload route and one clear decision: inspect first, store later.
 
-Pompelmi is most useful when you treat uploaded files as untrusted input and decide what to do with them before storage or downstream processing.
+Pompelmi is most useful when you treat uploaded files as untrusted input and make a policy decision before persistence or downstream parsing.
 
-## Prerequisites
-
-- Node.js 18 or higher
-- An existing Node.js app, or a new project (`npm init -y`)
-
----
-
-## 1. Install
+## 1. Install the core package
 
 ```bash
 npm install pompelmi
 ```
 
-That is the only required dependency. No daemon to start and no API key to configure.
+That is enough to scan bytes locally. Framework adapters are optional.
 
----
-
-## 2. Scan one file locally
-
-Create a file named `scan-test.mjs`:
+## 2. Scan one file
 
 ```js
-import { scanBytes } from 'pompelmi';
 import { readFileSync } from 'node:fs';
-
-const buffer = readFileSync('./package.json');
-
-const result = await scanBytes(buffer, {
-  filename: 'package.json',
-  mimeType: 'application/json',
-});
-
-console.log('Verdict:', result.verdict);
-console.log('Reasons:', result.reasons);
-console.log('Duration:', result.durationMs, 'ms');
-```
-
-Run it:
-
-```bash
-node scan-test.mjs
-```
-
-You should see `Verdict: clean` for a normal JSON file. Try the [EICAR test string](https://www.eicar.org/download-anti-malware-testfile/) if you want a safe way to exercise a malicious verdict.
-
----
-
-## 3. Put it in an Express upload route
-
-Install Express and Multer if needed:
-
-```bash
-npm install express multer
-```
-
-Create `server.mjs`:
-
-```js
-import express from 'express';
-import multer from 'multer';
 import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
-const app = express();
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024 },
+const bytes = readFileSync('./package.json');
+
+const report = await scanBytes(bytes, {
+  filename: 'package.json',
+  mimeType: 'application/json',
+  policy: STRICT_PUBLIC_UPLOAD,
+  failClosed: true,
 });
 
-app.post('/upload', upload.single('file'), async (req, res) => {
-  if (!req.file) {
-    return res.status(400).json({ error: 'No file provided' });
-  }
-
-  const result = await scanBytes(req.file.buffer, {
-    policy: STRICT_PUBLIC_UPLOAD,
-    filename: req.file.originalname,
-    mimeType: req.file.mimetype,
-    failClosed: true,
-  });
-
-  if (result.verdict !== 'clean') {
-    return res.status(422).json({
-      error: 'Upload rejected',
-      verdict: result.verdict,
-      reasons: result.reasons,
-    });
-  }
-
-  res.json({ ok: true, verdict: result.verdict });
-});
-
-app.listen(3000, () => console.log('Listening on http://localhost:3000'));
+console.log(report.verdict);
+console.log(report.reasons);
 ```
 
-Start the server:
+## 3. Understand the verdict
 
-```bash
-node server.mjs
-```
+| Verdict | Meaning | Typical action |
+| --- | --- | --- |
+| `clean` | No blocking indicators from the configured checks | Continue to storage or downstream processing |
+| `suspicious` | Something risky was detected, but not necessarily confirmed malware | Quarantine, manual review, or reject |
+| `malicious` | High-confidence match or a policy condition you treat as malicious | Reject and investigate |
 
-Test it:
+## 4. Pick a first policy
 
-```bash
-curl -F "file=@package.json;type=application/json" http://localhost:3000/upload
-
-curl -F "file=@/path/to/anything.exe;type=application/octet-stream" http://localhost:3000/upload
-```
-
-In a real system, `suspicious` uploads often go to quarantine or manual review instead of an immediate permanent reject.
-
----
-
-## 4. Understand the verdict
-
-`scanBytes` returns a `ScanReport`:
-
-```ts
-{
-  verdict: 'clean' | 'suspicious' | 'malicious',
-  ok: boolean,
-  matches: Match[],
-  reasons: string[],
-  durationMs: number,
-  file: {
-    name?: string,
-    mimeType?: string,
-    size?: number,
-    sha256?: string,
-  },
-}
-```
-
-Recommended handling:
-
-- `clean` -> continue to storage or downstream processing.
-- `suspicious` -> quarantine, hold for review, or reject based on your tolerance.
-- `malicious` -> reject, log, and investigate as needed.
-
----
-
-## 5. Tighten or change the policy
-
-`STRICT_PUBLIC_UPLOAD` is a good starting point for untrusted uploads. Other built-in packs include:
+Built-in policy packs cover common starting points:
 
 | Policy | Best for |
 | --- | --- |
-| `STRICT_PUBLIC_UPLOAD` | Anonymous or untrusted uploaders |
-| `CONSERVATIVE_DEFAULT` | General-purpose hardened default |
-| `DOCUMENTS_ONLY` | PDF, Word, Excel, and CSV portals |
-| `IMAGES_ONLY` | Avatar or image-only endpoints |
-| `ARCHIVES` | Archive handling with ZIP bomb protection |
+| `STRICT_PUBLIC_UPLOAD` | Public or semi-trusted upload endpoints |
+| `CONSERVATIVE_DEFAULT` | Balanced default for most server-side upload flows |
+| `DOCUMENTS_ONLY` | PDF and Office-oriented intake portals |
+| `IMAGES_ONLY` | Avatar, gallery, and image-only routes |
+| `ARCHIVES` | ZIP-heavy endpoints when paired with archive guards |
 
-```js
-import { scanBytes, IMAGES_ONLY } from 'pompelmi';
+For archive handling, pair the policy with `createZipBombGuard()` and `CommonHeuristicsScanner`:
 
-const result = await scanBytes(buffer, { policy: IMAGES_ONLY });
+```ts
+import { composeScanners, createZipBombGuard, CommonHeuristicsScanner } from 'pompelmi';
+
+const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard()],
+    ['heuristics', CommonHeuristicsScanner],
+  ],
+  { stopOn: 'suspicious' }
+);
 ```
 
-You can also configure rules manually:
+## 5. Choose your integration path
 
-```js
-import { scanBytes } from 'pompelmi';
+- [Secure file uploads in Express](./how-to/express/)
+- [Secure file uploads in Next.js](./how-to/nextjs/)
+- [Secure file uploads in NestJS](./how-to/nestjs/)
+- [Secure file uploads in Fastify](./how-to/fastify/)
+- [Secure file uploads in Koa](./how-to/koa/)
+- [Secure file uploads in Nuxt/Nitro](./how-to/nuxt-nitro/)
 
-const result = await scanBytes(buffer, {
-  maxFileSizeBytes: 5 * 1024 * 1024,
-  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/webp'],
-  includeExtensions: ['jpg', 'jpeg', 'png', 'webp'],
-  filename: file.originalname,
-});
-```
+## 6. Decide how you will store files
 
----
+The most common safe sequence is:
 
-## What runs during a scan
-
-By default, Pompelmi can combine:
-
-1. Size and extension checks.
-2. Declared MIME and magic-byte validation.
-3. Structural heuristics for suspicious file content.
-4. Archive protections for ZIP expansion and traversal cases.
-5. Optional YARA matching when you add it.
-
----
+1. Receive the upload into memory or an isolated temp area.
+2. Scan bytes and archive structure.
+3. Reject malicious files immediately.
+4. Quarantine suspicious files if you need review instead of hard blocking.
+5. Persist only the files your application is ready to trust.
 
 ## Next steps
 
-- [Framework integration guides](./how-to/express/)
-- [Threat model and architecture](./explaination/architecture/)
-- [Production-readiness checklist](./production-readiness/)
-- [Support options](./support/)
+- [How to scan file uploads in Multer](./tutorials/how-to-scan-file-uploads-in-multer/)
+- [Node.js file upload validation best practices](./tutorials/nodejs-file-upload-validation-best-practices/)
+- [Quarantine / inspect-first-store-later workflows](./use-cases/quarantine-inspect-first-store-later/)
+- [Production readiness](./production-readiness/)

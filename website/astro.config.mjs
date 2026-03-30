@@ -35,9 +35,9 @@ export default defineConfig({
     tailwind({ applyBaseStyles: false }),
     sitemap(),
     starlight({
-  title: 'Pompelmi Docs',
+  title: 'Pompelmi',
   description:
-    'In-process file upload security for Node.js. Scan and block risky uploads before storage with no cloud API or daemon.',
+    'In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, and risky document structures.',
 
   // v0.33+ => social is an ARRAY of links
   social: [
@@ -46,10 +46,7 @@ export default defineConfig({
 
   // head must use objects { tag, attrs, content? }
   head: [
-    { tag: 'link', attrs: { rel: 'canonical', href: 'https://pompelmi.github.io/pompelmi/' } },
-    { tag: 'meta', attrs: { property: 'og:title', content: 'Pompelmi Docs — in-process file upload security for Node.js' } },
-    { tag: 'meta', attrs: { property: 'og:description', content: 'Scan and block risky uploads before storage with no cloud API, no daemon, and a local-first deployment model.' } },
-    { tag: 'meta', attrs: { property: 'og:url', content: 'https://pompelmi.github.io/pompelmi/' } },
+    { tag: 'meta', attrs: { property: 'og:site_name', content: 'Pompelmi' } },
     { tag: 'meta', attrs: { property: 'og:image', content: 'https://pompelmi.github.io/pompelmi/og.png' } },
     { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
     { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
@@ -63,10 +60,14 @@ export default defineConfig({
     { label: 'Overview', slug: 'index' },
     { label: 'Getting started', slug: 'getting-started' },
     { label: 'Framework guides', autogenerate: { directory: 'how-to', collapsed: false } },
+    { label: 'Use cases', autogenerate: { directory: 'use-cases', collapsed: false } },
+    { label: 'Comparisons', autogenerate: { directory: 'comparisons', collapsed: false } },
     { label: 'Tutorials', autogenerate: { directory: 'tutorials', collapsed: false } },
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },
     { label: 'Explanations', autogenerate: { directory: 'explaination', collapsed: true } },
     { label: 'Production readiness', slug: 'production-readiness' },
+    { label: 'Featured in', link: '/pompelmi/featured-in/' },
+    { label: 'Translations', link: '/pompelmi/translations/' },
     { label: 'Blog', link: '/pompelmi/blog/' },
     { label: 'Support', slug: 'support' },
     { label: 'Enterprise options', slug: 'enterprise' }

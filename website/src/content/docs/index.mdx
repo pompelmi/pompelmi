@@ -1,88 +1,74 @@
 ---
 title: Pompelmi
-description: Secure file uploads for Node.js. Scan untrusted files before storage with in-process, local-first checks for spoofed files, archive bombs, and risky document structures.
+description: In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, and risky document structures.
 ---
 
 # Pompelmi
 
-Secure file uploads for Node.js.
+Pompelmi is an open-source upload gate for Node.js. It inspects untrusted files before storage or downstream processing with in-process, local-first checks for spoofed types, archive abuse, and risky document structures.
 
-Pompelmi is the open-source upload gate for Node.js. It inspects untrusted files before storage or downstream processing with in-process, local-first checks. Start here if filenames, extensions, or client-provided MIME types are not enough for your upload flow.
+It is designed for the point where your application decides whether an upload is safe enough to keep, quarantine, or reject.
 
-## Why teams use it
-
-Most upload handlers still do some version of:
-
-`upload -> trust filename/MIME -> store -> parse or serve later`
-
-Pompelmi changes that to:
-
-`upload -> inspect bytes + structure -> allow | quarantine | reject -> store/process`
-
-## Quick start
+## Start here
 
 ```bash
 npm install pompelmi
 ```
 
+Then choose the shortest path that matches your stack:
+
+| Path | Best starting page |
+| --- | --- |
+| Express + Multer | [Secure file uploads in Express](./how-to/express/) |
+| Next.js App Router | [Secure file uploads in Next.js](./how-to/nextjs/) |
+| NestJS | [Secure file uploads in NestJS](./how-to/nestjs/) |
+| Fastify | [Secure file uploads in Fastify](./how-to/fastify/) |
+| Koa | [Secure file uploads in Koa](./how-to/koa/) |
+| Nuxt/Nitro | [Secure file uploads in Nuxt/Nitro](./how-to/nuxt-nitro/) |
+
+## What Pompelmi helps with
+
+- File-type spoofing where the extension and declared MIME are not trustworthy.
+- ZIP archives that can hide traversal, deep nesting, or decompression abuse.
+- Risky PDF, SVG, Office, and polyglot structures that are not visible from metadata alone.
+- Optional YARA matching when the built-in heuristics are not specific enough for your environment.
+
+## What it does not claim to be
+
+- Not a full endpoint protection platform.
+- Not a replacement for storage isolation, auth, logging, or incident response.
+- Not a compliance certification.
+
+Use it as an application-layer control at the upload boundary.
+
+## Content map
+
+- [Use cases](./use-cases/) for practical deployment patterns like S3 presigned flows, CI/CD artifact scanning, PDF upload hardening, and quarantine workflows.
+- [Comparisons](./comparisons/) for decision pages like Pompelmi vs ClamAV, extension checks vs MIME sniffing, and when to add YARA.
+- [Tutorials](./tutorials/) for search-intent walkthroughs such as Multer scanning, upload validation best practices, and Node.js security checklists.
+- [Featured in](/pompelmi/featured-in/) for external references.
+- [Translations](/pompelmi/translations/) for community-maintained language resources.
+
+## Minimal core example
+
 ```ts
 import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
 const report = await scanBytes(fileBytes, {
-  policy: STRICT_PUBLIC_UPLOAD,
   filename: 'upload.pdf',
   mimeType: 'application/pdf',
+  policy: STRICT_PUBLIC_UPLOAD,
   failClosed: true,
 });
 
 if (report.verdict !== 'clean') {
-  // reject, quarantine, or escalate based on your policy
+  // reject or quarantine based on your policy
 }
 ```
 
-## What it checks
+## Continue
 
-| Risk | What Pompelmi checks |
-| --- | --- |
-| Spoofed or renamed files | Extension policy, declared MIME checks, and magic-byte validation |
-| Archive bombs and traversal | Entry count, total extracted size, nesting depth, and archive path guards |
-| Risky document structures | Heuristics for polyglots, executable signatures, and script-bearing documents |
-| Environment-specific threats | Optional YARA rules in a composed scanner pipeline |
-
-## Who it is for
-
-- Public or semi-trusted upload endpoints.
-- Privacy-sensitive or self-hosted environments.
-- Teams that want a typed upload-security layer rather than a chain of ad hoc checks.
-
-## Why not just MIME checks or a daemon-based scanner?
-
-| Approach | Useful for | Gap |
-| --- | --- | --- |
-| MIME or extension checks only | Basic allowlists and cheap filtering | They still rely on metadata or filenames the client controls. |
-| DIY validation | Full control over your own rules | Archive handling, structured verdicts, and fail-closed behavior are easy to underbuild. |
-| Cloud scanning APIs | Managed detection | Adds data egress, network latency, and a hard external dependency. |
-| Daemon-based AV | Signature scanning and existing security tooling | Solves a different layer from the application-level upload gate before storage. |
-
-Pompelmi focuses on the upload gate itself. It can complement YARA or daemon-based scanners. It is not presented as a full antivirus replacement.
-
-## Framework guides
-
-- [Express](./how-to/express/)
-- [Next.js](./how-to/nextjs/)
-- [NestJS](./how-to/nestjs/)
-- [Fastify](./how-to/fastify/)
-- [Koa](./how-to/koa/)
-- [Nuxt/Nitro](./how-to/nuxt-nitro/)
-
-## Evaluate it
-
-- [Getting started guide](./getting-started/)
+- [Getting started](./getting-started/)
 - [Threat model and architecture](./explaination/architecture/)
-- [Production-readiness notes](./production-readiness/)
+- [Production readiness](./production-readiness/)
 - [Examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)
-- [Security policy](https://github.com/pompelmi/pompelmi/blob/main/SECURITY.md)
-
-## Support
-
-Start with docs, GitHub Issues, and GitHub Discussions whenever the question can be public. If you need private rollout help or a commercial relationship, see [Support](./support/) and [Enterprise support](./enterprise/).

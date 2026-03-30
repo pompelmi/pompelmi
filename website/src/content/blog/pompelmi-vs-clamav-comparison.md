@@ -144,7 +144,7 @@ YARA is a pattern-matching engine designed for malware research. It lets you wri
 
 **Example YARA rule:**
 
-```yara
+```txt
 rule PE_Disguised_As_PDF
 {
   meta:

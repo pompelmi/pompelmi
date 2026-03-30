@@ -1,0 +1,63 @@
+---
+import PublicLayout from '../components/PublicLayout.astro';
+
+const resources = [
+  { label: 'Deutsch', code: 'de', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.de.md' },
+  { label: 'Español', code: 'es', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.es.md' },
+  { label: 'Français', code: 'fr', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.fr.md' },
+  { label: 'Italiano', code: 'it', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.it.md' },
+  { label: '日本語', code: 'ja', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.ja.md' },
+  { label: '한국어', code: 'ko', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.ko.md' },
+  { label: 'Português (BR)', code: 'pt-BR', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.pt-BR.md' },
+  { label: 'Русский', code: 'ru', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.ru.md' },
+  { label: 'Türkçe', code: 'tr', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.tr.md' },
+  { label: '简体中文', code: 'zh-CN', href: 'https://github.com/pompelmi/pompelmi/blob/main/docs/i18n/README.zh-CN.md' },
+];
+
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebPage',
+  name: 'Translations',
+  description:
+    'Community-maintained translated resources for Pompelmi. The English website and README remain the source of truth.',
+  url: 'https://pompelmi.github.io/pompelmi/translations/',
+};
+---
+
+<PublicLayout
+  title="Translations — Pompelmi"
+  description="Community-maintained translated resources for Pompelmi. The English website and README remain the source of truth."
+  jsonLd={jsonLd}
+>
+  <section class="mx-auto max-w-5xl px-4 py-12">
+    <div class="max-w-3xl">
+      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Language resources</p>
+      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">Translations</h1>
+      <p class="mt-4 text-base leading-7 text-slate-600">
+        Pompelmi&apos;s English website and root README are the maintained source of truth. The translated resources below are useful for discovery and onboarding, but they may lag behind the current API and docs structure.
+      </p>
+      <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-600">
+        <p><strong class="text-slate-900">Recommended path:</strong> start with the English docs for installation, framework guides, and current examples.</p>
+        <div class="mt-3 flex flex-wrap gap-3">
+          <a href="/pompelmi/getting-started/" class="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-900 hover:bg-slate-50">English docs</a>
+          <a href="https://github.com/pompelmi/pompelmi/blob/main/README.md" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-900 hover:bg-slate-50">English README</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-10 grid gap-4 sm:grid-cols-2">
+      {resources.map((resource) => (
+        <a
+          href={resource.href}
+          target="_blank"
+          rel="noopener"
+          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow"
+        >
+          <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{resource.code}</div>
+          <h2 class="mt-2 text-lg font-semibold tracking-tight text-slate-950">{resource.label}</h2>
+          <p class="mt-2 text-sm leading-6 text-slate-600">Translated README on GitHub.</p>
+        </a>
+      ))}
+    </div>
+  </section>
+</PublicLayout>

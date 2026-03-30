@@ -6,7 +6,6 @@ export const GET: APIRoute = ({ site }) => {
   const body = [
     'User-agent: *',
     'Allow: /',
-    origin && `Sitemap: ${origin}sitemap.xml`,
     origin && `Sitemap: ${origin}sitemap-index.xml`,
   ].filter(Boolean).join('\n')
   return new Response(body, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })

@@ -6,6 +6,7 @@
  * - image?: string (1200x630; absolute or under /public)
  * - noindex?: boolean
  * - canonical?: string
+ * - ogType?: string
  * - jsonLd?: Record<string, any> | Record<string, any>[]
  */
 const {
@@ -14,17 +15,17 @@ const {
   image = '/pompelmi/og.png',
   noindex = false,
   canonical: canonicalOverride,
+  ogType = 'website',
   jsonLd = null,
 } = Astro.props
 
 const site = Astro.site?.toString().replace(/\/$/, '') || ''
-const base = import.meta.env.BASE_URL || '/'
 const path = Astro.url?.pathname || '/'
-const canonical = canonicalOverride || (site ? new URL(`${base.replace(/\/$/, '')}${path}`, site).toString() : undefined)
+const canonical = canonicalOverride || (site ? new URL(path, site).toString() : undefined)
 const ogImage = image.startsWith('http')
   ? image
   : site
-    ? new URL(image.startsWith(base) ? image : `${base.replace(/\/$/, '')}${image}`, site).toString()
+    ? new URL(image.startsWith('/') ? image : `/${image}`, site).toString()
     : image
 ---
 <title>{title}</title>
@@ -32,7 +33,7 @@ const ogImage = image.startsWith('http')
 {canonical && <link rel="canonical" href={canonical} />}
 {noindex && <meta name="robots" content="noindex,nofollow" />}
 
-<meta property="og:type" content="website" />
+<meta property="og:type" content={ogType} />
 {canonical && <meta property="og:url" content={canonical} />}
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />

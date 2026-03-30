@@ -1,123 +1,56 @@
 ---
-title: Example Reference
-description: A reference page in my new Starlight docs site.
+title: Scan report and verdicts
+description: Reference for Pompelmi scan results, verdict meanings, and the fields adapters typically expose to application code.
 ---
 
-Reference pages are ideal for outlining how things work in terse and clear terms.
-Less concerned with telling a story or addressing a specific use case, they should give a comprehensive outline of what you're documenting.
+Use this reference when you need the stable concepts behind Pompelmi's upload gate rather than a framework-specific example.
 
-## Further reading
+## Core verdicts
 
-- Read [about reference](https://diataxis.fr/reference/) in the Diátaxis framework
+| Verdict | Meaning | Typical action |
+| --- | --- | --- |
+| `clean` | No blocking indicators from the configured checks | Continue to storage or downstream processing |
+| `suspicious` | Risky characteristics were found, but not necessarily a confirmed malicious match | Quarantine, review, or reject |
+| `malicious` | High-confidence match or a condition you treat as explicitly blocked | Reject immediately |
 
----
-title: Scan Engine HTTP API
-description: The minimal HTTP contract between your app and the scan engine. Request, response schema, and error codes.
----
+## Core scan shape
 
-Use this reference when wiring your backend (Express/Koa/Next) to the **scan engine**. The contract is intentionally small: send one file, get back a verdict.
+`scanBytes()` and `scanFile()` return a `ScanReport`:
 
-## Endpoint
-
-```
-POST {ENGINE_URL}/scan
-```
-
-- **Content-Type:** `multipart/form-data`
-- **Field:** `file` (single file)
-- **Auth:** optional (e.g., `Authorization: Bearer <token>`) depending on your engine
-
-## Request
-
-```http
-POST /scan HTTP/1.1
-Host: engine.example
-Content-Type: multipart/form-data; boundary=----X
-
-------X
-Content-Disposition: form-data; name="file"; filename="sample.jpg"
-Content-Type: image/jpeg
-
-<binary>
-------X--
-```
-
-### Notes
-- Keep the field name **exactly** `file` (the UI components already use this name).
-- Enforce **size/MIME** guards on your server before forwarding.
-- Add headers your engine requires (API key, tenant, etc.).
-
-## Response
-
-### TypeScript shape
 ```ts
-export type ScanResult = {
-  result: {
-    malicious: boolean;
-    engine?: string;         // e.g. "clamav", "yara"
-    signature?: string;      // detection name if malicious
-    score?: number;          // optional numeric risk score
+type ScanReport = {
+  ok: boolean;
+  verdict: 'clean' | 'suspicious' | 'malicious';
+  matches: Array<{ rule: string; tags?: string[]; meta?: Record<string, unknown> }>;
+  reasons: string[];
+  durationMs: number;
+  file?: {
+    name?: string;
+    mimeType?: string;
+    size?: number;
+    sha256?: string;
   };
-  meta?: {
-    filename?: string;
-    mime?: string;
-    size?: number;           // bytes
-    durationMs?: number;     // engine time
-  };
-  errors?: string[];         // engine or validation messages
 };
 ```
 
-### JSON examples
-**Clean file**
-```json
-{
-  "result": { "malicious": false, "engine": "clamav" },
-  "meta": { "filename": "sample.jpg", "mime": "image/jpeg", "size": 123456, "durationMs": 42 }
-}
-```
+## Adapter behavior
 
-**Malicious (EICAR)**
-```json
-{
-  "result": { "malicious": true, "engine": "clamav", "signature": "Win.Test.EICAR_HDB-1" },
-  "meta": { "filename": "eicar.com", "mime": "application/octet-stream", "size": 68, "durationMs": 37 }
-}
-```
+Different adapters expose the verdict in slightly different shapes, but the same concepts still apply:
 
-## cURL
+- Express middleware attaches `req.pompelmi`.
+- Koa middleware attaches `ctx.state.pompelmi`.
+- Fastify attaches `request.pompelmi`.
+- Next.js route handlers return JSON with the verdict and any matches the route decides to expose.
+- NestJS can use `PompelmiInterceptor` for blocking and `PompelmiService` for direct `ScanReport` access.
 
-Clean JPG:
-```bash
-curl -sS -X POST "$ENGINE_URL/scan" \
-  -H "Authorization: Bearer $ENGINE_TOKEN" \
-  -F "file=@./sample.jpg" | jq
-```
+## Recommended handling
 
-EICAR test:
-```bash
-curl -sS -X POST "$ENGINE_URL/scan" \
-  -H "Authorization: Bearer $ENGINE_TOKEN" \
-  -F "file=@./eicar.com" | jq
-```
-
-## Error codes
-
-- **400 Bad Request** — missing `file` field or invalid multipart
-- **413 Payload Too Large** — file too big
-- **415 Unsupported Media Type** — MIME not allowed by the engine
-- **429 Too Many Requests** — throttled/rate‑limited
-- **5xx** — engine failure; inspect `errors` array for details
-
-## Security
-
-- Use HTTPS and **auth** between your app and the engine.
-- Apply server‑side **allowlists** (MIME/extension) and size limits before forwarding.
-- Consider proxy/WAF rate‑limits and sanitation of filenames.
+- `clean`: move into the live storage path.
+- `suspicious`: quarantine or review if the business flow needs a softer decision.
+- `malicious`: block and log the event.
 
 ## See also
-- UI components: [`@pompelmi/ui-react`](/pompelmi/docs/reference/ui-react/)
-- How‑to (server):
-  - [Next.js](/pompelmi/docs/how-to/nextjs/)
-  - [Express](/pompelmi/docs/how-to/express/)
-  - [Koa](/pompelmi/docs/how-to/koa/)
+
+- [Getting started](../getting-started/)
+- [Framework guides](../how-to/express/)
+- [Quarantine / inspect-first-store-later workflows](../use-cases/quarantine-inspect-first-store-later/)

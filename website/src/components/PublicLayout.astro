@@ -1,0 +1,86 @@
+---
+import '../styles/global.css';
+import SEOHead from './SEOHead.astro';
+
+const {
+  title,
+  description,
+  jsonLd = null,
+  ogType = 'website',
+} = Astro.props;
+
+const basePath = import.meta.env.BASE_URL || '/';
+const withBase = (path = '') => `${basePath}${path.replace(/^\//, '')}`;
+
+const navLinks = [
+  { href: withBase('getting-started/'), label: 'Docs' },
+  { href: withBase('use-cases/'), label: 'Use cases' },
+  { href: withBase('comparisons/'), label: 'Comparisons' },
+  { href: withBase('blog/'), label: 'Blog' },
+  { href: withBase('featured-in/'), label: 'Featured in' },
+];
+
+const footerLinks = [
+  { href: withBase('getting-started/'), label: 'Getting started' },
+  { href: withBase('how-to/express/'), label: 'Express guide' },
+  { href: withBase('use-cases/'), label: 'Use cases' },
+  { href: withBase('comparisons/'), label: 'Comparisons' },
+  { href: withBase('translations/'), label: 'Translations' },
+  { href: 'https://github.com/pompelmi/pompelmi/tree/main/examples', label: 'Examples' },
+  { href: 'https://github.com/pompelmi/pompelmi', label: 'GitHub' },
+];
+---
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <SEOHead title={title} description={description} jsonLd={jsonLd} ogType={ogType} />
+    <link rel="icon" href="/pompelmi/favicon.svg" />
+  </head>
+  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
+    <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
+        <a href={withBase()} class="flex items-center gap-3 text-sm font-semibold tracking-tight text-slate-900">
+          <img src={withBase('logo.svg')} alt="" class="h-7 w-auto" />
+          <span>Pompelmi</span>
+        </a>
+        <nav class="flex flex-wrap items-center justify-end gap-2 text-sm text-slate-600">
+          {navLinks.map((link) => (
+            <a href={link.href} class="rounded-md px-3 py-1.5 transition hover:bg-slate-100 hover:text-slate-900">
+              {link.label}
+            </a>
+          ))}
+          <a
+            href="https://github.com/pompelmi/pompelmi"
+            target="_blank"
+            rel="noopener"
+            class="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-900 transition hover:border-slate-400 hover:bg-slate-100"
+          >
+            GitHub
+          </a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="border-t border-slate-200 bg-white">
+      <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+        <p>In-process file upload security for Node.js.</p>
+        <div class="flex flex-wrap gap-4">
+          {footerLinks.map((link) => (
+            <a
+              href={link.href}
+              target={link.href.startsWith('http') ? '_blank' : undefined}
+              rel={link.href.startsWith('http') ? 'noopener' : undefined}
+              class="transition hover:text-slate-900"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

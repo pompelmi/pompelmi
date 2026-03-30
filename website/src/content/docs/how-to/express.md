@@ -1,169 +1,97 @@
 ---
-title: Use Pompelmi with Express
-description: Add a /scan endpoint in Express that validates uploads and forwards them to your scan engine.
+title: Secure file uploads in Express
+description: Add an in-process upload gate to an Express route with Multer, @pompelmi/express-middleware, archive guards, and local-first scanning.
 ---
 
-This guide shows a concrete, minimal integration with **Express**. You’ll expose a `POST /scan` route that accepts a file, performs basic checks (size/MIME), forwards it to your **scan engine** (e.g., ClamAV/YARA service), and returns a clear **CLEAN / MALICIOUS** verdict to the client UI.
+This is the canonical Express integration path for Pompelmi.
 
-> Works with Node **18+** (uses the built‑in `fetch`, `Blob`, and `FormData`).
+Use it when you already accept files through Multer and want a clear allow, quarantine, or reject decision before writing anything to disk or object storage.
 
----
-
-## 1) Install
+## Install
 
 ```bash
-pnpm add express multer cors
+npm install pompelmi @pompelmi/express-middleware express multer
 ```
 
-No extra HTTP client is needed—Node 18+ has `fetch` and `FormData` built in.
-
----
-
-## 2) Environment
-
-Create `.env` (or export the variable in your shell):
-
-```bash
-POMPELMI_ENGINE_URL=https://your-engine.example
-PORT=4000
-```
-
-> The UI will call **your** Express route (e.g., `http://localhost:4000/scan`). Your Express route will forward the file to `${POMPELMI_ENGINE_URL}/scan` and return the engine’s JSON.
-
----
-
-## 3) Minimal server
-
-Create `server.ts` (or `server.js` if you prefer JS):
+## Minimal route
 
 ```ts
 import express from 'express';
 import multer from 'multer';
-import cors from 'cors';
+import { createUploadGuard } from '@pompelmi/express-middleware';
+import {
+  CommonHeuristicsScanner,
+  composeScanners,
+  createZipBombGuard,
+} from 'pompelmi';
 
 const app = express();
 
-// Allow your site origins (adjust for prod)
-app.use(cors({
-  origin: [
-    'http://localhost:3000', // Next.js dev
-    'http://localhost:4321', // Astro dev (docs/demo)
+const scanner = composeScanners(
+  [
+    ['zipGuard', createZipBombGuard()],
+    ['heuristics', CommonHeuristicsScanner],
   ],
-}));
+  { stopOn: 'suspicious' }
+);
 
-// Multer in-memory storage + size limit
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB client guard
+  limits: { fileSize: 10 * 1024 * 1024 },
 });
 
-const ENGINE = (process.env.POMPELMI_ENGINE_URL || '').replace(/\/$/, '');
-const ACTION = ENGINE ? `${ENGINE}/scan` : '';
-if (!ACTION) {
-  console.warn('[pompelmi] POMPELMI_ENGINE_URL not set — /scan will fail until you configure it');
-}
+app.post(
+  '/upload',
+  upload.single('file'),
+  createUploadGuard({
+    scanner,
+    includeExtensions: ['pdf', 'png', 'jpg', 'jpeg', 'zip'],
+    allowedMimeTypes: [
+      'application/pdf',
+      'image/png',
+      'image/jpeg',
+      'application/zip',
+    ],
+    maxFileSizeBytes: 10 * 1024 * 1024,
+    failClosed: true,
+  }),
+  (req, res) => {
+    const scan = (req as any).pompelmi;
 
-// Optional: quick MIME allowlist (tighten per your needs)
-const ALLOW = new Set([
-  'image/jpeg',
-  'image/png',
-  'application/pdf',
-]);
-
-app.post('/scan', upload.single('file'), async (req, res) => {
-  try {
-    const f = req.file;
-    if (!f) return res.status(400).json({ error: 'No file provided' });
-
-    if (!ALLOW.has(f.mimetype)) {
-      return res.status(415).json({ error: `Unsupported content-type: ${f.mimetype}` });
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file provided' });
     }
 
-    // Build multipart body for the engine
-    const form = new FormData();
-    const blob = new Blob([f.buffer], { type: f.mimetype });
-    form.append('file', blob, f.originalname);
+    if (scan?.verdict !== 'clean') {
+      return res.status(422).json({
+        ok: false,
+        verdict: scan?.verdict,
+        results: scan?.results ?? [],
+      });
+    }
 
-    const r = await fetch(ACTION, { method: 'POST', body: form });
-    const data = await r.json().catch(() => ({ error: 'Invalid JSON from engine' }));
-
-    // Pass-through status + body (normalize a bit for the UI)
-    if (!r.ok) return res.status(r.status).json({ error: data?.error || 'Scan error' });
-    return res.status(200).json(data);
-  } catch (err) {
-    console.error('[pompelmi] scan error', err);
-    return res.status(500).json({ error: 'Internal error while scanning' });
+    res.json({ ok: true, verdict: 'clean', file: req.file.originalname });
   }
-});
-
-const port = Number(process.env.PORT || 4000);
-app.listen(port, () => {
-  console.log(`pompelmi express listening on http://localhost:${port}`);
-});
+);
 ```
 
-**Notes**
+## Why this pattern
 
-- The route expects a single `file` field (that’s what the React UI components send).
-- Keep **size/MIME** guards server‑side even if the UI also enforces limits.
-- If your engine requires headers/auth, add them to the `fetch` call.
+- `multer.memoryStorage()` keeps bytes in memory until the route has a verdict.
+- `createUploadGuard()` gives Express a real upload gate instead of ad hoc checks inside the handler.
+- `createZipBombGuard()` covers archive-specific abuse that a MIME allowlist cannot see.
+- `CommonHeuristicsScanner` adds structural checks for PDFs, SVGs, Office files, executables, and EICAR-like test content.
 
----
+## Production notes
 
-## 4) Wire up the UI (client)
+- Keep parser limits and `maxFileSizeBytes` aligned.
+- Treat `suspicious` as quarantine or manual review for document-heavy workflows.
+- Store files only after the route returns `clean`.
+- Add auth, rate limits, and non-executable storage outside the scanner itself.
 
-In your Next.js/React app, point the UI to **your** Express route:
+## Continue
 
-```env
-# Next.js (client)
-NEXT_PUBLIC_POMPELMI_URL=http://localhost:4000
-```
-
-```tsx
-import { UploadButton } from '@pompelmi/ui-react';
-
-<UploadButton action={`${process.env.NEXT_PUBLIC_POMPELMI_URL?.replace(/\/$/, '')}/scan`} />
-```
-
----
-
-## 5) Test the flow
-
-- Upload a **clean JPG** → expect **CLEAN**
-- Use the official **EICAR** test file → expect **MALICIOUS** (download it from eicar.org)
-- Watch the server logs for errors and the browser Network panel for the `/scan` call
-
----
-
-## 6) Production hardening (checklist)
-
-- Tighten the **MIME/extension** allowlist to your use‑case.
-- Add an **auth layer** (e.g., API key/JWT) on your `/scan` endpoint.
-- Set a **reverse proxy** (Nginx/Cloudflare) with body size limits and rate‑limits.
-- Stream to temp files if you expect very large uploads (switch Multer storage).
-- Make the engine URL configurable via secret manager/ENV.
-
----
-
-## Troubleshooting
-
-- **415 Unsupported content-type** → Add the needed MIME(s) to `ALLOW` or remove the guard.
-- **CORS errors** → Update `cors({ origin: [...] })` with your production domain.
-- **Engine 5xx / timeouts** → Check engine logs and network reachability; consider a timeout/retry policy around `fetch`.
-- **UI shows only ERROR** → Open DevTools → Network, inspect the `/scan` response JSON from your server.
-
----
-
-## Alternative: using `@pompelmi/express-middleware`
-
-If you prefer a one‑liner, the monorepo ships `@pompelmi/express-middleware`. Its exact API may evolve; see the package README in your repo. A typical usage looks like:
-
-```ts
-import express from 'express';
-import { pompelmi } from '@pompelmi/express-middleware';
-
-const app = express();
-app.post('/scan', pompelmi({ engineUrl: process.env.POMPELMI_ENGINE_URL! }));
-```
-
-> The custom middleware is optional—the plain Express example above is fully functional and gives you maximum control.
+- [How to scan file uploads in Multer](../tutorials/how-to-scan-file-uploads-in-multer/)
+- [Document upload security](../use-cases/document-upload-security/)
+- [Secure S3 presigned uploads with malware scanning](../tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
+- [Express examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)
