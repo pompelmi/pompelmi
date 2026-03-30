@@ -2,6 +2,8 @@
 import PublicLayout from '../components/PublicLayout.astro';
 import mentionsData from '../../../mentions/mentions.json';
 
+const basePath = import.meta.env.BASE_URL || '/';
+const heroLogoPath = `${basePath}logo.svg`;
 const quickStartSnippet = `npm install pompelmi`;
 
 const startPaths = [
@@ -87,6 +89,7 @@ const jsonLd = {
     <div class="mx-auto max-w-6xl px-4 py-16 sm:py-20">
       <div class="max-w-4xl">
         <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Open-source core · MIT · Node.js 18+</p>
+        <img src={heroLogoPath} alt="" class="mt-6 h-16 w-auto sm:h-20" />
         <h1 class="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
           In-process file upload security for Node.js.
         </h1>

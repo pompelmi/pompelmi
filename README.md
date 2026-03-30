@@ -113,6 +113,7 @@ if (report.verdict !== "clean") {
 - [Featured in](https://pompelmi.github.io/pompelmi/featured-in/)
 - [Translations](https://pompelmi.github.io/pompelmi/translations/)
 - [Examples index](./examples/README.md)
+- [Demo example](./examples/demo)
 - [Contributing](./CONTRIBUTING.md)
 - [Security](./SECURITY.md)
 - [Roadmap](./ROADMAP.md)
