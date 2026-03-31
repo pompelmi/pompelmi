@@ -44,12 +44,12 @@
   },
   "devDependencies": {
     "@fastify/multipart": "^9.0.3",
-    "@types/node": "^20.11.0",
-    "@vitest/coverage-v8": "2.1.9",
+    "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "4.1.2",
     "fastify": "^5.5.0",
     "file-type": "^18.7.0",
     "tsup": "^8.5.0",
-    "typescript": "^5.5.0",
+    "typescript": "^6.0.2",
     "unzipper": "^0.12.3",
     "vitest": "2.1.9"
   },
