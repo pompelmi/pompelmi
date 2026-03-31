@@ -6,9 +6,10 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 
 - Dependabot checks both `npm` and `github-actions` version updates daily.
 - Patch and minor updates are intended to appear quickly and stay eligible for the existing safe auto-merge flow.
-- Major updates remain manual and are intentionally delayed by about 7 days with Dependabot `cooldown`.
-- The configuration uses `cooldown` within each existing update block rather than overlapping schedule blocks for the same ecosystem and directory.
-- Cooldown delays major updates after a release appears; it does not guarantee that major PRs arrive on a specific weekday.
+- `npm` major updates remain manual and are intentionally delayed by about 7 days with Dependabot `cooldown`.
+- `github-actions` major updates also remain manual, but Dependabot does not currently accept semver cooldown settings for that ecosystem in this repository configuration.
+- The configuration avoids overlapping schedule blocks for the same ecosystem and directory.
+- For `npm`, cooldown delays major updates after a release appears; it does not guarantee that major PRs arrive on a specific weekday.
 
 ## What is auto-merged
 
