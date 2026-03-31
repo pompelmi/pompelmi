@@ -2,6 +2,14 @@
 
 This dependency automation system is active. It uses Dependabot plus GitHub Actions to keep development tooling current without turning routine maintenance into noisy npm releases.
 
+## How updates are paced
+
+- Dependabot checks both `npm` and `github-actions` version updates daily.
+- Patch and minor updates are intended to appear quickly and stay eligible for the existing safe auto-merge flow.
+- Major updates remain manual and are intentionally delayed by about 7 days with Dependabot `cooldown`.
+- The configuration uses `cooldown` within each existing update block rather than overlapping schedule blocks for the same ecosystem and directory.
+- Cooldown delays major updates after a release appears; it does not guarantee that major PRs arrive on a specific weekday.
+
 ## What is auto-merged
 
 - Only pull requests opened by `dependabot[bot]`.
@@ -14,7 +22,7 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 ## What is intentionally not auto-merged
 
 - Major dependency updates.
-- Major `github-actions` updates. These stay manual and outside the grouped auto-merge lane.
+- Major `github-actions` updates. These stay manual and outside the grouped auto-merge lane even though Dependabot now checks daily.
 - Production or runtime dependency updates.
 - Non-Dependabot pull requests.
 - Any pull request with failing required checks.
@@ -24,7 +32,7 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 
 - npm development dependency updates are intentionally split into smaller buckets to reduce CI blast radius.
 - Smaller patch and minor PRs are more likely to go fully green and auto-merge reliably after required checks pass.
-- Major npm development dependency updates remain outside the grouped auto-merge lane.
+- Major npm development dependency updates remain outside the grouped auto-merge lane and are delayed by cooldown before PRs appear.
 - `Lint` remains temporarily non-required until the existing baseline cleanup is finished. After that cleanup, `Lint` should become required too.
 
 ## Why maintenance GitHub releases exist

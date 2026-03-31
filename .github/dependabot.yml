@@ -4,20 +4,17 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
+      interval: "daily"
       time: "06:00"
       timezone: "UTC"
-    open-pull-requests-limit: 3
+    cooldown:
+      semver-major-days: 7
+    open-pull-requests-limit: 5
     labels:
       - dependencies
       - dev-deps
     allow:
       - dependency-type: "development"
-    ignore:
-      - dependency-name: "*"
-        update-types:
-          - "version-update:semver-major"
     groups:
       typescript-build-tooling:
         patterns:
@@ -117,11 +114,12 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "wednesday"
+      interval: "daily"
       time: "06:00"
       timezone: "UTC"
-    open-pull-requests-limit: 2
+    cooldown:
+      semver-major-days: 7
+    open-pull-requests-limit: 4
     labels:
       - dependencies
       - github-actions
