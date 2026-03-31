@@ -27,7 +27,7 @@
     "@rollup/plugin-babel": "^6.0.4",
     "@types/koa": "^2.15.0",
     "@types/react-dom": "^19.1.6",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "2.1.9",
     "astro": "^5.12.9",
     "autoprefixer": "^10.4.21",
