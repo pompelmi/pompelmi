@@ -1,4 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import type React from "react";
+import { useCallback, useRef, useState } from "react";
+
+type UploadResult = unknown;
 
 export interface UploadDropzoneProps {
   accept?: string;
@@ -6,7 +9,7 @@ export interface UploadDropzoneProps {
   action: string;
   /** Allow multiple files (default false) */
   multiple?: boolean;
-  onResult?: (data: any) => void;
+  onResult?: (data: UploadResult) => void;
   onError?: (error: Error) => void;
   onProgress?: (progress: number) => void;
   className?: string;
@@ -20,10 +23,17 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
   onResult,
   onError,
   onProgress,
-  className = ''
+  className = "",
 }) => {
   const [dragOver, setDragOver] = useState(false);
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+
+  const openFilePicker = useCallback(() => {
+    if (!loading) {
+      inputRef.current?.click();
+    }
+  }, [loading]);
 
   const handleUpload = useCallback(
     (files: FileList | File[]) => {
@@ -31,7 +41,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
       if (!fileList.length) return;
 
       if (!multiple && fileList.length > 1) {
-        onError?.(new Error('Multiple file upload not allowed'));
+        onError?.(new Error("Multiple file upload not allowed"));
         return;
       }
 
@@ -42,10 +52,10 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
       }
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append("file", file);
 
       const xhr = new XMLHttpRequest();
-      xhr.open('POST', action);
+      xhr.open("POST", action);
 
       xhr.upload.onprogress = (ev) => {
         if (ev.lengthComputable && onProgress) {
@@ -73,53 +83,62 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
       setLoading(true);
       xhr.send(formData);
     },
-    [action, maxSize, multiple, onResult, onError, onProgress]
+    [action, maxSize, multiple, onResult, onError, onProgress],
   );
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  const handleDrop: React.DragEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
     setDragOver(false);
-    if (e.dataTransfer.files) {
-      handleUpload(e.dataTransfer.files);
+    if (event.dataTransfer.files) {
+      handleUpload(event.dataTransfer.files);
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
+  const handleDragOver: React.DragEventHandler<HTMLButtonElement> = (event) => {
+    event.preventDefault();
     setDragOver(true);
   };
 
-  const handleDragLeave = () => setDragOver(false);
+  const handleDragLeave: React.DragEventHandler<HTMLButtonElement> = () => {
+    setDragOver(false);
+  };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      handleUpload(e.target.files);
+  const handleChange: React.ChangeEventHandler<HTMLInputElement> = (event) => {
+    if (event.target.files) {
+      handleUpload(event.target.files);
     }
   };
 
+  const handleClick: React.MouseEventHandler<HTMLButtonElement> = () => {
+    openFilePicker();
+  };
+
   return (
-    <div
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-      className={`relative flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
-        dragOver ? 'border-blue-600 bg-blue-50' : 'border-gray-300 bg-white'
-      } ${className}`}
-    >
+    <>
       <input
-        id="upload-dropzone-input"
         type="file"
         accept={accept}
         multiple={multiple}
+        ref={inputRef}
         onChange={handleChange}
         className="hidden"
       />
-      <label htmlFor="upload-dropzone-input" className="cursor-pointer">
-        {loading
-          ? 'Uploading…'
-          : 'Drag and drop a file here or click to choose one'}
-      </label>
-    </div>
+      <button
+        type="button"
+        disabled={loading}
+        onClick={handleClick}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        className={`relative flex w-full flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+          dragOver ? "border-blue-600 bg-blue-50" : "border-gray-300 bg-white"
+        } ${className}`}
+      >
+        <span className="cursor-pointer">
+          {loading ? "Uploading…" : "Drag and drop a file here or click to choose one"}
+        </span>
+      </button>
+    </>
   );
 };
 

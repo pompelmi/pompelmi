@@ -11,10 +11,6 @@
     "strict": true,
     "emitDeclarationOnly": true
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "src/presets.ts"
-  ]
+  "include": ["src"],
+  "exclude": ["src/presets.ts"]
 }

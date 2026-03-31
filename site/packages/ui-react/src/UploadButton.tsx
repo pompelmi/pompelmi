@@ -1,4 +1,7 @@
-import React, { useRef, useState } from 'react';
+import type React from "react";
+import { useRef, useState } from "react";
+
+type UploadResult = unknown;
 
 export interface UploadButtonProps {
   /** Acceptable MIME types, e.g. "image/*" */
@@ -8,7 +11,7 @@ export interface UploadButtonProps {
   /** Endpoint that will receive the file via POST */
   action: string;
   /** Called with the parsed JSON response on success */
-  onResult?: (data: any) => void;
+  onResult?: (data: UploadResult) => void;
   /** Called with an Error when something goes wrong */
   onError?: (error: Error) => void;
   /** Called with a 0–100 number during upload */
@@ -26,8 +29,8 @@ const UploadButton: React.FC<UploadButtonProps> = ({
   onResult,
   onError,
   onProgress,
-  className = '',
-  label = 'Upload file'
+  className = "",
+  label = "Upload file",
 }) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [loading, setLoading] = useState(false);
@@ -46,10 +49,10 @@ const UploadButton: React.FC<UploadButtonProps> = ({
     }
 
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append("file", file);
 
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', action);
+    xhr.open("POST", action);
 
     xhr.upload.onprogress = (ev) => {
       if (ev.lengthComputable && onProgress) {
@@ -93,7 +96,7 @@ const UploadButton: React.FC<UploadButtonProps> = ({
         disabled={loading}
         className="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
       >
-        {loading ? 'Uploading…' : label}
+        {loading ? "Uploading…" : label}
       </button>
     </div>
   );

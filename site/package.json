@@ -39,6 +39,7 @@
   },
   "scripts": {
     "build": "rollup -c",
+    "lint": "biome check package.json biome.json pnpm-workspace.yaml rollup.config.js tsconfig.json tsconfig.strict.json packages/ui-react/package.json packages/ui-react/tsconfig.json packages/ui-react/tsconfig.strict.json packages/ui-react/src website/astro.config.mjs website/package.json website/tsconfig.json website/tailwind.config.cjs website/postcss.config.cjs",
     "prepublishOnly": "npm run build && npm run pack:strict",
     "yara:node:smoke": "tsx scripts/yara-node-smoke.ts",
     "yara:int:smoke": "tsx scripts/yara-integration-smoke.ts",
