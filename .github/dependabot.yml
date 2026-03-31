@@ -6,6 +6,7 @@ multi-ecosystem-groups:
       interval: "daily"
       time: "06:00"
       timezone: "UTC"
+    open-pull-requests-limit: 1
     labels:
       - dependencies
 
@@ -14,7 +15,6 @@ updates:
     directory: "/"
     patterns: ["*"]
     multi-ecosystem-group: "daily-maintenance"
-    open-pull-requests-limit: 1
     allow:
       - dependency-type: "development"
 
@@ -22,4 +22,3 @@ updates:
     directory: "/"
     patterns: ["*"]
     multi-ecosystem-group: "daily-maintenance"
-    open-pull-requests-limit: 1

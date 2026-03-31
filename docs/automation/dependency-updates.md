@@ -6,7 +6,7 @@ Dependabot version updates now follow one consolidated daily maintenance stream:
 - That group checks daily at `06:00 UTC`.
 - `npm` remains limited to development dependencies only.
 - This creates one consolidated dependency PR flow for version updates.
-- `open-pull-requests-limit: 1` keeps version-update PRs to one open PR at a time.
+- `open-pull-requests-limit: 1` is enforced on the shared multi-ecosystem group, which keeps version-update PRs to one open PR at a time.
 - A single grouped PR can still contain multiple dependency and workflow updates from the same daily run.
 
 ## Auto-merge behavior
