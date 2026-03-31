@@ -15,11 +15,14 @@ export const cfg = {
   // Allowlist MIME (lo sniffing magic-bytes arriva nello step successivo)
   allowedMimeCsv: str(
     "ALLOW_MIME",
-    "image/png,image/jpeg,application/pdf,application/zip,text/plain,application/octet-stream"
+    "image/png,image/jpeg,application/pdf,application/zip,text/plain,application/octet-stream",
   ),
   // Politica fail-closed
-  failClosed: str("FAIL_CLOSED", "true") === "true"
+  failClosed: str("FAIL_CLOSED", "true") === "true",
 };
 export const allowedMime = new Set(
-  cfg.allowedMimeCsv.split(",").map(s => s.trim()).filter(Boolean)
+  cfg.allowedMimeCsv
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean),
 );

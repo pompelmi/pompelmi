@@ -162,7 +162,8 @@ export async function zipDeepInspection(
       }
 
       // 3) LFH vs CEN filename mismatch
-      const lfhOffset = (entry as any).relativeOffsetOfLocalHeader ?? (entry as any).relativeOffset ?? null;
+      const lfhOffset =
+        (entry as any).relativeOffsetOfLocalHeader ?? (entry as any).relativeOffset ?? null;
       if (lfhOffset != null) {
         const lfhName = readLFHName(buffer, lfhOffset, entry.generalPurposeBitFlag);
         if (lfhName && lfhName !== cenName) {

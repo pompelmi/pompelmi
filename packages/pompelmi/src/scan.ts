@@ -1,10 +1,15 @@
-import { Readable } from 'node:stream';
-import { promisify } from 'node:util';
-import { pipeline as _pipeline } from 'node:stream';
-import { scanStream } from './scanStream.js';
-import { analyzeSecurityRisks, detectPolyglot } from './magicBytes/index.js';
-import { applyPreset, type ScanOptionsWithPreset } from './presets/index.js';
-import { ReasonCode, inferReasonCode, type ReasonCodeInfo, getReasonCodeInfo, type Finding } from './reasonCodes.js';
+import { pipeline as _pipeline, Readable } from "node:stream";
+import { promisify } from "node:util";
+import { analyzeSecurityRisks, detectPolyglot } from "./magicBytes/index.js";
+import { applyPreset, type ScanOptionsWithPreset } from "./presets/index.js";
+import {
+  type Finding,
+  getReasonCodeInfo,
+  inferReasonCode,
+  ReasonCode,
+  type ReasonCodeInfo,
+} from "./reasonCodes.js";
+import { scanStream } from "./scanStream.js";
 
 const pipeline = promisify(_pipeline);
 
@@ -31,7 +36,7 @@ export interface ScanOptions {
 }
 
 /** Possible verdicts returned by the scanner. */
-export type Verdict = 'clean' | 'suspicious' | 'malicious';
+export type Verdict = "clean" | "suspicious" | "malicious";
 
 /**
  * Result object returned by {@link scan}.
@@ -93,7 +98,7 @@ export async function scan(
   opts: ScanOptionsWithPreset = {},
 ): Promise<ScanReport> {
   const start = Date.now();
-  
+
   // Apply preset if specified
   const options = applyPreset(opts);
 
@@ -106,7 +111,7 @@ export async function scan(
         maxBufferSize: options.maxBufferSize,
       });
     }
-    
+
     // Convert buffer/string to stream if useStreamScanner explicitly requested
     if (options.useStreamScanner) {
       const buffer = Buffer.isBuffer(input) ? input : Buffer.from(input);
@@ -122,41 +127,40 @@ export async function scan(
   let buffer: Buffer;
   if (Buffer.isBuffer(input)) {
     buffer = input;
-  } else if (typeof input === 'string') {
+  } else if (typeof input === "string") {
     buffer = Buffer.from(input);
   } else {
     // This branch should not be reached due to routing above,
     // but kept for safety - convert stream to buffer
     const chunks: Buffer[] = [];
-    for await (const chunk of (input as Readable)) {
+    for await (const chunk of input as Readable) {
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk));
     }
     buffer = Buffer.concat(chunks);
   }
 
   // ─── Naïve detection (EICAR signature) ───────────────────────────────────
-  const EICAR_SIGNATURE =
-    'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+  const EICAR_SIGNATURE = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*";
 
   const findings: string[] = [];
   const findingsWithReasons: Finding[] = [];
-  let verdict: Verdict = 'clean';
+  let verdict: Verdict = "clean";
 
   if (buffer.includes(EICAR_SIGNATURE)) {
-    findings.push('EICAR test signature');
+    findings.push("EICAR test signature");
     findingsWithReasons.push({
-      message: 'EICAR test signature',
+      message: "EICAR test signature",
       reasonCode: ReasonCode.MALWARE_EICAR_TEST,
     });
-    verdict = 'malicious';
+    verdict = "malicious";
   }
 
   // ─── Advanced Magic Bytes & Polyglot Detection ────────────────────────────
   const securityAnalysis = analyzeSecurityRisks(buffer);
-  
+
   if (securityAnalysis.suspicious) {
     findings.push(...securityAnalysis.reasons);
-    
+
     // Add findings with reason codes
     for (const reason of securityAnalysis.reasons) {
       const reasonCode = inferReasonCode(reason);
@@ -165,33 +169,33 @@ export async function scan(
         reasonCode,
       });
     }
-    
+
     // Upgrade verdict if not already malicious
-    if (verdict !== 'malicious') {
+    if (verdict !== "malicious") {
       // Polyglot files or images with embedded scripts are highly suspicious
       if (securityAnalysis.isPolyglot || securityAnalysis.hasEmbeddedScripts) {
-        verdict = 'suspicious';
+        verdict = "suspicious";
       }
-      
+
       // Executable files are automatically suspicious
       if (securityAnalysis.isExecutable) {
-        verdict = 'suspicious';
+        verdict = "suspicious";
       }
     }
   }
-  
+
   // Additional polyglot-specific analysis
   const polyglotResult = detectPolyglot(buffer);
-  if (polyglotResult.isPolyglot && !findings.some(f => f.includes('Polyglot'))) {
-    const message = `Polyglot file: ${polyglotResult.formats.join(', ')}`;
+  if (polyglotResult.isPolyglot && !findings.some((f) => f.includes("Polyglot"))) {
+    const message = `Polyglot file: ${polyglotResult.formats.join(", ")}`;
     findings.push(message);
     findingsWithReasons.push({
       message,
       reasonCode: ReasonCode.FILE_POLYGLOT,
       metadata: { formats: polyglotResult.formats },
     });
-    if (verdict === 'clean') {
-      verdict = 'suspicious';
+    if (verdict === "clean") {
+      verdict = "suspicious";
     }
   }
 

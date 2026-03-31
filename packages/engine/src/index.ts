@@ -1,27 +1,27 @@
-import Fastify from "fastify";
-import multipart from "@fastify/multipart";
 import cors from "@fastify/cors";
-import { cfg, allowedMime } from "./config";
-import { type ScanResult, resultJsonSchema } from "./schema";
+import multipart from "@fastify/multipart";
+import Fastify from "fastify";
+import { allowedMime, cfg } from "./config";
 import { hashAndDetect } from "./scanner/builtin";
+import { resultJsonSchema, type ScanResult } from "./schema";
 import { sniffMimeFromStream } from "./utils/sniff";
 
+export { zipDeepInspection } from "./scanner/zip-deep";
 // Esportiamo lo schema JSON per lo script "schema:json"
 export { resultJsonSchema } from "./schema";
-export { zipDeepInspection } from "./scanner/zip-deep";
 
 async function main() {
   const app = Fastify({
     logger: true,
     disableRequestLogging: true,
     requestTimeout: cfg.timeoutMs,
-    connectionTimeout: cfg.timeoutMs
+    connectionTimeout: cfg.timeoutMs,
   });
 
   await app.register(cors, { origin: cfg.corsOrigin });
   await app.register(multipart, {
     attachFieldsToBody: false,
-    limits: { fileSize: cfg.maxBytes, files: 1 }
+    limits: { fileSize: cfg.maxBytes, files: 1 },
   });
 
   app.get("/healthz", async () => ({ ok: true, version: "0.17.0-dev.6" }));
@@ -41,10 +41,10 @@ async function main() {
           matches: [],
           sha256: "",
           bytes: 0,
-          elapsedMs: 0
+          elapsedMs: 0,
         },
         reason: "magic_mime_disallowed",
-        error: null
+        error: null,
       };
       return reply.status(415).send(payload);
     }
@@ -53,10 +53,9 @@ async function main() {
     try {
       const { sha256, bytes, matches } = await hashAndDetect(file.file);
 
-      const verdict: ScanResult["result"]["verdict"] =
-        matches.some((m) => m.severity === "high")
-          ? "malicious"
-          : matches.length
+      const verdict: ScanResult["result"]["verdict"] = matches.some((m) => m.severity === "high")
+        ? "malicious"
+        : matches.length
           ? "suspicious"
           : "clean";
 
@@ -66,10 +65,10 @@ async function main() {
           matches,
           sha256,
           bytes,
-          elapsedMs: Date.now() - started
+          elapsedMs: Date.now() - started,
         },
         reason: matches.length ? "builtin_match" : undefined,
-        error: null
+        error: null,
       };
 
       const status = verdict === "clean" ? 200 : 422;
@@ -82,10 +81,10 @@ async function main() {
           matches: [],
           sha256: "",
           bytes: 0,
-          elapsedMs: Date.now() - started
+          elapsedMs: Date.now() - started,
         },
         reason: "engine_error",
-        error: e?.message ?? "scan_error"
+        error: e?.message ?? "scan_error",
       };
       return reply.status(500).send(res);
     }
@@ -101,13 +100,11 @@ main().catch((err) => {
 });
 
 // --- Added scanners (safe defaults) ---
-export { ExecutableDetector } from './scanners/executable-detector';
-export { PdfActionScanner } from './scanners/pdf-actions';
-export { SvgActiveContentScanner } from './scanners/svg-active';
-export { PolyglotMagicScanner } from './scanners/polyglot-magic';
-
-// --- Added: ZIP header integrity scanner ---
-export { ZipHeaderIntegrityScanner } from './scanners/zip-header-integrity';
-
+export { ExecutableDetector } from "./scanners/executable-detector";
 // --- Added: Office macro hints scanner ---
-export { OfficeMacroHintsScanner } from './scanners/office-macro-hints';
+export { OfficeMacroHintsScanner } from "./scanners/office-macro-hints";
+export { PdfActionScanner } from "./scanners/pdf-actions";
+export { PolyglotMagicScanner } from "./scanners/polyglot-magic";
+export { SvgActiveContentScanner } from "./scanners/svg-active";
+// --- Added: ZIP header integrity scanner ---
+export { ZipHeaderIntegrityScanner } from "./scanners/zip-header-integrity";

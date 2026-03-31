@@ -1,6 +1,6 @@
 // Tipi minimi per usare pompelmi nel middleware.
 // Quando il pacchetto "pompelmi" esporrà tipi ufficiali, potremo rimuovere questo file.
-declare module 'pompelmi' {
+declare module "pompelmi" {
   export type YaraMatch = {
     rule: string;
     tags?: string[];

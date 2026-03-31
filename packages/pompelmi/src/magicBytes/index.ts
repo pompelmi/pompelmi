@@ -1,3 +1,3 @@
-export * from './types.js';
-export * from './signatures.js';
-export * from './detector.js';
+export * from "./detector.js";
+export * from "./signatures.js";
+export * from "./types.js";

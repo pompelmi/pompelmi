@@ -1,4 +1,4 @@
-import type { ScanOptions } from '@pompelmi/core';
+import type { ScanOptions } from "@pompelmi/core";
 
 /**
  * Scanner interface compatible with the core scanner.
@@ -26,22 +26,24 @@ export interface PompelmiModuleAsyncOptions {
    * Modules to import that provide dependencies for the factory.
    */
   imports?: any[];
-  
+
   /**
    * Dependencies to inject into the factory function.
    */
   inject?: any[];
-  
+
   /**
    * Factory function that returns module options.
    */
   useFactory?: (...args: any[]) => Promise<PompelmiModuleOptions> | PompelmiModuleOptions;
-  
+
   /**
    * Class to use for providing options.
    */
-  useClass?: new (...args: any[]) => PompelmiModuleOptionsFactory;
-  
+  useClass?: new (
+    ...args: any[]
+  ) => PompelmiModuleOptionsFactory;
+
   /**
    * Existing provider to use for options.
    */
@@ -58,4 +60,4 @@ export interface PompelmiModuleOptionsFactory {
 /**
  * Token for injecting module options.
  */
-export const POMPELMI_MODULE_OPTIONS = Symbol('POMPELMI_MODULE_OPTIONS');
+export const POMPELMI_MODULE_OPTIONS = Symbol("POMPELMI_MODULE_OPTIONS");

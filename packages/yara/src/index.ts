@@ -12,22 +12,25 @@ export interface YaraMatch {
 export interface ScanResult {
   verdict: Verdict;
   engine: "yara";
-  tags: string[];        // compact reason tags (rule names, etc.)
-  matches: YaraMatch[];  // raw matches (best-effort parsed)
-  raw?: unknown;         // original CLI JSON (if available)
+  tags: string[]; // compact reason tags (rule names, etc.)
+  matches: YaraMatch[]; // raw matches (best-effort parsed)
+  raw?: unknown; // original CLI JSON (if available)
 }
 
 export interface ScannerLike {
   name: string;
-  scan: (bytes: Uint8Array | ArrayBuffer | Buffer, ctx?: { filename?: string; mime?: string }) => Promise<ScanResult>;
+  scan: (
+    bytes: Uint8Array | ArrayBuffer | Buffer,
+    ctx?: { filename?: string; mime?: string },
+  ) => Promise<ScanResult>;
 }
 
 export interface CreateYaraScannerOptions {
-  rulesPath: string | string[];               // path(s) to .yar files (globs are okay if your shell expands them)
-  yaraPath?: string;                          // default: "yara"
-  timeoutMs?: number;                         // soft timeout enforced from Node side (default 1500ms)
-  treatMatchAs?: Exclude<Verdict, "clean">;   // default: "suspicious"
-  ignoreRules?: string[];                     // drop matches for these rule names
+  rulesPath: string | string[]; // path(s) to .yar files (globs are okay if your shell expands them)
+  yaraPath?: string; // default: "yara"
+  timeoutMs?: number; // soft timeout enforced from Node side (default 1500ms)
+  treatMatchAs?: Exclude<Verdict, "clean">; // default: "suspicious"
+  ignoreRules?: string[]; // drop matches for these rule names
   externalVars?: Record<string, string | number | boolean>; // passed as -d name=value
 }
 
@@ -40,7 +43,7 @@ export function createYaraScanner(opts: CreateYaraScannerOptions): ScannerLike {
     timeoutMs = 1500,
     treatMatchAs = "suspicious",
     ignoreRules = [],
-    externalVars = {}
+    externalVars = {},
   } = opts;
 
   const rules = Array.isArray(rulesPath) ? rulesPath : [rulesPath];
@@ -54,7 +57,7 @@ export function createYaraScanner(opts: CreateYaraScannerOptions): ScannerLike {
       const argsBase = [
         // Print tags and metadata when not using JSON (harmless if JSON enabled)
         "--print-tags",
-        "--print-meta"
+        "--print-meta",
       ];
 
       // CLI timeout (seconds) if supported; Node-side timeout guards regardless
@@ -71,37 +74,51 @@ export function createYaraScanner(opts: CreateYaraScannerOptions): ScannerLike {
       let out = await runYaraOnce(yaraPath, argsJson, bytes, timeoutMs).catch(() => null);
 
       let parsed: { matches: YaraMatch[]; raw?: unknown } | null = null;
-      if (out && out.code !== 2) { // 0: matches; 1: no matches; 2: error
+      if (out && out.code !== 2) {
+        // 0: matches; 1: no matches; 2: error
         parsed = parseJsonOutput(out.stdout);
       }
 
       // If JSON failed or not supported, try text mode
       if (!parsed) {
-        out = await runYaraOnce(yaraPath, [...extVars, ...argsText], bytes, timeoutMs).catch((e) => e?.out ?? null);
+        out = await runYaraOnce(yaraPath, [...extVars, ...argsText], bytes, timeoutMs).catch(
+          (e) => e?.out ?? null,
+        );
         parsed = parseTextOutput(out?.stdout ?? "");
       }
 
-      const all = (parsed?.matches ?? []).filter(m => !ignoreRules.includes(m.rule));
+      const all = (parsed?.matches ?? []).filter((m) => !ignoreRules.includes(m.rule));
 
       // Escalate to malicious if a match declares severity/high/critical via tags or meta
       let verdict: Verdict = all.length ? treatMatchAs : "clean";
-      if (all.some(m =>
-        (m.meta && (m.meta["verdict"] === "malicious" || m.meta["severity"] === "high" || m.meta["severity"] === "critical")) ||
-        (m.tags?.includes("malicious") || m.tags?.includes("sev:high") || m.tags?.includes("sev:critical"))
-      )) {
+      if (
+        all.some(
+          (m) =>
+            (m.meta &&
+              (m.meta["verdict"] === "malicious" ||
+                m.meta["severity"] === "high" ||
+                m.meta["severity"] === "critical")) ||
+            m.tags?.includes("malicious") ||
+            m.tags?.includes("sev:high") ||
+            m.tags?.includes("sev:critical"),
+        )
+      ) {
         verdict = "malicious";
       }
 
-      const tags = all.slice(0, 10).flatMap(m => ["yara", m.rule, ...(m.tags ?? []).slice(0, 2)]).slice(0, 12);
+      const tags = all
+        .slice(0, 10)
+        .flatMap((m) => ["yara", m.rule, ...(m.tags ?? []).slice(0, 2)])
+        .slice(0, 12);
 
       return {
         verdict,
         engine: "yara",
         tags,
         matches: all,
-        raw: parsed?.raw
+        raw: parsed?.raw,
       };
-    }
+    },
   };
 }
 
@@ -113,7 +130,12 @@ function toBuffer(x: Uint8Array | ArrayBuffer | Buffer): Buffer {
 
 type ProcOut = { code: number; stdout: string; stderr: string };
 
-async function runYaraOnce(cmd: string, args: string[], bytes: Buffer, timeoutMs: number): Promise<ProcOut> {
+async function runYaraOnce(
+  cmd: string,
+  args: string[],
+  bytes: Buffer,
+  timeoutMs: number,
+): Promise<ProcOut> {
   return new Promise<ProcOut>((resolve, reject) => {
     const child = spawn(cmd, args, { stdio: ["pipe", "pipe", "pipe"] });
     const timer = setTimeout(() => {
@@ -125,8 +147,12 @@ async function runYaraOnce(cmd: string, args: string[], bytes: Buffer, timeoutMs
     let stderr = "";
     child.stdout.setEncoding("utf8");
     child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (d) => (stdout += d));
-    child.stderr.on("data", (d) => (stderr += d));
+    child.stdout.on("data", (d) => {
+      stdout += d;
+    });
+    child.stderr.on("data", (d) => {
+      stderr += d;
+    });
 
     child.on("error", (err) => {
       clearTimeout(timer);
@@ -142,22 +168,25 @@ async function runYaraOnce(cmd: string, args: string[], bytes: Buffer, timeoutMs
   });
 }
 
-function parseJsonOutput(stdout: string | null | undefined): { matches: YaraMatch[]; raw?: unknown } | null {
+function parseJsonOutput(
+  stdout: string | null | undefined,
+): { matches: YaraMatch[]; raw?: unknown } | null {
   if (!stdout) return { matches: [] };
   try {
     const data = JSON.parse(stdout);
     // Common shapes seen with -j: either an array of hits or an object with matches
-    const arr: any[] =
-      Array.isArray(data) ? data :
-      Array.isArray((data as any)?.matches) ? (data as any).matches :
-      [];
+    const arr: any[] = Array.isArray(data)
+      ? data
+      : Array.isArray((data as any)?.matches)
+        ? (data as any).matches
+        : [];
 
     const matches: YaraMatch[] = arr.map((m: any) => ({
       rule: m.rule ?? m.signature ?? "unknown_rule",
       namespace: m.namespace,
       tags: m.tags ?? [],
       meta: m.meta ?? {},
-      strings: Array.isArray(m.strings) ? m.strings : []
+      strings: Array.isArray(m.strings) ? m.strings : [],
     }));
     return { matches, raw: data };
   } catch {
@@ -168,7 +197,10 @@ function parseJsonOutput(stdout: string | null | undefined): { matches: YaraMatc
 function parseTextOutput(stdout: string): { matches: YaraMatch[] } {
   // Very tolerant parser: lines like "RULENAME <path or ->"
   const matches: YaraMatch[] = [];
-  const lines = stdout.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const lines = stdout
+    .split(/\r?\n/)
+    .map((l) => l.trim())
+    .filter(Boolean);
   for (const line of lines) {
     // grab the first token as rule name
     const rule = line.split(/\s+/)[0] ?? "unknown_rule";

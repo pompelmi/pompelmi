@@ -1,9 +1,9 @@
-import express from "express";
-import multer from "multer";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { scanBytes, STRICT_PUBLIC_UPLOAD } from "pompelmi";
+import express from "express";
+import multer from "multer";
+import { STRICT_PUBLIC_UPLOAD, scanBytes } from "pompelmi";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

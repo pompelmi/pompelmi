@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { Match } from "../schema";
+import type { Match } from "../schema";
 
 /**
  * Hash SHA-256 in streaming + semplice rilevazione EICAR.
@@ -25,7 +25,7 @@ export async function hashAndDetect(stream: NodeJS.ReadableStream) {
             rule: "EICAR",
             source: "builtin",
             severity: "high",
-            meta: { note: "EICAR string found" }
+            meta: { note: "EICAR string found" },
           });
         }
       }

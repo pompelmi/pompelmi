@@ -1,5 +1,5 @@
-import { createZipTraversalGuard } from '../scanners/zipTraversalGuard';
-import { scanPolyglot } from '../scanners/polyglotDetector';
+import { scanPolyglot } from "../scanners/polyglotDetector";
+import { createZipTraversalGuard } from "../scanners/zipTraversalGuard";
 
 /**
  * Factory to avoid circular imports with index.ts.
@@ -9,18 +9,18 @@ import { scanPolyglot } from '../scanners/polyglotDetector';
  *   });
  */
 export function createProductionScannerFactory(deps: {
-  composeScanners: any,
-  createZipBombGuard: any,
-  CommonHeuristicsScanner: any
+  composeScanners: any;
+  createZipBombGuard: any;
+  CommonHeuristicsScanner: any;
 }) {
   const { composeScanners, createZipBombGuard, CommonHeuristicsScanner } = deps;
   return composeScanners(
     [
-      ['zip-bomb', createZipBombGuard()],
-      ['zip-traversal', createZipTraversalGuard()],
-      ['heuristics', CommonHeuristicsScanner],
-      ['polyglot', { scan: scanPolyglot }],
+      ["zip-bomb", createZipBombGuard()],
+      ["zip-traversal", createZipTraversalGuard()],
+      ["heuristics", CommonHeuristicsScanner],
+      ["polyglot", { scan: scanPolyglot }],
     ],
-    { parallel: false, stopOn: 'suspicious', tagSourceName: true, timeoutMsPerScanner: 2000 }
+    { parallel: false, stopOn: "suspicious", tagSourceName: true, timeoutMsPerScanner: 2000 },
   );
 }

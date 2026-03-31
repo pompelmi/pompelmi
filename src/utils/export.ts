@@ -3,9 +3,9 @@
  * @module utils/export
  */
 
-import type { ScanReport } from '../types';
+import type { ScanReport } from "../types";
 
-export type ExportFormat = 'json' | 'csv' | 'markdown' | 'html' | 'sarif';
+export type ExportFormat = "json" | "csv" | "markdown" | "html" | "sarif";
 
 export interface ExportOptions {
   /** Include detailed match information */
@@ -25,23 +25,19 @@ export class ScanResultExporter {
    */
   toJSON(reports: ScanReport | ScanReport[], options: ExportOptions = {}): string {
     const data = Array.isArray(reports) ? reports : [reports];
-    
+
     if (!options.includeDetails) {
       // Simplified output
-      const simplified = data.map(r => ({
+      const simplified = data.map((r) => ({
         verdict: r.verdict,
         file: r.file?.name,
         matches: r.matches.length,
         durationMs: r.durationMs,
       }));
-      return options.prettyPrint 
-        ? JSON.stringify(simplified, null, 2)
-        : JSON.stringify(simplified);
+      return options.prettyPrint ? JSON.stringify(simplified, null, 2) : JSON.stringify(simplified);
     }
 
-    return options.prettyPrint 
-      ? JSON.stringify(data, null, 2)
-      : JSON.stringify(data);
+    return options.prettyPrint ? JSON.stringify(data, null, 2) : JSON.stringify(data);
   }
 
   /**
@@ -49,43 +45,43 @@ export class ScanResultExporter {
    */
   toCSV(reports: ScanReport | ScanReport[], options: ExportOptions = {}): string {
     const data = Array.isArray(reports) ? reports : [reports];
-    
+
     const headers = [
-      'filename',
-      'verdict',
-      'matches_count',
-      'file_size',
-      'mime_type',
-      'duration_ms',
-      'engine',
+      "filename",
+      "verdict",
+      "matches_count",
+      "file_size",
+      "mime_type",
+      "duration_ms",
+      "engine",
     ];
 
     if (options.includeDetails) {
-      headers.push('reasons', 'match_rules');
+      headers.push("reasons", "match_rules");
     }
 
-    const rows = data.map(report => {
+    const rows = data.map((report) => {
       const row = [
-        this.escapeCsv(report.file?.name || 'unknown'),
+        this.escapeCsv(report.file?.name || "unknown"),
         report.verdict,
         report.matches.length.toString(),
         (report.file?.size || 0).toString(),
-        this.escapeCsv(report.file?.mimeType || 'unknown'),
+        this.escapeCsv(report.file?.mimeType || "unknown"),
         (report.durationMs || 0).toString(),
-        report.engine || 'unknown',
+        report.engine || "unknown",
       ];
 
       if (options.includeDetails) {
         row.push(
-          this.escapeCsv((report.reasons || []).join('; ')),
-          this.escapeCsv(report.matches.map(m => m.rule).join('; '))
+          this.escapeCsv((report.reasons || []).join("; ")),
+          this.escapeCsv(report.matches.map((m) => m.rule).join("; ")),
         );
       }
 
-      return row.join(',');
+      return row.join(",");
     });
 
-    return [headers.join(','), ...rows].join('\n');
+    return [headers.join(","), ...rows].join("\n");
   }
 
   /**
@@ -93,41 +89,41 @@ export class ScanResultExporter {
    */
   toMarkdown(reports: ScanReport | ScanReport[], options: ExportOptions = {}): string {
     const data = Array.isArray(reports) ? reports : [reports];
-    
-    let md = '# Scan Results\n\n';
-    md += `**Total Scans:** ${data.length}\n\n`;
-    
-    const clean = data.filter(r => r.verdict === 'clean').length;
-    const suspicious = data.filter(r => r.verdict === 'suspicious').length;
-    const malicious = data.filter(r => r.verdict === 'malicious').length;
 
-    md += '## Summary\n\n';
+    let md = "# Scan Results\n\n";
+    md += `**Total Scans:** ${data.length}\n\n`;
+
+    const clean = data.filter((r) => r.verdict === "clean").length;
+    const suspicious = data.filter((r) => r.verdict === "suspicious").length;
+    const malicious = data.filter((r) => r.verdict === "malicious").length;
+
+    md += "## Summary\n\n";
     md += `- ✅ Clean: ${clean}\n`;
     md += `- ⚠️ Suspicious: ${suspicious}\n`;
     md += `- ❌ Malicious: ${malicious}\n\n`;
 
-    md += '## Detailed Results\n\n';
-    
+    md += "## Detailed Results\n\n";
+
     for (const report of data) {
-      const icon = report.verdict === 'clean' ? '✅' : report.verdict === 'suspicious' ? '⚠️' : '❌';
-      md += `### ${icon} ${report.file?.name || 'Unknown'}\n\n`;
+      const icon = report.verdict === "clean" ? "✅" : report.verdict === "suspicious" ? "⚠️" : "❌";
+      md += `### ${icon} ${report.file?.name || "Unknown"}\n\n`;
       md += `- **Verdict:** ${report.verdict}\n`;
       md += `- **Size:** ${this.formatBytes(report.file?.size || 0)}\n`;
-      md += `- **MIME Type:** ${report.file?.mimeType || 'unknown'}\n`;
+      md += `- **MIME Type:** ${report.file?.mimeType || "unknown"}\n`;
       md += `- **Duration:** ${report.durationMs || 0}ms\n`;
       md += `- **Matches:** ${report.matches.length}\n`;
 
       if (options.includeDetails && report.matches.length > 0) {
-        md += '\n**Match Details:**\n';
+        md += "\n**Match Details:**\n";
         for (const match of report.matches) {
           md += `- ${match.rule}`;
           if (match.tags && match.tags.length > 0) {
-            md += ` (${match.tags.join(', ')})`;
+            md += ` (${match.tags.join(", ")})`;
           }
-          md += '\n';
+          md += "\n";
         }
       }
-      md += '\n';
+      md += "\n";
     }
 
     return md;
@@ -140,20 +136,20 @@ export class ScanResultExporter {
   toSARIF(reports: ScanReport | ScanReport[], options: ExportOptions = {}): string {
     const data = Array.isArray(reports) ? reports : [reports];
 
-    const results = data.flatMap(report => {
-      if (report.verdict === 'clean') return [];
+    const results = data.flatMap((report) => {
+      if (report.verdict === "clean") return [];
 
-      return report.matches.map(match => ({
+      return report.matches.map((match) => ({
         ruleId: match.rule,
-        level: report.verdict === 'malicious' ? 'error' : 'warning',
+        level: report.verdict === "malicious" ? "error" : "warning",
         message: {
-          text: `${match.rule} detected in ${report.file?.name || 'unknown file'}`,
+          text: `${match.rule} detected in ${report.file?.name || "unknown file"}`,
         },
         locations: [
           {
             physicalLocation: {
               artifactLocation: {
-                uri: report.file?.name || 'unknown',
+                uri: report.file?.name || "unknown",
               },
             },
           },
@@ -166,15 +162,16 @@ export class ScanResultExporter {
     });
 
     const sarif = {
-      version: '2.1.0',
-      $schema: 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+      version: "2.1.0",
+      $schema:
+        "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
       runs: [
         {
           tool: {
             driver: {
-              name: 'Pompelmi',
-              version: '0.29.0',
-              informationUri: 'https://pompelmi.github.io/pompelmi/',
+              name: "Pompelmi",
+              version: "0.29.0",
+              informationUri: "https://pompelmi.github.io/pompelmi/",
             },
           },
           results,
@@ -182,9 +179,7 @@ export class ScanResultExporter {
       ],
     };
 
-    return options.prettyPrint
-      ? JSON.stringify(sarif, null, 2)
-      : JSON.stringify(sarif);
+    return options.prettyPrint ? JSON.stringify(sarif, null, 2) : JSON.stringify(sarif);
   }
 
   /**
@@ -192,10 +187,10 @@ export class ScanResultExporter {
    */
   toHTML(reports: ScanReport | ScanReport[], options: ExportOptions = {}): string {
     const data = Array.isArray(reports) ? reports : [reports];
-    
-    const clean = data.filter(r => r.verdict === 'clean').length;
-    const suspicious = data.filter(r => r.verdict === 'suspicious').length;
-    const malicious = data.filter(r => r.verdict === 'malicious').length;
+
+    const clean = data.filter((r) => r.verdict === "clean").length;
+    const suspicious = data.filter((r) => r.verdict === "suspicious").length;
+    const malicious = data.filter((r) => r.verdict === "malicious").length;
 
     let html = `<!DOCTYPE html>
 <html lang="en">
@@ -229,11 +224,11 @@ export class ScanResultExporter {
     for (const report of data) {
       const statusClass = report.verdict;
       html += `<div class="result ${statusClass}">`;
-      html += `<h3>${this.escapeHtml(report.file?.name || 'Unknown')}</h3>`;
+      html += `<h3>${this.escapeHtml(report.file?.name || "Unknown")}</h3>`;
       html += `<table>`;
       html += `<tr><th>Verdict</th><td>${report.verdict.toUpperCase()}</td></tr>`;
       html += `<tr><th>Size</th><td>${this.formatBytes(report.file?.size || 0)}</td></tr>`;
-      html += `<tr><th>MIME Type</th><td>${this.escapeHtml(report.file?.mimeType || 'unknown')}</td></tr>`;
+      html += `<tr><th>MIME Type</th><td>${this.escapeHtml(report.file?.mimeType || "unknown")}</td></tr>`;
       html += `<tr><th>Duration</th><td>${report.durationMs || 0}ms</td></tr>`;
       html += `<tr><th>Matches</th><td>${report.matches.length}</td></tr>`;
       html += `</table>`;
@@ -243,7 +238,7 @@ export class ScanResultExporter {
         for (const match of report.matches) {
           html += `<li><strong>${this.escapeHtml(match.rule)}</strong>`;
           if (match.tags && match.tags.length > 0) {
-            html += ` ${match.tags.map(tag => `<span class="badge">${this.escapeHtml(tag)}</span>`).join('')}`;
+            html += ` ${match.tags.map((tag) => `<span class="badge">${this.escapeHtml(tag)}</span>`).join("")}`;
           }
           html += `</li>`;
         }
@@ -259,17 +254,21 @@ export class ScanResultExporter {
   /**
    * Export to specified format
    */
-  export(reports: ScanReport | ScanReport[], format: ExportFormat, options: ExportOptions = {}): string {
+  export(
+    reports: ScanReport | ScanReport[],
+    format: ExportFormat,
+    options: ExportOptions = {},
+  ): string {
     switch (format) {
-      case 'json':
+      case "json":
         return this.toJSON(reports, options);
-      case 'csv':
+      case "csv":
         return this.toCSV(reports, options);
-      case 'markdown':
+      case "markdown":
         return this.toMarkdown(reports, options);
-      case 'html':
+      case "html":
         return this.toHTML(reports, options);
-      case 'sarif':
+      case "sarif":
         return this.toSARIF(reports, options);
       default:
         throw new Error(`Unsupported export format: ${format}`);
@@ -277,7 +276,7 @@ export class ScanResultExporter {
   }
 
   private escapeCsv(value: string): string {
-    if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    if (value.includes(",") || value.includes('"') || value.includes("\n")) {
       return `"${value.replace(/"/g, '""')}"`;
     }
     return value;
@@ -285,19 +284,19 @@ export class ScanResultExporter {
 
   private escapeHtml(value: string): string {
     return value
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;');
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   private formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 Bytes';
+    if (bytes === 0) return "0 Bytes";
     const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const sizes = ["Bytes", "KB", "MB", "GB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / k ** i) * 100) / 100 + " " + sizes[i];
   }
 }
 
@@ -307,7 +306,7 @@ export class ScanResultExporter {
 export function exportScanResults(
   reports: ScanReport | ScanReport[],
   format: ExportFormat,
-  options?: ExportOptions
+  options?: ExportOptions,
 ): string {
   const exporter = new ScanResultExporter();
   return exporter.export(reports, format, options);

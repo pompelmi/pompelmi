@@ -1,18 +1,17 @@
-import { existsSync, statSync } from 'node:fs';
-import { readdir } from 'node:fs/promises';
-import { join, extname, relative } from 'node:path';
-import { createReadStream } from 'node:fs';
-import { scan } from '@pompelmi/core';
-import type { ScanReport } from '@pompelmi/core';
-import { formatTable, formatJson, formatSummary } from '../formatters/index.js';
-import * as pc from 'picocolors';
+import { createReadStream, existsSync, statSync } from "node:fs";
+import { readdir } from "node:fs/promises";
+import { extname, join, relative } from "node:path";
+import type { ScanReport } from "@pompelmi/core";
+import { scan } from "@pompelmi/core";
+import * as pc from "picocolors";
+import { formatJson, formatSummary, formatTable } from "../formatters/index.js";
 
 export interface ScanOptions {
   recursive: boolean;
-  format: 'table' | 'json' | 'summary';
+  format: "table" | "json" | "summary";
   ext?: string | string[];
   maxSize: number;
-  failOn: 'malicious' | 'suspicious' | 'any' | 'never';
+  failOn: "malicious" | "suspicious" | "any" | "never";
   quiet: boolean;
   color: boolean;
   stream: boolean;
@@ -21,7 +20,7 @@ export interface ScanOptions {
 export interface ScanResult {
   file: string;
   size: number;
-  verdict: 'clean' | 'suspicious' | 'malicious';
+  verdict: "clean" | "suspicious" | "malicious";
   findings: string[];
   durationMs: number;
   error?: string;
@@ -30,9 +29,9 @@ export interface ScanResult {
 /**
  * Main scan command handler
  */
-export async function scanCommand(directory: string = '.', options: ScanOptions) {
+export async function scanCommand(directory: string = ".", options: ScanOptions) {
   const startTime = Date.now();
-  
+
   // Validate directory
   if (!existsSync(directory)) {
     console.error(pc.red(`Error: Directory not found: ${directory}`));
@@ -48,18 +47,18 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
   // Parse extensions filter
   const extensions = options.ext
     ? Array.isArray(options.ext)
-      ? options.ext.map((e: string) => e.trim().toLowerCase().replace(/^\./, ''))
-      : options.ext.split(',').map((e: string) => e.trim().toLowerCase().replace(/^\./, ''))
+      ? options.ext.map((e: string) => e.trim().toLowerCase().replace(/^\./, ""))
+      : options.ext.split(",").map((e: string) => e.trim().toLowerCase().replace(/^\./, ""))
     : undefined;
 
   if (!options.quiet) {
-    console.log(pc.cyan('🔍 Pompelmi File Scanner'));
-    console.log(pc.dim('─'.repeat(60)));
+    console.log(pc.cyan("🔍 Pompelmi File Scanner"));
+    console.log(pc.dim("─".repeat(60)));
     console.log(`📁 Scanning: ${directory}`);
     if (options.recursive) console.log(`🔄 Mode: Recursive`);
-    if (extensions) console.log(`📋 Extensions: ${extensions.join(', ')}`);
-    console.log(pc.dim('─'.repeat(60)));
-    console.log('');
+    if (extensions) console.log(`📋 Extensions: ${extensions.join(", ")}`);
+    console.log(pc.dim("─".repeat(60)));
+    console.log("");
   }
 
   // Collect files to scan
@@ -68,7 +67,7 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
     : await collectFiles(directory, options.recursive, extensions, options.maxSize);
 
   if (filesToScan.length === 0) {
-    console.log(pc.yellow('⚠️  No files found to scan'));
+    console.log(pc.yellow("⚠️  No files found to scan"));
     process.exit(0);
   }
 
@@ -82,9 +81,13 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
 
   for (const filePath of filesToScan) {
     scannedCount++;
-    
-    if (!options.quiet && options.format === 'table') {
-      process.stdout.write(pc.dim(`[${scannedCount}/${filesToScan.length}] Scanning ${relative(directory, filePath)}...`));
+
+    if (!options.quiet && options.format === "table") {
+      process.stdout.write(
+        pc.dim(
+          `[${scannedCount}/${filesToScan.length}] Scanning ${relative(directory, filePath)}...`,
+        ),
+      );
     }
 
     try {
@@ -92,11 +95,13 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
       const result = await scanFile(filePath, fileStats.size, options);
       results.push(result);
 
-      if (!options.quiet && options.format === 'table') {
-        const statusIcon = 
-          result.verdict === 'malicious' ? pc.red('✗') :
-          result.verdict === 'suspicious' ? pc.yellow('⚠') :
-          pc.green('✓');
+      if (!options.quiet && options.format === "table") {
+        const statusIcon =
+          result.verdict === "malicious"
+            ? pc.red("✗")
+            : result.verdict === "suspicious"
+              ? pc.yellow("⚠")
+              : pc.green("✓");
         process.stdout.write(`\r${statusIcon} ${relative(directory, filePath)}\n`);
       }
     } catch (error) {
@@ -104,14 +109,16 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
       results.push({
         file: filePath,
         size: 0,
-        verdict: 'clean',
+        verdict: "clean",
         findings: [],
         durationMs: 0,
         error: errorMessage,
       });
-      
-      if (!options.quiet && options.format === 'table') {
-        process.stdout.write(`\r${pc.red('✗')} ${relative(directory, filePath)} - ${pc.red('Error')}\n`);
+
+      if (!options.quiet && options.format === "table") {
+        process.stdout.write(
+          `\r${pc.red("✗")} ${relative(directory, filePath)} - ${pc.red("Error")}\n`,
+        );
       }
     }
   }
@@ -119,36 +126,36 @@ export async function scanCommand(directory: string = '.', options: ScanOptions)
   // Calculate summary statistics
   const summary = {
     total: results.length,
-    clean: results.filter(r => r.verdict === 'clean' && !r.error).length,
-    suspicious: results.filter(r => r.verdict === 'suspicious').length,
-    malicious: results.filter(r => r.verdict === 'malicious').length,
-    errors: results.filter(r => r.error).length,
+    clean: results.filter((r) => r.verdict === "clean" && !r.error).length,
+    suspicious: results.filter((r) => r.verdict === "suspicious").length,
+    malicious: results.filter((r) => r.verdict === "malicious").length,
+    errors: results.filter((r) => r.error).length,
     totalDurationMs: Date.now() - startTime,
   };
 
   // Output results
-  if (!options.quiet || options.format !== 'table') {
-    console.log('');
+  if (!options.quiet || options.format !== "table") {
+    console.log("");
   }
 
   switch (options.format) {
-    case 'json':
+    case "json":
       console.log(formatJson(results, summary, directory));
       break;
-    case 'summary':
+    case "summary":
       console.log(formatSummary(results, summary, directory));
       break;
-    case 'table':
+    case "table":
     default:
       console.log(formatTable(results, summary, directory));
       break;
   }
 
   // Determine exit code based on failOn option
-  const shouldFail = 
-    (options.failOn === 'malicious' && summary.malicious > 0) ||
-    (options.failOn === 'suspicious' && (summary.suspicious > 0 || summary.malicious > 0)) ||
-    (options.failOn === 'any' && (summary.suspicious > 0 || summary.malicious > 0));
+  const shouldFail =
+    (options.failOn === "malicious" && summary.malicious > 0) ||
+    (options.failOn === "suspicious" && (summary.suspicious > 0 || summary.malicious > 0)) ||
+    (options.failOn === "any" && (summary.suspicious > 0 || summary.malicious > 0));
 
   if (shouldFail) {
     process.exit(1);
@@ -175,7 +182,7 @@ async function collectFiles(
       const fullPath = join(dir, entry.name);
 
       // Skip hidden files and node_modules
-      if (entry.name.startsWith('.') || entry.name === 'node_modules') {
+      if (entry.name.startsWith(".") || entry.name === "node_modules") {
         continue;
       }
 
@@ -230,7 +237,7 @@ async function scanFile(
     file: filePath,
     size: fileSize,
     verdict: result.verdict,
-    findings: (result.matches || []).map(m => m.rule),
+    findings: (result.matches || []).map((m) => m.rule),
     durationMs: result.durationMs,
   };
 }

@@ -1,12 +1,12 @@
 /** Decompilation-specific types for Pompelmi */
 
-export type DecompilationEngine = 'binaryninja-hlil' | 'ghidra-pcode';
+export type DecompilationEngine = "binaryninja-hlil" | "ghidra-pcode";
 
-export type AnalysisDepth = 'minimal' | 'basic' | 'deep';
+export type AnalysisDepth = "minimal" | "basic" | "deep";
 
 export interface DecompilationMatch {
   rule: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: "low" | "medium" | "high" | "critical";
   engine: DecompilationEngine;
   confidence: number; // 0.0 to 1.0
   meta?: {
@@ -110,39 +110,39 @@ export interface DecompilationOptions {
 export interface SuspiciousPattern {
   name: string;
   description: string;
-  severity: 'low' | 'medium' | 'high' | 'critical';
+  severity: "low" | "medium" | "high" | "critical";
   pattern: RegExp | string | ((instruction: any) => boolean);
 }
 
 export const SUSPICIOUS_PATTERNS: SuspiciousPattern[] = [
   {
-    name: 'syscall_direct',
-    description: 'Direct system call without library wrapper',
-    severity: 'medium',
-    pattern: /syscall|sysenter|int\s+0x80/i
+    name: "syscall_direct",
+    description: "Direct system call without library wrapper",
+    severity: "medium",
+    pattern: /syscall|sysenter|int\s+0x80/i,
   },
   {
-    name: 'process_injection',
-    description: 'Process injection techniques',
-    severity: 'high',
-    pattern: /CreateRemoteThread|WriteProcessMemory|VirtualAllocEx/i
+    name: "process_injection",
+    description: "Process injection techniques",
+    severity: "high",
+    pattern: /CreateRemoteThread|WriteProcessMemory|VirtualAllocEx/i,
   },
   {
-    name: 'anti_debug',
-    description: 'Anti-debugging techniques',
-    severity: 'medium',
-    pattern: /IsDebuggerPresent|CheckRemoteDebuggerPresent|OutputDebugString/i
+    name: "anti_debug",
+    description: "Anti-debugging techniques",
+    severity: "medium",
+    pattern: /IsDebuggerPresent|CheckRemoteDebuggerPresent|OutputDebugString/i,
   },
   {
-    name: 'obfuscation_xor',
-    description: 'XOR-based obfuscation pattern',
-    severity: 'medium',
-    pattern: /xor.*0x[0-9a-f]+.*xor/i
+    name: "obfuscation_xor",
+    description: "XOR-based obfuscation pattern",
+    severity: "medium",
+    pattern: /xor.*0x[0-9a-f]+.*xor/i,
   },
   {
-    name: 'crypto_constants',
-    description: 'Cryptographic constants',
-    severity: 'low',
-    pattern: /0x67452301|0xefcdab89|0x98badcfe|0x10325476/i
-  }
+    name: "crypto_constants",
+    description: "Cryptographic constants",
+    severity: "low",
+    pattern: /0x67452301|0xefcdab89|0x98badcfe|0x10325476/i,
+  },
 ];

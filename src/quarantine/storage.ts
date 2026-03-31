@@ -12,10 +12,10 @@
  * @module quarantine/storage
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as crypto from 'crypto';
-import type { QuarantineEntry, QuarantineFilter } from './types';
+import * as crypto from "crypto";
+import * as fs from "fs";
+import * as path from "path";
+import type { QuarantineEntry, QuarantineFilter } from "./types";
 
 // ── Adapter interface ─────────────────────────────────────────────────────────
 
@@ -85,8 +85,8 @@ export class FilesystemQuarantineStorage implements QuarantineStorage {
   private readonly metaDir: string;
 
   constructor(options: FilesystemQuarantineStorageOptions) {
-    this.filesDir = path.join(options.dir, 'files');
-    this.metaDir = path.join(options.dir, 'meta');
+    this.filesDir = path.join(options.dir, "files");
+    this.metaDir = path.join(options.dir, "meta");
     if (options.createIfMissing !== false) {
       fs.mkdirSync(this.filesDir, { recursive: true });
       fs.mkdirSync(this.metaDir, { recursive: true });
@@ -95,7 +95,7 @@ export class FilesystemQuarantineStorage implements QuarantineStorage {
 
   async saveFile(id: string, bytes: Uint8Array): Promise<string> {
     // Use a safe, collision-resistant filename derived from the entry id.
-    const storageKey = `${id}-${crypto.randomBytes(4).toString('hex')}`;
+    const storageKey = `${id}-${crypto.randomBytes(4).toString("hex")}`;
     const filePath = path.join(this.filesDir, storageKey);
     await fs.promises.writeFile(filePath, bytes);
     return storageKey;
@@ -113,18 +113,20 @@ export class FilesystemQuarantineStorage implements QuarantineStorage {
 
   async deleteFile(storageKey: string): Promise<void> {
     const filePath = path.join(this.filesDir, safeBasename(storageKey));
-    await fs.promises.unlink(filePath).catch(() => {/* already gone */});
+    await fs.promises.unlink(filePath).catch(() => {
+      /* already gone */
+    });
   }
 
   async saveEntry(entry: QuarantineEntry): Promise<void> {
     const metaPath = path.join(this.metaDir, `${safeBasename(entry.id)}.json`);
-    await fs.promises.writeFile(metaPath, JSON.stringify(entry, null, 2), 'utf8');
+    await fs.promises.writeFile(metaPath, JSON.stringify(entry, null, 2), "utf8");
   }
 
   async getEntry(id: string): Promise<QuarantineEntry | null> {
     const metaPath = path.join(this.metaDir, `${safeBasename(id)}.json`);
     try {
-      const raw = await fs.promises.readFile(metaPath, 'utf8');
+      const raw = await fs.promises.readFile(metaPath, "utf8");
       return JSON.parse(raw) as QuarantineEntry;
     } catch {
       return null;
@@ -144,9 +146,9 @@ export class FilesystemQuarantineStorage implements QuarantineStorage {
     const entries: QuarantineEntry[] = [];
 
     for (const file of files) {
-      if (!file.endsWith('.json')) continue;
+      if (!file.endsWith(".json")) continue;
       try {
-        const raw = await fs.promises.readFile(path.join(this.metaDir, file), 'utf8');
+        const raw = await fs.promises.readFile(path.join(this.metaDir, file), "utf8");
         entries.push(JSON.parse(raw) as QuarantineEntry);
       } catch {
         // Skip unreadable entries.
@@ -169,7 +171,7 @@ export class FilesystemQuarantineStorage implements QuarantineStorage {
  * user-supplied or derived keys as filenames.
  */
 function safeBasename(key: string): string {
-  return path.basename(key).replace(/[^a-zA-Z0-9._-]/g, '_');
+  return path.basename(key).replace(/[^a-zA-Z0-9._-]/g, "_");
 }
 
 function applyFilter(entries: QuarantineEntry[], filter?: QuarantineFilter): QuarantineEntry[] {

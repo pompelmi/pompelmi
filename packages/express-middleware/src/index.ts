@@ -1,7 +1,7 @@
-import type { RequestHandler } from 'express';
-import * as path from 'node:path';
+import * as path from "node:path";
+import type { RequestHandler } from "express";
 
-type Severity = 'clean' | 'suspicious' | 'malicious';
+type Severity = "clean" | "suspicious" | "malicious";
 
 export interface ScanResult {
   severity: Severity;
@@ -31,20 +31,18 @@ export interface UploadGuardOptions {
   scanner?: ScannerFn;
 }
 
-type MulterFile =
-  & FileMeta
-  & {
-    buffer?: Buffer;
-    path?: string;
-  };
+type MulterFile = FileMeta & {
+  buffer?: Buffer;
+  path?: string;
+};
 
 function asScannerFn(scanner?: ScannerFn) {
   if (!scanner) return null;
-  return typeof scanner === 'function' ? scanner : scanner.scan.bind(scanner);
+  return typeof scanner === "function" ? scanner : scanner.scan.bind(scanner);
 }
 
 function extLower(name: string) {
-  const e = path.extname(name || '').replace(/^\./, '');
+  const e = path.extname(name || "").replace(/^\./, "");
   return e.toLowerCase();
 }
 
@@ -54,7 +52,7 @@ function collectMulterFiles(req: any): MulterFile[] {
 
   if (Array.isArray(req.files)) {
     for (const f of req.files) files.push(f as MulterFile);
-  } else if (req.files && typeof req.files === 'object') {
+  } else if (req.files && typeof req.files === "object") {
     for (const key of Object.keys(req.files)) {
       const v = (req.files as Record<string, unknown>)[key];
       if (Array.isArray(v)) for (const f of v) files.push(f as MulterFile);
@@ -75,10 +73,10 @@ export function createUploadGuard(opts: UploadGuardOptions): RequestHandler {
     includeExtensions = [],
     allowedMimeTypes = [],
     maxFileSizeBytes = Number.MAX_SAFE_INTEGER,
-    stopOn = 'suspicious',
+    stopOn = "suspicious",
     failClosed = true,
     onScanEvent,
-    scanner
+    scanner,
   } = opts;
 
   const scan = asScannerFn(scanner);
@@ -88,14 +86,14 @@ export function createUploadGuard(opts: UploadGuardOptions): RequestHandler {
       const files = collectMulterFiles(req);
 
       if (!files.length) {
-        (req as any).pompelmi = { files: [], results: [], verdict: 'clean' as Severity };
+        (req as any).pompelmi = { files: [], results: [], verdict: "clean" as Severity };
         return next();
       }
 
       for (const f of files) {
-        if (typeof f.size === 'number' && f.size > maxFileSizeBytes) {
+        if (typeof f.size === "number" && f.size > maxFileSizeBytes) {
           return res.status(422).json({
-            error: 'file_too_large',
+            error: "file_too_large",
             message: `File "\${f.originalname}" exceeds max allowed size`,
           });
         }
@@ -104,16 +102,16 @@ export function createUploadGuard(opts: UploadGuardOptions): RequestHandler {
           const e = extLower(f.originalname);
           if (!includeExtensions.includes(e)) {
             return res.status(422).json({
-              error: 'extension_not_allowed',
+              error: "extension_not_allowed",
               message: `File "\${f.originalname}" has disallowed extension ".\${e}"`,
             });
           }
         }
 
         if (allowedMimeTypes.length) {
-          if (!allowedMimeTypes.includes((f.mimetype || '').toLowerCase())) {
+          if (!allowedMimeTypes.includes((f.mimetype || "").toLowerCase())) {
             return res.status(422).json({
-              error: 'mime_not_allowed',
+              error: "mime_not_allowed",
               message: `File "\${f.originalname}" has disallowed MIME "\${f.mimetype}"`,
             });
           }
@@ -121,7 +119,7 @@ export function createUploadGuard(opts: UploadGuardOptions): RequestHandler {
       }
 
       const results: ScanResult[] = [];
-      let overall: Severity = 'clean';
+      let overall: Severity = "clean";
 
       for (const f of files) {
         const meta: FileMeta = {
@@ -131,47 +129,51 @@ export function createUploadGuard(opts: UploadGuardOptions): RequestHandler {
           size: f.size ?? 0,
         };
 
-        let result: ScanResult = { severity: 'clean' };
+        let result: ScanResult = { severity: "clean" };
 
         if (scan) {
           const bytes: Uint8Array | undefined = f.buffer;
           if (!bytes) {
             if (failClosed) {
               return res.status(422).json({
-                error: 'bytes_missing',
+                error: "bytes_missing",
                 message: `File "\${f.originalname}" not available in memory. Ensure memoryStorage() is configured.`,
               });
             }
           } else {
             result = await Promise.resolve(scan(bytes, meta));
-            onScanEvent?.({ type: 'scan_result', file: meta, result });
+            onScanEvent?.({ type: "scan_result", file: meta, result });
           }
         }
 
         results.push(result);
-        if (result.severity === 'malicious') overall = 'malicious';
-        else if (result.severity === 'suspicious' && overall === 'clean') overall = 'suspicious';
+        if (result.severity === "malicious") overall = "malicious";
+        else if (result.severity === "suspicious" && overall === "clean") overall = "suspicious";
       }
 
       const shouldBlock =
-        (stopOn === 'suspicious' && (overall === 'suspicious' || overall === 'malicious')) ||
-        (stopOn === 'malicious' && overall === 'malicious');
+        (stopOn === "suspicious" && (overall === "suspicious" || overall === "malicious")) ||
+        (stopOn === "malicious" && overall === "malicious");
 
       if (shouldBlock) {
         return res.status(422).json({
-          error: 'blocked_by_policy',
+          error: "blocked_by_policy",
           message: `Upload blocked (\${overall}).`,
           results,
         });
       }
 
-      (req as any).pompelmi = { files: files.map(f => f.originalname), results, verdict: overall };
+      (req as any).pompelmi = {
+        files: files.map((f) => f.originalname),
+        results,
+        verdict: overall,
+      };
       return next();
     } catch (err: any) {
       if (failClosed) {
         return res.status(422).json({
-          error: 'scan_error',
-          message: err?.message || 'Upload rejected by scanner',
+          error: "scan_error",
+          message: err?.message || "Upload rejected by scanner",
         });
       }
       return next(err);

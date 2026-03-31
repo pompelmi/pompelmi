@@ -18,10 +18,10 @@ const RULES_DIR = path.join(__dirname, "..", "rules", "starter");
 async function readRulePack(dir) {
   const entries = await fs.readdir(dir, { withFileTypes: true }).catch(() => []);
   const files = entries
-    .filter(e => e.isFile() && e.name.endsWith(".yar"))
-    .map(e => path.join(dir, e.name));
+    .filter((e) => e.isFile() && e.name.endsWith(".yar"))
+    .map((e) => path.join(dir, e.name));
   if (files.length === 0) throw new Error("No .yar files found in rules/starter/");
-  const texts = await Promise.all(files.map(p => fs.readFile(p, "utf8")));
+  const texts = await Promise.all(files.map((p) => fs.readFile(p, "utf8")));
   return texts.join("\n\n");
 }
 

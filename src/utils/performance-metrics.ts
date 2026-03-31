@@ -45,7 +45,7 @@ export interface ScanStatistics {
 export class PerformanceTracker {
   private startTime: number;
   private checkpoints: Map<string, number> = new Map();
-  
+
   constructor() {
     this.startTime = Date.now();
   }
@@ -77,14 +77,15 @@ export class PerformanceTracker {
 
     return {
       totalDurationMs: totalDuration,
-      heuristicsDurationMs: this.checkpoints.has('heuristics_end') 
-        ? (this.checkpoints.get('heuristics_end') ?? 0) - (this.checkpoints.get('heuristics_start') ?? 0)
+      heuristicsDurationMs: this.checkpoints.has("heuristics_end")
+        ? (this.checkpoints.get("heuristics_end") ?? 0) -
+          (this.checkpoints.get("heuristics_start") ?? 0)
         : undefined,
-      yaraDurationMs: this.checkpoints.has('yara_end')
-        ? (this.checkpoints.get('yara_end') ?? 0) - (this.checkpoints.get('yara_start') ?? 0)
+      yaraDurationMs: this.checkpoints.has("yara_end")
+        ? (this.checkpoints.get("yara_end") ?? 0) - (this.checkpoints.get("yara_start") ?? 0)
         : undefined,
-      prepDurationMs: this.checkpoints.has('prep_end')
-        ? (this.checkpoints.get('prep_end') ?? 0) - this.startTime
+      prepDurationMs: this.checkpoints.has("prep_end")
+        ? (this.checkpoints.get("prep_end") ?? 0) - this.startTime
         : undefined,
       throughputBps: throughput,
       bytesScanned,
@@ -97,7 +98,9 @@ export class PerformanceTracker {
 /**
  * Aggregate statistics from multiple scan reports
  */
-export function aggregateScanStats(reports: Array<{ verdict: string; durationMs?: number; file?: { size?: number } }>): ScanStatistics {
+export function aggregateScanStats(
+  reports: Array<{ verdict: string; durationMs?: number; file?: { size?: number } }>,
+): ScanStatistics {
   let cleanCount = 0;
   let suspiciousCount = 0;
   let maliciousCount = 0;
@@ -106,9 +109,9 @@ export function aggregateScanStats(reports: Array<{ verdict: string; durationMs?
   let validDurationCount = 0;
 
   for (const report of reports) {
-    if (report.verdict === 'clean') cleanCount++;
-    else if (report.verdict === 'suspicious') suspiciousCount++;
-    else if (report.verdict === 'malicious') maliciousCount++;
+    if (report.verdict === "clean") cleanCount++;
+    else if (report.verdict === "suspicious") suspiciousCount++;
+    else if (report.verdict === "malicious") maliciousCount++;
 
     if (report.durationMs !== undefined) {
       totalDuration += report.durationMs;

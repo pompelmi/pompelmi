@@ -1,8 +1,9 @@
 /// <reference types="vitest" />
-import { describe, it, expect } from "vitest";
+
+import { Buffer } from "node:buffer";
+import { describe, expect, it } from "vitest";
 import * as yazl from "yazl";
 import { zipDeepInspection } from "../src/scanner/zip-deep";
-import { Buffer } from "node:buffer";
 
 // Helper: make a ZIP in-memory with a single file named `name`
 async function zipWithSingleFile(name: string, content = "x") {
@@ -20,13 +21,13 @@ describe("zipDeepInspection", () => {
   it("flags ../ traversal", async () => {
     const buf = await zipWithSingleFile("../evil.txt");
     const hits = await zipDeepInspection(buf);
-    expect(hits.some(h => h.tag === "zip.traversal")).toBe(true);
+    expect(hits.some((h) => h.tag === "zip.traversal")).toBe(true);
   });
 
   it("flags absolute path", async () => {
     const buf = await zipWithSingleFile("/etc/passwd");
     const hits = await zipDeepInspection(buf);
-    expect(hits.some(h => h.tag === "zip.traversal")).toBe(true);
+    expect(hits.some((h) => h.tag === "zip.traversal")).toBe(true);
   });
 
   it("flags LFH≠CEN mismatch", async () => {
@@ -40,7 +41,7 @@ describe("zipDeepInspection", () => {
     expect(nameLen).toBe(5);
     buf.write("b.txt", off + 30, "ascii"); // same length as 'a.txt'
     const hits = await zipDeepInspection(buf);
-    expect(hits.some(h => h.tag === "zip.lfhMismatch")).toBe(true);
+    expect(hits.some((h) => h.tag === "zip.lfhMismatch")).toBe(true);
   });
 
   it("flags symlink entry (if present)", async () => {

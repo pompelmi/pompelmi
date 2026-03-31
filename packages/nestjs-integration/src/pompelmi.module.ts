@@ -1,20 +1,20 @@
-import { Module, DynamicModule, Provider, Type } from '@nestjs/common';
-import { PompelmiService } from './pompelmi.service.js';
-import { PompelmiInterceptor } from './pompelmi.interceptor.js';
+import { type DynamicModule, Module, type Provider, Type } from "@nestjs/common";
 import {
   POMPELMI_MODULE_OPTIONS,
-  type PompelmiModuleOptions,
   type PompelmiModuleAsyncOptions,
+  type PompelmiModuleOptions,
   type PompelmiModuleOptionsFactory,
-} from './interfaces.js';
+} from "./interfaces.js";
+import { PompelmiInterceptor } from "./pompelmi.interceptor.js";
+import { PompelmiService } from "./pompelmi.service.js";
 
 /**
  * Dynamic NestJS module for Pompelmi malware scanner.
- * 
+ *
  * Provides:
  * - PompelmiService: Injectable service for programmatic scanning
  * - PompelmiInterceptor: Interceptor for automatic file upload scanning
- * 
+ *
  * @example Synchronous configuration:
  * ```typescript
  * @Module({
@@ -27,7 +27,7 @@ import {
  * })
  * export class AppModule {}
  * ```
- * 
+ *
  * @example Asynchronous configuration:
  * ```typescript
  * @Module({
@@ -48,7 +48,7 @@ import {
 export class PompelmiModule {
   /**
    * Register module with synchronous configuration.
-   * 
+   *
    * @param options - Module configuration options
    * @returns Dynamic module
    */
@@ -71,7 +71,7 @@ export class PompelmiModule {
   /**
    * Register module with asynchronous configuration.
    * Allows configuration to be loaded from ConfigService or other async sources.
-   * 
+   *
    * @param options - Async module configuration options
    * @returns Dynamic module
    */
@@ -80,7 +80,7 @@ export class PompelmiModule {
       module: PompelmiModule,
       imports: options.imports || [],
       providers: [
-        ...this.createAsyncProviders(options),
+        ...PompelmiModule.createAsyncProviders(options),
         PompelmiService,
         PompelmiInterceptor,
       ],
@@ -92,9 +92,7 @@ export class PompelmiModule {
   /**
    * Create providers for async configuration.
    */
-  private static createAsyncProviders(
-    options: PompelmiModuleAsyncOptions,
-  ): Provider[] {
+  private static createAsyncProviders(options: PompelmiModuleAsyncOptions): Provider[] {
     if (options.useFactory) {
       return [
         {
@@ -132,7 +130,7 @@ export class PompelmiModule {
     }
 
     throw new Error(
-      'Invalid PompelmiModuleAsyncOptions: must provide useFactory, useClass, or useExisting',
+      "Invalid PompelmiModuleAsyncOptions: must provide useFactory, useClass, or useExisting",
     );
   }
 }

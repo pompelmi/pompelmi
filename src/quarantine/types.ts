@@ -11,16 +11,16 @@
  * @module quarantine/types
  */
 
-import type { ScanReport } from '../types';
+import type { ScanReport } from "../types";
 
 // ── Status ────────────────────────────────────────────────────────────────────
 
 /** The review status of a quarantined file. */
 export type QuarantineStatus =
-  | 'pending'    // Newly quarantined; awaiting review.
-  | 'reviewing'  // Actively being reviewed by an operator.
-  | 'promoted'   // Cleared; the file has been accepted (released to storage).
-  | 'deleted';   // Permanently removed after review.
+  | "pending" // Newly quarantined; awaiting review.
+  | "reviewing" // Actively being reviewed by an operator.
+  | "promoted" // Cleared; the file has been accepted (released to storage).
+  | "deleted"; // Permanently removed after review.
 
 // ── Core model ────────────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ export interface QuarantineEntry {
 // ── Decision model ────────────────────────────────────────────────────────────
 
 /** The outcome of a manual review. */
-export type QuarantineDecision = 'promote' | 'delete';
+export type QuarantineDecision = "promote" | "delete";
 
 /** Input required to resolve a quarantine entry. */
 export interface QuarantineReview {

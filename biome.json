@@ -1,5 +1,10 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.2.4/schema.json",
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -18,19 +23,13 @@
   "files": {
     "includes": [
       "**",
-      "!**/node_modules/**",
-      "!**/dist/**",
-      "!**/coverage/**",
-      "!**/.next/**",
-      "!**/docs/docs-dist/**",
-      "!**/docs/public/**",
-      "!**/docs/resources/**",
-      "!pompelmi/**",
-      "!**/samples/**",
-      "!**/website/**",
-      "!**/site/**",
-      "!**/tmp-*/**",
-      "!**/.tmp-*/**"
+      "!docs/docs-dist",
+      "!docs/public",
+      "!docs/resources",
+      "!pompelmi",
+      "!samples",
+      "!site",
+      "!website"
     ]
   }
 }

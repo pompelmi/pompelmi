@@ -8,8 +8,8 @@
  * provides a unified `scan()` function accepting Buffer, Readable stream,
  * or a file-path string.
  */
-import { Readable } from 'node:stream';
-import { scanBytes, scanFile, type ScanOptions, type ScanReport } from 'pompelmi';
+import type { Readable } from "node:stream";
+import { type ScanOptions, type ScanReport, scanBytes, scanFile } from "pompelmi";
 
 export type { ScanOptions, ScanReport };
 
@@ -25,7 +25,7 @@ export async function scan(
   input: Buffer | Readable | string,
   opts?: ScanOptions,
 ): Promise<ScanReport> {
-  if (typeof input === 'string') {
+  if (typeof input === "string") {
     return scanFile(input, opts);
   }
 
@@ -36,11 +36,11 @@ export async function scan(
   // Readable stream — collect chunks then scan
   const chunks: Buffer[] = [];
   await new Promise<void>((resolve, reject) => {
-    input.on('data', (chunk: Buffer | string) =>
+    input.on("data", (chunk: Buffer | string) =>
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk)),
     );
-    input.on('end', resolve);
-    input.on('error', reject);
+    input.on("end", resolve);
+    input.on("error", reject);
   });
   const buf = Buffer.concat(chunks);
   return scanBytes(new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength), opts);
@@ -57,5 +57,5 @@ export async function isMalware(
   opts?: ScanOptions,
 ): Promise<boolean> {
   const report = await scan(input, opts);
-  return report.verdict === 'malicious';
+  return report.verdict === "malicious";
 }

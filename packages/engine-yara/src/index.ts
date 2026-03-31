@@ -1,19 +1,22 @@
-import * as os from 'node:os';
-import * as fs from 'node:fs/promises';
-import * as fssync from 'node:fs';
-import * as path from 'node:path';
-import { randomBytes } from 'node:crypto';
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { execFile } from "node:child_process";
+import { randomBytes } from "node:crypto";
+import * as fssync from "node:fs";
+import * as fs from "node:fs/promises";
+import * as os from "node:os";
+import * as path from "node:path";
+import { promisify } from "node:util";
+
 const pexec = promisify(execFile);
 
 export type Match = { rule: string; meta?: Record<string, any> };
 export type YaraOptions = { rulesGlob?: string | string[]; yaraPath?: string; timeoutMs?: number };
 
 export function createYaraScanner(options: YaraOptions = {}) {
-  const yaraPath = options.yaraPath ?? 'yara';
+  const yaraPath = options.yaraPath ?? "yara";
   const timeout = options.timeoutMs ?? 3000;
-  const patterns = Array.isArray(options.rulesGlob) ? options.rulesGlob : [options.rulesGlob ?? 'rules/**/*.yar'];
+  const patterns = Array.isArray(options.rulesGlob)
+    ? options.rulesGlob
+    : [options.rulesGlob ?? "rules/**/*.yar"];
 
   return {
     async scan(bytes: Uint8Array): Promise<Match[]> {
@@ -24,11 +27,11 @@ export function createYaraScanner(options: YaraOptions = {}) {
       try {
         await fs.writeFile(binPath, Buffer.from(bytes));
 
-        const ruleFiles = dedupe(await Promise.all(patterns.map(p => findRuleFiles(p))));
+        const ruleFiles = dedupe(await Promise.all(patterns.map((p) => findRuleFiles(p))));
         if (!ruleFiles.length) return [];
 
-        const joined = (await Promise.all(ruleFiles.map(p => fs.readFile(p, 'utf8')))).join('\n');
-        await fs.writeFile(rulesPath, joined, 'utf8');
+        const joined = (await Promise.all(ruleFiles.map((p) => fs.readFile(p, "utf8")))).join("\n");
+        await fs.writeFile(rulesPath, joined, "utf8");
 
         const { stdout } = await pexec(yaraPath, [rulesPath, binPath], { timeout });
         return parseYara(stdout);
@@ -38,37 +41,44 @@ export function createYaraScanner(options: YaraOptions = {}) {
         if (/ENOENT|spawn/.test(String(e?.message))) return [];
         return [];
       } finally {
-        try { await fs.rm(tmpDir, { recursive: true, force: true }); } catch {}
+        try {
+          await fs.rm(tmpDir, { recursive: true, force: true });
+        } catch {}
       }
-    }
+    },
   };
 }
 
 function parseYara(out: string): Match[] {
   const s = out.trim();
   if (!s) return [];
-  return s.split('\n').filter(Boolean).map(line => ({ rule: line.split(/\s+/, 1)[0] }));
+  return s
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => ({ rule: line.split(/\s+/, 1)[0] }));
 }
 
-function randomHex(n: number) { return randomBytes(n).toString('hex'); }
+function randomHex(n: number) {
+  return randomBytes(n).toString("hex");
+}
 
 // ----- simple glob-ish finder (supports: 'rules/**/*.yar', 'rules/*.yar', direct files, or dirs) -----
 async function findRuleFiles(pattern: string): Promise<string[]> {
   // Direct file
   if (pattern && fssync.existsSync(pattern) && fssync.statSync(pattern).isFile()) {
-    return pattern.endsWith('.yar') ? [pattern] : [];
+    return pattern.endsWith(".yar") ? [pattern] : [];
   }
   // Infer base dir from pattern before first '*'
-  let base = pattern?.split('*')[0] || 'rules';
+  let base = pattern?.split("*")[0] || "rules";
   if (!fssync.existsSync(base)) {
     // fall back to 'rules' dir
-    base = 'rules';
+    base = "rules";
     if (!fssync.existsSync(base)) return [];
   }
   const acc: string[] = [];
   await walk(base, acc);
   // filter by extension only (keeps it simple & robust)
-  return acc.filter(p => p.endsWith('.yar'));
+  return acc.filter((p) => p.endsWith(".yar"));
 }
 
 async function walk(dir: string, acc: string[]) {

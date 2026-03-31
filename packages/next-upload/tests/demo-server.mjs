@@ -1,25 +1,25 @@
-import { createServer } from 'node:http';
-import { Readable } from 'node:stream';
-import { createNextUploadHandler } from '../dist/index.js';
+import { createServer } from "node:http";
+import { Readable } from "node:stream";
+import { createNextUploadHandler } from "../dist/index.js";
 
 // Scanner EICAR (demo). In produzione passa 'rules' YARA o uno scanner vero.
 const SimpleEicarScanner = {
   async scan(bytes) {
-    const text = Buffer.from(bytes).toString('utf8');
-    if (text.includes('EICAR-STANDARD-ANTIVIRUS-TEST-FILE')) return [{ rule: 'eicar_test' }];
+    const text = Buffer.from(bytes).toString("utf8");
+    if (text.includes("EICAR-STANDARD-ANTIVIRUS-TEST-FILE")) return [{ rule: "eicar_test" }];
     return [];
-  }
+  },
 };
 
 const handler = createNextUploadHandler({
   scanner: SimpleEicarScanner,
-  includeExtensions: ['txt','png','jpg','jpeg','pdf','zip'],
-  allowedMimeTypes: ['text/plain','image/png','image/jpeg','application/pdf','application/zip'],
+  includeExtensions: ["txt", "png", "jpg", "jpeg", "pdf", "zip"],
+  allowedMimeTypes: ["text/plain", "image/png", "image/jpeg", "application/pdf", "application/zip"],
   maxFileSizeBytes: 20 * 1024 * 1024,
   timeoutMs: 5000,
   concurrency: 4,
   failClosed: true,
-  onScanEvent: (ev) => console.log('[scan]', ev)
+  onScanEvent: (ev) => console.log("[scan]", ev),
 });
 
 const PORT = Number(process.env.PORT) || 3004;
@@ -38,7 +38,7 @@ function headersFromNode(nodeHeaders) {
 
 const server = createServer(async (req, res) => {
   try {
-    if (req.method === 'POST' && req.url === '/upload') {
+    if (req.method === "POST" && req.url === "/upload") {
       // Converte IncomingMessage (Node stream) in WHATWG ReadableStream
       const body = Readable.toWeb(req);
       const headers = headersFromNode(req.headers);
@@ -48,26 +48,28 @@ const server = createServer(async (req, res) => {
         method: req.method,
         headers,
         body,
-        duplex: 'half'
+        duplex: "half",
       });
 
       const webRes = await handler(webReq);
 
       res.statusCode = webRes.status;
-      webRes.headers.forEach((v, k) => res.setHeader(k, v));
+      webRes.headers.forEach((v, k) => {
+        res.setHeader(k, v);
+      });
       const ab = await webRes.arrayBuffer();
       res.end(Buffer.from(ab));
       return;
     }
 
     res.statusCode = 404;
-    res.setHeader('content-type', 'text/plain; charset=utf-8');
-    res.end('Not Found');
+    res.setHeader("content-type", "text/plain; charset=utf-8");
+    res.end("Not Found");
   } catch (err) {
-    console.error('[demo] error', err);
+    console.error("[demo] error", err);
     res.statusCode = 500;
-    res.setHeader('content-type', 'application/json');
-    res.end(JSON.stringify({ ok: false, reason: 'server_error' }));
+    res.setHeader("content-type", "application/json");
+    res.end(JSON.stringify({ ok: false, reason: "server_error" }));
   }
 });
 

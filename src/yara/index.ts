@@ -17,8 +17,8 @@ export interface YaraEngine {
 // Factory: sceglie l'engine a runtime (Node o Browser)
 // (Per ora i moduli chiamati lanceranno "non implementato")
 export async function createYaraEngine(): Promise<YaraEngine> {
-  const isNode = typeof process !== 'undefined' && !!(process as any).versions?.node;
-  const target = isNode ? 'node' : 'browser';
+  const isNode = typeof process !== "undefined" && !!(process as any).versions?.node;
+  const target = isNode ? "node" : "browser";
   const mod: any = await import(`./${target}`);
   return isNode
     ? (mod.createNodeEngine() as YaraEngine)
@@ -30,13 +30,12 @@ export async function createYaraScannerFromRules(rulesSource: string) {
   return engine.compile(rulesSource);
 }
 
-
 export async function createYaraScannerFromFile(rulesPath: string): Promise<YaraCompiled> {
   const engine = await createYaraEngine();
   if (!engine.compileFile) {
-    throw new Error('YARA compileFile non disponibile in questo runtime (browser).');
+    throw new Error("YARA compileFile non disponibile in questo runtime (browser).");
   }
   return engine.compileFile(rulesPath);
 }
 
-export { createRemoteEngine } from './remote';
+export { createRemoteEngine } from "./remote";

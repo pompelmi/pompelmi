@@ -1,7 +1,8 @@
 // src/scan/remote.ts
-import { createRemoteEngine } from '../yara/remote';
-import type { YaraMatch } from '../yara/index';
-import type { RemoteEngineOptions } from '../yara/remote';
+
+import type { YaraMatch } from "../yara/index";
+import type { RemoteEngineOptions } from "../yara/remote";
+import { createRemoteEngine } from "../yara/remote";
 
 export interface RemoteScanResult {
   file: File;
@@ -16,7 +17,7 @@ export interface RemoteScanResult {
 export async function scanFilesWithRemoteYara(
   files: File[],
   rulesSource: string,
-  remote: RemoteEngineOptions
+  remote: RemoteEngineOptions,
 ): Promise<RemoteScanResult[]> {
   const engine = await createRemoteEngine(remote);
   const compiled = await engine.compile(rulesSource);
@@ -28,7 +29,7 @@ export async function scanFilesWithRemoteYara(
       const matches = await compiled.scan(bytes);
       results.push({ file, matches });
     } catch (err: any) {
-      console.warn('[remote-yara] scan error for', file.name, err);
+      console.warn("[remote-yara] scan error for", file.name, err);
       results.push({ file, matches: [], error: String(err?.message ?? err) });
     }
   }

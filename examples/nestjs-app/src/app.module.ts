@@ -1,7 +1,7 @@
-import { Module } from '@nestjs/common';
-import { PompelmiModule } from '@pompelmi/nestjs-integration';
-import { UploadController } from './upload.controller';
-import { ScanService } from './scan.service';
+import { Module } from "@nestjs/common";
+import { PompelmiModule } from "@pompelmi/nestjs-integration";
+import { ScanService } from "./scan.service";
+import { UploadController } from "./upload.controller";
 
 @Module({
   imports: [

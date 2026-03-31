@@ -1,6 +1,6 @@
 /** Shared types for Pompelmi */
 
-export type Verdict = 'clean' | 'suspicious' | 'malicious';
+export type Verdict = "clean" | "suspicious" | "malicious";
 
 export interface YaraMatch {
   rule: string;
@@ -10,7 +10,7 @@ export interface YaraMatch {
 }
 
 // Re-export decompilation types
-export * from './types/decompilation';
+export * from "./types/decompilation";
 
 // NOTE: HIPAA compliance types are exported from 'pompelmi' (full Node.js entry)
 // and from 'pompelmi/node'. They are Node.js-only (uses crypto/os/path) and
@@ -20,7 +20,7 @@ export * from './types/decompilation';
 export interface Match {
   rule: string;
   // used by zip-bomb-guard etc. We also keep 'suspicious' for compatibility.
-  severity?: 'info' | 'low' | 'medium' | 'high' | 'critical' | 'suspicious' | 'malicious';
+  severity?: "info" | "low" | "medium" | "high" | "critical" | "suspicious" | "malicious";
   meta?: Record<string, unknown>;
 }
 
@@ -51,7 +51,8 @@ interface BaseReport {
 
   truncated?: boolean;
   timedOut?: boolean;
-  engine?: string;}
+  engine?: string;
+}
 
 export interface NormalScanReport extends BaseReport {}
 export interface StreamScanReport extends BaseReport {}

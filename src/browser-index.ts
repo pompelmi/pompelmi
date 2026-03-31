@@ -16,72 +16,64 @@
  * For the React hook, import from 'pompelmi/react'.
  */
 
-// Core scan API (browser-safe; disables cache/YARA automatically in browser)
-export { scanFiles, scanBytes, scanFile, type ScanOptions } from './scan';
-
-// File validation
-export { validateFile } from './validate';
-
-// Built-in scanners (pure TypeScript, no Node deps)
-export { CommonHeuristicsScanner } from './scanners/common-heuristics';
-export { createZipBombGuard } from './scanners/zip-bomb-guard';
-
 // Policy and preset composition
-export { definePolicy, DEFAULT_POLICY } from './policy';
+export { DEFAULT_POLICY, definePolicy } from "./policy";
 export {
-  POLICY_PACKS,
-  DOCUMENTS_ONLY,
-  IMAGES_ONLY,
-  STRICT_PUBLIC_UPLOAD,
-  CONSERVATIVE_DEFAULT,
   ARCHIVES,
+  CONSERVATIVE_DEFAULT,
+  DOCUMENTS_ONLY,
   getPolicyPack,
+  IMAGES_ONLY,
+  POLICY_PACKS,
   type PolicyPackName,
-} from './policy-packs';
+  STRICT_PUBLIC_UPLOAD,
+} from "./policy-packs";
 export {
+  type ComposeScannerOptions,
   composeScanners,
   createPresetScanner,
+  type NamedScanner,
   type PresetName,
   type PresetOptions,
-  type NamedScanner,
-  type ComposeScannerOptions,
-} from './presets';
-
-// Verdict helpers
-export { mapMatchesToVerdict } from './verdict';
-
-// Performance tracking (browser-safe)
-export {
-  PerformanceTracker,
-  aggregateScanStats,
-  type PerformanceMetrics,
-  type ScanStatistics,
-} from './utils/performance-metrics';
-
-// Advanced detection (browser-safe)
-export {
-  detectPolyglot,
-  detectObfuscatedScripts,
-  analyzeNestedArchives,
-} from './utils/advanced-detection';
-
-// Export utilities (browser-safe)
-export {
-  ScanResultExporter,
-  exportScanResults,
-  type ExportFormat,
-  type ExportOptions,
-} from './utils/export';
-
+} from "./presets";
+// Core scan API (browser-safe; disables cache/YARA automatically in browser)
+export { type ScanOptions, scanBytes, scanFile, scanFiles } from "./scan";
+// Built-in scanners (pure TypeScript, no Node deps)
+export { CommonHeuristicsScanner } from "./scanners/common-heuristics";
+export { createZipBombGuard } from "./scanners/zip-bomb-guard";
 // Core types
 export type {
-  Verdict,
+  FileInfo,
   Match,
-  YaraMatch,
-  ScanReport,
   ScanContext,
   ScanFn,
   Scanner,
-  FileInfo,
+  ScanReport,
   Uint8ArrayLike,
-} from './types';
+  Verdict,
+  YaraMatch,
+} from "./types";
+// Advanced detection (browser-safe)
+export {
+  analyzeNestedArchives,
+  detectObfuscatedScripts,
+  detectPolyglot,
+} from "./utils/advanced-detection";
+// Export utilities (browser-safe)
+export {
+  type ExportFormat,
+  type ExportOptions,
+  exportScanResults,
+  ScanResultExporter,
+} from "./utils/export";
+// Performance tracking (browser-safe)
+export {
+  aggregateScanStats,
+  type PerformanceMetrics,
+  PerformanceTracker,
+  type ScanStatistics,
+} from "./utils/performance-metrics";
+// File validation
+export { validateFile } from "./validate";
+// Verdict helpers
+export { mapMatchesToVerdict } from "./verdict";

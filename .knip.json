@@ -1,9 +1,5 @@
 {
-  "entry": [
-    "src/index.ts",
-    "src/browser-index.ts",
-    "packages/*/src/index.ts"
-  ],
+  "entry": ["src/index.ts", "src/browser-index.ts", "packages/*/src/index.ts"],
   "project": [
     "src/**/*.ts",
     "packages/*/src/**/*.ts",

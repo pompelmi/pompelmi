@@ -1,8 +1,8 @@
-import * as path from 'node:path';
-import type { FastifyPluginAsync } from 'fastify';
-import fp from 'fastify-plugin';
+import * as path from "node:path";
+import type { FastifyPluginAsync } from "fastify";
+import fp from "fastify-plugin";
 
-type Severity = 'clean' | 'suspicious' | 'malicious';
+type Severity = "clean" | "suspicious" | "malicious";
 
 export interface ScanResult {
   severity: Severity;
@@ -33,14 +33,16 @@ export interface UploadGuardOptions {
 }
 
 function extLower(name: string) {
-  const e = path.extname(name || '').replace(/^\./, '');
+  const e = path.extname(name || "").replace(/^\./, "");
   return e.toLowerCase();
 }
 function asScannerFn(scanner?: ScannerFn) {
   if (!scanner) return null;
-  return typeof scanner === 'function' ? scanner : scanner.scan.bind(scanner);
+  return typeof scanner === "function" ? scanner : scanner.scan.bind(scanner);
 }
-function isFn(v: any): v is Function { return typeof v === 'function'; }
+function isFn(v: any): v is Function {
+  return typeof v === "function";
+}
 
 /** Fastify v5 preHandler for @fastify/multipart v9. */
 export function createUploadGuard(opts: UploadGuardOptions) {
@@ -48,10 +50,10 @@ export function createUploadGuard(opts: UploadGuardOptions) {
     includeExtensions = [],
     allowedMimeTypes = [],
     maxFileSizeBytes = Number.MAX_SAFE_INTEGER,
-    stopOn = 'suspicious',
+    stopOn = "suspicious",
     failClosed = true,
     onScanEvent,
-    scanner
+    scanner,
   } = opts;
 
   const scan = asScannerFn(scanner);
@@ -59,7 +61,7 @@ export function createUploadGuard(opts: UploadGuardOptions) {
   return async function uploadGuard(req: any, reply: any) {
     try {
       if (!isFn(req?.isMultipart) || !req.isMultipart()) {
-        (req as any).pompelmi = { files: [], results: [], verdict: 'clean' as Severity };
+        (req as any).pompelmi = { files: [], results: [], verdict: "clean" as Severity };
         return;
       }
 
@@ -67,24 +69,30 @@ export function createUploadGuard(opts: UploadGuardOptions) {
 
       const results: ScanResult[] = [];
       const filenames: string[] = [];
-      let overall: Severity = 'clean';
+      let overall: Severity = "clean";
 
       for await (const part of parts as any) {
-        if (part?.type !== 'file') continue;
+        if (part?.type !== "file") continue;
 
-        const filename = String(part.filename ?? '');
-        const mimetype = String(part.mimetype ?? '').toLowerCase();
-        const fieldname = String(part.fieldname ?? '');
+        const filename = String(part.filename ?? "");
+        const mimetype = String(part.mimetype ?? "").toLowerCase();
+        const fieldname = String(part.fieldname ?? "");
 
         if (includeExtensions.length) {
           const e = extLower(filename);
           if (!includeExtensions.includes(e)) {
-            reply.code(422).send({ error: 'extension_not_allowed', message: `File "${filename}" has disallowed extension ".${e}"` });
+            reply.code(422).send({
+              error: "extension_not_allowed",
+              message: `File "${filename}" has disallowed extension ".${e}"`,
+            });
             return;
           }
         }
         if (allowedMimeTypes.length && !allowedMimeTypes.includes(mimetype)) {
-          reply.code(422).send({ error: 'mime_not_allowed', message: `File "${filename}" has disallowed MIME "${mimetype}"` });
+          reply.code(422).send({
+            error: "mime_not_allowed",
+            message: `File "${filename}" has disallowed MIME "${mimetype}"`,
+          });
           return;
         }
 
@@ -93,7 +101,10 @@ export function createUploadGuard(opts: UploadGuardOptions) {
           buf = await part.toBuffer(); // v9
         } catch (_e) {
           if (failClosed) {
-            reply.code(422).send({ error: 'file_too_large', message: `File "${filename}" exceeds max allowed size` });
+            reply.code(422).send({
+              error: "file_too_large",
+              message: `File "${filename}" exceeds max allowed size`,
+            });
             return;
           } else {
             continue;
@@ -101,38 +112,45 @@ export function createUploadGuard(opts: UploadGuardOptions) {
         }
 
         if (buf.length > maxFileSizeBytes) {
-          reply.code(422).send({ error: 'file_too_large', message: `File "${filename}" exceeds max allowed size` });
+          reply.code(422).send({
+            error: "file_too_large",
+            message: `File "${filename}" exceeds max allowed size`,
+          });
           return;
         }
 
         const meta: FileMeta = { fieldname, originalname: filename, mimetype, size: buf.length };
 
-        let result: ScanResult = { severity: 'clean' };
+        let result: ScanResult = { severity: "clean" };
         if (scan) {
           result = await scan(buf, meta);
-          onScanEvent?.({ type: 'scan_result', file: meta, result });
+          onScanEvent?.({ type: "scan_result", file: meta, result });
         }
 
         results.push(result);
         filenames.push(filename);
 
-        if (result.severity === 'malicious') overall = 'malicious';
-        else if (result.severity === 'suspicious' && overall === 'clean') overall = 'suspicious';
+        if (result.severity === "malicious") overall = "malicious";
+        else if (result.severity === "suspicious" && overall === "clean") overall = "suspicious";
       }
 
       const shouldBlock =
-        (stopOn === 'suspicious' && (overall === 'suspicious' || overall === 'malicious')) ||
-        (stopOn === 'malicious' && overall === 'malicious');
+        (stopOn === "suspicious" && (overall === "suspicious" || overall === "malicious")) ||
+        (stopOn === "malicious" && overall === "malicious");
 
       if (shouldBlock) {
-        reply.code(422).send({ error: 'blocked_by_policy', message: `Upload blocked (${overall}).`, results });
+        reply
+          .code(422)
+          .send({ error: "blocked_by_policy", message: `Upload blocked (${overall}).`, results });
         return;
       }
 
       (req as any).pompelmi = { files: filenames, results, verdict: overall };
     } catch (err: any) {
       if (failClosed) {
-        reply.code(422).send({ error: 'scan_error', message: err?.message || 'Upload rejected by scanner' });
+        reply
+          .code(422)
+          .send({ error: "scan_error", message: err?.message || "Upload rejected by scanner" });
         return;
       }
       throw err;
@@ -140,22 +158,22 @@ export function createUploadGuard(opts: UploadGuardOptions) {
   };
 }
 
-declare module 'fastify' {
+declare module "fastify" {
   interface FastifyInstance {
     createUploadGuard: typeof createUploadGuard;
   }
 }
 
 const registerUploadGuardFactory: FastifyPluginAsync = async (fastify) => {
-  if (!fastify.hasDecorator('createUploadGuard')) {
-    fastify.decorate('createUploadGuard', createUploadGuard);
+  if (!fastify.hasDecorator("createUploadGuard")) {
+    fastify.decorate("createUploadGuard", createUploadGuard);
   }
 };
 
 export const pompelmiFastifyPlugin = fp(registerUploadGuardFactory, {
-  name: '@pompelmi/fastify-plugin',
-  fastify: '5.x',
-  dependencies: ['@fastify/multipart'],
+  name: "@pompelmi/fastify-plugin",
+  fastify: "5.x",
+  dependencies: ["@fastify/multipart"],
 });
 
 export default pompelmiFastifyPlugin;

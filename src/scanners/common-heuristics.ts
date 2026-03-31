@@ -5,7 +5,7 @@
  */
 export type HeuristicMatch = {
   rule: string;
-  severity?: 'info' | 'low' | 'medium' | 'high' | 'critical' | 'suspicious' | 'malicious';
+  severity?: "info" | "low" | "medium" | "high" | "critical" | "suspicious" | "malicious";
   meta?: Record<string, unknown>;
 };
 
@@ -15,7 +15,7 @@ export interface SimpleScanner {
 
 function hasAsciiToken(buf: Buffer, token: string): boolean {
   // Use latin1 so we can safely search binary
-  return buf.indexOf(token, 0, 'latin1') !== -1;
+  return buf.indexOf(token, 0, "latin1") !== -1;
 }
 function startsWith(buf: Buffer, bytes: number[]): boolean {
   if (buf.length < bytes.length) return false;
@@ -29,7 +29,7 @@ function isPDF(buf: Buffer): boolean {
 }
 function isOleCfb(buf: Buffer): boolean {
   // D0 CF 11 E0 A1 B1 1A E1
-  const sig = [0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1];
+  const sig = [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1];
   return startsWith(buf, sig);
 }
 function isZipLike(buf: Buffer): boolean {
@@ -44,13 +44,13 @@ function isPeExecutable(buf: Buffer): boolean {
 /** OOXML macro hint via filename token in ZIP container */
 function hasOoxmlMacros(buf: Buffer): boolean {
   if (!isZipLike(buf)) return false;
-  return hasAsciiToken(buf, 'vbaProject.bin');
+  return hasAsciiToken(buf, "vbaProject.bin");
 }
 
 /** PDF risky features (/JavaScript, /OpenAction, /AA, /Launch) */
 function pdfRiskTokens(buf: Buffer): string[] {
-  const tokens = ['/JavaScript', '/OpenAction', '/AA', '/Launch'];
-  return tokens.filter(t => hasAsciiToken(buf, t));
+  const tokens = ["/JavaScript", "/OpenAction", "/AA", "/Launch"];
+  return tokens.filter((t) => hasAsciiToken(buf, t));
 }
 
 export const CommonHeuristicsScanner: SimpleScanner = {
@@ -60,10 +60,10 @@ export const CommonHeuristicsScanner: SimpleScanner = {
 
     // Office macros (OLE / OOXML)
     if (isOleCfb(buf)) {
-      matches.push({ rule: 'office_ole_container', severity: 'suspicious' });
+      matches.push({ rule: "office_ole_container", severity: "suspicious" });
     }
     if (hasOoxmlMacros(buf)) {
-      matches.push({ rule: 'office_ooxml_macros', severity: 'suspicious' });
+      matches.push({ rule: "office_ooxml_macros", severity: "suspicious" });
     }
 
     // PDF risky tokens
@@ -71,24 +71,28 @@ export const CommonHeuristicsScanner: SimpleScanner = {
       const toks = pdfRiskTokens(buf);
       if (toks.length) {
         matches.push({
-          rule: 'pdf_risky_actions',
-          severity: 'suspicious',
-          meta: { tokens: toks }
+          rule: "pdf_risky_actions",
+          severity: "suspicious",
+          meta: { tokens: toks },
         });
       }
     }
 
     // Executable header
     if (isPeExecutable(buf)) {
-      matches.push({ rule: 'pe_executable_signature', severity: 'suspicious' });
+      matches.push({ rule: "pe_executable_signature", severity: "suspicious" });
     }
 
     // EICAR test file
     const EICAR_NEEDLE = "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!";
     if (hasAsciiToken(buf, EICAR_NEEDLE)) {
-      matches.push({ rule: 'eicar_test_file', severity: 'high', meta: { note: 'EICAR standard antivirus test file detected' } });
+      matches.push({
+        rule: "eicar_test_file",
+        severity: "high",
+        meta: { note: "EICAR standard antivirus test file detected" },
+      });
     }
 
     return matches;
-  }
+  },
 };

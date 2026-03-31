@@ -1,15 +1,15 @@
 // src/yara/node.ts
-import type { YaraEngine, YaraCompiled, YaraMatch } from './index';
+import type { YaraCompiled, YaraEngine, YaraMatch } from "./index";
 
 function normalizeMatches(matches: any[]): YaraMatch[] {
   return (matches ?? []).map((m) => ({
-    rule: m.ruleIdentifier ?? m.rule ?? 'unknown',
+    rule: m.ruleIdentifier ?? m.rule ?? "unknown",
     tags: m.tags ?? [],
   }));
 }
 
 export async function createNodeEngine(): Promise<YaraEngine> {
-  const yarax = await import('@litko/yara-x'); // { compile, fromFile, ... }
+  const yarax = await import("@litko/yara-x"); // { compile, fromFile, ... }
 
   function wrapRules(rules: any): YaraCompiled {
     return {
@@ -22,7 +22,7 @@ export async function createNodeEngine(): Promise<YaraEngine> {
       },
       // 👇 opzionale/feature: usa l’API async se presente
       async scanFileAsync(filePath: string): Promise<YaraMatch[]> {
-        if (typeof rules.scanFileAsync === 'function') {
+        if (typeof rules.scanFileAsync === "function") {
           const res = await rules.scanFileAsync(filePath);
           return normalizeMatches(res);
         }

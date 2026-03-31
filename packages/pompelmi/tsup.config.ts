@@ -1,13 +1,13 @@
-import { defineConfig } from 'tsup';
+import { defineConfig } from "tsup";
 
 export default defineConfig({
   esbuildOptions(options) {
-    options.resolveExtensions = ['.ts','.tsx','.js','.mjs','.cjs','.json'];
+    options.resolveExtensions = [".ts", ".tsx", ".js", ".mjs", ".cjs", ".json"];
   },
-  entry: ['src/index.ts'],
+  entry: ["src/index.ts"],
   dts: true,
-  format: ['esm', 'cjs'],
+  format: ["esm", "cjs"],
   clean: true,
   // Se in futuro il core userà unzipper/S3, tenerli esterni evita warning/build errors
-  external: ['unzipper', '@aws-sdk/client-s3']
+  external: ["unzipper", "@aws-sdk/client-s3"],
 });

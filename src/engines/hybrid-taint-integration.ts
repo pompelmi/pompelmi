@@ -1,29 +1,24 @@
 /**
  * Hybrid Taint Analysis Integration
- * 
+ *
  * Complete integration package for dynamic taint tracking and hybrid orchestration
  * with existing Pompelmi decompilation engines and HIPAA compliance.
  */
 
-import { DynamicTaintEngine } from './dynamic-taint';
-import { HybridAnalysisOrchestrator } from './hybrid-orchestrator';
-import { TaintPolicyManager } from './taint-policies';
-
+import type { DecompilationResult, DecompilationScanner } from "../types/decompilation";
 import type {
-  TaintConfig,
-  TaintAnalysisResult,
-  HybridConfig,
-  HybridAnalysisResult,
   AnalysisEngine,
-  EngineCapability
-} from '../types/taint-tracking';
+  EngineCapability,
+  HybridAnalysisResult,
+  HybridConfig,
+  TaintAnalysisResult,
+  TaintConfig,
+} from "../types/taint-tracking";
+import { DynamicTaintEngine } from "./dynamic-taint";
+import { HybridAnalysisOrchestrator } from "./hybrid-orchestrator";
 
-import type { TaintPolicy } from './taint-policies';
-
-import type {
-  DecompilationScanner,
-  DecompilationResult
-} from '../types/decompilation';
+import type { TaintPolicy } from "./taint-policies";
+import { TaintPolicyManager } from "./taint-policies";
 
 /**
  * Enhanced analysis result combining all engines
@@ -31,34 +26,34 @@ import type {
 export interface EnhancedAnalysisResult {
   /** Analysis session ID */
   sessionId: string;
-  
+
   /** Overall success status */
   success: boolean;
-  
+
   /** Total analysis time */
   totalTime: number;
-  
+
   /** Static analysis results */
   static?: {
     binaryNinja?: DecompilationResult;
     ghidra?: DecompilationResult;
   };
-  
+
   /** Dynamic taint analysis results */
   taint?: TaintAnalysisResult;
-  
+
   /** Hybrid orchestration results */
   hybrid?: HybridAnalysisResult;
-  
+
   /** Policy used for analysis */
   policy?: TaintPolicy;
-  
+
   /** Security assessment */
   security: {
     riskScore: number; // 0-100
     vulnerabilities: Array<{
       type: string;
-      severity: 'low' | 'medium' | 'high' | 'critical';
+      severity: "low" | "medium" | "high" | "critical";
       confidence: number;
       description: string;
       evidence: any;
@@ -66,19 +61,19 @@ export interface EnhancedAnalysisResult {
     }>;
     recommendations: string[];
   };
-  
+
   /** Compliance assessment */
   compliance?: {
     hipaaCompliant: boolean;
     issues: Array<{
       type: string;
-      severity: 'info' | 'warning' | 'critical';
+      severity: "info" | "warning" | "critical";
       description: string;
       remediation: string;
     }>;
     auditTrail: any[];
   };
-  
+
   /** Performance metrics */
   performance: {
     enginesUsed: AnalysisEngine[];
@@ -112,21 +107,21 @@ export class HybridTaintAnalyzer {
   }): Promise<void> {
     // Register engines with orchestrator
     if (engines.binaryNinja) {
-      await this.registerEngine('binaryninja-hlil', engines.binaryNinja);
-      this.registeredEngines.set('binaryninja-hlil', engines.binaryNinja);
+      await this.registerEngine("binaryninja-hlil", engines.binaryNinja);
+      this.registeredEngines.set("binaryninja-hlil", engines.binaryNinja);
     }
 
     if (engines.ghidra) {
-      await this.registerEngine('ghidra-pcode', engines.ghidra);
-      this.registeredEngines.set('ghidra-pcode', engines.ghidra);
+      await this.registerEngine("ghidra-pcode", engines.ghidra);
+      this.registeredEngines.set("ghidra-pcode", engines.ghidra);
     }
 
     // Register taint engine
-    await this.registerEngine('dynamic-taint', this.taintEngine);
-    this.registeredEngines.set('dynamic-taint', this.taintEngine);
+    await this.registerEngine("dynamic-taint", this.taintEngine);
+    this.registeredEngines.set("dynamic-taint", this.taintEngine);
 
-    console.debug('[HYBRID-TAINT-ANALYZER] Initialized with engines:', {
-      engines: Array.from(this.registeredEngines.keys())
+    console.debug("[HYBRID-TAINT-ANALYZER] Initialized with engines:", {
+      engines: Array.from(this.registeredEngines.keys()),
     });
   }
 
@@ -135,21 +130,21 @@ export class HybridTaintAnalyzer {
    */
   async analyze(
     data: Uint8Array,
-    policyName: string = 'malware-analysis',
+    policyName: string = "malware-analysis",
     options?: {
       enabledEngines?: AnalysisEngine[];
       customConfig?: Partial<HybridConfig>;
       includeCompliance?: boolean;
-    }
+    },
   ): Promise<EnhancedAnalysisResult> {
     const startTime = Date.now();
     const sessionId = this.generateSessionId();
 
-    console.debug('[HYBRID-TAINT-ANALYZER] Starting comprehensive analysis', {
+    console.debug("[HYBRID-TAINT-ANALYZER] Starting comprehensive analysis", {
       sessionId,
       policyName,
       dataSize: data.length,
-      options
+      options,
     });
 
     try {
@@ -172,25 +167,24 @@ export class HybridTaintAnalyzer {
         startTime,
         hybridResult,
         policy,
-        options?.includeCompliance || false
+        options?.includeCompliance || false,
       );
 
-      console.debug('[HYBRID-TAINT-ANALYZER] Analysis completed', {
+      console.debug("[HYBRID-TAINT-ANALYZER] Analysis completed", {
         sessionId,
         totalTime: enhancedResult.totalTime,
         riskScore: enhancedResult.security.riskScore,
-        vulnerabilities: enhancedResult.security.vulnerabilities.length
+        vulnerabilities: enhancedResult.security.vulnerabilities.length,
       });
 
       return enhancedResult;
-
     } catch (error) {
       const totalTime = Date.now() - startTime;
-      
-      console.error('[HYBRID-TAINT-ANALYZER] Analysis failed', {
+
+      console.error("[HYBRID-TAINT-ANALYZER] Analysis failed", {
         sessionId,
         error: error instanceof Error ? error.message : String(error),
-        totalTime
+        totalTime,
       });
 
       return this.createFailureResult(sessionId, totalTime, error);
@@ -207,7 +201,9 @@ export class HybridTaintAnalyzer {
   /**
    * Get policies by use case
    */
-  getPoliciesByUseCase(useCase: 'malware' | 'vulnerability' | 'compliance' | 'forensics' | 'general'): TaintPolicy[] {
+  getPoliciesByUseCase(
+    useCase: "malware" | "vulnerability" | "compliance" | "forensics" | "general",
+  ): TaintPolicy[] {
     return this.policyManager.getPoliciesByUseCase(useCase);
   }
 
@@ -223,12 +219,12 @@ export class HybridTaintAnalyzer {
    */
   async quickTaintAnalysis(
     data: Uint8Array,
-    config?: Partial<TaintConfig>
+    config?: Partial<TaintConfig>,
   ): Promise<TaintAnalysisResult> {
     if (config) {
       await this.taintEngine.configureTaint({
         ...this.getDefaultTaintConfig(),
-        ...config
+        ...config,
       });
     }
 
@@ -245,24 +241,13 @@ export class HybridTaintAnalyzer {
   /**
    * Add custom taint source for analysis
    */
-  async addTaintSource(
-    address: string,
-    source: string,
-    metadata?: any
-  ): Promise<void> {
-    await this.taintEngine.addTaintSource(
-      address,
-      source as any,
-      { metadata }
-    );
+  async addTaintSource(address: string, source: string, metadata?: any): Promise<void> {
+    await this.taintEngine.addTaintSource(address, source as any, { metadata });
   }
 
   // Private methods
 
-  private async registerEngine(
-    engine: AnalysisEngine,
-    instance: any
-  ): Promise<void> {
+  private async registerEngine(engine: AnalysisEngine, instance: any): Promise<void> {
     const capabilities = this.createEngineCapabilities(engine);
     await this.orchestrator.registerEngine(engine, instance, capabilities);
   }
@@ -270,62 +255,58 @@ export class HybridTaintAnalyzer {
   private createEngineCapabilities(engine: AnalysisEngine): EngineCapability {
     const baseCapabilities = {
       engine,
-      supportedFormats: ['PE', 'ELF', 'Mach-O', 'raw'],
-      supportedArchitectures: ['x86', 'x64', 'ARM', 'ARM64'],
+      supportedFormats: ["PE", "ELF", "Mach-O", "raw"],
+      supportedArchitectures: ["x86", "x64", "ARM", "ARM64"],
       requirements: {
         minMemoryMB: 512,
-        maxTimeoutMS: 300000
-      }
+        maxTimeoutMS: 300000,
+      },
     };
 
     switch (engine) {
-      case 'binaryninja-hlil':
+      case "binaryninja-hlil":
         return {
           ...baseCapabilities,
           capabilities: [
-            'decompilation',
-            'disassembly',
-            'control_flow',
-            'data_flow',
-            'api_analysis'
+            "decompilation",
+            "disassembly",
+            "control_flow",
+            "data_flow",
+            "api_analysis",
           ],
           performance: {
-            speed: 'medium',
-            accuracy: 'high',
-            memoryUsage: 'medium'
-          }
+            speed: "medium",
+            accuracy: "high",
+            memoryUsage: "medium",
+          },
         };
 
-      case 'ghidra-pcode':
+      case "ghidra-pcode":
         return {
           ...baseCapabilities,
           capabilities: [
-            'decompilation',
-            'disassembly',
-            'control_flow',
-            'data_flow',
-            'obfuscation_analysis'
+            "decompilation",
+            "disassembly",
+            "control_flow",
+            "data_flow",
+            "obfuscation_analysis",
           ],
           performance: {
-            speed: 'slow',
-            accuracy: 'high',
-            memoryUsage: 'high'
-          }
+            speed: "slow",
+            accuracy: "high",
+            memoryUsage: "high",
+          },
         };
 
-      case 'dynamic-taint':
+      case "dynamic-taint":
         return {
           ...baseCapabilities,
-          capabilities: [
-            'taint_tracking',
-            'data_flow',
-            'vulnerability_detection'
-          ],
+          capabilities: ["taint_tracking", "data_flow", "vulnerability_detection"],
           performance: {
-            speed: 'medium',
-            accuracy: 'high',
-            memoryUsage: 'medium'
-          }
+            speed: "medium",
+            accuracy: "high",
+            memoryUsage: "medium",
+          },
         };
 
       default:
@@ -333,10 +314,10 @@ export class HybridTaintAnalyzer {
           ...baseCapabilities,
           capabilities: [],
           performance: {
-            speed: 'medium',
-            accuracy: 'medium',
-            memoryUsage: 'medium'
-          }
+            speed: "medium",
+            accuracy: "medium",
+            memoryUsage: "medium",
+          },
         };
     }
   }
@@ -346,10 +327,10 @@ export class HybridTaintAnalyzer {
     options?: {
       enabledEngines?: AnalysisEngine[];
       customConfig?: Partial<HybridConfig>;
-    }
+    },
   ): HybridConfig {
     const baseConfig = this.policyManager.createHybridConfig(policy.name);
-    
+
     // Apply engine filtering if specified
     if (options?.enabledEngines) {
       for (const engine of Object.keys(baseConfig.engines) as AnalysisEngine[]) {
@@ -373,7 +354,7 @@ export class HybridTaintAnalyzer {
       ...override,
       engines: { ...base.engines, ...override.engines },
       global: { ...base.global, ...override.global },
-      aggregation: { ...base.aggregation, ...override.aggregation }
+      aggregation: { ...base.aggregation, ...override.aggregation },
     };
   }
 
@@ -382,13 +363,13 @@ export class HybridTaintAnalyzer {
     startTime: number,
     hybridResult: HybridAnalysisResult,
     policy: TaintPolicy,
-    includeCompliance: boolean
+    includeCompliance: boolean,
   ): Promise<EnhancedAnalysisResult> {
     const totalTime = Date.now() - startTime;
 
     // Extract static analysis results
     const staticResults = this.extractStaticResults(hybridResult);
-    
+
     // Extract taint analysis results
     const taintResults = hybridResult.findings.taint;
 
@@ -396,8 +377,9 @@ export class HybridTaintAnalyzer {
     const security = this.calculateSecurityAssessment(hybridResult, taintResults);
 
     // Calculate compliance assessment if requested
-    const compliance = includeCompliance ? 
-      this.calculateComplianceAssessment(hybridResult, taintResults) : undefined;
+    const compliance = includeCompliance
+      ? this.calculateComplianceAssessment(hybridResult, taintResults)
+      : undefined;
 
     // Calculate performance metrics
     const performance = this.calculatePerformanceMetrics(hybridResult);
@@ -412,7 +394,7 @@ export class HybridTaintAnalyzer {
       policy,
       security,
       compliance,
-      performance
+      performance,
     };
   }
 
@@ -422,17 +404,17 @@ export class HybridTaintAnalyzer {
   } {
     const results: { binaryNinja?: DecompilationResult; ghidra?: DecompilationResult } = {};
 
-    const binjaResults = hybridResult.engineResults['binaryninja-hlil'];
+    const binjaResults = hybridResult.engineResults["binaryninja-hlil"];
     if (binjaResults && binjaResults.length > 0) {
-      const successResult = binjaResults.find(r => r.status === 'success');
+      const successResult = binjaResults.find((r) => r.status === "success");
       if (successResult) {
         results.binaryNinja = successResult.result as DecompilationResult;
       }
     }
 
-    const ghidraResults = hybridResult.engineResults['ghidra-pcode'];
+    const ghidraResults = hybridResult.engineResults["ghidra-pcode"];
     if (ghidraResults && ghidraResults.length > 0) {
-      const successResult = ghidraResults.find(r => r.status === 'success');
+      const successResult = ghidraResults.find((r) => r.status === "success");
       if (successResult) {
         results.ghidra = successResult.result as DecompilationResult;
       }
@@ -443,11 +425,11 @@ export class HybridTaintAnalyzer {
 
   private calculateSecurityAssessment(
     hybridResult: HybridAnalysisResult,
-    taintResults?: TaintAnalysisResult
-  ): EnhancedAnalysisResult['security'] {
+    taintResults?: TaintAnalysisResult,
+  ): EnhancedAnalysisResult["security"] {
     const vulnerabilities: Array<{
       type: string;
-      severity: 'low' | 'medium' | 'high' | 'critical';
+      severity: "low" | "medium" | "high" | "critical";
       confidence: number;
       description: string;
       evidence: any;
@@ -466,17 +448,17 @@ export class HybridTaintAnalyzer {
             confidence: flow.confidence,
             description: flow.metadata?.description || `Tainted data reaches ${flow.sink.type}`,
             evidence: flow,
-            mitigations: flow.metadata?.mitigations || []
+            mitigations: flow.metadata?.mitigations || [],
           });
 
           // Add to risk score
           const severityWeight = {
-            'low': 10,
-            'medium': 25,
-            'high': 50,
-            'critical': 75
+            low: 10,
+            medium: 25,
+            high: 50,
+            critical: 75,
           }[flow.severity];
-          
+
           riskScore += severityWeight * flow.confidence;
         }
       }
@@ -485,24 +467,24 @@ export class HybridTaintAnalyzer {
     // Process static analysis matches
     if (hybridResult.findings.static?.matches) {
       for (const match of hybridResult.findings.static.matches) {
-        const severity = match.severity || 'medium';
+        const severity = match.severity || "medium";
         vulnerabilities.push({
           type: `static_${match.rule}`,
           severity,
           confidence: match.confidence || 0.5,
           description: `Static analysis detected: ${match.rule}`,
           evidence: match,
-          mitigations: ['Review and validate finding', 'Apply appropriate security controls']
+          mitigations: ["Review and validate finding", "Apply appropriate security controls"],
         });
 
         // Add to risk score
         const severityWeight: Record<string, number> = {
-          'low': 5,
-          'medium': 15,
-          'high': 30,
-          'critical': 50
+          low: 5,
+          medium: 15,
+          high: 30,
+          critical: 50,
         };
-        
+
         riskScore += (severityWeight[severity] || 10) * (match.confidence || 0.5);
       }
     }
@@ -516,17 +498,17 @@ export class HybridTaintAnalyzer {
     return {
       riskScore,
       vulnerabilities,
-      recommendations
+      recommendations,
     };
   }
 
   private calculateComplianceAssessment(
     hybridResult: HybridAnalysisResult,
-    taintResults?: TaintAnalysisResult
-  ): EnhancedAnalysisResult['compliance'] {
+    taintResults?: TaintAnalysisResult,
+  ): EnhancedAnalysisResult["compliance"] {
     const issues: Array<{
       type: string;
-      severity: 'info' | 'warning' | 'critical';
+      severity: "info" | "warning" | "critical";
       description: string;
       remediation: string;
     }> = [];
@@ -536,13 +518,13 @@ export class HybridTaintAnalyzer {
     // Check for PHI exposure risks
     if (taintResults?.flows) {
       for (const flow of taintResults.flows) {
-        if (flow.sink.type === 'log_output' || flow.sink.type === 'network_send') {
+        if (flow.sink.type === "log_output" || flow.sink.type === "network_send") {
           hipaaCompliant = false;
           issues.push({
-            type: 'phi_exposure_risk',
-            severity: 'critical',
+            type: "phi_exposure_risk",
+            severity: "critical",
             description: `Potential PHI exposure through ${flow.sink.type}`,
-            remediation: 'Implement data sanitization and encryption controls'
+            remediation: "Implement data sanitization and encryption controls",
           });
         }
       }
@@ -554,43 +536,43 @@ export class HybridTaintAnalyzer {
     return {
       hipaaCompliant,
       issues,
-      auditTrail
+      auditTrail,
     };
   }
 
   private calculatePerformanceMetrics(
-    hybridResult: HybridAnalysisResult
-  ): EnhancedAnalysisResult['performance'] {
+    hybridResult: HybridAnalysisResult,
+  ): EnhancedAnalysisResult["performance"] {
     return {
       enginesUsed: hybridResult.statistics.enginesUsed,
       totalInstructions: hybridResult.findings.taint?.instructionsAnalyzed || 0,
       memoryPeak: hybridResult.statistics.memoryPeak,
-      cpuTime: hybridResult.statistics.averageTaskTime * hybridResult.statistics.tasksExecuted
+      cpuTime: hybridResult.statistics.averageTaskTime * hybridResult.statistics.tasksExecuted,
     };
   }
 
   private generateSecurityRecommendations(
     vulnerabilities: Array<any>,
-    riskScore: number
+    riskScore: number,
   ): string[] {
     const recommendations: string[] = [];
 
     if (riskScore > 80) {
-      recommendations.push('CRITICAL: Immediate security review required');
-      recommendations.push('Consider quarantining or blocking this binary');
+      recommendations.push("CRITICAL: Immediate security review required");
+      recommendations.push("Consider quarantining or blocking this binary");
     } else if (riskScore > 50) {
-      recommendations.push('HIGH: Comprehensive security assessment recommended');
-      recommendations.push('Implement additional monitoring controls');
+      recommendations.push("HIGH: Comprehensive security assessment recommended");
+      recommendations.push("Implement additional monitoring controls");
     } else if (riskScore > 25) {
-      recommendations.push('MEDIUM: Standard security review recommended');
+      recommendations.push("MEDIUM: Standard security review recommended");
     }
 
-    if (vulnerabilities.some(v => v.type.includes('taint_exec'))) {
-      recommendations.push('Code injection vulnerabilities detected - review input validation');
+    if (vulnerabilities.some((v) => v.type.includes("taint_exec"))) {
+      recommendations.push("Code injection vulnerabilities detected - review input validation");
     }
 
-    if (vulnerabilities.some(v => v.type.includes('network'))) {
-      recommendations.push('Network-related risks identified - review network controls');
+    if (vulnerabilities.some((v) => v.type.includes("network"))) {
+      recommendations.push("Network-related risks identified - review network controls");
     }
 
     return recommendations;
@@ -601,13 +583,13 @@ export class HybridTaintAnalyzer {
     return [
       {
         timestamp: Date.now(),
-        event: 'hybrid_analysis_completed',
+        event: "hybrid_analysis_completed",
         details: {
           sessionId: hybridResult.sessionId,
           engines: hybridResult.statistics.enginesUsed,
-          duration: hybridResult.totalTime
-        }
-      }
+          duration: hybridResult.totalTime,
+        },
+      },
     ];
   }
 
@@ -616,35 +598,35 @@ export class HybridTaintAnalyzer {
       maxInstructions: 100000,
       timeout: 60000,
       confidenceThreshold: 0.5,
-      enabledSources: ['user_input', 'file_read'],
-      enabledSinks: ['exec_function', 'file_write'],
+      enabledSources: ["user_input", "file_read"],
+      enabledSinks: ["exec_function", "file_write"],
       trackImplicitFlows: false,
       pathSensitive: false,
       maxCallDepth: 5,
       hipaaCompliance: {
         enabled: true,
         sanitizeAddresses: true,
-        auditLevel: 'standard'
-      }
+        auditLevel: "standard",
+      },
     };
   }
 
   private generateSessionId(): string {
     const array = new Uint8Array(16);
-    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    if (typeof crypto !== "undefined" && crypto.getRandomValues) {
       crypto.getRandomValues(array);
     } else {
       for (let i = 0; i < 16; i++) {
         array[i] = Math.floor(Math.random() * 256);
       }
     }
-    return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
   }
 
   private createFailureResult(
     sessionId: string,
     totalTime: number,
-    error: unknown
+    error: unknown,
   ): EnhancedAnalysisResult {
     return {
       sessionId,
@@ -653,14 +635,14 @@ export class HybridTaintAnalyzer {
       security: {
         riskScore: 0,
         vulnerabilities: [],
-        recommendations: ['Analysis failed - manual review required']
+        recommendations: ["Analysis failed - manual review required"],
       },
       performance: {
         enginesUsed: [],
         totalInstructions: 0,
         memoryPeak: 0,
-        cpuTime: totalTime
-      }
+        cpuTime: totalTime,
+      },
     };
   }
 }
@@ -672,7 +654,7 @@ export async function analyzeWithTaint(
     binaryNinja?: DecompilationScanner;
     ghidra?: DecompilationScanner;
   },
-  policy: string = 'malware-analysis'
+  policy: string = "malware-analysis",
 ): Promise<EnhancedAnalysisResult> {
   const analyzer = new HybridTaintAnalyzer();
   await analyzer.initialize(engines);

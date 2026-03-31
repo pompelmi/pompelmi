@@ -26,17 +26,17 @@
  * @module quarantine/workflow
  */
 
-import * as crypto from 'crypto';
-import type { ScanReport } from '../types';
+import * as crypto from "crypto";
+import type { ScanReport } from "../types";
+import type { QuarantineStorage } from "./storage";
 import type {
+  QuarantinedFileInfo,
   QuarantineEntry,
   QuarantineFilter,
   QuarantineReport,
   QuarantineReview,
   QuarantineStatus,
-  QuarantinedFileInfo,
-} from './types';
-import type { QuarantineStorage } from './storage';
+} from "./types";
 
 // ── Options ───────────────────────────────────────────────────────────────────
 
@@ -79,8 +79,8 @@ export class QuarantineManager {
    * configured policy.
    */
   shouldQuarantine(report: ScanReport): boolean {
-    if (report.verdict === 'malicious') return this.quarantineMalicious;
-    if (report.verdict === 'suspicious') return this.quarantineSuspicious;
+    if (report.verdict === "malicious") return this.quarantineMalicious;
+    if (report.verdict === "suspicious") return this.quarantineSuspicious;
     return false;
   }
 
@@ -95,7 +95,7 @@ export class QuarantineManager {
   async quarantine(
     bytes: Uint8Array,
     report: ScanReport,
-    fileInfo: Omit<QuarantinedFileInfo, 'sha256'> & { sha256?: string },
+    fileInfo: Omit<QuarantinedFileInfo, "sha256"> & { sha256?: string },
   ): Promise<QuarantineEntry> {
     const id = generateId();
     const sha256 = fileInfo.sha256 ?? computeSha256(bytes);
@@ -109,7 +109,7 @@ export class QuarantineManager {
       file: { ...fileInfo, sha256 },
       scanReport: report,
       quarantinedAt: now,
-      status: 'pending',
+      status: "pending",
       updatedAt: now,
     };
 
@@ -122,7 +122,7 @@ export class QuarantineManager {
    */
   async startReview(id: string, reviewedBy?: string): Promise<QuarantineEntry> {
     return this.storage.updateEntry(id, {
-      status: 'reviewing',
+      status: "reviewing",
       reviewedBy,
       updatedAt: new Date().toISOString(),
     });
@@ -138,14 +138,14 @@ export class QuarantineManager {
   async resolve(id: string, review: QuarantineReview): Promise<QuarantineEntry> {
     const entry = await this.storage.getEntry(id);
     if (!entry) throw new Error(`Quarantine entry not found: ${id}`);
-    if (entry.status === 'promoted' || entry.status === 'deleted') {
+    if (entry.status === "promoted" || entry.status === "deleted") {
       throw new Error(`Quarantine entry ${id} is already resolved (${entry.status}).`);
     }
 
     const now = new Date().toISOString();
-    const newStatus: QuarantineStatus = review.decision === 'promote' ? 'promoted' : 'deleted';
+    const newStatus: QuarantineStatus = review.decision === "promote" ? "promoted" : "deleted";
 
-    if (review.decision === 'delete') {
+    if (review.decision === "delete") {
       await this.storage.deleteFile(entry.storageKey);
     }
 
@@ -180,7 +180,7 @@ export class QuarantineManager {
   }
 
   listPending(): Promise<QuarantineEntry[]> {
-    return this.storage.listEntries({ status: 'pending' });
+    return this.storage.listEntries({ status: "pending" });
   }
 
   countEntries(filter?: QuarantineFilter): Promise<number> {
@@ -213,5 +213,5 @@ function generateId(): string {
 }
 
 function computeSha256(bytes: Uint8Array): string {
-  return crypto.createHash('sha256').update(bytes).digest('hex');
+  return crypto.createHash("sha256").update(bytes).digest("hex");
 }

@@ -3,10 +3,10 @@
  * @module utils/batch-scanner
  */
 
-import type { ScanReport, ScanContext } from '../types';
-import { scanBytes, type ScanOptions } from '../scan';
+import { type ScanOptions, scanBytes } from "../scan";
+import type { ScanContext, ScanReport } from "../types";
 
-export interface BatchScanOptions extends Omit<ScanOptions, 'ctx'> {
+export interface BatchScanOptions extends Omit<ScanOptions, "ctx"> {
   /** Maximum concurrent scans (default: 5) */
   concurrency?: number;
   /** Callback for individual scan completion */
@@ -150,7 +150,7 @@ export class BatchScanner {
           mimeType: file.type,
           size: file.size,
         },
-      }))
+      })),
     );
 
     return this.scanBatch(tasks);
@@ -160,15 +160,12 @@ export class BatchScanner {
    * Scan files from file paths (Node.js environment)
    */
   async scanFilePaths(filePaths: string[]): Promise<BatchScanResult> {
-    const fs = await import('fs/promises');
-    const path = await import('path');
+    const fs = await import("fs/promises");
+    const path = await import("path");
 
     const tasks: ScanTask[] = await Promise.all(
       filePaths.map(async (filePath) => {
-        const [content, stats] = await Promise.all([
-          fs.readFile(filePath),
-          fs.stat(filePath),
-        ]);
+        const [content, stats] = await Promise.all([fs.readFile(filePath), fs.stat(filePath)]);
 
         return {
           content: new Uint8Array(content),
@@ -177,7 +174,7 @@ export class BatchScanner {
             size: stats.size,
           },
         };
-      })
+      }),
     );
 
     return this.scanBatch(tasks);
@@ -189,7 +186,7 @@ export class BatchScanner {
  */
 export async function batchScan(
   tasks: ScanTask[],
-  options?: BatchScanOptions
+  options?: BatchScanOptions,
 ): Promise<BatchScanResult> {
   const scanner = new BatchScanner(options);
   return scanner.scanBatch(tasks);

@@ -3,8 +3,8 @@
  * @module utils/cache-manager
  */
 
-import { createHash } from 'crypto';
-import type { ScanReport } from '../types';
+import { createHash } from "crypto";
+import type { ScanReport } from "../types";
 
 export interface CacheEntry {
   /** Scan report */
@@ -48,7 +48,7 @@ export class ScanCacheManager {
   private readonly ttl: number;
   private readonly enableLRU: boolean;
   private readonly enableStats: boolean;
-  
+
   // Statistics
   private stats = {
     hits: 0,
@@ -67,10 +67,10 @@ export class ScanCacheManager {
    * Generate cache key from file content
    */
   private generateKey(content: Uint8Array, preset?: string): string {
-    const hash = createHash('sha256')
+    const hash = createHash("sha256")
       .update(content)
-      .update(preset || 'default')
-      .digest('hex');
+      .update(preset || "default")
+      .digest("hex");
     return hash;
   }
 

@@ -1,10 +1,10 @@
-import * as os from 'os';
-import * as fs from 'fs/promises';
-import * as path from 'path';
-import { execFile } from 'child_process';
-import { promisify } from 'util';
-import { randomBytes } from 'crypto';
-import { fileURLToPath } from 'url';
+import { execFile } from "child_process";
+import { randomBytes } from "crypto";
+import * as fs from "fs/promises";
+import * as os from "os";
+import * as path from "path";
+import { fileURLToPath } from "url";
+import { promisify } from "util";
 
 // Node.js globals - declared to avoid @types/node dependency
 declare const process: {
@@ -27,12 +27,12 @@ interface HipaaUtilities {
 }
 
 // Define types locally - these will match the main package types
-export type AnalysisDepth = 'minimal' | 'basic' | 'deep';
-export type DecompilationEngine = 'binaryninja-hlil' | 'ghidra-pcode';
+export type AnalysisDepth = "minimal" | "basic" | "deep";
+export type DecompilationEngine = "binaryninja-hlil" | "ghidra-pcode";
 
 export interface DecompilationMatch {
   rule: string;
-  severity?: 'low' | 'medium' | 'high' | 'critical';
+  severity?: "low" | "medium" | "high" | "critical";
   engine: DecompilationEngine;
   confidence: number;
   meta?: {
@@ -106,12 +106,12 @@ export class GhidraScanner implements DecompilationScanner {
   constructor(options: GhidraOptions = {}) {
     this.options = {
       timeout: options.timeout ?? 60000, // 60 second default
-      depth: options.depth ?? 'basic',
+      depth: options.depth ?? "basic",
       enableHeuristics: options.enableHeuristics ?? true,
-      ghidraPath: options.ghidraPath ?? process.env.GHIDRA_INSTALL_DIR ?? '',
-      analyzeHeadless: options.analyzeHeadless ?? 'analyzeHeadless',
-      javaPath: options.javaPath ?? 'java',
-      maxMemory: options.maxMemory ?? '2G'
+      ghidraPath: options.ghidraPath ?? process.env.GHIDRA_INSTALL_DIR ?? "",
+      analyzeHeadless: options.analyzeHeadless ?? "analyzeHeadless",
+      javaPath: options.javaPath ?? "java",
+      maxMemory: options.maxMemory ?? "2G",
     };
 
     // Initialize HIPAA compliance utilities
@@ -121,22 +121,22 @@ export class GhidraScanner implements DecompilationScanner {
   private createHipaaUtilities(): HipaaUtilities {
     return {
       sanitizeFilename: (filename?: string) => {
-        if (!filename) return 'unknown';
+        if (!filename) return "unknown";
         const basename = path.basename(filename);
-        const hash = randomBytes(4).toString('hex');
+        const hash = randomBytes(4).toString("hex");
         const ext = path.extname(basename);
         return `file_${hash}${ext}`;
       },
       sanitizeError: (error: Error | string) => {
-        const message = typeof error === 'string' ? error : error.message;
+        const message = typeof error === "string" ? error : error.message;
         return message
-          .replace(/[A-Za-z]:\\[^\s]+/g, '[REDACTED_PATH]')
-          .replace(/\/[^\s]+/g, '[REDACTED_PATH]')
-          .replace(/\b\d{3}-?\d{2}-?\d{4}\b/g, '[REDACTED_ID]')
-          .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, '[REDACTED_EMAIL]');
+          .replace(/[A-Za-z]:\\[^\s]+/g, "[REDACTED_PATH]")
+          .replace(/\/[^\s]+/g, "[REDACTED_PATH]")
+          .replace(/\b\d{3}-?\d{2}-?\d{4}\b/g, "[REDACTED_ID]")
+          .replace(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g, "[REDACTED_EMAIL]");
       },
-      createSecureTempPath: (prefix = 'pompelmi-ghidra') => {
-        const randomId = randomBytes(8).toString('hex');
+      createSecureTempPath: (prefix = "pompelmi-ghidra") => {
+        const randomId = randomBytes(8).toString("hex");
         return path.join(os.tmpdir(), `${prefix}-${Date.now()}-${randomId}`);
       },
       secureCleanup: async (filePath: string) => {
@@ -149,7 +149,7 @@ export class GhidraScanner implements DecompilationScanner {
       auditLog: (eventType: string, details: any) => {
         // Simple audit logging - in production, this would write to secure logs
         console.debug(`[HIPAA-AUDIT] ${eventType}:`, JSON.stringify(details));
-      }
+      },
     };
   }
 
@@ -161,46 +161,51 @@ export class GhidraScanner implements DecompilationScanner {
   async analyze(bytes: Uint8Array): Promise<DecompilationResult> {
     // HIPAA-compliant analysis with secure temp file handling
     const secureId = this.randomHex(16);
-    const tmpDir = this.hipaa.createSecureTempPath('ghidra-analysis');
-    const projectDir = path.join(tmpDir, 'project');
-    const binPath = this.hipaa.createSecureTempPath('ghidra-sample');
-    const scriptPath = path.join(tmpDir, 'analysis_script.java');
-    
+    const tmpDir = this.hipaa.createSecureTempPath("ghidra-analysis");
+    const projectDir = path.join(tmpDir, "project");
+    const binPath = this.hipaa.createSecureTempPath("ghidra-sample");
+    const scriptPath = path.join(tmpDir, "analysis_script.java");
+
     // Audit log for analysis start
-    this.hipaa.auditLog('decompilation_start', {
-      engine: 'ghidra-pcode',
+    this.hipaa.auditLog("decompilation_start", {
+      engine: "ghidra-pcode",
       depth: this.options.depth,
       sampleSize: bytes.length,
-      sessionId: secureId
+      sessionId: secureId,
     });
-    
+
     try {
       // Create project directory
       await fs.mkdir(tmpDir, { recursive: true });
       await fs.mkdir(projectDir, { recursive: true });
-      
+
       // Write binary to temp file
       await fs.writeFile(binPath, bytes);
-      
+
       // Create Ghidra analysis script
       await this.createAnalysisScript(scriptPath);
-      
+
       // Build analyzeHeadless command
       const ghidraScript = this.options.analyzeHeadless;
       const projectPath = projectDir;
-      const projectName = 'PompelmiAnalysis';
-      
+      const projectName = "PompelmiAnalysis";
+
       const args = [
         `-Xmx${this.options.maxMemory}`,
-        '-jar', path.join(this.options.ghidraPath, 'support', 'analyzeHeadless.jar'),
-        projectPath, projectName,
-        '-import', binPath,
-        '-scriptPath', path.dirname(scriptPath),
-        '-postScript', path.basename(scriptPath, '.java'),
-        '-overwrite',
-        '-deleteProject'
+        "-jar",
+        path.join(this.options.ghidraPath, "support", "analyzeHeadless.jar"),
+        projectPath,
+        projectName,
+        "-import",
+        binPath,
+        "-scriptPath",
+        path.dirname(scriptPath),
+        "-postScript",
+        path.basename(scriptPath, ".java"),
+        "-overwrite",
+        "-deleteProject",
       ];
-      
+
       // Execute Ghidra analysis with sanitized environment
       const env = { ...process.env };
       // Remove potentially sensitive environment variables for HIPAA compliance
@@ -208,22 +213,18 @@ export class GhidraScanner implements DecompilationScanner {
       delete env.USER;
       delete env.HOME;
       delete env.USERPROFILE;
-      
+
       const timeoutSeconds = Math.ceil(this.options.timeout / 1000);
-      const { stdout, stderr } = await pexec(
-        this.options.javaPath,
-        args,
-        { 
-          timeout: this.options.timeout,
-          env,
-          maxBuffer: 10 * 1024 * 1024, // 10MB buffer
-          cwd: tmpDir
-        }
-      );
-      
+      const { stdout, stderr } = await pexec(this.options.javaPath, args, {
+        timeout: this.options.timeout,
+        env,
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        cwd: tmpDir,
+      });
+
       // Parse results from stdout/stderr - sanitize any errors for HIPAA compliance
       let rawResult: GhidraAnalysisResult;
-      
+
       try {
         // Look for JSON output in the logs
         const jsonMatch = stdout.match(/POMPELMI_RESULT:([\s\S]*?)POMPELMI_END/);
@@ -235,117 +236,119 @@ export class GhidraScanner implements DecompilationScanner {
         }
       } catch (parseError) {
         const sanitizedError = this.hipaa.sanitizeError(parseError as Error);
-        this.hipaa.auditLog('decompilation_parse_error', {
-          engine: 'ghidra-pcode',
+        this.hipaa.auditLog("decompilation_parse_error", {
+          engine: "ghidra-pcode",
           sessionId: secureId,
-          error: sanitizedError
+          error: sanitizedError,
         });
-        
+
         return {
-          engine: 'ghidra-pcode',
+          engine: "ghidra-pcode",
           success: false,
           functions: [],
           matches: [],
-          meta: { error: 'Failed to parse analysis results' }
+          meta: { error: "Failed to parse analysis results" },
         };
       }
-      
+
       if (!rawResult.success) {
-        const sanitizedError = rawResult.error ? this.hipaa.sanitizeError(rawResult.error) : 'Analysis failed';
-        
-        this.hipaa.auditLog('decompilation_analysis_error', {
-          engine: 'ghidra-pcode',
+        const sanitizedError = rawResult.error
+          ? this.hipaa.sanitizeError(rawResult.error)
+          : "Analysis failed";
+
+        this.hipaa.auditLog("decompilation_analysis_error", {
+          engine: "ghidra-pcode",
           sessionId: secureId,
-          error: sanitizedError
+          error: sanitizedError,
         });
-        
+
         return {
-          engine: 'ghidra-pcode',
+          engine: "ghidra-pcode",
           success: false,
           functions: [],
           matches: [],
-          meta: { error: sanitizedError }
+          meta: { error: sanitizedError },
         };
       }
-      
+
       // Transform functions to our interface
-      const functions: FunctionAnalysis[] = (rawResult.functions || []).map(func => ({
-        name: func.name || 'unknown',
-        address: func.address || '0x0',
+      const functions: FunctionAnalysis[] = (rawResult.functions || []).map((func) => ({
+        name: func.name || "unknown",
+        address: func.address || "0x0",
         size: func.size || 0,
         complexity: func.complexity,
         callCount: func.callCount,
         isObfuscated: func.complexity > 50,
-        hasAntiAnalysis: func.suspiciousCalls?.some((call: string) => 
-          call.toLowerCase().includes('debug') || call.toLowerCase().includes('protect')),
-        suspiciousCalls: func.suspiciousCalls || []
+        hasAntiAnalysis: func.suspiciousCalls?.some(
+          (call: string) =>
+            call.toLowerCase().includes("debug") || call.toLowerCase().includes("protect"),
+        ),
+        suspiciousCalls: func.suspiciousCalls || [],
       }));
-      
+
       // Transform matches to our interface
-      const matches: DecompilationMatch[] = (rawResult.matches || []).map(match => ({
+      const matches: DecompilationMatch[] = (rawResult.matches || []).map((match) => ({
         rule: match.rule,
-        severity: match.severity || 'medium',
-        engine: 'ghidra-pcode',
+        severity: match.severity || "medium",
+        engine: "ghidra-pcode",
         confidence: match.confidence || 0.5,
-        meta: match.meta || {}
+        meta: match.meta || {},
       }));
-      
+
       // Log successful analysis
-      this.hipaa.auditLog('decompilation_success', {
-        engine: 'ghidra-pcode',
+      this.hipaa.auditLog("decompilation_success", {
+        engine: "ghidra-pcode",
         sessionId: secureId,
         functionCount: functions.length,
-        matchCount: matches.length
+        matchCount: matches.length,
       });
 
       return {
-        engine: 'ghidra-pcode',
+        engine: "ghidra-pcode",
         success: true,
         functions,
         matches,
-        meta: rawResult.meta
+        meta: rawResult.meta,
       };
-      
     } catch (error: any) {
       const sanitizedError = this.hipaa.sanitizeError(error);
-      
+
       // Log error event for audit trail
-      this.hipaa.auditLog('decompilation_error', {
-        engine: 'ghidra-pcode',
+      this.hipaa.auditLog("decompilation_error", {
+        engine: "ghidra-pcode",
         sessionId: secureId,
-        errorType: error.code || 'unknown',
-        error: sanitizedError
+        errorType: error.code || "unknown",
+        error: sanitizedError,
       });
-      
+
       // Handle specific error cases
-      if (error.code === 'ENOENT') {
+      if (error.code === "ENOENT") {
         return {
-          engine: 'ghidra-pcode',
+          engine: "ghidra-pcode",
           success: false,
           functions: [],
           matches: [],
-          meta: { error: 'Ghidra installation not found' }
+          meta: { error: "Ghidra installation not found" },
         };
       }
-      
-      if (error.killed && error.signal === 'SIGTERM') {
+
+      if (error.killed && error.signal === "SIGTERM") {
         return {
-          engine: 'ghidra-pcode',
+          engine: "ghidra-pcode",
           success: false,
           functions: [],
           matches: [],
-          meta: { error: 'Analysis timeout' }
+          meta: { error: "Analysis timeout" },
         };
       }
-      
+
       return {
-        engine: 'ghidra-pcode',
+        engine: "ghidra-pcode",
         success: false,
         functions: [],
         matches: [],
-        meta: { error: 'Analysis failed' }
+        meta: { error: "Analysis failed" },
       };
-      
     } finally {
       // HIPAA-compliant secure cleanup
       try {
@@ -353,19 +356,19 @@ export class GhidraScanner implements DecompilationScanner {
         await fs.rm(tmpDir, { recursive: true, force: true });
         // Secure cleanup of binary file if separate
         await this.hipaa.secureCleanup(binPath);
-        
-        this.hipaa.auditLog('decompilation_cleanup', {
-          engine: 'ghidra-pcode',
+
+        this.hipaa.auditLog("decompilation_cleanup", {
+          engine: "ghidra-pcode",
           sessionId: secureId,
-          status: 'completed'
+          status: "completed",
         });
       } catch (cleanupError) {
         // Log cleanup failure but don't throw
         const sanitizedCleanupError = this.hipaa.sanitizeError(cleanupError as Error);
-        this.hipaa.auditLog('decompilation_cleanup_error', {
-          engine: 'ghidra-pcode',
+        this.hipaa.auditLog("decompilation_cleanup_error", {
+          engine: "ghidra-pcode",
           sessionId: secureId,
-          error: sanitizedCleanupError
+          error: sanitizedCleanupError,
         });
       }
     }
@@ -599,35 +602,37 @@ public class PompelmiPcodeAnalysis extends GhidraScript {
     }
 }
 `;
-    
-    await fs.writeFile(scriptPath, script.trim(), 'utf8');
+
+    await fs.writeFile(scriptPath, script.trim(), "utf8");
   }
 
   private parseGhidraOutput(stdout: string, stderr: string): GhidraAnalysisResult {
     // Fallback parsing if JSON extraction fails
-    if (stderr.includes('ERROR') || stdout.includes('ERROR')) {
+    if (stderr.includes("ERROR") || stdout.includes("ERROR")) {
       return {
         success: false,
-        error: 'Ghidra analysis error'
+        error: "Ghidra analysis error",
       };
     }
-    
+
     // Extract basic info from stdout
     const functionCount = (stdout.match(/Function/g) || []).length;
-    
+
     return {
       success: true,
       functions: [],
       matches: [],
       meta: {
         analysisTime: 0,
-        functionCount: functionCount
-      }
+        functionCount: functionCount,
+      },
     };
   }
 
   private randomHex(length: number): string {
-    return randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length);
+    return randomBytes(Math.ceil(length / 2))
+      .toString("hex")
+      .slice(0, length);
   }
 }
 

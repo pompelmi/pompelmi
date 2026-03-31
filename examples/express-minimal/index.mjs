@@ -24,15 +24,23 @@ async function loadPompelmi() {
         let all = [];
         for (const [name, s] of entries) {
           const res = (await s.scan(bytes)) || [];
-          if (opts.tagSourceName) res.forEach(e => (e.source ??= name));
+          if (opts.tagSourceName) {
+            res.forEach((e) => {
+              e.source ??= name;
+            });
+          }
           all = all.concat(res);
           const stop = (opts.stopOn || "").toLowerCase();
-          if (stop && res.some(e => (e?.meta?.verdict || "").toLowerCase() === stop)) break;
+          if (stop && res.some((e) => (e?.meta?.verdict || "").toLowerCase() === stop)) break;
         }
         return all;
-      }
+      },
     });
-    CommonHeuristicsScanner = { async scan() { return []; } };
+    CommonHeuristicsScanner = {
+      async scan() {
+        return [];
+      },
+    };
   }
 }
 
@@ -59,18 +67,23 @@ const SimplePdfJsMacroScanner = {
         meta: {
           description: "PDF contains JavaScript with an open action",
           verdict: "suspicious",
-          source: "SimplePdfJsMacroScanner"
+          source: "SimplePdfJsMacroScanner",
         },
-        tags: ["pdf", "js", "heuristic"]
+        tags: ["pdf", "js", "heuristic"],
       });
     }
 
     // Heuristic: macro suspicious words (need >=2 to trigger)
     const macroWords = [
-      "AutoOpen", "AutoClose", "Document_Open", "CreateObject(",
-      "WScript.Shell", "Shell(", "Sub Workbook_Open()"
+      "AutoOpen",
+      "AutoClose",
+      "Document_Open",
+      "CreateObject(",
+      "WScript.Shell",
+      "Shell(",
+      "Sub Workbook_Open()",
     ];
-    const macroHits = macroWords.filter(w => text.includes(w)).length;
+    const macroHits = macroWords.filter((w) => text.includes(w)).length;
     if (macroHits >= 2) {
       events.push({
         rule: "Office_Macro_Heuristic",
@@ -78,18 +91,18 @@ const SimplePdfJsMacroScanner = {
           description: "Suspicious macro-like keywords",
           verdict: "suspicious",
           hits: macroHits,
-          source: "SimplePdfJsMacroScanner"
+          source: "SimplePdfJsMacroScanner",
         },
-        tags: ["office", "vba", "heuristic"]
+        tags: ["office", "vba", "heuristic"],
       });
     }
 
     return events;
-  }
+  },
 };
 
 // Compose scanners (add more later if you want)
-let scanners = [
+const scanners = [
   ["heuristics", CommonHeuristicsScanner],
   ["simple-heuristics", SimplePdfJsMacroScanner],
 ];
@@ -101,12 +114,12 @@ const scanner = composeScanners(scanners, {
   parallel: false,
   stopOn: "suspicious",
   timeoutMsPerScanner: 1500,
-  tagSourceName: true
+  tagSourceName: true,
 });
 
 // Verdict mapper
 function mapToVerdict(events = []) {
-  const verdicts = events.map(e => (e?.meta?.verdict || "").toLowerCase()).filter(Boolean);
+  const verdicts = events.map((e) => (e?.meta?.verdict || "").toLowerCase()).filter(Boolean);
   if (verdicts.includes("malicious")) return "malicious";
   if (verdicts.includes("suspicious")) return "suspicious";
   return "clean";
@@ -115,7 +128,7 @@ function mapToVerdict(events = []) {
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
-  limits: { fileSize: 25 * 1024 * 1024 } // 25 MB
+  limits: { fileSize: 25 * 1024 * 1024 }, // 25 MB
 });
 
 app.get("/health", (_req, res) => res.json({ ok: true }));

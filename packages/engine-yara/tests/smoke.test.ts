@@ -1,8 +1,8 @@
-import * as pkg from '../src';
-import { describe, it, expect } from 'vitest';
+import { describe, expect, it } from "vitest";
+import * as pkg from "../src";
 
-describe('smoke', () => {
-  it('package loads', () => {
+describe("smoke", () => {
+  it("package loads", () => {
     expect(pkg).toBeTruthy();
   });
 });

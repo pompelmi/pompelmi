@@ -1,27 +1,33 @@
-import type { Scanner, ScanFn, Match, Verdict, DecompilationScanner, AnalysisDepth } from "./types";
 import { CommonHeuristicsScanner } from "./scanners/common-heuristics";
+import type { AnalysisDepth, DecompilationScanner, Match, ScanFn, Scanner, Verdict } from "./types";
 
-export type PresetName = 'basic' | 'advanced' | 'malware-analysis' | 'decompilation-basic' | 'decompilation-deep' | string;
+export type PresetName =
+  | "basic"
+  | "advanced"
+  | "malware-analysis"
+  | "decompilation-basic"
+  | "decompilation-deep"
+  | string;
 
-export interface PresetOptions { 
+export interface PresetOptions {
   // YARA options
   yaraRules?: string | string[];
   yaraTimeout?: number;
-  
+
   // Decompilation options
   enableDecompilation?: boolean;
-  decompilationEngine?: 'binaryninja-hlil' | 'ghidra-pcode' | 'both';
+  decompilationEngine?: "binaryninja-hlil" | "ghidra-pcode" | "both";
   decompilationDepth?: AnalysisDepth;
   decompilationTimeout?: number;
-  
+
   // Binary Ninja specific
   binaryNinjaPath?: string;
   pythonPath?: string;
-  
-  // Ghidra specific  
+
+  // Ghidra specific
   ghidraPath?: string;
   analyzeHeadless?: string;
-  
+
   // General options
   timeout?: number;
   [key: string]: unknown;
@@ -91,16 +97,19 @@ function shouldStop(matches: Match[], stopOn: Verdict | undefined): boolean {
   return SEVERITY_RANK[highest] >= SEVERITY_RANK[stopOn];
 }
 
-async function runWithTimeout<T>(
-  fn: () => Promise<T>,
-  timeoutMs: number | undefined,
-): Promise<T> {
+async function runWithTimeout<T>(fn: () => Promise<T>, timeoutMs: number | undefined): Promise<T> {
   if (!timeoutMs) return fn();
   return new Promise<T>((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error("scanner timeout")), timeoutMs);
     fn().then(
-      (v) => { clearTimeout(timer); resolve(v); },
-      (e) => { clearTimeout(timer); reject(e); },
+      (v) => {
+        clearTimeout(timer);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(timer);
+        reject(e);
+      },
     );
   });
 }
@@ -124,7 +133,10 @@ async function runWithTimeout<T>(
  * const scanner = composeScanners(scannerA, scannerB, scannerC);
  * ```
  */
-export function composeScanners(namedScanners: NamedScanner[], opts?: ComposeScannerOptions): ScanFn;
+export function composeScanners(
+  namedScanners: NamedScanner[],
+  opts?: ComposeScannerOptions,
+): ScanFn;
 export function composeScanners(...scanners: Scanner[]): ScanFn;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function composeScanners(...args: any[]): ScanFn {
@@ -137,7 +149,9 @@ export function composeScanners(...args: any[]): ScanFn {
   ) {
     const entries = first as NamedScanner[];
     const opts: ComposeScannerOptions =
-      rest.length > 0 && !Array.isArray(rest[0]) && typeof rest[0] !== "function" &&
+      rest.length > 0 &&
+      !Array.isArray(rest[0]) &&
+      typeof rest[0] !== "function" &&
       !(typeof rest[0] === "object" && rest[0] !== null && "scan" in (rest[0] as object))
         ? (rest[0] as ComposeScannerOptions)
         : {};
@@ -212,56 +226,74 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
   scanners.push(CommonHeuristicsScanner);
 
   // Add decompilation scanners based on preset
-  if (preset === 'decompilation-basic' || preset === 'decompilation-deep' || 
-      preset === 'malware-analysis' || opts.enableDecompilation) {
-    
-    const depth = preset === 'decompilation-deep' ? 'deep' : 
-                  preset === 'decompilation-basic' ? 'basic' : 
-                  opts.decompilationDepth || 'basic';
-    
-    if (!opts.decompilationEngine || opts.decompilationEngine === 'binaryninja-hlil' || opts.decompilationEngine === 'both') {
+  if (
+    preset === "decompilation-basic" ||
+    preset === "decompilation-deep" ||
+    preset === "malware-analysis" ||
+    opts.enableDecompilation
+  ) {
+    const depth =
+      preset === "decompilation-deep"
+        ? "deep"
+        : preset === "decompilation-basic"
+          ? "basic"
+          : opts.decompilationDepth || "basic";
+
+    if (
+      !opts.decompilationEngine ||
+      opts.decompilationEngine === "binaryninja-hlil" ||
+      opts.decompilationEngine === "both"
+    ) {
       try {
         // Dynamic import to avoid bundling issues - using Function to bypass TypeScript type checking
-        const importModule = new Function('specifier', 'return import(specifier)');
-        importModule('@pompelmi/engine-binaryninja').then((mod: any) => {
-          const binjaScanner = mod.createBinaryNinjaScanner({
-            timeout: opts.decompilationTimeout || opts.timeout || 30000,
-            depth,
-            pythonPath: opts.pythonPath,
-            binaryNinjaPath: opts.binaryNinjaPath
+        const importModule = new Function("specifier", "return import(specifier)");
+        importModule("@pompelmi/engine-binaryninja")
+          .then((mod: any) => {
+            const binjaScanner = mod.createBinaryNinjaScanner({
+              timeout: opts.decompilationTimeout || opts.timeout || 30000,
+              depth,
+              pythonPath: opts.pythonPath,
+              binaryNinjaPath: opts.binaryNinjaPath,
+            });
+            scanners.push(binjaScanner);
+          })
+          .catch(() => {
+            // Binary Ninja engine not available - silently skip
           });
-          scanners.push(binjaScanner);
-        }).catch(() => {
-          // Binary Ninja engine not available - silently skip
-        });
       } catch {
         // Engine not installed
       }
     }
-    
-    if (!opts.decompilationEngine || opts.decompilationEngine === 'ghidra-pcode' || opts.decompilationEngine === 'both') {
+
+    if (
+      !opts.decompilationEngine ||
+      opts.decompilationEngine === "ghidra-pcode" ||
+      opts.decompilationEngine === "both"
+    ) {
       try {
         // Dynamic import for Ghidra engine (when implemented) - using Function to bypass TypeScript type checking
-        const importModule = new Function('specifier', 'return import(specifier)');
-        importModule('@pompelmi/engine-ghidra').then((mod: any) => {
-          const ghidraScanner = mod.createGhidraScanner({
-            timeout: opts.decompilationTimeout || opts.timeout || 30000,
-            depth,
-            ghidraPath: opts.ghidraPath,
-            analyzeHeadless: opts.analyzeHeadless
+        const importModule = new Function("specifier", "return import(specifier)");
+        importModule("@pompelmi/engine-ghidra")
+          .then((mod: any) => {
+            const ghidraScanner = mod.createGhidraScanner({
+              timeout: opts.decompilationTimeout || opts.timeout || 30000,
+              depth,
+              ghidraPath: opts.ghidraPath,
+              analyzeHeadless: opts.analyzeHeadless,
+            });
+            scanners.push(ghidraScanner);
+          })
+          .catch(() => {
+            // Ghidra engine not available - silently skip
           });
-          scanners.push(ghidraScanner);
-        }).catch(() => {
-          // Ghidra engine not available - silently skip
-        });
       } catch {
         // Engine not installed
       }
     }
   }
-  
+
   // Add other scanners for advanced presets
-  if (preset === 'advanced' || preset === 'malware-analysis') {
+  if (preset === "advanced" || preset === "malware-analysis") {
     // CommonHeuristicsScanner is already added above for all presets
   }
 
@@ -271,33 +303,33 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
       return [] as Match[];
     };
   }
-  
+
   return composeScanners(...scanners);
 }
 
 // Preset configurations
 export const PRESET_CONFIGS: Record<string, PresetOptions> = {
-  'basic': {
-    timeout: 10000
+  basic: {
+    timeout: 10000,
   },
-  'advanced': {
+  advanced: {
     timeout: 30000,
-    enableDecompilation: false
+    enableDecompilation: false,
   },
-  'malware-analysis': {
+  "malware-analysis": {
     timeout: 60000,
     enableDecompilation: true,
-    decompilationEngine: 'both',
-    decompilationDepth: 'deep'
+    decompilationEngine: "both",
+    decompilationDepth: "deep",
   },
-  'decompilation-basic': {
+  "decompilation-basic": {
     timeout: 30000,
     enableDecompilation: true,
-    decompilationDepth: 'basic'
+    decompilationDepth: "basic",
   },
-  'decompilation-deep': {
+  "decompilation-deep": {
     timeout: 120000,
     enableDecompilation: true,
-    decompilationDepth: 'deep'
-  }
+    decompilationDepth: "deep",
+  },
 };

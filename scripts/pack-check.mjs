@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { readdirSync, readFileSync, existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const ROOT = process.cwd();
@@ -10,7 +10,7 @@ const allowedGlobs = [
   /^LICENSE(\..*)?$/i,
   /^CHANGELOG(\..*)?$/i,
   /^dist\/.*/i,
-  /^bin\/.*/i
+  /^bin\/.*/i,
 ];
 const bannedGlobs = [
   /^src\/.*/i,
@@ -19,7 +19,7 @@ const bannedGlobs = [
   /^\.github\/.*/i,
   /^\.vscode\/.*/i,
   /^scripts\/.*/i,
-  /^examples?\/.*/i
+  /^examples?\/.*/i,
 ];
 
 const warn = (s) => console.log("⚠️", s);
@@ -33,7 +33,13 @@ function isBanned(path) {
   return bannedGlobs.some((re) => re.test(path));
 }
 
-function readJson(p) { try { return JSON.parse(readFileSync(p, "utf8")); } catch { return null; } }
+function readJson(p) {
+  try {
+    return JSON.parse(readFileSync(p, "utf8"));
+  } catch {
+    return null;
+  }
+}
 
 function listWorkspaces() {
   if (!existsSync(PKG_DIR)) return [];
@@ -44,7 +50,10 @@ function listWorkspaces() {
 
 function packDry(dir) {
   try {
-    const out = execFileSync("npm", ["pack", "--json", "--dry-run"], { cwd: dir, encoding: "utf8" });
+    const out = execFileSync("npm", ["pack", "--json", "--dry-run"], {
+      cwd: dir,
+      encoding: "utf8",
+    });
     // npm@>=7 returns a JSON array
     const json = JSON.parse(out);
     return json[0] || json; // { files: [...], name, version, filename, ... }
@@ -83,7 +92,9 @@ function checkPackage(dir) {
 
     // Quick exports sanity
     if (pkg.exports && typeof pkg.exports === "object" && pkg.exports["."]) {
-      const mainTarget = Object.values(pkg.exports["."]).find((v) => typeof v === "string" && (v.startsWith("dist/") || v.startsWith("./dist/")));
+      const mainTarget = Object.values(pkg.exports["."]).find(
+        (v) => typeof v === "string" && (v.startsWith("dist/") || v.startsWith("./dist/")),
+      );
       if (!mainTarget) {
         problems.push('exports["."] does not point to dist/*');
       } else {
@@ -100,7 +111,9 @@ function checkPackage(dir) {
     if (files.length > 20) console.log(`  … +${files.length - 20} more`);
 
     if (problems.length) {
-      problems.forEach((p) => warn(p));
+      problems.forEach((p) => {
+        warn(p);
+      });
       return { ok: false, problems };
     } else {
       ok("tarball looks good");
@@ -110,7 +123,8 @@ function checkPackage(dir) {
   return { skipped: true };
 }
 
-let bad = 0, checked = 0;
+let bad = 0,
+  checked = 0;
 const workspaces = listWorkspaces();
 for (const d of workspaces) {
   const res = checkPackage(d);

@@ -1,41 +1,37 @@
 /**
  * Hybrid Analysis Orchestrator
- * 
+ *
  * Advanced orchestration framework for coordinating multiple analysis engines
  * including Binary Ninja, Ghidra, dynamic taint tracking, and custom engines.
  */
 
+import type { DecompilationResult, DecompilationScanner } from "../types/decompilation";
 import type {
   AnalysisEngine,
   AnalysisPhase,
-  EngineCapability,
   AnalysisTask,
-  TaskResult,
-  OrchestrationStrategy,
-  HybridConfig,
+  EngineCapability,
   HybridAnalysisResult,
+  HybridConfig,
   HybridOrchestrator,
-  TaintAnalysisResult
-} from '../types/taint-tracking';
+  OrchestrationStrategy,
+  TaintAnalysisResult,
+  TaskResult,
+} from "../types/taint-tracking";
 
-import type {
-  DecompilationResult,
-  DecompilationScanner
-} from '../types/decompilation';
-
-import { DynamicTaintEngine } from './dynamic-taint';
+import type { DynamicTaintEngine } from "./dynamic-taint";
 
 // Simple crypto utilities
 function generateRandomHex(bytes: number): string {
   const array = new Uint8Array(bytes);
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
     crypto.getRandomValues(array);
   } else {
     for (let i = 0; i < bytes; i++) {
       array[i] = Math.floor(Math.random() * 256);
     }
   }
-  return Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 /**
@@ -63,9 +59,9 @@ class TaskQueue {
    * Get the next available task that has all dependencies satisfied
    */
   getNextTask(completedTasks: Set<string>): AnalysisTask | null {
-    const availableIndex = this.tasks.findIndex(task => {
+    const availableIndex = this.tasks.findIndex((task) => {
       // Check if all dependencies are completed
-      return task.dependencies.every(dep => completedTasks.has(dep));
+      return task.dependencies.every((dep) => completedTasks.has(dep));
     });
 
     if (availableIndex === -1) {
@@ -132,7 +128,7 @@ class ResultCorrelator {
    */
   correlateResults(
     results: Map<AnalysisEngine, TaskResult[]>,
-    strategy: OrchestrationStrategy
+    strategy: OrchestrationStrategy,
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -152,16 +148,16 @@ class ResultCorrelator {
 
     // Extract all findings from all engines
     const allFindings = new Map<AnalysisEngine, any[]>();
-    
+
     for (const [engine, taskResults] of results) {
       const findings: any[] = [];
-      
+
       for (const result of taskResults) {
-        if (result.status === 'success' && result.result) {
-          if (engine === 'dynamic-taint') {
+        if (result.status === "success" && result.result) {
+          if (engine === "dynamic-taint") {
             const taintResult = result.result as TaintAnalysisResult;
             findings.push(...taintResult.flows);
-          } else if (engine === 'binaryninja-hlil' || engine === 'ghidra-pcode') {
+          } else if (engine === "binaryninja-hlil" || engine === "ghidra-pcode") {
             const decompResult = result.result as DecompilationResult;
             findings.push(...decompResult.matches);
             findings.push(...decompResult.functions);
@@ -170,7 +166,7 @@ class ResultCorrelator {
           }
         }
       }
-      
+
       allFindings.set(engine, findings);
     }
 
@@ -179,7 +175,7 @@ class ResultCorrelator {
       const algorithmCorrelations = this.applyCorrelationAlgorithm(
         algorithm,
         allFindings,
-        strategy.correlation.engineWeights || {}
+        strategy.correlation.engineWeights || {},
       );
       correlations.push(...algorithmCorrelations);
     }
@@ -188,9 +184,9 @@ class ResultCorrelator {
   }
 
   private applyCorrelationAlgorithm(
-    algorithm: 'similarity' | 'overlap' | 'consensus' | 'weighted',
+    algorithm: "similarity" | "overlap" | "consensus" | "weighted",
     findings: Map<AnalysisEngine, any[]>,
-    weights: { [engine in AnalysisEngine]?: number }
+    weights: { [engine in AnalysisEngine]?: number },
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -205,18 +201,18 @@ class ResultCorrelator {
     }> = [];
 
     switch (algorithm) {
-      case 'similarity':
+      case "similarity":
         return this.applySimilarityCorrelation(findings, weights);
-      
-      case 'overlap':
+
+      case "overlap":
         return this.applyOverlapCorrelation(findings, weights);
-      
-      case 'consensus':
+
+      case "consensus":
         return this.applyConsensusCorrelation(findings, weights);
-      
-      case 'weighted':
+
+      case "weighted":
         return this.applyWeightedCorrelation(findings, weights);
-      
+
       default:
         return correlations;
     }
@@ -224,7 +220,7 @@ class ResultCorrelator {
 
   private applySimilarityCorrelation(
     findings: Map<AnalysisEngine, any[]>,
-    weights: { [engine in AnalysisEngine]?: number }
+    weights: { [engine in AnalysisEngine]?: number },
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -239,21 +235,24 @@ class ResultCorrelator {
     }> = [];
 
     // Group similar findings across engines
-    const findingGroups = new Map<string, {
-      engines: AnalysisEngine[];
-      findings: any[];
-      similarity: number;
-    }>();
+    const findingGroups = new Map<
+      string,
+      {
+        engines: AnalysisEngine[];
+        findings: any[];
+        similarity: number;
+      }
+    >();
 
     for (const [engine, engineFindings] of findings) {
       for (const finding of engineFindings) {
         const signature = this.generateFindingSignature(finding);
-        
+
         if (!findingGroups.has(signature)) {
           findingGroups.set(signature, {
             engines: [],
             findings: [],
-            similarity: 1.0
+            similarity: 1.0,
           });
         }
 
@@ -265,20 +264,24 @@ class ResultCorrelator {
 
     // Convert groups to correlations
     for (const [signature, group] of findingGroups) {
-      if (group.engines.length > 1) { // Only include multi-engine findings
-        const totalWeight = group.engines.reduce((sum, engine) => 
-          sum + (weights[engine] || 1.0), 0);
-        
-        const avgConfidence = group.findings.reduce((sum, finding) => {
-          const confidence = finding.confidence || 0.5;
-          return sum + confidence;
-        }, 0) / group.findings.length;
+      if (group.engines.length > 1) {
+        // Only include multi-engine findings
+        const totalWeight = group.engines.reduce(
+          (sum, engine) => sum + (weights[engine] || 1.0),
+          0,
+        );
+
+        const avgConfidence =
+          group.findings.reduce((sum, finding) => {
+            const confidence = finding.confidence || 0.5;
+            return sum + confidence;
+          }, 0) / group.findings.length;
 
         correlations.push({
           engines: group.engines,
           finding: group.findings[0], // Use first finding as representative
           confidence: avgConfidence * (totalWeight / group.engines.length),
-          consensus: group.engines.length / findings.size
+          consensus: group.engines.length / findings.size,
         });
       }
     }
@@ -288,7 +291,7 @@ class ResultCorrelator {
 
   private applyOverlapCorrelation(
     findings: Map<AnalysisEngine, any[]>,
-    weights: { [engine in AnalysisEngine]?: number }
+    weights: { [engine in AnalysisEngine]?: number },
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -301,7 +304,7 @@ class ResultCorrelator {
 
   private applyConsensusCorrelation(
     findings: Map<AnalysisEngine, any[]>,
-    weights: { [engine in AnalysisEngine]?: number }
+    weights: { [engine in AnalysisEngine]?: number },
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -311,15 +314,13 @@ class ResultCorrelator {
     // Focus on findings that appear in majority of engines
     const similarityResults = this.applySimilarityCorrelation(findings, weights);
     const consensusThreshold = 0.5; // Majority consensus
-    
-    return similarityResults.filter(correlation => 
-      correlation.consensus >= consensusThreshold
-    );
+
+    return similarityResults.filter((correlation) => correlation.consensus >= consensusThreshold);
   }
 
   private applyWeightedCorrelation(
     findings: Map<AnalysisEngine, any[]>,
-    weights: { [engine in AnalysisEngine]?: number }
+    weights: { [engine in AnalysisEngine]?: number },
   ): Array<{
     engines: AnalysisEngine[];
     finding: any;
@@ -334,7 +335,7 @@ class ResultCorrelator {
     // Generate a signature for finding similarity matching
     if (finding.rule) {
       // Decompilation match
-      return `decomp_${finding.rule}_${finding.severity || 'medium'}`;
+      return `decomp_${finding.rule}_${finding.severity || "medium"}`;
     } else if (finding.name && finding.address) {
       // Function analysis
       return `func_${finding.name}_${finding.address}`;
@@ -353,30 +354,36 @@ class ResultCorrelator {
  */
 export class HybridAnalysisOrchestrator implements HybridOrchestrator {
   private config: HybridConfig | null = null;
-  private engines: Map<AnalysisEngine, {
-    instance: any;
-    capabilities: EngineCapability;
-  }> = new Map();
+  private engines: Map<
+    AnalysisEngine,
+    {
+      instance: any;
+      capabilities: EngineCapability;
+    }
+  > = new Map();
   private correlator: ResultCorrelator = new ResultCorrelator();
-  private activeSessions: Map<string, {
-    tasks: TaskQueue;
-    results: Map<AnalysisEngine, TaskResult[]>;
-    startTime: number;
-    config: HybridConfig;
-  }> = new Map();
+  private activeSessions: Map<
+    string,
+    {
+      tasks: TaskQueue;
+      results: Map<AnalysisEngine, TaskResult[]>;
+      startTime: number;
+      config: HybridConfig;
+    }
+  > = new Map();
 
   /**
    * Configure the orchestrator
    */
   async configure(config: HybridConfig): Promise<void> {
     this.config = config;
-    
-    console.debug('[HYBRID-ORCHESTRATOR] Configuration updated', {
+
+    console.debug("[HYBRID-ORCHESTRATOR] Configuration updated", {
       strategy: config.strategy.name,
       enabledEngines: Object.keys(config.engines).filter(
-        engine => config.engines[engine as AnalysisEngine]?.enabled
+        (engine) => config.engines[engine as AnalysisEngine]?.enabled,
       ).length,
-      maxConcurrency: config.strategy.scheduling.maxConcurrency
+      maxConcurrency: config.strategy.scheduling.maxConcurrency,
     });
   }
 
@@ -386,15 +393,15 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
   async registerEngine(
     engine: AnalysisEngine,
     instance: any,
-    capabilities: EngineCapability
+    capabilities: EngineCapability,
   ): Promise<void> {
     this.engines.set(engine, { instance, capabilities });
-    
-    console.debug('[HYBRID-ORCHESTRATOR] Engine registered', {
+
+    console.debug("[HYBRID-ORCHESTRATOR] Engine registered", {
       engine,
       capabilities: capabilities.capabilities,
       supportedFormats: capabilities.supportedFormats,
-      performance: capabilities.performance
+      performance: capabilities.performance,
     });
   }
 
@@ -403,16 +410,16 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
    */
   async analyze(data: Uint8Array): Promise<HybridAnalysisResult> {
     if (!this.config) {
-      throw new Error('Orchestrator not configured');
+      throw new Error("Orchestrator not configured");
     }
 
     const sessionId = generateRandomHex(16);
     const startTime = Date.now();
 
-    console.debug('[HYBRID-ORCHESTRATOR] Starting analysis', {
+    console.debug("[HYBRID-ORCHESTRATOR] Starting analysis", {
       sessionId,
       dataSize: data.length,
-      strategy: this.config.strategy.name
+      strategy: this.config.strategy.name,
     });
 
     // Initialize session
@@ -420,14 +427,14 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       tasks: new TaskQueue(this.config.strategy.scheduling.maxConcurrency),
       results: new Map<AnalysisEngine, TaskResult[]>(),
       startTime,
-      config: this.config
+      config: this.config,
     };
     this.activeSessions.set(sessionId, session);
 
     try {
       // Generate analysis tasks based on strategy
       const tasks = await this.generateAnalysisTasks(data, this.config.strategy);
-      
+
       // Enqueue all tasks
       for (const task of tasks) {
         session.tasks.enqueue(task);
@@ -437,43 +444,29 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       await this.executeTasks(sessionId);
 
       // Correlate results
-      const correlations = this.correlator.correlateResults(
-        session.results,
-        this.config.strategy
-      );
+      const correlations = this.correlator.correlateResults(session.results, this.config.strategy);
 
       // Generate final result
-      const result = await this.generateHybridResult(
-        sessionId,
-        session,
-        correlations
-      );
+      const result = await this.generateHybridResult(sessionId, session, correlations);
 
-      console.debug('[HYBRID-ORCHESTRATOR] Analysis completed', {
+      console.debug("[HYBRID-ORCHESTRATOR] Analysis completed", {
         sessionId,
         totalTime: result.totalTime,
         enginesUsed: result.statistics.enginesUsed,
-        correlations: correlations.length
+        correlations: correlations.length,
       });
 
       return result;
-
     } catch (error) {
-      console.error('[HYBRID-ORCHESTRATOR] Analysis failed', {
+      console.error("[HYBRID-ORCHESTRATOR] Analysis failed", {
         sessionId,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       // Return partial results if available
-      const partialResult = await this.generateHybridResult(
-        sessionId,
-        session,
-        [],
-        false
-      );
-      
-      return partialResult;
+      const partialResult = await this.generateHybridResult(sessionId, session, [], false);
 
+      return partialResult;
     } finally {
       // Cleanup session
       this.activeSessions.delete(sessionId);
@@ -484,7 +477,7 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
    * Get available engines and their capabilities
    */
   async getAvailableEngines(): Promise<EngineCapability[]> {
-    return Array.from(this.engines.values()).map(engine => engine.capabilities);
+    return Array.from(this.engines.values()).map((engine) => engine.capabilities);
   }
 
   /**
@@ -498,8 +491,8 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
 
     // In a real implementation, this would cancel running tasks
     this.activeSessions.delete(sessionId);
-    
-    console.debug('[HYBRID-ORCHESTRATOR] Analysis cancelled', { sessionId });
+
+    console.debug("[HYBRID-ORCHESTRATOR] Analysis cancelled", { sessionId });
     return true;
   }
 
@@ -517,22 +510,24 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       throw new Error(`Session ${sessionId} not found`);
     }
 
-    const completedCount = Array.from(session.results.values())
-      .reduce((sum, results) => sum + results.length, 0);
-    
-    const totalTasks = completedCount + session.tasks.getPendingCount() + 
-                     session.tasks.getRunningCount();
+    const completedCount = Array.from(session.results.values()).reduce(
+      (sum, results) => sum + results.length,
+      0,
+    );
+
+    const totalTasks =
+      completedCount + session.tasks.getPendingCount() + session.tasks.getRunningCount();
 
     const elapsedTime = Date.now() - session.startTime;
-    const estimatedTotal = totalTasks > 0 ? 
-      (elapsedTime / Math.max(completedCount, 1)) * totalTasks : 0;
+    const estimatedTotal =
+      totalTasks > 0 ? (elapsedTime / Math.max(completedCount, 1)) * totalTasks : 0;
     const estimatedRemaining = Math.max(0, estimatedTotal - elapsedTime);
 
     return {
       phase: this.determineCurrentPhase(session),
       completedTasks: completedCount,
       totalTasks,
-      estimatedTimeRemaining: estimatedRemaining
+      estimatedTimeRemaining: estimatedRemaining,
     };
   }
 
@@ -541,7 +536,7 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
    */
   private async generateAnalysisTasks(
     data: Uint8Array,
-    strategy: OrchestrationStrategy
+    strategy: OrchestrationStrategy,
   ): Promise<AnalysisTask[]> {
     const tasks: AnalysisTask[] = [];
     let taskIdCounter = 0;
@@ -566,14 +561,14 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
           input: {
             data,
             previousResults: [],
-            config: this.config?.engines[engine]?.config
+            config: this.config?.engines[engine]?.config,
           },
           metadata: {
             description: `${phase} analysis using ${engine}`,
             estimatedDuration: this.estimateTaskDuration(engine),
             maxRetries: strategy.scheduling.retryPolicy.maxRetries,
-            timeout: strategy.scheduling.defaultTimeout
-          }
+            timeout: strategy.scheduling.defaultTimeout,
+          },
         });
       }
     }
@@ -621,11 +616,11 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
    */
   private async executeTask(task: AnalysisTask): Promise<TaskResult> {
     const startTime = Date.now();
-    
-    console.debug('[HYBRID-ORCHESTRATOR] Executing task', {
+
+    console.debug("[HYBRID-ORCHESTRATOR] Executing task", {
       taskId: task.id,
       engine: task.engine,
-      phase: task.phase
+      phase: task.phase,
     });
 
     try {
@@ -638,24 +633,26 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
 
       // Execute based on engine type
       switch (task.engine) {
-        case 'dynamic-taint':
+        case "dynamic-taint": {
           const taintEngine = engineInfo.instance as DynamicTaintEngine;
           result = await taintEngine.performTaintAnalysis(task.input.data);
           break;
+        }
 
-        case 'binaryninja-hlil':
-        case 'ghidra-pcode':
+        case "binaryninja-hlil":
+        case "ghidra-pcode": {
           const decompEngine = engineInfo.instance as DecompilationScanner;
-          if (typeof decompEngine.analyze === 'function') {
+          if (typeof decompEngine.analyze === "function") {
             result = await decompEngine.analyze(task.input.data);
           } else {
             throw new Error(`Engine ${task.engine} does not support analyze method`);
           }
           break;
+        }
 
         default:
           // Custom engine execution
-          if (typeof engineInfo.instance.analyze === 'function') {
+          if (typeof engineInfo.instance.analyze === "function") {
             result = await engineInfo.instance.analyze(task.input.data);
           } else {
             throw new Error(`Engine ${task.engine} does not support analysis`);
@@ -668,38 +665,37 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       return {
         taskId: task.id,
         engine: task.engine,
-        status: 'success',
+        status: "success",
         result,
         metrics: {
           startTime,
           endTime,
           memoryUsed: 0, // Would be tracked in real implementation
-          cpuTime: endTime - startTime
+          cpuTime: endTime - startTime,
         },
-        confidence
+        confidence,
       };
-
     } catch (error) {
       const endTime = Date.now();
-      
-      console.error('[HYBRID-ORCHESTRATOR] Task failed', {
+
+      console.error("[HYBRID-ORCHESTRATOR] Task failed", {
         taskId: task.id,
         engine: task.engine,
-        error: error instanceof Error ? error.message : String(error)
+        error: error instanceof Error ? error.message : String(error),
       });
 
       return {
         taskId: task.id,
         engine: task.engine,
-        status: 'failed',
+        status: "failed",
         metrics: {
           startTime,
           endTime,
           memoryUsed: 0,
-          cpuTime: endTime - startTime
+          cpuTime: endTime - startTime,
         },
         error: error instanceof Error ? error.message : String(error),
-        confidence: 0
+        confidence: 0,
       };
     }
   }
@@ -709,13 +705,13 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
   private calculateTaskDependencies(phase: AnalysisPhase, existingTasks: AnalysisTask[]): string[] {
     // Tasks in later phases depend on earlier phases
     const phaseOrder: AnalysisPhase[] = [
-      'preprocessing',
-      'static',
-      'dynamic',
-      'taint',
-      'correlation',
-      'postprocessing',
-      'reporting'
+      "preprocessing",
+      "static",
+      "dynamic",
+      "taint",
+      "correlation",
+      "postprocessing",
+      "reporting",
     ];
 
     const currentPhaseIndex = phaseOrder.indexOf(phase);
@@ -723,26 +719,27 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
 
     // Depend on all tasks from previous phases
     return existingTasks
-      .filter(task => {
+      .filter((task) => {
         const taskPhaseIndex = phaseOrder.indexOf(task.phase);
         return taskPhaseIndex < currentPhaseIndex;
       })
-      .map(task => task.id);
+      .map((task) => task.id);
   }
 
   private calculateTaskPriority(engine: AnalysisEngine, phase: AnalysisPhase): number {
-    const basePriority = {
-      'preprocessing': 100,
-      'static': 80,
-      'dynamic': 60,
-      'taint': 60,
-      'correlation': 40,
-      'postprocessing': 20,
-      'reporting': 10
-    }[phase] || 50;
+    const basePriority =
+      {
+        preprocessing: 100,
+        static: 80,
+        dynamic: 60,
+        taint: 60,
+        correlation: 40,
+        postprocessing: 20,
+        reporting: 10,
+      }[phase] || 50;
 
     const engineBonus = this.config?.engines[engine]?.priority || 0;
-    
+
     return basePriority + engineBonus;
   }
 
@@ -751,16 +748,16 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
     if (!engineInfo) return 30000; // Default 30 seconds
 
     const speedMultiplier = {
-      'fast': 0.5,
-      'medium': 1.0,
-      'slow': 2.0
+      fast: 0.5,
+      medium: 1.0,
+      slow: 2.0,
     }[engineInfo.capabilities.performance.speed];
 
     return 30000 * speedMultiplier; // Base 30 seconds * speed
   }
 
   private calculateResultConfidence(result: any, engine: AnalysisEngine): number {
-    if (result && typeof result.confidence === 'number') {
+    if (result && typeof result.confidence === "number") {
       return result.confidence;
     }
 
@@ -769,9 +766,9 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
     if (!engineInfo) return 0.5;
 
     const accuracyMap = {
-      'low': 0.3,
-      'medium': 0.6,
-      'high': 0.9
+      low: 0.3,
+      medium: 0.6,
+      high: 0.9,
     };
 
     return accuracyMap[engineInfo.capabilities.performance.accuracy];
@@ -779,7 +776,7 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
 
   private findTaskEngine(taskId: string): AnalysisEngine | null {
     // Extract engine from task ID format: "phase_engine_counter"
-    const parts = taskId.split('_');
+    const parts = taskId.split("_");
     if (parts.length >= 2) {
       return parts[1] as AnalysisEngine;
     }
@@ -792,15 +789,15 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
   }): AnalysisPhase {
     // Determine current phase based on completed tasks
     const completedEngines = Array.from(session.results.keys());
-    
-    if (completedEngines.some(e => e === 'binaryninja-hlil' || e === 'ghidra-pcode')) {
-      if (completedEngines.includes('dynamic-taint')) {
-        return 'correlation';
+
+    if (completedEngines.some((e) => e === "binaryninja-hlil" || e === "ghidra-pcode")) {
+      if (completedEngines.includes("dynamic-taint")) {
+        return "correlation";
       }
-      return 'dynamic';
+      return "dynamic";
     }
-    
-    return 'static';
+
+    return "static";
   }
 
   private async generateHybridResult(
@@ -817,27 +814,27 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       confidence: number;
       consensus: number;
     }>,
-    success: boolean = true
+    success: boolean = true,
   ): Promise<HybridAnalysisResult> {
     const totalTime = Date.now() - session.startTime;
     const allResults = Array.from(session.results.values()).flat();
-    
+
     // Aggregate findings by type
     const staticFindings: any = {
       functions: [],
       matches: [],
-      metadata: {}
+      metadata: {},
     };
-    
+
     let taintFindings: TaintAnalysisResult | undefined;
 
     // Process engine results
     for (const [engine, results] of session.results) {
       for (const result of results) {
-        if (result.status === 'success' && result.result) {
-          if (engine === 'dynamic-taint') {
+        if (result.status === "success" && result.result) {
+          if (engine === "dynamic-taint") {
             taintFindings = result.result as TaintAnalysisResult;
-          } else if (engine === 'binaryninja-hlil' || engine === 'ghidra-pcode') {
+          } else if (engine === "binaryninja-hlil" || engine === "ghidra-pcode") {
             const decompResult = result.result as DecompilationResult;
             staticFindings.functions.push(...decompResult.functions);
             staticFindings.matches.push(...decompResult.matches);
@@ -851,7 +848,7 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
     const recommendations = this.generateRecommendations(
       staticFindings,
       taintFindings,
-      correlations
+      correlations,
     );
 
     return {
@@ -862,76 +859,77 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
       findings: {
         static: staticFindings,
         taint: taintFindings,
-        correlations
+        correlations,
       },
       statistics: {
         enginesUsed: Array.from(session.results.keys()),
         tasksExecuted: allResults.length,
-        tasksSuccessful: allResults.filter(r => r.status === 'success').length,
-        tasksFailed: allResults.filter(r => r.status === 'failed').length,
-        averageTaskTime: allResults.reduce((sum, r) => 
-          sum + (r.metrics.endTime - r.metrics.startTime), 0) / Math.max(allResults.length, 1),
-        memoryPeak: Math.max(...allResults.map(r => r.metrics.memoryUsed || 0))
+        tasksSuccessful: allResults.filter((r) => r.status === "success").length,
+        tasksFailed: allResults.filter((r) => r.status === "failed").length,
+        averageTaskTime:
+          allResults.reduce((sum, r) => sum + (r.metrics.endTime - r.metrics.startTime), 0) /
+          Math.max(allResults.length, 1),
+        memoryPeak: Math.max(...allResults.map((r) => r.metrics.memoryUsed || 0)),
       },
       recommendations,
       meta: {
         configUsed: session.config,
         strategyUsed: session.config.strategy.name,
         timestamp: Date.now(),
-        version: '1.0.0'
-      }
+        version: "1.0.0",
+      },
     };
   }
 
   private generateRecommendations(
     staticFindings: any,
     taintFindings?: TaintAnalysisResult,
-    correlations?: Array<any>
+    correlations?: Array<any>,
   ): Array<{
-    type: 'security' | 'performance' | 'analysis';
-    severity: 'info' | 'warning' | 'critical';
+    type: "security" | "performance" | "analysis";
+    severity: "info" | "warning" | "critical";
     message: string;
     evidence?: any;
   }> {
     const recommendations: Array<{
-      type: 'security' | 'performance' | 'analysis';
-      severity: 'info' | 'warning' | 'critical';
+      type: "security" | "performance" | "analysis";
+      severity: "info" | "warning" | "critical";
       message: string;
       evidence?: any;
     }> = [];
 
     // Security recommendations based on taint analysis
     if (taintFindings) {
-      const criticalFlows = taintFindings.flows.filter(f => f.severity === 'critical');
+      const criticalFlows = taintFindings.flows.filter((f) => f.severity === "critical");
       if (criticalFlows.length > 0) {
         recommendations.push({
-          type: 'security',
-          severity: 'critical',
+          type: "security",
+          severity: "critical",
           message: `Found ${criticalFlows.length} critical taint flow(s) that may indicate security vulnerabilities`,
-          evidence: criticalFlows
+          evidence: criticalFlows,
         });
       }
 
-      const vulnFlows = taintFindings.flows.filter(f => f.isVulnerability);
+      const vulnFlows = taintFindings.flows.filter((f) => f.isVulnerability);
       if (vulnFlows.length > 0) {
         recommendations.push({
-          type: 'security',
-          severity: 'warning',
+          type: "security",
+          severity: "warning",
           message: `Detected ${vulnFlows.length} potential vulnerability pattern(s)`,
-          evidence: vulnFlows
+          evidence: vulnFlows,
         });
       }
     }
 
     // Analysis recommendations based on correlation
     if (correlations && correlations.length > 0) {
-      const highConsensus = correlations.filter(c => c.consensus >= 0.8);
+      const highConsensus = correlations.filter((c) => c.consensus >= 0.8);
       if (highConsensus.length > 0) {
         recommendations.push({
-          type: 'analysis',
-          severity: 'info',
+          type: "analysis",
+          severity: "info",
           message: `${highConsensus.length} finding(s) confirmed by multiple analysis engines`,
-          evidence: highConsensus
+          evidence: highConsensus,
         });
       }
     }
@@ -939,10 +937,11 @@ export class HybridAnalysisOrchestrator implements HybridOrchestrator {
     // Performance recommendations
     if (staticFindings.functions?.length > 1000) {
       recommendations.push({
-        type: 'performance',
-        severity: 'info',
-        message: 'Large number of functions detected - consider using focused analysis for better performance',
-        evidence: { functionCount: staticFindings.functions.length }
+        type: "performance",
+        severity: "info",
+        message:
+          "Large number of functions detected - consider using focused analysis for better performance",
+        evidence: { functionCount: staticFindings.functions.length },
       });
     }
 

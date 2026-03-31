@@ -1,12 +1,12 @@
-import { type Match, type Scanner } from '../types';
+import type { Match, Scanner } from "../types";
 
 export type ZipBombGuardOptions = {
-  maxEntries?: number;                 // default 1000
-  maxTotalUncompressedBytes?: number;  // default 500 * 1024 * 1024 (500MB)
-  maxEntryNameLength?: number;         // default 255
-  maxCompressionRatio?: number;        // default 1000 (uncompressed/ compressed)
+  maxEntries?: number; // default 1000
+  maxTotalUncompressedBytes?: number; // default 500 * 1024 * 1024 (500MB)
+  maxEntryNameLength?: number; // default 255
+  maxCompressionRatio?: number; // default 1000 (uncompressed/ compressed)
   // Search window for EOCD; ZIP spec says comment <= 65535 bytes.
-  eocdSearchWindow?: number;           // default 70_000
+  eocdSearchWindow?: number; // default 70_000
 };
 
 const SIG_LFH = 0x04034b50; // not used (we parse CD)
@@ -29,7 +29,9 @@ function r32(buf: Buffer, off: number) {
 }
 function isZipLike(buf: Buffer) {
   // local file header at start is common
-  return buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04;
+  return (
+    buf.length >= 4 && buf[0] === 0x50 && buf[1] === 0x4b && buf[2] === 0x03 && buf[3] === 0x04
+  );
 }
 
 function lastIndexOfEOCD(buf: Buffer, window: number): number {
@@ -40,7 +42,9 @@ function lastIndexOfEOCD(buf: Buffer, window: number): number {
 }
 
 function hasTraversal(name: string): boolean {
-  return name.includes('../') || name.includes('..\\') || name.startsWith('/') || /^[A-Za-z]:/.test(name);
+  return (
+    name.includes("../") || name.includes("..\\") || name.startsWith("/") || /^[A-Za-z]:/.test(name)
+  );
 }
 
 export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
@@ -57,7 +61,7 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
       const eocdPos = lastIndexOfEOCD(buf, cfg.eocdSearchWindow);
       if (eocdPos < 0 || eocdPos + 22 > buf.length) {
         // ZIP but no EOCD — malformed or polyglot → suspicious
-        matches.push({ rule: 'zip_eocd_not_found', severity: 'medium' });
+        matches.push({ rule: "zip_eocd_not_found", severity: "medium" });
         return matches;
       }
 
@@ -67,7 +71,7 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
 
       // Bounds check
       if (cdOffset + cdSize > buf.length) {
-        matches.push({ rule: 'zip_cd_out_of_bounds', severity: 'medium' });
+        matches.push({ rule: "zip_cd_out_of_bounds", severity: "medium" });
         return matches;
       }
 
@@ -82,26 +86,30 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
         if (sig !== SIG_CEN) break; // stop if structure breaks
 
         const compSize = r32(buf, ptr + 20);
-        const uncSize  = r32(buf, ptr + 24);
-        const fnLen    = r16(buf, ptr + 28);
-        const exLen    = r16(buf, ptr + 30);
-        const cmLen    = r16(buf, ptr + 32);
+        const uncSize = r32(buf, ptr + 24);
+        const fnLen = r16(buf, ptr + 28);
+        const exLen = r16(buf, ptr + 30);
+        const cmLen = r16(buf, ptr + 32);
 
         const nameStart = ptr + 46;
         const nameEnd = nameStart + fnLen;
         if (nameEnd > buf.length) break;
 
-        const name = buf.toString('utf8', nameStart, nameEnd);
+        const name = buf.toString("utf8", nameStart, nameEnd);
 
         sumComp += compSize;
-        sumUnc  += uncSize;
+        sumUnc += uncSize;
         seen++;
 
         if (name.length > cfg.maxEntryNameLength) {
-          matches.push({ rule: 'zip_entry_name_too_long', severity: 'medium', meta: { name, length: name.length } });
+          matches.push({
+            rule: "zip_entry_name_too_long",
+            severity: "medium",
+            meta: { name, length: name.length },
+          });
         }
         if (hasTraversal(name)) {
-          matches.push({ rule: 'zip_path_traversal_entry', severity: 'medium', meta: { name } });
+          matches.push({ rule: "zip_path_traversal_entry", severity: "medium", meta: { name } });
         }
 
         // move to next entry
@@ -110,31 +118,47 @@ export function createZipBombGuard(opts: ZipBombGuardOptions = {}): Scanner {
 
       if (seen !== totalEntries) {
         // central dir truncated/odd, still report what we found
-        matches.push({ rule: 'zip_cd_truncated', severity: 'medium', meta: { seen, totalEntries } });
+        matches.push({
+          rule: "zip_cd_truncated",
+          severity: "medium",
+          meta: { seen, totalEntries },
+        });
       }
 
       // Heuristics thresholds
       if (seen > cfg.maxEntries) {
-        matches.push({ rule: 'zip_too_many_entries', severity: 'medium', meta: { seen, limit: cfg.maxEntries } });
+        matches.push({
+          rule: "zip_too_many_entries",
+          severity: "medium",
+          meta: { seen, limit: cfg.maxEntries },
+        });
       }
       if (sumUnc > cfg.maxTotalUncompressedBytes) {
         matches.push({
-          rule: 'zip_total_uncompressed_too_large',
-          severity: 'medium',
-          meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes }
+          rule: "zip_total_uncompressed_too_large",
+          severity: "medium",
+          meta: { totalUncompressed: sumUnc, limit: cfg.maxTotalUncompressedBytes },
         });
       }
 
       if (sumComp === 0 && sumUnc > 0) {
-        matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio: Infinity } });
+        matches.push({
+          rule: "zip_suspicious_ratio",
+          severity: "medium",
+          meta: { ratio: Infinity },
+        });
       } else if (sumComp > 0) {
         const ratio = sumUnc / Math.max(1, sumComp);
         if (ratio >= cfg.maxCompressionRatio) {
-          matches.push({ rule: 'zip_suspicious_ratio', severity: 'medium', meta: { ratio, limit: cfg.maxCompressionRatio } });
+          matches.push({
+            rule: "zip_suspicious_ratio",
+            severity: "medium",
+            meta: { ratio, limit: cfg.maxCompressionRatio },
+          });
         }
       }
 
       return matches;
-    }
+    },
   };
 }

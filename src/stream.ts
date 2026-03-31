@@ -1,7 +1,7 @@
 // stream.ts
 import { createHash } from "node:crypto";
-import { mapMatchesToVerdict } from "./verdict";
 import type { ScanReport, YaraMatch } from "./types";
+import { mapMatchesToVerdict } from "./verdict";
 
 export type ScanOptions = {
   maxBytes?: number;
@@ -14,17 +14,21 @@ export type ScanOptions = {
 
 export async function scanStream(
   readable: NodeJS.ReadableStream,
-  options: ScanOptions
+  options: ScanOptions,
 ): Promise<ScanReport> {
   const start = performance.now();
   const max = options.maxBytes ?? 50 * 1024 * 1024;
   const sha = options.computeSha256 === false ? null : createHash("sha256");
   const chunks: Buffer[] = [];
-  let size = 0, truncated = false, timedOut = false;
+  let size = 0,
+    truncated = false,
+    timedOut = false;
 
   let timer: NodeJS.Timeout | null = null;
   if (options.timeoutMs && options.timeoutMs > 0) {
-    timer = setTimeout(() => { timedOut = true; }, options.timeoutMs);
+    timer = setTimeout(() => {
+      timedOut = true;
+    }, options.timeoutMs);
   }
 
   try {
@@ -34,7 +38,10 @@ export async function scanStream(
       size += b.length;
       if (sha) sha.update(b);
       await options.scanChunk?.(b);
-      if (size > max) { truncated = true; break; }
+      if (size > max) {
+        truncated = true;
+        break;
+      }
       chunks.push(b);
     }
   } finally {
@@ -44,8 +51,11 @@ export async function scanStream(
   const buf = Buffer.concat(chunks, Math.min(size, max));
   let matches: YaraMatch[] = [];
   if (!timedOut) {
-    try { matches = await options.scanAll(new Uint8Array(buf)); }
-    catch { /* fail-closed handled by adapters; keep matches=[] here */ }
+    try {
+      matches = await options.scanAll(new Uint8Array(buf));
+    } catch {
+      /* fail-closed handled by adapters; keep matches=[] here */
+    }
   }
 
   const verdict = timedOut ? "suspicious" : mapMatchesToVerdict(matches);

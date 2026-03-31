@@ -3,8 +3,8 @@
  * @module utils/threat-intelligence
  */
 
-import { createHash } from 'crypto';
-import type { ScanReport, Match } from '../types';
+import { createHash } from "crypto";
+import type { Match, ScanReport } from "../types";
 
 export interface ThreatIntelligenceSource {
   /** Source name */
@@ -34,10 +34,10 @@ export interface EnhancedScanReport {
   /** Risk score (0-100) */
   riskScore?: number;
   /** Include all properties from ScanReport */
-  verdict: import('../types').Verdict;
-  matches: import('../types').YaraMatch[];
+  verdict: import("../types").Verdict;
+  matches: import("../types").YaraMatch[];
   reasons?: string[];
-  file?: import('../types').FileInfo;
+  file?: import("../types").FileInfo;
   durationMs?: number;
   error?: string;
   ok: boolean;
@@ -51,7 +51,7 @@ export interface EnhancedScanReport {
  * In production, this would connect to real threat intel APIs
  */
 export class LocalThreatIntelligence implements ThreatIntelligenceSource {
-  name = 'Local Database';
+  name = "Local Database";
   private knownThreats: Map<string, ThreatInfo> = new Map();
 
   constructor() {
@@ -61,15 +61,12 @@ export class LocalThreatIntelligence implements ThreatIntelligenceSource {
 
   private initializeKnownThreats(): void {
     // Example: EICAR test file hash
-    this.knownThreats.set(
-      '275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f',
-      {
-        threatLevel: 100,
-        category: 'test-malware',
-        source: 'local',
-        metadata: { name: 'EICAR Test File' },
-      }
-    );
+    this.knownThreats.set("275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", {
+      threatLevel: 100,
+      category: "test-malware",
+      source: "local",
+      metadata: { name: "EICAR Test File" },
+    });
   }
 
   async checkHash(hash: string): Promise<ThreatInfo | null> {
@@ -124,13 +121,11 @@ export class ThreatIntelligenceAggregator {
    * Check file hash against all sources
    */
   async checkHash(hash: string): Promise<ThreatInfo[]> {
-    const results = await Promise.allSettled(
-      this.sources.map(source => source.checkHash(hash))
-    );
+    const results = await Promise.allSettled(this.sources.map((source) => source.checkHash(hash)));
 
     const threats: ThreatInfo[] = [];
     for (const result of results) {
-      if (result.status === 'fulfilled' && result.value) {
+      if (result.status === "fulfilled" && result.value) {
         threats.push(result.value);
       }
     }
@@ -141,12 +136,9 @@ export class ThreatIntelligenceAggregator {
   /**
    * Enhance scan report with threat intelligence
    */
-  async enhanceScanReport(
-    content: Uint8Array,
-    report: ScanReport
-  ): Promise<EnhancedScanReport> {
+  async enhanceScanReport(content: Uint8Array, report: ScanReport): Promise<EnhancedScanReport> {
     // Calculate file hash
-    const hash = createHash('sha256').update(content).digest('hex');
+    const hash = createHash("sha256").update(content).digest("hex");
 
     // Check threat intelligence
     const threatIntel = await this.checkHash(hash);
@@ -170,13 +162,13 @@ export class ThreatIntelligenceAggregator {
 
     // Base score from verdict
     switch (report.verdict) {
-      case 'malicious':
+      case "malicious":
         score += 70;
         break;
-      case 'suspicious':
+      case "suspicious":
         score += 40;
         break;
-      case 'clean':
+      case "clean":
         score += 0;
         break;
     }
@@ -186,7 +178,7 @@ export class ThreatIntelligenceAggregator {
 
     // Add points from threat intelligence
     if (threats.length > 0) {
-      const maxThreat = Math.max(...threats.map(t => t.threatLevel));
+      const maxThreat = Math.max(...threats.map((t) => t.threatLevel));
       score = Math.max(score, maxThreat);
     }
 
@@ -205,5 +197,5 @@ export function createThreatIntelligence(): ThreatIntelligenceAggregator {
  * Helper to get file hash
  */
 export function getFileHash(content: Uint8Array): string {
-  return createHash('sha256').update(content).digest('hex');
+  return createHash("sha256").update(content).digest("hex");
 }

@@ -29,8 +29,8 @@
  * @module hooks
  */
 
-import type { ScanContext, ScanReport } from './types';
-import type { QuarantineEntry } from './quarantine/types';
+import type { QuarantineEntry } from "./quarantine/types";
+import type { ScanContext, ScanReport } from "./types";
 
 // ── Event payloads ────────────────────────────────────────────────────────────
 
@@ -95,7 +95,10 @@ export function createScanHooks(hooks: ScanHooks): ScanHooks {
 
 // ── withHooks wrapper ─────────────────────────────────────────────────────────
 
-type ScanFn = (bytes: Uint8Array, opts?: { ctx?: ScanContext; [k: string]: unknown }) => Promise<ScanReport>;
+type ScanFn = (
+  bytes: Uint8Array,
+  opts?: { ctx?: ScanContext; [k: string]: unknown },
+) => Promise<ScanReport>;
 
 /**
  * Wrap a scan function with lifecycle hooks.
@@ -105,9 +108,10 @@ type ScanFn = (bytes: Uint8Array, opts?: { ctx?: ScanContext; [k: string]: unkno
  */
 export function withHooks(scanFn: ScanFn, hooks: ScanHooks): ScanFn {
   return async (bytes, opts = {}) => {
-    const scanId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
-      ? (crypto as { randomUUID(): string }).randomUUID()
-      : undefined;
+    const scanId =
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? (crypto as { randomUUID(): string }).randomUUID()
+        : undefined;
 
     const startedAt = Date.now();
     const ctx: ScanStartContext = { ...opts.ctx, scanId, startedAt };
@@ -127,7 +131,7 @@ export function withHooks(scanFn: ScanFn, hooks: ScanHooks): ScanFn {
 
     void hooks.onScanComplete?.(completeCtx, report);
 
-    if (report.verdict === 'suspicious' || report.verdict === 'malicious') {
+    if (report.verdict === "suspicious" || report.verdict === "malicious") {
       void hooks.onThreatDetected?.(completeCtx, report);
     }
 

@@ -3,17 +3,17 @@
  * @module config
  */
 
-import type { PresetName, PresetOptions } from './presets';
-import type { CacheOptions } from './utils/cache-manager';
-import type { ScanReport } from './types';
+import type { PresetName, PresetOptions } from "./presets";
+import type { ScanReport } from "./types";
+import type { CacheOptions } from "./utils/cache-manager";
 
 export interface ScannerConfig {
   /** Default preset to use */
   defaultPreset?: PresetName;
-  
+
   /** Preset-specific options */
   presetOptions?: PresetOptions;
-  
+
   /** Performance settings */
   performance?: {
     /** Enable caching of scan results */
@@ -27,7 +27,7 @@ export interface ScannerConfig {
     /** Maximum concurrent scans */
     maxConcurrency?: number;
   };
-  
+
   /** Security settings */
   security?: {
     /** Maximum file size to scan (in bytes) */
@@ -39,7 +39,7 @@ export interface ScannerConfig {
     /** Enable strict mode (reject suspicious files) */
     strictMode?: boolean;
   };
-  
+
   /** Advanced detection */
   advanced?: {
     /** Enable polyglot detection */
@@ -51,17 +51,17 @@ export interface ScannerConfig {
     /** Maximum archive nesting depth */
     maxArchiveDepth?: number;
   };
-  
+
   /** Logging and reporting */
   logging?: {
     /** Enable detailed logging */
     verbose?: boolean;
     /** Log level (debug, info, warn, error) */
-    level?: 'debug' | 'info' | 'warn' | 'error';
+    level?: "debug" | "info" | "warn" | "error";
     /** Enable scan statistics */
     enableStats?: boolean;
   };
-  
+
   /** Callbacks — use 'pompelmi/hooks' for a richer, typed hook interface */
   callbacks?: {
     /** Called before scan starts */
@@ -77,8 +77,8 @@ export interface ScannerConfig {
  * Default configuration
  */
 export const DEFAULT_CONFIG: ScannerConfig = {
-  defaultPreset: 'zip-basic',
-  
+  defaultPreset: "zip-basic",
+
   performance: {
     enableCache: false,
     enablePerformanceTracking: false,
@@ -91,24 +91,24 @@ export const DEFAULT_CONFIG: ScannerConfig = {
       enableStats: false,
     },
   },
-  
+
   security: {
     maxFileSize: 100 * 1024 * 1024, // 100MB
     enableThreatIntel: false,
     scanTimeout: 30000, // 30 seconds
     strictMode: false,
   },
-  
+
   advanced: {
     enablePolyglotDetection: true,
     enableObfuscationDetection: true,
     enableNestedArchiveAnalysis: true,
     maxArchiveDepth: 5,
   },
-  
+
   logging: {
     verbose: false,
-    level: 'info',
+    level: "info",
     enableStats: false,
   },
 };
@@ -119,7 +119,7 @@ export const DEFAULT_CONFIG: ScannerConfig = {
 export const CONFIG_PRESETS = {
   /** Fast scanning with minimal features */
   fast: {
-    defaultPreset: 'basic' as PresetName,
+    defaultPreset: "basic" as PresetName,
     performance: {
       enableCache: true,
       enablePerformanceTracking: false,
@@ -137,7 +137,7 @@ export const CONFIG_PRESETS = {
 
   /** Thorough scanning with all features */
   thorough: {
-    defaultPreset: 'advanced' as PresetName,
+    defaultPreset: "advanced" as PresetName,
     performance: {
       enableCache: true,
       enablePerformanceTracking: true,
@@ -157,14 +157,14 @@ export const CONFIG_PRESETS = {
     },
     logging: {
       verbose: true,
-      level: 'debug' as const,
+      level: "debug" as const,
       enableStats: true,
     },
   } as Partial<ScannerConfig>,
 
   /** Production-ready configuration */
   production: {
-    defaultPreset: 'advanced' as PresetName,
+    defaultPreset: "advanced" as PresetName,
     performance: {
       enableCache: true,
       enablePerformanceTracking: true,
@@ -190,14 +190,14 @@ export const CONFIG_PRESETS = {
     },
     logging: {
       verbose: false,
-      level: 'warn' as const,
+      level: "warn" as const,
       enableStats: true,
     },
   } as Partial<ScannerConfig>,
 
   /** Development configuration */
   development: {
-    defaultPreset: 'basic' as PresetName,
+    defaultPreset: "basic" as PresetName,
     performance: {
       enableCache: false,
       enablePerformanceTracking: true,
@@ -210,7 +210,7 @@ export const CONFIG_PRESETS = {
     },
     logging: {
       verbose: true,
-      level: 'debug' as const,
+      level: "debug" as const,
       enableStats: true,
     },
   } as Partial<ScannerConfig>,
@@ -278,33 +278,33 @@ export class ConfigManager {
     // Validate performance settings
     if (this.config.performance?.maxConcurrency !== undefined) {
       if (this.config.performance.maxConcurrency < 1) {
-        errors.push('maxConcurrency must be at least 1');
+        errors.push("maxConcurrency must be at least 1");
       }
       if (this.config.performance.maxConcurrency > 50) {
-        errors.push('maxConcurrency should not exceed 50');
+        errors.push("maxConcurrency should not exceed 50");
       }
     }
 
     // Validate security settings
     if (this.config.security?.maxFileSize !== undefined) {
       if (this.config.security.maxFileSize < 1024) {
-        errors.push('maxFileSize must be at least 1KB');
+        errors.push("maxFileSize must be at least 1KB");
       }
     }
 
     if (this.config.security?.scanTimeout !== undefined) {
       if (this.config.security.scanTimeout < 1000) {
-        errors.push('scanTimeout must be at least 1000ms');
+        errors.push("scanTimeout must be at least 1000ms");
       }
     }
 
     // Validate advanced settings
     if (this.config.advanced?.maxArchiveDepth !== undefined) {
       if (this.config.advanced.maxArchiveDepth < 1) {
-        errors.push('maxArchiveDepth must be at least 1');
+        errors.push("maxArchiveDepth must be at least 1");
       }
       if (this.config.advanced.maxArchiveDepth > 20) {
-        errors.push('maxArchiveDepth should not exceed 20');
+        errors.push("maxArchiveDepth should not exceed 20");
       }
     }
 

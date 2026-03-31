@@ -9,17 +9,8 @@
     "skipLibCheck": true,
     "declaration": true,
     "emitDeclarationOnly": false,
-    "types": [
-      "vitest/globals",
-      "node"
-    ]
+    "types": ["vitest/globals", "node"]
   },
-  "include": [
-    "src",
-    "tests"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules"
-  ]
+  "include": ["src", "tests"],
+  "exclude": ["dist", "node_modules"]
 }

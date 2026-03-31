@@ -11,7 +11,7 @@
  */
 
 // Re-export all browser-safe APIs
-export * from './browser-index';
+export * from "./browser-index";
 
 // React hook for controlled file inputs
-export { useFileScanner } from './useFileScanner';
+export { useFileScanner } from "./useFileScanner";

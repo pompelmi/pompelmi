@@ -1,24 +1,27 @@
 import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
   BadRequestException,
-} from '@nestjs/common';
-import { Observable } from 'rxjs';
-import { PompelmiService } from './pompelmi.service.js';
+  type CallHandler,
+  type ExecutionContext,
+  Injectable,
+  type NestInterceptor,
+} from "@nestjs/common";
+import type { Observable } from "rxjs";
+import type { PompelmiService } from "./pompelmi.service.js";
+
+const invalidFilenameCharacters = new RegExp("[\\u0000-\\u001F\\u007F]", "g");
+const invalidLogFilenameCharacters = new RegExp("[\\u0000-\\u001F\\u007F%]", "g");
 
 /**
  * Interceptor that automatically scans uploaded files for malware.
- * 
+ *
  * Use with NestJS file upload decorators:
  * - @UseInterceptors(FileInterceptor('file'), PompelmiInterceptor)
  * - @UseInterceptors(FilesInterceptor('files'), PompelmiInterceptor)
  * - @UseInterceptors(FileFieldsInterceptor([...]), PompelmiInterceptor)
  * - @UseInterceptors(AnyFilesInterceptor(), PompelmiInterceptor)
- * 
+ *
  * Throws BadRequestException if malware is detected.
- * 
+ *
  * @example
  * ```typescript
  * @Controller('upload')
@@ -35,30 +38,31 @@ import { PompelmiService } from './pompelmi.service.js';
 export class PompelmiInterceptor implements NestInterceptor {
   constructor(private readonly pompelmiService: PompelmiService) {}
 
-  async intercept(
-    context: ExecutionContext,
-    next: CallHandler,
-  ): Promise<Observable<any>> {
+  async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
-    
+
     // Collect all uploaded files from various sources
     const files: Array<Express.Multer.File> = [];
-    
+
     // Single file upload (@UploadedFile)
     if (request.file) {
       files.push(request.file);
     }
-    
+
     // Multiple files upload (@UploadedFiles)
     if (request.files) {
       if (Array.isArray(request.files)) {
         // FilesInterceptor or AnyFilesInterceptor
         files.push(...request.files);
-      } else if (typeof request.files === 'object' && request.files !== null && !Array.isArray(request.files)) {
+      } else if (
+        typeof request.files === "object" &&
+        request.files !== null &&
+        !Array.isArray(request.files)
+      ) {
         // FileFieldsInterceptor (object with fieldname keys)
         // Use Object.prototype.hasOwnProperty to safely check for own properties
         for (const fieldname in request.files) {
-          if (Object.prototype.hasOwnProperty.call(request.files, fieldname)) {
+          if (Object.hasOwn(request.files, fieldname)) {
             const fieldFiles = request.files[fieldname];
             if (Array.isArray(fieldFiles)) {
               files.push(...fieldFiles);
@@ -83,21 +87,24 @@ export class PompelmiInterceptor implements NestInterceptor {
   private async scanFile(file: Express.Multer.File): Promise<void> {
     if (!file.buffer) {
       throw new BadRequestException({
-        message: 'File buffer not available. Ensure memoryStorage() is configured.',
+        message: "File buffer not available. Ensure memoryStorage() is configured.",
         filename: file.originalname,
       });
     }
 
     const result = await this.pompelmiService.scan(file.buffer);
 
-    if (result.verdict === 'malicious') {
+    if (result.verdict === "malicious") {
       // Sanitize filename to prevent injection attacks
-      const sanitizedFilename = String(file.originalname || 'unknown').replace(/[\x00-\x1F\x7F]/g, '');
+      const sanitizedFilename = String(file.originalname || "unknown").replace(
+        invalidFilenameCharacters,
+        "",
+      );
       throw new BadRequestException({
-        message: 'Malware detected in uploaded file',
+        message: "Malware detected in uploaded file",
         details: {
           verdict: result.verdict,
-          findings: (result.matches || []).map(m => m.rule),
+          findings: (result.matches || []).map((m) => m.rule),
           filename: sanitizedFilename,
           mimetype: file.mimetype,
           size: file.size,
@@ -106,13 +113,16 @@ export class PompelmiInterceptor implements NestInterceptor {
     }
 
     // Optionally warn about suspicious files (without blocking)
-    if (result.verdict === 'suspicious') {
+    if (result.verdict === "suspicious") {
       // Sanitize filename for logging to prevent format string attacks
-      const sanitizedFilename = String(file.originalname || 'unknown').replace(/[\x00-\x1F\x7F%]/g, '');
+      const sanitizedFilename = String(file.originalname || "unknown").replace(
+        invalidLogFilenameCharacters,
+        "",
+      );
       // In a production system, you might want to log this
-      console.warn('Suspicious file detected', {
+      console.warn("Suspicious file detected", {
         filename: sanitizedFilename,
-        findings: (result.matches || []).map(m => m.rule),
+        findings: (result.matches || []).map((m) => m.rule),
       });
     }
   }

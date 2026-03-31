@@ -1,13 +1,13 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { describe, it, expect, beforeEach } from 'vitest';
-import { PompelmiModule } from '../src/pompelmi.module';
-import { PompelmiService } from '../src/pompelmi.service';
-import { PompelmiInterceptor } from '../src/pompelmi.interceptor';
-import { POMPELMI_MODULE_OPTIONS } from '../src/interfaces';
+import { Test, type TestingModule } from "@nestjs/testing";
+import { beforeEach, describe, expect, it } from "vitest";
+import { POMPELMI_MODULE_OPTIONS } from "../src/interfaces";
+import { PompelmiInterceptor } from "../src/pompelmi.interceptor";
+import { PompelmiModule } from "../src/pompelmi.module";
+import { PompelmiService } from "../src/pompelmi.service";
 
-describe('PompelmiModule', () => {
-  describe('forRoot', () => {
-    it('should create module with default options', async () => {
+describe("PompelmiModule", () => {
+  describe("forRoot", () => {
+    it("should create module with default options", async () => {
       const module: TestingModule = await Test.createTestingModule({
         imports: [PompelmiModule.forRoot()],
       }).compile();
@@ -17,7 +17,7 @@ describe('PompelmiModule', () => {
       expect(module.get(PompelmiInterceptor)).toBeDefined();
     });
 
-    it('should provide module options', async () => {
+    it("should provide module options", async () => {
       const options = {
         failFast: true,
         heuristicThreshold: 80,
@@ -31,7 +31,7 @@ describe('PompelmiModule', () => {
       expect(providedOptions).toEqual(options);
     });
 
-    it('should create PompelmiService with provided options', async () => {
+    it("should create PompelmiService with provided options", async () => {
       const options = {
         failFast: false,
         maxDepth: 5,
@@ -46,8 +46,8 @@ describe('PompelmiModule', () => {
     });
   });
 
-  describe('forRootAsync', () => {
-    it('should create module with useFactory', async () => {
+  describe("forRootAsync", () => {
+    it("should create module with useFactory", async () => {
       const module: TestingModule = await Test.createTestingModule({
         imports: [
           PompelmiModule.forRootAsync({
@@ -61,16 +61,16 @@ describe('PompelmiModule', () => {
 
       const service = module.get(PompelmiService);
       const options = service.getOptions();
-      
+
       expect(options.failFast).toBe(true);
       expect(options.heuristicThreshold).toBe(90);
     });
 
-    it('should support async factory with dependencies', async () => {
+    it("should support async factory with dependencies", async () => {
       class ConfigService {
         get(key: string, defaultValue?: any) {
-          if (key === 'SCAN_FAIL_FAST') return true;
-          if (key === 'SCAN_THRESHOLD') return 85;
+          if (key === "SCAN_FAIL_FAST") return true;
+          if (key === "SCAN_THRESHOLD") return 85;
           return defaultValue;
         }
       }
@@ -79,8 +79,8 @@ describe('PompelmiModule', () => {
         imports: [
           PompelmiModule.forRootAsync({
             useFactory: (config: ConfigService) => ({
-              failFast: config.get('SCAN_FAIL_FAST'),
-              heuristicThreshold: config.get('SCAN_THRESHOLD'),
+              failFast: config.get("SCAN_FAIL_FAST"),
+              heuristicThreshold: config.get("SCAN_THRESHOLD"),
             }),
             inject: [ConfigService],
           }),
@@ -90,12 +90,12 @@ describe('PompelmiModule', () => {
 
       const service = module.get(PompelmiService);
       const options = service.getOptions();
-      
+
       expect(options.failFast).toBe(true);
       expect(options.heuristicThreshold).toBe(85);
     });
 
-    it('should support useClass', async () => {
+    it("should support useClass", async () => {
       class PompelmiConfigService {
         createPompelmiOptions() {
           return {
@@ -115,19 +115,17 @@ describe('PompelmiModule', () => {
 
       const service = module.get(PompelmiService);
       const options = service.getOptions();
-      
+
       expect(options.failFast).toBe(false);
       expect(options.maxDepth).toBe(10);
     });
 
-    it('should throw error if no configuration method provided', async () => {
+    it("should throw error if no configuration method provided", async () => {
       await expect(
         Test.createTestingModule({
-          imports: [
-            PompelmiModule.forRootAsync({} as any),
-          ],
-        }).compile()
-      ).rejects.toThrow('Invalid PompelmiModuleAsyncOptions');
+          imports: [PompelmiModule.forRootAsync({} as any)],
+        }).compile(),
+      ).rejects.toThrow("Invalid PompelmiModuleAsyncOptions");
     });
   });
 });

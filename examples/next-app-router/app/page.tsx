@@ -23,7 +23,8 @@ export default function Page() {
         Next.js App Router • file upload demo
       </h1>
       <p style={{ opacity: 0.8, marginBottom: 16 }}>
-        This sends files to <code>/api/upload</code> which enforces a simple policy (extension/MIME/size) and runs a demo scanner.
+        This sends files to <code>/api/upload</code> which enforces a simple policy
+        (extension/MIME/size) and runs a demo scanner.
       </p>
       <form onSubmit={onSubmit} encType="multipart/form-data" style={{ display: "grid", gap: 12 }}>
         <input name="files" type="file" multiple />
@@ -33,8 +34,17 @@ export default function Page() {
       </form>
 
       {result && (
-        <pre style={{ marginTop: 16, background: "#0b1020", color: "white", padding: 12, borderRadius: 8, overflow: "auto" }}>
-{JSON.stringify(result, null, 2)}
+        <pre
+          style={{
+            marginTop: 16,
+            background: "#0b1020",
+            color: "white",
+            padding: 12,
+            borderRadius: 8,
+            overflow: "auto",
+          }}
+        >
+          {JSON.stringify(result, null, 2)}
         </pre>
       )}
     </main>

@@ -27,24 +27,24 @@ export function createPerformanceMonitor(): {
     start() {
       metrics.startTime = Date.now();
     },
-    
+
     end(bytesProcessed: number) {
       metrics.endTime = Date.now();
       metrics.durationMs = metrics.endTime - metrics.startTime;
       metrics.bytesProcessed = bytesProcessed;
-      
+
       // Calculate throughput in MB/s
       if (metrics.durationMs > 0) {
         const bytesPerMs = bytesProcessed / metrics.durationMs;
         metrics.throughputMBps = (bytesPerMs * 1000) / (1024 * 1024);
       }
-      
+
       return { ...metrics };
     },
-    
+
     getMetrics() {
       return { ...metrics };
-    }
+    },
   };
 }
 
@@ -53,10 +53,10 @@ export function createPerformanceMonitor(): {
  */
 export function formatPerformanceMetrics(metrics: PerformanceMetrics): string {
   const { durationMs, bytesProcessed, throughputMBps } = metrics;
-  
+
   const sizeMB = (bytesProcessed / (1024 * 1024)).toFixed(2);
-  const duration = durationMs ? `${durationMs}ms` : 'N/A';
-  const throughput = throughputMBps ? `${throughputMBps.toFixed(2)} MB/s` : 'N/A';
-  
+  const duration = durationMs ? `${durationMs}ms` : "N/A";
+  const throughput = throughputMBps ? `${throughputMBps.toFixed(2)} MB/s` : "N/A";
+
   return `Processed ${sizeMB} MB in ${duration} (${throughput})`;
 }

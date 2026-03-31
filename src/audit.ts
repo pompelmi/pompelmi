@@ -19,19 +19,19 @@
  * @module audit
  */
 
-import * as fs from 'fs';
-import type { ScanReport } from './types';
-import type { QuarantineEntry } from './quarantine/types';
+import * as fs from "fs";
+import type { QuarantineEntry } from "./quarantine/types";
+import type { ScanReport } from "./types";
 
 // ── Record types ──────────────────────────────────────────────────────────────
 
 export type AuditEventType =
-  | 'scan.complete'
-  | 'scan.error'
-  | 'threat.detected'
-  | 'quarantine.created'
-  | 'quarantine.resolved'
-  | 'quarantine.deleted';
+  | "scan.complete"
+  | "scan.error"
+  | "threat.detected"
+  | "quarantine.created"
+  | "quarantine.resolved"
+  | "quarantine.deleted";
 
 interface BaseAuditRecord {
   /** ISO-8601 timestamp. */
@@ -45,12 +45,12 @@ interface BaseAuditRecord {
 }
 
 export interface ScanAuditRecord extends BaseAuditRecord {
-  event: 'scan.complete' | 'scan.error' | 'threat.detected';
+  event: "scan.complete" | "scan.error" | "threat.detected";
   filename?: string;
   mimeType?: string;
   sizeBytes?: number;
   sha256?: string;
-  verdict: ScanReport['verdict'];
+  verdict: ScanReport["verdict"];
   matchCount: number;
   durationMs?: number;
   engine?: string;
@@ -58,11 +58,11 @@ export interface ScanAuditRecord extends BaseAuditRecord {
 }
 
 export interface QuarantineAuditRecord extends BaseAuditRecord {
-  event: 'quarantine.created' | 'quarantine.resolved' | 'quarantine.deleted';
+  event: "quarantine.created" | "quarantine.resolved" | "quarantine.deleted";
   quarantineId: string;
   filename?: string;
   sha256: string;
-  decision?: 'promote' | 'delete';
+  decision?: "promote" | "delete";
   reviewedBy?: string;
   reviewNote?: string;
 }
@@ -72,9 +72,9 @@ export type AuditRecord = ScanAuditRecord | QuarantineAuditRecord;
 // ── Destination ───────────────────────────────────────────────────────────────
 
 export type AuditDest =
-  | { dest: 'console' }
-  | { dest: 'file'; path: string }
-  | { dest: 'custom'; write: (record: AuditRecord) => void | Promise<void> };
+  | { dest: "console" }
+  | { dest: "file"; path: string }
+  | { dest: "custom"; write: (record: AuditRecord) => void | Promise<void> };
 
 export interface AuditTrailOptions {
   /** Where to write audit records. Default: 'console'. */
@@ -90,7 +90,7 @@ export class AuditTrail {
 
   constructor(options: AuditTrailOptions = {}) {
     this.options = {
-      output: options.output ?? { dest: 'console' },
+      output: options.output ?? { dest: "console" },
       pretty: options.pretty ?? false,
     };
   }
@@ -98,11 +98,14 @@ export class AuditTrail {
   /** Log a completed scan. */
   logScanComplete(
     report: ScanReport,
-    extra?: Pick<ScanAuditRecord, 'filename' | 'sizeBytes' | 'sha256' | 'correlationId' | 'uploadedBy'>,
+    extra?: Pick<
+      ScanAuditRecord,
+      "filename" | "sizeBytes" | "sha256" | "correlationId" | "uploadedBy"
+    >,
   ): void {
     const record: ScanAuditRecord = {
       timestamp: new Date().toISOString(),
-      event: report.verdict !== 'clean' ? 'threat.detected' : 'scan.complete',
+      event: report.verdict !== "clean" ? "threat.detected" : "scan.complete",
       verdict: report.verdict,
       matchCount: report.matches?.length ?? 0,
       durationMs: report.durationMs,
@@ -116,12 +119,12 @@ export class AuditTrail {
   /** Log a scan error. */
   logScanError(
     error: unknown,
-    extra?: Pick<ScanAuditRecord, 'filename' | 'correlationId' | 'uploadedBy'>,
+    extra?: Pick<ScanAuditRecord, "filename" | "correlationId" | "uploadedBy">,
   ): void {
     const record: ScanAuditRecord = {
       timestamp: new Date().toISOString(),
-      event: 'scan.error',
-      verdict: 'clean', // unknown at this point
+      event: "scan.error",
+      verdict: "clean", // unknown at this point
       matchCount: 0,
       error: error instanceof Error ? error.message : String(error),
       ...extra,
@@ -133,7 +136,7 @@ export class AuditTrail {
   logQuarantine(entry: QuarantineEntry, correlationId?: string): void {
     const record: QuarantineAuditRecord = {
       timestamp: new Date().toISOString(),
-      event: 'quarantine.created',
+      event: "quarantine.created",
       quarantineId: entry.id,
       filename: entry.file.originalName,
       sha256: entry.file.sha256,
@@ -147,11 +150,11 @@ export class AuditTrail {
   logQuarantineResolved(entry: QuarantineEntry, correlationId?: string): void {
     const record: QuarantineAuditRecord = {
       timestamp: new Date().toISOString(),
-      event: entry.status === 'deleted' ? 'quarantine.deleted' : 'quarantine.resolved',
+      event: entry.status === "deleted" ? "quarantine.deleted" : "quarantine.resolved",
       quarantineId: entry.id,
       filename: entry.file.originalName,
       sha256: entry.file.sha256,
-      decision: entry.status === 'promoted' ? 'promote' : 'delete',
+      decision: entry.status === "promoted" ? "promote" : "delete",
       reviewedBy: entry.reviewedBy,
       reviewNote: entry.reviewNote,
       correlationId,
@@ -160,19 +163,17 @@ export class AuditTrail {
   }
 
   private async write(record: AuditRecord): Promise<void> {
-    const line = this.options.pretty
-      ? JSON.stringify(record, null, 2)
-      : JSON.stringify(record);
+    const line = this.options.pretty ? JSON.stringify(record, null, 2) : JSON.stringify(record);
 
     const { output } = this.options;
 
     try {
-      if (output.dest === 'console') {
-        process.stdout.write(line + '\n');
-      } else if (output.dest === 'file') {
+      if (output.dest === "console") {
+        process.stdout.write(line + "\n");
+      } else if (output.dest === "file") {
         // Append a newline-delimited JSON (NDJSON) record.
-        await fs.promises.appendFile(output.path, line + '\n', 'utf8');
-      } else if (output.dest === 'custom') {
+        await fs.promises.appendFile(output.path, line + "\n", "utf8");
+      } else if (output.dest === "custom") {
         await output.write(record);
       }
     } catch {

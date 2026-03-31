@@ -1,18 +1,23 @@
+import { execFile } from "node:child_process";
 import { promises as fs } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import * as url from "node:url";
-import { execFile } from "node:child_process";
 
 const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 const RULES_DIR = path.resolve(__dirname, "..", "..", "rules", "starter");
 
 async function buildTempRulesFile() {
   const entries = await fs.readdir(RULES_DIR, { withFileTypes: true }).catch(() => []);
-  const files = entries.filter(e => e.isFile() && e.name.endsWith(".yar")).map(e => path.join(RULES_DIR, e.name));
+  const files = entries
+    .filter((e) => e.isFile() && e.name.endsWith(".yar"))
+    .map((e) => path.join(RULES_DIR, e.name));
   if (!files.length) throw new Error("No .yar files found in rules/starter/");
-  const text = (await Promise.all(files.map(p => fs.readFile(p, "utf8")))).join("\n\n");
-  const tmp = path.join(os.tmpdir(), `pompelmi-rules-${Date.now()}-${Math.random().toString(36).slice(2)}.yar`);
+  const text = (await Promise.all(files.map((p) => fs.readFile(p, "utf8")))).join("\n\n");
+  const tmp = path.join(
+    os.tmpdir(),
+    `pompelmi-rules-${Date.now()}-${Math.random().toString(36).slice(2)}.yar`,
+  );
   await fs.writeFile(tmp, text, "utf8");
   return tmp;
 }
@@ -35,7 +40,10 @@ function parseYaraOutput(stdout) {
     const rule = m[1];
     const meta = {};
     if (m[2]) {
-      for (const pair of m[2].split(",").map(s => s.trim()).filter(Boolean)) {
+      for (const pair of m[2]
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean)) {
         const idx = pair.indexOf("=");
         if (idx > 0) {
           const k = pair.slice(0, idx).trim();
@@ -52,7 +60,10 @@ function parseYaraOutput(stdout) {
 
 export const YaraCliScanner = {
   async scan(bytes) {
-    const uploadFile = path.join(os.tmpdir(), `pompelmi-upload-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`);
+    const uploadFile = path.join(
+      os.tmpdir(),
+      `pompelmi-upload-${Date.now()}-${Math.random().toString(36).slice(2)}.bin`,
+    );
     await fs.writeFile(uploadFile, Buffer.from(bytes));
     const rulesFile = await buildTempRulesFile();
     const stdout = await execYara(["-m", "-s", rulesFile, uploadFile]).finally(async () => {
@@ -64,5 +75,5 @@ export const YaraCliScanner = {
     // Default verdict if rule meta doesn't specify one
     for (const e of events) e.meta.verdict ??= "suspicious";
     return events;
-  }
+  },
 };

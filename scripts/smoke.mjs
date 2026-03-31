@@ -1,31 +1,46 @@
-import { existsSync, mkdirSync, writeFileSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
-import { join, dirname } from "node:path";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-function sh(cmd, opts={}) {
+function sh(cmd, opts = {}) {
   return execSync(cmd, { stdio: "pipe", encoding: "utf8", ...opts });
 }
 
 function detectPm() {
-  try { sh("pnpm -v"); return "pnpm"; } catch {}
-  try { sh("npm -v"); return "npm"; } catch {}
+  try {
+    sh("pnpm -v");
+    return "pnpm";
+  } catch {}
+  try {
+    sh("npm -v");
+    return "npm";
+  } catch {}
   return null;
 }
 
 function buildAll(pm) {
   if (pm === "pnpm") {
-    try { console.log("→ build (pnpm)"); sh("pnpm -w build", { stdio: "inherit" }); return; } catch {}
+    try {
+      console.log("→ build (pnpm)");
+      sh("pnpm -w build", { stdio: "inherit" });
+      return;
+    } catch {}
     console.log("→ fallback pnpm -r --if-present build");
     sh("pnpm -r --if-present build", { stdio: "inherit" });
     return;
   }
   if (pm === "npm") {
     console.log("→ build (npm)");
-    try { sh("npm run -w build", { stdio: "inherit" }); return; } catch {}
-    try { sh("npm run build", { stdio: "inherit" }); } catch (e) {
+    try {
+      sh("npm run -w build", { stdio: "inherit" });
+      return;
+    } catch {}
+    try {
+      sh("npm run build", { stdio: "inherit" });
+    } catch (e) {
       console.log("! build npm failed:", e?.message || e);
     }
   }
@@ -38,18 +53,21 @@ function mkSamples(dir) {
   writeFileSync(join(dir, "eicar.txt"), eicar + "\n");
   writeFileSync(join(dir, "a.txt"), "A");
   writeFileSync(join(dir, "b.txt"), "B");
-  try { sh(`(cd "${dir}" && zip -q sample.zip a.txt b.txt)`); }
-  catch { writeFileSync(join(dir, "sample.zip"), "PK\\x05\\x06" + "\\x00".repeat(18)); }
+  try {
+    sh(`(cd "${dir}" && zip -q sample.zip a.txt b.txt)`);
+  } catch {
+    writeFileSync(join(dir, "sample.zip"), "PK\\x05\\x06" + "\\x00".repeat(18));
+  }
 }
 
-function findDistEntry(root=".") {
+function findDistEntry(root = ".") {
   const candidates = [
     "dist/pompelmi.esm.js",
     "dist/index.mjs",
     "dist/pompelmi.cjs.js",
     "dist/pompelmi.cjs",
     "dist/index.cjs.js",
-    "dist/index.cjs"
+    "dist/index.cjs",
   ];
   for (const c of candidates) if (existsSync(join(root, c))) return c;
   return null;
@@ -79,7 +97,11 @@ function findCli() {
   else if (pkg.bin && pkg.bin.pompelmi) binPath = pkg.bin.pompelmi;
   if (!binPath) {
     const guesses = ["dist/cli.cjs", "dist/index.cjs", "dist/cli.js", "bin/cli.js", "bin.js"];
-    for (const g of guesses) if (existsSync(join("packages/cli", g))) { binPath = g; break; }
+    for (const g of guesses)
+      if (existsSync(join("packages/cli", g))) {
+        binPath = g;
+        break;
+      }
   }
   return binPath ? join("packages/cli", binPath) : null;
 }
@@ -87,7 +109,10 @@ function findCli() {
 (async () => {
   console.log("== pompelmi smoke test ==");
   const pm = detectPm();
-  if (!pm) { console.error("No package manager found (need pnpm or npm)"); process.exit(2); }
+  if (!pm) {
+    console.error("No package manager found (need pnpm or npm)");
+    process.exit(2);
+  }
 
   buildAll(pm);
 
@@ -95,7 +120,7 @@ function findCli() {
   mkSamples(S);
 
   const dist = findDistEntry(".");
-  if (!dist) { 
+  if (!dist) {
     console.error("No dist/* artifacts found. Do you have a build that emits dist/* ?");
     process.exit(3);
   }
@@ -106,11 +131,11 @@ function findCli() {
   if (cli) {
     console.log("→ CLI found:", cli);
     try {
-      const out1 = sh(`node "${cli}" "${join(S,"clean.txt")}" --format table`);
+      const out1 = sh(`node "${cli}" "${join(S, "clean.txt")}" --format table`);
       console.log(out1.trim());
-      const out2 = sh(`node "${cli}" "${join(S,"eicar.txt")}" --format table || true`);
+      const out2 = sh(`node "${cli}" "${join(S, "eicar.txt")}" --format table || true`);
       console.log(out2.trim());
-      const out3 = sh(`node "${cli}" "${join(S,"sample.zip")}" --format table`);
+      const out3 = sh(`node "${cli}" "${join(S, "sample.zip")}" --format table`);
       console.log(out3.trim());
     } catch (e) {
       console.log("CLI exists but execution failed (not blocking smoke):", e?.message || e);

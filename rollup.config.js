@@ -1,15 +1,13 @@
 // rollup.config.js
-import resolve from '@rollup/plugin-node-resolve';
-import commonjs from '@rollup/plugin-commonjs';
-import typescript from '@rollup/plugin-typescript';
 
-const NATIVE_EXTERNAL = [
-  /^@litko\/yara-x(?:$|\/)/,
-  /\.node(\?|$)/,
-];
+import commonjs from "@rollup/plugin-commonjs";
+import resolve from "@rollup/plugin-node-resolve";
+import typescript from "@rollup/plugin-typescript";
+
+const NATIVE_EXTERNAL = [/^@litko\/yara-x(?:$|\/)/, /\.node(\?|$)/];
 
 // Shared plugins
-const plugins = (tsconfig = './tsconfig.json') => [
+const plugins = (tsconfig = "./tsconfig.json") => [
   resolve({ preferBuiltins: true }),
   commonjs(),
   typescript({ tsconfig }),
@@ -19,13 +17,13 @@ const plugins = (tsconfig = './tsconfig.json') => [
 const outputs = (stem) => [
   {
     file: `dist/${stem}.esm.js`,
-    format: 'esm',
+    format: "esm",
     sourcemap: true,
     inlineDynamicImports: true,
   },
   {
     file: `dist/${stem}.cjs`,
-    format: 'cjs',
+    format: "cjs",
     sourcemap: true,
     inlineDynamicImports: true,
   },
@@ -34,8 +32,8 @@ const outputs = (stem) => [
 export default [
   // ── Primary Node.js bundle ────────────────────────────────────────────────
   {
-    input: 'src/index.ts',
-    output: outputs('pompelmi'),
+    input: "src/index.ts",
+    output: outputs("pompelmi"),
     external: (id) => NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
@@ -44,8 +42,8 @@ export default [
   // No Node.js built-ins (no crypto/os/path/unzipper).
   // Import from 'pompelmi/browser'.
   {
-    input: 'src/browser-index.ts',
-    output: outputs('pompelmi.browser'),
+    input: "src/browser-index.ts",
+    output: outputs("pompelmi.browser"),
     external: (id) => NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
@@ -55,9 +53,9 @@ export default [
   // Import from 'pompelmi/react'.
   // Peer dependency: react ^18 || ^19
   {
-    input: 'src/react-index.ts',
-    output: outputs('pompelmi.react'),
-    external: (id) => id === 'react' || NATIVE_EXTERNAL.some((re) => re.test(id)),
+    input: "src/react-index.ts",
+    output: outputs("pompelmi.react"),
+    external: (id) => id === "react" || NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
 
@@ -65,11 +63,11 @@ export default [
   // Provides the quarantine/review/promote/delete workflow for upload pipelines.
   // Import from 'pompelmi/quarantine'.
   {
-    input: 'src/quarantine/index.ts',
-    output: outputs('pompelmi.quarantine'),
+    input: "src/quarantine/index.ts",
+    output: outputs("pompelmi.quarantine"),
     // Keep Node.js built-ins external — they must not be inlined.
     external: (id) =>
-      ['fs', 'path', 'crypto', 'os', 'stream', 'events', 'util', 'buffer'].includes(id) ||
+      ["fs", "path", "crypto", "os", "stream", "events", "util", "buffer"].includes(id) ||
       NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
@@ -78,8 +76,8 @@ export default [
   // Scan lifecycle event hooks.
   // Import from 'pompelmi/hooks'.
   {
-    input: 'src/hooks.ts',
-    output: outputs('pompelmi.hooks'),
+    input: "src/hooks.ts",
+    output: outputs("pompelmi.hooks"),
     external: (id) => NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
@@ -88,10 +86,10 @@ export default [
   // Structured audit trail logging.
   // Import from 'pompelmi/audit'.
   {
-    input: 'src/audit.ts',
-    output: outputs('pompelmi.audit'),
+    input: "src/audit.ts",
+    output: outputs("pompelmi.audit"),
     external: (id) =>
-      ['fs', 'path', 'crypto', 'os', 'stream', 'events', 'util', 'buffer'].includes(id) ||
+      ["fs", "path", "crypto", "os", "stream", "events", "util", "buffer"].includes(id) ||
       NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },
@@ -100,8 +98,8 @@ export default [
   // Named, pre-configured upload policies.
   // Import from 'pompelmi/policy-packs'.
   {
-    input: 'src/policy-packs.ts',
-    output: outputs('pompelmi.policy-packs'),
+    input: "src/policy-packs.ts",
+    output: outputs("pompelmi.policy-packs"),
     external: (id) => NATIVE_EXTERNAL.some((re) => re.test(id)),
     plugins: plugins(),
   },

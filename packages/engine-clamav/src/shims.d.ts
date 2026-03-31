@@ -1,1 +1,1 @@
-declare module 'clamscan';
+declare module "clamscan";

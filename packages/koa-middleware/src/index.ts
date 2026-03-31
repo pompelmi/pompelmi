@@ -1,7 +1,7 @@
-import type { Middleware } from 'koa';
-import * as path from 'node:path';
+import * as path from "node:path";
+import type { Middleware } from "koa";
 
-type Severity = 'clean' | 'suspicious' | 'malicious';
+type Severity = "clean" | "suspicious" | "malicious";
 
 export interface ScanResult {
   severity: Severity;
@@ -25,26 +25,24 @@ export interface UploadGuardOptions {
   includeExtensions?: string[];
   allowedMimeTypes?: string[];
   maxFileSizeBytes?: number;
-  stopOn?: Severity;          // default: 'suspicious'
-  failClosed?: boolean;       // default: true (block on internal errors / missing buffers)
+  stopOn?: Severity; // default: 'suspicious'
+  failClosed?: boolean; // default: true (block on internal errors / missing buffers)
   onScanEvent?: (ev: unknown) => void;
-  scanner?: ScannerFn;        // composed scanner from core, or any compatible fn
+  scanner?: ScannerFn; // composed scanner from core, or any compatible fn
 }
 
-type KoaMulterFile =
-  & FileMeta
-  & {
-    buffer?: Buffer;          // memoryStorage() buffer (multer v2)
-    path?: string;            // diskStorage path (we don't rely on disk)
-  };
+type KoaMulterFile = FileMeta & {
+  buffer?: Buffer; // memoryStorage() buffer (multer v2)
+  path?: string; // diskStorage path (we don't rely on disk)
+};
 
 function asScannerFn(scanner?: ScannerFn) {
   if (!scanner) return null;
-  return typeof scanner === 'function' ? scanner : scanner.scan.bind(scanner);
+  return typeof scanner === "function" ? scanner : scanner.scan.bind(scanner);
 }
 
 function extLower(name: string) {
-  const e = path.extname(name || '').replace(/^\./, '');
+  const e = path.extname(name || "").replace(/^\./, "");
   return e.toLowerCase();
 }
 
@@ -52,7 +50,7 @@ function pushAll(dst: KoaMulterFile[], maybe: unknown) {
   if (!maybe) return;
   if (Array.isArray(maybe)) {
     for (const f of maybe) dst.push(f as KoaMulterFile);
-  } else if (typeof maybe === 'object') {
+  } else if (typeof maybe === "object") {
     // field map { avatar: [File], docs: [File] }
     for (const k of Object.keys(maybe as any)) {
       const v = (maybe as any)[k];
@@ -86,10 +84,10 @@ export function createUploadGuard(opts: UploadGuardOptions): Middleware {
     includeExtensions = [],
     allowedMimeTypes = [],
     maxFileSizeBytes = Number.MAX_SAFE_INTEGER,
-    stopOn = 'suspicious',
+    stopOn = "suspicious",
     failClosed = true,
     onScanEvent,
-    scanner
+    scanner,
   } = opts;
 
   const scan = asScannerFn(scanner);
@@ -99,15 +97,18 @@ export function createUploadGuard(opts: UploadGuardOptions): Middleware {
       const files = collectKoaFiles(ctx);
 
       if (!files.length) {
-        (ctx.state as any).pompelmi = { files: [], results: [], verdict: 'clean' as Severity };
+        (ctx.state as any).pompelmi = { files: [], results: [], verdict: "clean" as Severity };
         return next();
       }
 
       // fast pre-filters
       for (const f of files) {
-        if (typeof f.size === 'number' && f.size > maxFileSizeBytes) {
+        if (typeof f.size === "number" && f.size > maxFileSizeBytes) {
           ctx.status = 422;
-          ctx.body = { error: 'file_too_large', message: `File "${f.originalname}" exceeds max allowed size` };
+          ctx.body = {
+            error: "file_too_large",
+            message: `File "${f.originalname}" exceeds max allowed size`,
+          };
           return;
         }
 
@@ -115,22 +116,28 @@ export function createUploadGuard(opts: UploadGuardOptions): Middleware {
           const e = extLower(f.originalname);
           if (!includeExtensions.includes(e)) {
             ctx.status = 422;
-            ctx.body = { error: 'extension_not_allowed', message: `File "${f.originalname}" has disallowed extension ".${e}"` };
+            ctx.body = {
+              error: "extension_not_allowed",
+              message: `File "${f.originalname}" has disallowed extension ".${e}"`,
+            };
             return;
           }
         }
 
         if (allowedMimeTypes.length) {
-          if (!allowedMimeTypes.includes((f.mimetype || '').toLowerCase())) {
+          if (!allowedMimeTypes.includes((f.mimetype || "").toLowerCase())) {
             ctx.status = 422;
-            ctx.body = { error: 'mime_not_allowed', message: `File "${f.originalname}" has disallowed MIME "${f.mimetype}"` };
+            ctx.body = {
+              error: "mime_not_allowed",
+              message: `File "${f.originalname}" has disallowed MIME "${f.mimetype}"`,
+            };
             return;
           }
         }
       }
 
       const results: ScanResult[] = [];
-      let overall: Severity = 'clean';
+      let overall: Severity = "clean";
 
       for (const f of files) {
         const meta: FileMeta = {
@@ -140,43 +147,50 @@ export function createUploadGuard(opts: UploadGuardOptions): Middleware {
           size: f.size ?? 0,
         };
 
-        let result: ScanResult = { severity: 'clean' };
+        let result: ScanResult = { severity: "clean" };
 
         if (scan) {
           const bytes: Uint8Array | undefined = f.buffer;
           if (!bytes) {
             if (failClosed) {
               ctx.status = 422;
-              ctx.body = { error: 'bytes_missing', message: `File "${f.originalname}" not in memory. Ensure memoryStorage() is configured.` };
+              ctx.body = {
+                error: "bytes_missing",
+                message: `File "${f.originalname}" not in memory. Ensure memoryStorage() is configured.`,
+              };
               return;
             }
           } else {
             result = await Promise.resolve(scan(bytes, meta));
-            onScanEvent?.({ type: 'scan_result', file: meta, result });
+            onScanEvent?.({ type: "scan_result", file: meta, result });
           }
         }
 
         results.push(result);
-        if (result.severity === 'malicious') overall = 'malicious';
-        else if (result.severity === 'suspicious' && overall === 'clean') overall = 'suspicious';
+        if (result.severity === "malicious") overall = "malicious";
+        else if (result.severity === "suspicious" && overall === "clean") overall = "suspicious";
       }
 
       const shouldBlock =
-        (stopOn === 'suspicious' && (overall === 'suspicious' || overall === 'malicious')) ||
-        (stopOn === 'malicious' && overall === 'malicious');
+        (stopOn === "suspicious" && (overall === "suspicious" || overall === "malicious")) ||
+        (stopOn === "malicious" && overall === "malicious");
 
       if (shouldBlock) {
         ctx.status = 422;
-        ctx.body = { error: 'blocked_by_policy', message: `Upload blocked (${overall}).`, results };
+        ctx.body = { error: "blocked_by_policy", message: `Upload blocked (${overall}).`, results };
         return;
       }
 
-      (ctx.state as any).pompelmi = { files: files.map(f => f.originalname), results, verdict: overall };
+      (ctx.state as any).pompelmi = {
+        files: files.map((f) => f.originalname),
+        results,
+        verdict: overall,
+      };
       await next();
     } catch (err: any) {
       if (failClosed) {
         ctx.status = 422;
-        ctx.body = { error: 'scan_error', message: err?.message || 'Upload rejected by scanner' };
+        ctx.body = { error: "scan_error", message: err?.message || "Upload rejected by scanner" };
         return;
       }
       throw err;

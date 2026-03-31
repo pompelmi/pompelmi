@@ -40,5 +40,11 @@
     "LICENSE*",
     "package.json"
   ],
-  "keywords": ["pompelmi", "malware", "scanner", "security", "file-upload"]
+  "keywords": [
+    "pompelmi",
+    "malware",
+    "scanner",
+    "security",
+    "file-upload"
+  ]
 }

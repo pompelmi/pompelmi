@@ -1,9 +1,5 @@
-import type {
-  MagicBytesSignature,
-  MagicBytesResult,
-  PolyglotResult,
-} from './types.js';
-import { DEFAULT_SIGNATURES } from './signatures.js';
+import { DEFAULT_SIGNATURES } from "./signatures.js";
+import type { MagicBytesResult, MagicBytesSignature, PolyglotResult } from "./types.js";
 
 /**
  * Extensible magic bytes detector for file format identification
@@ -96,7 +92,7 @@ export class MagicBytesDetector {
       formats,
       mimeTypes,
       suspicious,
-      reason: `Multiple file formats detected: ${formats.join(', ')}`,
+      reason: `Multiple file formats detected: ${formats.join(", ")}`,
     };
   }
 
@@ -109,12 +105,12 @@ export class MagicBytesDetector {
     suspicious: boolean;
   } {
     const scriptPatterns = [
-      { type: 'PHP', pattern: Buffer.from('<?php') },
-      { type: 'JavaScript', pattern: Buffer.from('<script') },
-      { type: 'Shell', pattern: Buffer.from('#!/bin/') },
-      { type: 'Python', pattern: Buffer.from('#!/usr/bin/env python') },
-      { type: 'Perl', pattern: Buffer.from('#!/usr/bin/perl') },
-      { type: 'Ruby', pattern: Buffer.from('#!/usr/bin/ruby') },
+      { type: "PHP", pattern: Buffer.from("<?php") },
+      { type: "JavaScript", pattern: Buffer.from("<script") },
+      { type: "Shell", pattern: Buffer.from("#!/bin/") },
+      { type: "Python", pattern: Buffer.from("#!/usr/bin/env python") },
+      { type: "Perl", pattern: Buffer.from("#!/usr/bin/perl") },
+      { type: "Ruby", pattern: Buffer.from("#!/usr/bin/ruby") },
     ];
 
     const found: string[] = [];
@@ -126,14 +122,14 @@ export class MagicBytesDetector {
     }
 
     // Check for base64-encoded scripts (common obfuscation)
-    const content = buffer.toString('utf-8');
+    const content = buffer.toString("utf-8");
     if (
-      content.includes('eval(') ||
-      content.includes('exec(') ||
-      content.includes('base64_decode') ||
-      content.includes('atob(')
+      content.includes("eval(") ||
+      content.includes("exec(") ||
+      content.includes("base64_decode") ||
+      content.includes("atob(")
     ) {
-      found.push('Obfuscated Script');
+      found.push("Obfuscated Script");
     }
 
     return {
@@ -165,9 +161,7 @@ export class MagicBytesDetector {
 
     // Convert pattern to Buffer if string
     const pattern =
-      typeof signature.pattern === 'string'
-        ? Buffer.from(signature.pattern)
-        : signature.pattern;
+      typeof signature.pattern === "string" ? Buffer.from(signature.pattern) : signature.pattern;
 
     // Check if buffer is large enough
     if (buffer.length < offset + pattern.length) {
@@ -200,27 +194,27 @@ export class MagicBytesDetector {
     }
 
     if (polyglotResult.isPolyglot) {
-      reasons.push(`Polyglot file detected: ${polyglotResult.formats.join(', ')}`);
+      reasons.push(`Polyglot file detected: ${polyglotResult.formats.join(", ")}`);
     }
 
     if (scriptResult.hasScripts) {
-      reasons.push(`Embedded scripts found: ${scriptResult.scriptTypes.join(', ')}`);
+      reasons.push(`Embedded scripts found: ${scriptResult.scriptTypes.join(", ")}`);
     }
 
     // Special case: Image with embedded scripts (common exploit vector)
-    if (formatResult.detected && formatResult.mimeType?.startsWith('image/')) {
+    if (formatResult.detected && formatResult.mimeType?.startsWith("image/")) {
       if (scriptResult.hasScripts) {
-        reasons.push('Image file contains embedded executable code');
+        reasons.push("Image file contains embedded executable code");
       }
     }
 
     // Special case: Document with embedded executables
     if (
       formatResult.detected &&
-      (formatResult.mimeType?.includes('document') || formatResult.mimeType?.includes('pdf'))
+      (formatResult.mimeType?.includes("document") || formatResult.mimeType?.includes("pdf"))
     ) {
       if (polyglotResult.suspicious) {
-        reasons.push('Document contains embedded executable content');
+        reasons.push("Document contains embedded executable content");
       }
     }
 
@@ -229,10 +223,7 @@ export class MagicBytesDetector {
       isPolyglot: polyglotResult.isPolyglot,
       hasEmbeddedScripts: scriptResult.hasScripts,
       suspicious:
-        formatResult.suspicious ||
-        polyglotResult.suspicious ||
-        scriptResult.suspicious ||
-        false,
+        formatResult.suspicious || polyglotResult.suspicious || scriptResult.suspicious || false,
       reasons,
     };
   }

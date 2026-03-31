@@ -24,7 +24,7 @@
  * @module policy-packs
  */
 
-import { definePolicy, type Policy } from './policy';
+import { definePolicy, type Policy } from "./policy";
 
 const KB = 1024;
 const MB = 1024 * KB;
@@ -43,33 +43,39 @@ const MB = 1024 * KB;
  */
 export const DOCUMENTS_ONLY: Policy = definePolicy({
   includeExtensions: [
-    'pdf',
-    'doc', 'docx',
-    'xls', 'xlsx',
-    'ppt', 'pptx',
-    'odt', 'ods', 'odp',
-    'csv',
-    'txt',
-    'json',
-    'yaml', 'yml',
-    'md',
+    "pdf",
+    "doc",
+    "docx",
+    "xls",
+    "xlsx",
+    "ppt",
+    "pptx",
+    "odt",
+    "ods",
+    "odp",
+    "csv",
+    "txt",
+    "json",
+    "yaml",
+    "yml",
+    "md",
   ],
   allowedMimeTypes: [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'application/vnd.oasis.opendocument.text',
-    'application/vnd.oasis.opendocument.spreadsheet',
-    'application/vnd.oasis.opendocument.presentation',
-    'text/csv',
-    'text/plain',
-    'application/json',
-    'text/yaml',
-    'text/markdown',
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.oasis.opendocument.text",
+    "application/vnd.oasis.opendocument.spreadsheet",
+    "application/vnd.oasis.opendocument.presentation",
+    "text/csv",
+    "text/plain",
+    "application/json",
+    "text/yaml",
+    "text/markdown",
   ],
   maxFileSizeBytes: 25 * MB,
   timeoutMs: 10_000,
@@ -88,17 +94,17 @@ export const DOCUMENTS_ONLY: Policy = definePolicy({
  * Note: SVG is intentionally excluded — inline SVGs can contain scripts.
  */
 export const IMAGES_ONLY: Policy = definePolicy({
-  includeExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'tiff', 'tif', 'bmp', 'ico'],
+  includeExtensions: ["jpg", "jpeg", "png", "gif", "webp", "avif", "tiff", "tif", "bmp", "ico"],
   allowedMimeTypes: [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'image/avif',
-    'image/tiff',
-    'image/bmp',
-    'image/x-icon',
-    'image/vnd.microsoft.icon',
+    "image/jpeg",
+    "image/png",
+    "image/gif",
+    "image/webp",
+    "image/avif",
+    "image/tiff",
+    "image/bmp",
+    "image/x-icon",
+    "image/vnd.microsoft.icon",
   ],
   maxFileSizeBytes: 10 * MB,
   timeoutMs: 5_000,
@@ -116,13 +122,8 @@ export const IMAGES_ONLY: Policy = definePolicy({
  * allowlist.  Only allows plain images and PDF.
  */
 export const STRICT_PUBLIC_UPLOAD: Policy = definePolicy({
-  includeExtensions: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-  allowedMimeTypes: [
-    'image/jpeg',
-    'image/png',
-    'image/webp',
-    'application/pdf',
-  ],
+  includeExtensions: ["jpg", "jpeg", "png", "webp", "pdf"],
+  allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "application/pdf"],
   maxFileSizeBytes: 5 * MB,
   timeoutMs: 4_000,
   concurrency: 2,
@@ -137,16 +138,16 @@ export const STRICT_PUBLIC_UPLOAD: Policy = definePolicy({
  * shorter timeout than the permissive default.
  */
 export const CONSERVATIVE_DEFAULT: Policy = definePolicy({
-  includeExtensions: ['zip', 'png', 'jpg', 'jpeg', 'pdf', 'txt', 'csv', 'docx', 'xlsx'],
+  includeExtensions: ["zip", "png", "jpg", "jpeg", "pdf", "txt", "csv", "docx", "xlsx"],
   allowedMimeTypes: [
-    'application/zip',
-    'image/png',
-    'image/jpeg',
-    'application/pdf',
-    'text/plain',
-    'text/csv',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    "application/zip",
+    "image/png",
+    "image/jpeg",
+    "application/pdf",
+    "text/plain",
+    "text/csv",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ],
   maxFileSizeBytes: 10 * MB,
   timeoutMs: 8_000,
@@ -171,15 +172,15 @@ export const CONSERVATIVE_DEFAULT: Policy = definePolicy({
  * ```
  */
 export const ARCHIVES: Policy = definePolicy({
-  includeExtensions: ['zip', 'tar', 'gz', 'tgz', 'bz2', 'xz', '7z', 'rar'],
+  includeExtensions: ["zip", "tar", "gz", "tgz", "bz2", "xz", "7z", "rar"],
   allowedMimeTypes: [
-    'application/zip',
-    'application/x-tar',
-    'application/gzip',
-    'application/x-bzip2',
-    'application/x-xz',
-    'application/x-7z-compressed',
-    'application/x-rar-compressed',
+    "application/zip",
+    "application/x-tar",
+    "application/gzip",
+    "application/x-bzip2",
+    "application/x-xz",
+    "application/x-7z-compressed",
+    "application/x-rar-compressed",
   ],
   maxFileSizeBytes: 100 * MB,
   timeoutMs: 30_000,
@@ -190,11 +191,11 @@ export const ARCHIVES: Policy = definePolicy({
 // ── Named map ────────────────────────────────────────────────────────────────
 
 export type PolicyPackName =
-  | 'documents-only'
-  | 'images-only'
-  | 'strict-public-upload'
-  | 'conservative-default'
-  | 'archives';
+  | "documents-only"
+  | "images-only"
+  | "strict-public-upload"
+  | "conservative-default"
+  | "archives";
 
 /**
  * Named map of all built-in policy packs.
@@ -205,11 +206,11 @@ export type PolicyPackName =
  * ```
  */
 export const POLICY_PACKS: Record<PolicyPackName, Policy> = {
-  'documents-only': DOCUMENTS_ONLY,
-  'images-only': IMAGES_ONLY,
-  'strict-public-upload': STRICT_PUBLIC_UPLOAD,
-  'conservative-default': CONSERVATIVE_DEFAULT,
-  'archives': ARCHIVES,
+  "documents-only": DOCUMENTS_ONLY,
+  "images-only": IMAGES_ONLY,
+  "strict-public-upload": STRICT_PUBLIC_UPLOAD,
+  "conservative-default": CONSERVATIVE_DEFAULT,
+  archives: ARCHIVES,
 };
 
 /**
@@ -218,6 +219,9 @@ export const POLICY_PACKS: Record<PolicyPackName, Policy> = {
  */
 export function getPolicyPack(name: PolicyPackName): Policy {
   const policy = POLICY_PACKS[name];
-  if (!policy) throw new Error(`Unknown policy pack: '${name}'. Valid names: ${Object.keys(POLICY_PACKS).join(', ')}`);
+  if (!policy)
+    throw new Error(
+      `Unknown policy pack: '${name}'. Valid names: ${Object.keys(POLICY_PACKS).join(", ")}`,
+    );
   return policy;
 }
