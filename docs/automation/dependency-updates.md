@@ -6,14 +6,15 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 
 - Only pull requests opened by `dependabot[bot]`.
 - `npm` updates in `/` when Dependabot identifies them as direct development dependencies.
-- `github-actions` updates in `/`.
-- Patch and minor updates only.
-- Eligible bot PRs are queued with `gh pr merge --auto --squash`, so branch protection and required checks still decide when the merge actually happens.
+- Grouped `github-actions` patch and minor updates in `/`.
+- Only patch and minor updates.
+- Eligible bot PRs are queued with `gh pr merge --auto --squash`, and GitHub completes the merge only after all required checks pass.
 - Auto-merge is intended to operate with branch protection rather than bypass it.
 
 ## What is intentionally not auto-merged
 
 - Major dependency updates.
+- Major `github-actions` updates. These stay manual and outside the grouped auto-merge lane.
 - Production or runtime dependency updates.
 - Non-Dependabot pull requests.
 - Any pull request with failing required checks.
