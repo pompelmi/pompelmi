@@ -5,9 +5,10 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 ## How updates are paced
 
 - Dependabot checks both `npm` and `github-actions` version updates daily.
-- Patch and minor updates are intended to appear quickly and stay eligible for the existing safe auto-merge flow.
+- Patch and minor updates are the preferred fast lane. They are intended to appear quickly and stay eligible for the existing safe auto-merge flow.
 - `npm` major updates remain manual and are intentionally delayed by about 7 days with Dependabot `cooldown`.
-- `github-actions` major updates also remain manual, but Dependabot does not currently accept semver cooldown settings for that ecosystem in this repository configuration.
+- Some noisy `github-actions` major updates are intentionally ignored at the semver-major level to keep more room for grouped patch and minor PRs.
+- `github-actions` major updates are reduced, not eliminated. More important majors can still appear and remain manual.
 - The configuration avoids overlapping schedule blocks for the same ecosystem and directory.
 - For `npm`, cooldown delays major updates after a release appears; it does not guarantee that major PRs arrive on a specific weekday.
 
@@ -23,7 +24,7 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 ## What is intentionally not auto-merged
 
 - Major dependency updates.
-- Major `github-actions` updates. These stay manual and outside the grouped auto-merge lane even though Dependabot now checks daily.
+- Major `github-actions` updates that are still allowed to open. These stay manual and outside the grouped auto-merge lane even though Dependabot now checks daily.
 - Production or runtime dependency updates.
 - Non-Dependabot pull requests.
 - Any pull request with failing required checks.

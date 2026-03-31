@@ -121,6 +121,22 @@ updates:
     labels:
       - dependencies
       - github-actions
+    ignore:
+      - dependency-name: "actions/checkout"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "actions/setup-node"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "actions/configure-pages"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "actions/upload-pages-artifact"
+        update-types:
+          - "version-update:semver-major"
+      - dependency-name: "softprops/action-gh-release"
+        update-types:
+          - "version-update:semver-major"
     groups:
       github-actions:
         patterns:
