@@ -44,7 +44,10 @@ jobs:
 
       - name: Install dependencies
         run: |
-          # Install workspace dependencies from the root lockfile
+          # Install all workspace dependencies from the root lockfile.
+          # This workspace already includes `site`, `site/site`, and `website`,
+          # so a second frozen install inside `site/site` is redundant and can
+          # fail against the nested `site/pnpm-lock.yaml`.
           pnpm install --frozen-lockfile
 
       - name: Build ui-react package
