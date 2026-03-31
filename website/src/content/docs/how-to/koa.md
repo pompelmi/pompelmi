@@ -5,6 +5,8 @@ description: Protect a Koa upload route with @koa/multer, @pompelmi/koa-middlewa
 
 Koa leaves upload policy to your middleware stack. Pompelmi fits that model well: parse the file into memory, run the upload guard, and store only after the verdict is acceptable.
 
+For the broader upload-boundary model that this Koa flow follows, see [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+
 ## Install
 
 ```bash

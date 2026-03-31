@@ -5,6 +5,8 @@ description: Secure Nuxt 3 and Nitro upload routes with readFormData(), scanByte
 
 Nuxt/Nitro does not need a dedicated adapter to use Pompelmi. The simplest path is to read `FormData` in a Nitro handler, scan the bytes locally, and only persist files after a clean verdict.
 
+If you want the broader Node.js reasoning behind this inspect-first-store-later pattern, start with [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+
 ## Install
 
 ```bash
@@ -71,4 +73,5 @@ export default defineEventHandler(async (event) => {
 
 - [Secure file uploads in Nuxt/Nitro](/pompelmi/blog/nuxt-nitro-file-upload-security/)
 - [Image upload security](../use-cases/image-upload-security/)
+- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
 - [Secure S3 presigned uploads with malware scanning](../tutorials/secure-s3-presigned-uploads-with-malware-scanning/)

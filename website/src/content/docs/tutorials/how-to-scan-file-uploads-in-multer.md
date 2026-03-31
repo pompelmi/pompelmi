@@ -79,6 +79,7 @@ app.post(
 
 ## Continue
 
+- [How to scan file uploads in Express before storage](/pompelmi/blog/scan-file-uploads-express-before-storage/)
 - [Secure file uploads in Express](../how-to/express/)
 - [Node.js file upload validation best practices](./nodejs-file-upload-validation-best-practices/)
 - [Archive / ZIP upload security](../use-cases/archive-zip-upload-security/)

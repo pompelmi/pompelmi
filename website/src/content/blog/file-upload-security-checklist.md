@@ -62,4 +62,4 @@ The threat model changes whenever the route starts accepting new formats.
 
 ## Where to go next
 
-The concise docs version of this topic lives at [Node.js file upload security checklist](/pompelmi/tutorials/nodejs-file-upload-security-checklist/). From there, jump into the [framework guides](/pompelmi/getting-started/), the [examples directory](https://github.com/pompelmi/pompelmi/tree/main/examples), or the [GitHub repo](https://github.com/pompelmi/pompelmi).
+The concise docs version of this topic lives at [Node.js file upload security checklist](/pompelmi/tutorials/nodejs-file-upload-security-checklist/). For the broader route-design view, continue to [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/). From there, jump into the [framework guides](/pompelmi/getting-started/), the [examples directory](https://github.com/pompelmi/pompelmi/tree/main/examples), or the [GitHub repo](https://github.com/pompelmi/pompelmi).

@@ -5,6 +5,8 @@ description: A practical checklist for hardening Node.js upload routes with pars
 
 Use this checklist before you ship or review a file upload endpoint.
 
+If you want the broader implementation model behind these checklist items, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+
 ## Checklist
 
 ### 1. Limit what the parser accepts
@@ -60,6 +62,7 @@ Use this checklist before you ship or review a file upload endpoint.
 
 ## Continue
 
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
 - [Defense in depth for file uploads](../use-cases/defense-in-depth-for-file-uploads/)
 - [Do you need antivirus for file uploads?](../comparisons/do-you-need-antivirus-for-file-uploads/)
 - [Examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)

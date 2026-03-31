@@ -5,6 +5,8 @@ description: Use Pompelmi verdicts to support quarantine-first upload workflows 
 
 Many production systems need more than `allow` or `reject`. A quarantine-first workflow lets you isolate suspicious files without pretending they are safe.
 
+For storage-backed upload paths, the same promotion model is covered in [Scan Files Before S3 Upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/).
+
 ## Recommended flow
 
 1. Receive the upload into memory or a restricted staging area.
@@ -26,5 +28,6 @@ The repository includes an end-to-end example under [`examples/quarantine-workfl
 ## Continue
 
 - [Upload quarantine and review flows](/pompelmi/blog/upload-quarantine-review-flows/)
+- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
 - [S3 / presigned upload security](./s3-presigned-upload-security/)
 - [Document upload security](./document-upload-security/)

@@ -101,4 +101,4 @@ Pompelmi adds the upload gate after parsing and before trust.
 
 ## Where to go next
 
-Start with the canonical [Express guide](/pompelmi/how-to/express/) if you want the shortest production-ready route. For runnable code, see the [Express examples](https://github.com/pompelmi/pompelmi/tree/main/examples). If the repo is useful, [star it on GitHub](https://github.com/pompelmi/pompelmi).
+Start with the canonical [Express guide](/pompelmi/how-to/express/) if you want the shortest production-ready route. For a fuller explanation of why the upload boundary belongs before storage, read [How to Scan File Uploads in Express Before Storage](/pompelmi/blog/scan-file-uploads-express-before-storage/). If your route eventually promotes files into object storage, continue to [Scan Files Before S3 Upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/). For runnable code, see the [Express examples](https://github.com/pompelmi/pompelmi/tree/main/examples). If the repo is useful, [star it on GitHub](https://github.com/pompelmi/pompelmi).

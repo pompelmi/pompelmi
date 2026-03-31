@@ -10,6 +10,8 @@ tags: ["security", "nodejs", "mistakes", "best-practices", "tutorial"]
 
 Upload security is one of those areas where the obvious implementation is also the vulnerable one. These mistakes appear in production code regularly. Some lead to trivial exploits; others enable server-side execution or data exfiltration. Let's catalog them.
 
+If you want the broader model before diving into the failure cases, start with [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+
 ---
 
 ## 1. Writing Files to Disk Before Scanning
@@ -34,6 +36,8 @@ import { createUploadGuard } from '@pompelmi/express-middleware';
 const guard = createUploadGuard({ failClosed: true });
 app.post('/upload', upload.single('file'), guard, storeFile);
 ```
+
+For the route-level version of this pattern, see [How to Scan File Uploads in Express Before Storage](/pompelmi/blog/scan-file-uploads-express-before-storage/).
 
 ---
 

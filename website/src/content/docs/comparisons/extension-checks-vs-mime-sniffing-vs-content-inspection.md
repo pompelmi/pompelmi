@@ -32,4 +32,5 @@ Use all three in the right order:
 
 - [Why extension checks are not enough](/pompelmi/blog/mime-sniffing-magic-bytes/)
 - [File-type validation vs malware scanning](./file-type-validation-vs-malware-scanning/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
 - [Defense in depth for file uploads](../use-cases/defense-in-depth-for-file-uploads/)
