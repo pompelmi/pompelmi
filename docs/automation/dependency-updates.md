@@ -20,6 +20,13 @@ This dependency automation system is active. It uses Dependabot plus GitHub Acti
 - Any pull request with failing required checks.
 - Any pull request blocked by repository review or branch protection rules.
 
+## Why npm devDependency updates are split
+
+- npm development dependency updates are intentionally split into smaller buckets to reduce CI blast radius.
+- Smaller patch and minor PRs are more likely to go fully green and auto-merge reliably after required checks pass.
+- Major npm development dependency updates remain outside the grouped auto-merge lane.
+- `Lint` remains temporarily non-required until the existing baseline cleanup is finished. After that cleanup, `Lint` should become required too.
+
 ## Why maintenance GitHub releases exist
 
 - They make dependency and CI upkeep visible in the Releases page, which helps show that the project is actively maintained.

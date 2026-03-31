@@ -19,10 +19,97 @@ updates:
         update-types:
           - "version-update:semver-major"
     groups:
-      development-dependencies:
-        dependency-type: "development"
+      typescript-build-tooling:
+        patterns:
+          - "typescript"
+          - "tsx"
+          - "tsup"
+          - "rollup"
+          - "@rollup/*"
+          - "@types/node"
+          - "tslib"
+        update-types:
+          - "minor"
+          - "patch"
+      test-tooling:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "supertest"
+          - "@types/supertest"
+          - "@nestjs/testing"
+        update-types:
+          - "minor"
+          - "patch"
+      lint-and-analysis:
+        patterns:
+          - "@biomejs/biome"
+          - "knip"
+          - "depcheck"
+          - "ts-prune"
+        update-types:
+          - "minor"
+          - "patch"
+      docs-site-tooling:
+        patterns:
+          - "astro"
+          - "@astrojs/*"
+          - "tailwindcss"
+          - "postcss"
+          - "autoprefixer"
+          - "@babel/*"
+          - "unist-util-visit"
+        update-types:
+          - "minor"
+          - "patch"
+      framework-and-http-dev:
+        patterns:
+          - "koa"
+          - "@types/koa"
+          - "cors"
+          - "@types/cors"
+          - "express"
+          - "@types/express"
+          - "multer"
+          - "@types/multer"
+        update-types:
+          - "minor"
+          - "patch"
+      misc-dev-dependencies:
         patterns:
           - "*"
+        exclude-patterns:
+          - "typescript"
+          - "tsx"
+          - "tsup"
+          - "rollup"
+          - "@rollup/*"
+          - "@types/node"
+          - "tslib"
+          - "vitest"
+          - "@vitest/*"
+          - "supertest"
+          - "@types/supertest"
+          - "@nestjs/testing"
+          - "@biomejs/biome"
+          - "knip"
+          - "depcheck"
+          - "ts-prune"
+          - "astro"
+          - "@astrojs/*"
+          - "tailwindcss"
+          - "postcss"
+          - "autoprefixer"
+          - "@babel/*"
+          - "unist-util-visit"
+          - "koa"
+          - "@types/koa"
+          - "cors"
+          - "@types/cors"
+          - "express"
+          - "@types/express"
+          - "multer"
+          - "@types/multer"
         update-types:
           - "minor"
           - "patch"
