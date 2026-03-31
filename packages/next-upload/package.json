@@ -41,10 +41,10 @@
     "unzipper": "^0.12.3"
   },
   "devDependencies": {
-    "@types/node": "^20.19.10",
-    "@vitest/coverage-v8": "2.1.9",
+    "@types/node": "^25.5.0",
+    "@vitest/coverage-v8": "4.1.2",
     "tsup": "^8.5.0",
-    "typescript": "^5.5.0",
+    "typescript": "^6.0.2",
     "vitest": "2.1.9",
     "@pompelmi/core": "workspace:*"
   },
