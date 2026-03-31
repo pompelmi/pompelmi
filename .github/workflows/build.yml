@@ -3,8 +3,12 @@ name: Build
 on:
   push:
     branches: [ main ]
+    paths-ignore:
+      - 'website/**'
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'website/**'
   workflow_dispatch:
 
 permissions:
@@ -44,7 +48,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build all packages
         run: pnpm run build

@@ -45,10 +45,10 @@ jobs:
       - name: Install dependencies
         run: |
           # Install root dependencies first
-          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
           # Then install VitePress site dependencies
           if [ -d "site/site" ]; then
-            cd site/site && pnpm install && cd ../..
+            cd site/site && pnpm install --frozen-lockfile && cd ../..
           fi
 
       - name: Build ui-react package

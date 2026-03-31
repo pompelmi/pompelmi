@@ -4,16 +4,18 @@ on:
   push:
     branches: [ main ]
     paths-ignore:
-      - '**.md'
+      - '**/*.md'
       - 'docs/**'
       - 'site/**'
+      - 'website/**'
       - 'blog/**'
   pull_request:
     branches: [ main ]
     paths-ignore:
-      - '**.md'
+      - '**/*.md'
       - 'docs/**'
       - 'site/**'
+      - 'website/**'
   workflow_dispatch:
 
 permissions:
@@ -48,7 +50,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build packages
         run: pnpm run build
@@ -91,7 +93,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Run linting
         run: pnpm run lint
@@ -117,7 +119,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Type check
         run: pnpm run typecheck
@@ -151,7 +153,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --no-frozen-lockfile
+        run: pnpm install --frozen-lockfile
 
       - name: Build for analysis
         run: pnpm run build
