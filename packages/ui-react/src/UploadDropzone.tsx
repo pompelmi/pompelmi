@@ -84,7 +84,7 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
     [action, maxSize, multiple, onResult, onError, onProgress],
   );
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (e: React.DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files) {
@@ -92,12 +92,12 @@ const UploadDropzone: React.FC<UploadDropzoneProps> = ({
     }
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLButtonElement>) => {
     e.preventDefault();
     setDragOver(true);
   };
 
-  const handleDragLeave = () => setDragOver(false);
+  const handleDragLeave: React.DragEventHandler<HTMLButtonElement> = () => setDragOver(false);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
