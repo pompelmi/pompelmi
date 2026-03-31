@@ -1,8 +1,22 @@
 name: Maintenance Release
 
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - package.json
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - .github/dependabot.yml
+      - .github/release.yml
+      - .github/workflows/**
+      - .github/actions/**
+      - .npmrc
+      - .node-version
+      - .nvmrc
   schedule:
-    - cron: '17 7 * * 1'
+    - cron: '17 7 * * *'
   workflow_dispatch:
 
 permissions:
@@ -14,7 +28,7 @@ concurrency:
 
 jobs:
   maintenance-release:
-    name: Publish Maintenance Release
+    name: Create Maintenance Release
     runs-on: ubuntu-latest
     permissions:
       contents: write

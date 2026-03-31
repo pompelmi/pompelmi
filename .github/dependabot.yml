@@ -1,7 +1,7 @@
 version: 2
 
 multi-ecosystem-groups:
-  all-dependencies:
+  daily-maintenance:
     schedule:
       interval: "daily"
       time: "06:00"
@@ -13,7 +13,7 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     patterns: ["*"]
-    multi-ecosystem-group: "all-dependencies"
+    multi-ecosystem-group: "daily-maintenance"
     open-pull-requests-limit: 1
     allow:
       - dependency-type: "development"
@@ -21,5 +21,5 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     patterns: ["*"]
-    multi-ecosystem-group: "all-dependencies"
+    multi-ecosystem-group: "daily-maintenance"
     open-pull-requests-limit: 1
