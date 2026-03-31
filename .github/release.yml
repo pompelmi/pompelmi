@@ -1,0 +1,28 @@
+changelog:
+  categories:
+    - title: Features
+      labels:
+        - feature
+        - enhancement
+    - title: Security improvements
+      labels:
+        - security
+    - title: CI / workflow maintenance
+      labels:
+        - github-actions
+        - ci
+        - workflows
+    - title: Dependency updates
+      labels:
+        - dependencies
+        - dev-deps
+      exclude:
+        labels:
+          - github-actions
+    - title: Documentation
+      labels:
+        - docs
+        - documentation
+    - title: Other maintenance
+      labels:
+        - "*"

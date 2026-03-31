@@ -1,0 +1,134 @@
+name: Maintenance Release
+
+on:
+  schedule:
+    - cron: '17 7 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: maintenance-release
+  cancel-in-progress: false
+
+jobs:
+  maintenance-release:
+    name: Publish Maintenance Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        with:
+          fetch-depth: 0
+          submodules: false
+
+      - name: Decide whether a maintenance release is needed
+        id: scope
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          DEFAULT_BRANCH=$(gh repo view "$REPO" --json defaultBranchRef --jq '.defaultBranchRef.name')
+          git fetch --force --tags origin "$DEFAULT_BRANCH"
+          git checkout --detach "origin/$DEFAULT_BRANCH"
+
+          TODAY=$(date -u +%F)
+          TAG="maintenance-$TODAY"
+          TITLE="Maintenance release - $TODAY"
+
+          {
+            echo "default_branch=$DEFAULT_BRANCH"
+            echo "tag=$TAG"
+            echo "title=$TITLE"
+          } >> "$GITHUB_OUTPUT"
+
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "Maintenance tag $TAG already exists. Skipping."
+            exit 0
+          fi
+
+          PREVIOUS_TAG=$(git tag --list 'maintenance-*' --sort=-creatordate | head -n 1 || true)
+          BASE_REF=""
+          RELEASE_NOTES_START_TAG=""
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            BASE_REF="$PREVIOUS_TAG"
+            RELEASE_NOTES_START_TAG="$PREVIOUS_TAG"
+            echo "Comparing against previous maintenance release $PREVIOUS_TAG."
+          else
+            LAST_SEMVER_TAG=$(git tag --list 'v*' --sort=-creatordate | head -n 1 || true)
+            if [ -n "$LAST_SEMVER_TAG" ]; then
+              BASE_REF="$LAST_SEMVER_TAG"
+              RELEASE_NOTES_START_TAG="$LAST_SEMVER_TAG"
+              echo "No previous maintenance release found. Comparing against semver release $LAST_SEMVER_TAG."
+            else
+              BASE_REF=$(git rev-list --max-parents=0 HEAD | tail -n 1)
+              echo "No previous release tags found. Comparing against initial commit $BASE_REF."
+            fi
+          fi
+
+          {
+            echo "base_ref=$BASE_REF"
+            echo "release_notes_start_tag=$RELEASE_NOTES_START_TAG"
+          } >> "$GITHUB_OUTPUT"
+
+          RELEVANT_FILES=$(git diff --name-only "$BASE_REF"..HEAD | grep -E '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.github/dependabot\.yml|\.github/release\.yml|\.github/workflows/.*|\.github/actions/.*|\.npmrc|\.node-version|\.nvmrc)$' || true)
+
+          if [ -z "$RELEVANT_FILES" ]; then
+            echo "should_release=false" >> "$GITHUB_OUTPUT"
+            echo "No dependency or CI maintenance changes were found since $BASE_REF."
+            exit 0
+          fi
+
+          echo "should_release=true" >> "$GITHUB_OUTPUT"
+          {
+            echo "relevant_files<<EOF"
+            echo "$RELEVANT_FILES"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+          printf 'Relevant maintenance files since %s:\n%s\n' "$BASE_REF" "$RELEVANT_FILES"
+
+      - name: Create maintenance release
+        if: steps.scope.outputs.should_release == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INTRO: This maintenance release refreshes development dependencies and CI tooling, keeps Pompelmi aligned with the current ecosystem, and improves long-term reliability. No intentional user-facing API changes are included unless explicitly noted below.
+        run: |
+          set -euo pipefail
+
+          # The maintenance tag namespace intentionally does not match the
+          # semver tags used by publish.yml, so these releases stay GitHub-only.
+          NOTES_FILE=$(mktemp)
+          printf '%s\n\n' "$INTRO" > "$NOTES_FILE"
+
+          GENERATE_NOTES_ARGS=(
+            --method POST
+            "repos/$GITHUB_REPOSITORY/releases/generate-notes"
+            -f "tag_name=${{ steps.scope.outputs.tag }}"
+            -f "target_commitish=${{ steps.scope.outputs.default_branch }}"
+            -f "configuration_file_path=.github/release.yml"
+          )
+
+          if [ -n "${{ steps.scope.outputs.release_notes_start_tag }}" ]; then
+            GENERATE_NOTES_ARGS+=(-f "previous_tag_name=${{ steps.scope.outputs.release_notes_start_tag }}")
+          fi
+
+          GENERATED_NOTES=$(gh api "${GENERATE_NOTES_ARGS[@]}" --jq '.body')
+          printf '%s\n' "$GENERATED_NOTES" >> "$NOTES_FILE"
+
+          gh api --method POST "repos/$GITHUB_REPOSITORY/releases" \
+            -f "tag_name=${{ steps.scope.outputs.tag }}" \
+            -f "target_commitish=${{ steps.scope.outputs.default_branch }}" \
+            -f "name=${{ steps.scope.outputs.title }}" \
+            -F "body=@$NOTES_FILE" \
+            -F draft=false \
+            -F prerelease=false \
+            -F generate_release_notes=false \
+            -f "make_latest=false"
