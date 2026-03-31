@@ -27,7 +27,7 @@
     "@rollup/plugin-babel": "^6.0.4",
     "@types/koa": "^2.15.0",
     "@types/react-dom": "^19.1.6",
-    "@types/supertest": "^6.0.3",
+    "@types/supertest": "^7.2.0",
     "@vitest/coverage-v8": "2.1.9",
     "astro": "^5.12.9",
     "autoprefixer": "^10.4.21",
@@ -39,7 +39,7 @@
     "tailwindcss": "^3.4.17",
     "tsup": "8.5.0",
     "unist-util-visit": "^5.0.0",
-    "vitest": "2.1.9",
+    "vitest": "1.6.1",
     "yazl": "^3.3.1"
   }
 }
