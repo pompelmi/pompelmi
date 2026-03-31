@@ -1,146 +1,25 @@
 version: 2
 
+multi-ecosystem-groups:
+  all-dependencies:
+    schedule:
+      interval: "daily"
+      time: "06:00"
+      timezone: "UTC"
+    labels:
+      - dependencies
+
 updates:
   - package-ecosystem: "npm"
     directory: "/"
-    schedule:
-      interval: "daily"
-      time: "06:00"
-      timezone: "UTC"
-    cooldown:
-      semver-major-days: 7
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - dev-deps
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    open-pull-requests-limit: 1
     allow:
       - dependency-type: "development"
-    groups:
-      typescript-build-tooling:
-        patterns:
-          - "typescript"
-          - "tsx"
-          - "tsup"
-          - "rollup"
-          - "@rollup/*"
-          - "@types/node"
-          - "tslib"
-        update-types:
-          - "minor"
-          - "patch"
-      test-tooling:
-        patterns:
-          - "vitest"
-          - "@vitest/*"
-          - "supertest"
-          - "@types/supertest"
-          - "@nestjs/testing"
-        update-types:
-          - "minor"
-          - "patch"
-      lint-and-analysis:
-        patterns:
-          - "@biomejs/biome"
-          - "knip"
-          - "depcheck"
-          - "ts-prune"
-        update-types:
-          - "minor"
-          - "patch"
-      docs-site-tooling:
-        patterns:
-          - "astro"
-          - "@astrojs/*"
-          - "tailwindcss"
-          - "postcss"
-          - "autoprefixer"
-          - "@babel/*"
-          - "unist-util-visit"
-        update-types:
-          - "minor"
-          - "patch"
-      framework-and-http-dev:
-        patterns:
-          - "koa"
-          - "@types/koa"
-          - "cors"
-          - "@types/cors"
-          - "express"
-          - "@types/express"
-          - "multer"
-          - "@types/multer"
-        update-types:
-          - "minor"
-          - "patch"
-      misc-dev-dependencies:
-        patterns:
-          - "*"
-        exclude-patterns:
-          - "typescript"
-          - "tsx"
-          - "tsup"
-          - "rollup"
-          - "@rollup/*"
-          - "@types/node"
-          - "tslib"
-          - "vitest"
-          - "@vitest/*"
-          - "supertest"
-          - "@types/supertest"
-          - "@nestjs/testing"
-          - "@biomejs/biome"
-          - "knip"
-          - "depcheck"
-          - "ts-prune"
-          - "astro"
-          - "@astrojs/*"
-          - "tailwindcss"
-          - "postcss"
-          - "autoprefixer"
-          - "@babel/*"
-          - "unist-util-visit"
-          - "koa"
-          - "@types/koa"
-          - "cors"
-          - "@types/cors"
-          - "express"
-          - "@types/express"
-          - "multer"
-          - "@types/multer"
-        update-types:
-          - "minor"
-          - "patch"
 
   - package-ecosystem: "github-actions"
     directory: "/"
-    schedule:
-      interval: "daily"
-      time: "06:00"
-      timezone: "UTC"
-    open-pull-requests-limit: 4
-    labels:
-      - dependencies
-      - github-actions
-    ignore:
-      - dependency-name: "actions/checkout"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "actions/setup-node"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "actions/configure-pages"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "actions/upload-pages-artifact"
-        update-types:
-          - "version-update:semver-major"
-      - dependency-name: "softprops/action-gh-release"
-        update-types:
-          - "version-update:semver-major"
-    groups:
-      github-actions:
-        patterns:
-          - "*"
-        update-types:
-          - "minor"
-          - "patch"
+    patterns: ["*"]
+    multi-ecosystem-group: "all-dependencies"
+    open-pull-requests-limit: 1

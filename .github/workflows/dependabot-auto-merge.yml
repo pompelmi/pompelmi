@@ -14,53 +14,15 @@ permissions:
 jobs:
   enable-auto-merge:
     name: Enable Auto-merge
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.event.pull_request.draft == false
+    # Queue auto-merge only for Dependabot PRs. Required checks and branch
+    # protection remain the actual safety gate before GitHub merges anything.
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
     runs-on: ubuntu-latest
     permissions:
       contents: write
       pull-requests: write
     steps:
-      - name: Fetch Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@d7267f607e9d3fb96fc2fbe83e0af444713e90b7 # v2
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Classify update risk
-        id: eligibility
-        run: |
-          set -euo pipefail
-
-          UPDATE_TYPE="${{ steps.metadata.outputs.update-type }}"
-          PACKAGE_ECOSYSTEM="${{ steps.metadata.outputs.package-ecosystem }}"
-          DEPENDENCY_TYPE="${{ steps.metadata.outputs.dependency-type }}"
-
-          # Dependabot can group multiple updates, so the workflow relies on
-          # official metadata instead of labels or changed files. For grouped
-          # PRs, update-type reflects the highest semver change in the group.
-          if [[ "$UPDATE_TYPE" != "version-update:semver-patch" && "$UPDATE_TYPE" != "version-update:semver-minor" ]]; then
-            echo "should_enable=false" >> "$GITHUB_OUTPUT"
-            echo "Auto-merge stays disabled because this update is not patch or minor."
-            exit 0
-          fi
-
-          if [[ "$PACKAGE_ECOSYSTEM" == "npm" && "$DEPENDENCY_TYPE" == "direct:development" ]]; then
-            echo "should_enable=true" >> "$GITHUB_OUTPUT"
-            echo "reason=npm development dependency update" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          if [[ "$PACKAGE_ECOSYSTEM" == "github-actions" ]]; then
-            echo "should_enable=true" >> "$GITHUB_OUTPUT"
-            echo "reason=GitHub Actions patch/minor update" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          echo "should_enable=false" >> "$GITHUB_OUTPUT"
-          echo "Auto-merge stays disabled because this PR is not a low-risk dependency update."
-
-      - name: Enable auto-merge for safe Dependabot PRs
-        if: steps.eligibility.outputs.should_enable == 'true'
+      - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
