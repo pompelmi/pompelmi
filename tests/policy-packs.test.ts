@@ -7,8 +7,16 @@ describe("getPolicyPack", () => {
   });
 
   it("throws a helpful error for unknown policy pack names", () => {
-    expect(() => getPolicyPack("not-a-pack" as never)).toThrowError(
-      "Unknown policy pack: 'not-a-pack'. Valid names: documents-only, images-only, strict-public-upload, conservative-default, archives",
-    );
+    try {
+      getPolicyPack("not-a-pack" as never);
+      throw new Error("Expected getPolicyPack to throw for unknown policy pack name");
+    } catch (error) {
+      const message = (error as Error).message;
+      expect(message).toContain("Unknown policy pack: 'not-a-pack'");
+      expect(message).toContain("Valid names:");
+      for (const name of Object.keys(POLICY_PACKS)) {
+        expect(message).toContain(name);
+      }
+    }
   });
 });

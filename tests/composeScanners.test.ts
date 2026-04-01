@@ -5,7 +5,7 @@
  * Verifies that the named-scanner array form of composeScanners —
  * exactly as shown in the README — compiles and runs correctly.
  */
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   CommonHeuristicsScanner,
   type ComposeScannerOptions,
@@ -286,11 +286,18 @@ describe("composeScanners — TypeScript type exports", () => {
 });
 
 describe("createPresetScanner — dynamic decompilation imports", () => {
-  const RealFunction = globalThis.Function;
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
 
   it("configures Binary Ninja and Ghidra scanners when dynamic imports resolve", async () => {
-    const createBinaryNinjaScanner = vi.fn(() => noopScanner);
-    const createGhidraScanner = vi.fn(() => noopScanner);
+    const createBinaryNinjaScanner = vi.fn(() => async () => [
+      { rule: "binja", severity: "suspicious" as const },
+    ]);
+    const createGhidraScanner = vi.fn(() => async () => [
+      { rule: "ghidra", severity: "suspicious" as const },
+    ]);
 
     function MockFunction(this: unknown) {
       return (specifier: string) => {
@@ -319,6 +326,7 @@ describe("createPresetScanner — dynamic decompilation imports", () => {
 
     await Promise.resolve();
     await Promise.resolve();
+    const result = await scanner(BYTES);
 
     expect(createBinaryNinjaScanner).toHaveBeenCalledWith({
       timeout: 1234,
@@ -332,8 +340,12 @@ describe("createPresetScanner — dynamic decompilation imports", () => {
       ghidraPath: "/opt/ghidra",
       analyzeHeadless: "/opt/ghidra/support/analyzeHeadless",
     });
-
-    vi.stubGlobal("Function", RealFunction);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        { rule: "binja", severity: "suspicious" },
+        { rule: "ghidra", severity: "suspicious" },
+      ]),
+    );
   });
 
   it("silently skips decompilation imports when the Function constructor is unavailable", async () => {
@@ -348,7 +360,5 @@ describe("createPresetScanner — dynamic decompilation imports", () => {
 
     expect(typeof scanner).toBe("function");
     await expect(scanner(BYTES)).resolves.toEqual([]);
-
-    vi.stubGlobal("Function", RealFunction);
   });
 });

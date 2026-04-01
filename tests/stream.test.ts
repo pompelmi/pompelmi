@@ -146,7 +146,7 @@ describe("stream scanning", () => {
       expect(typeof result.durationMs).toBe("number");
     });
 
-    it("should fail closed to empty matches if scanAll throws", async () => {
+    it("should fail open to empty matches if scanAll throws", async () => {
       const stream = Readable.from([Buffer.from("test")]);
 
       const result = await scanStream(stream, {

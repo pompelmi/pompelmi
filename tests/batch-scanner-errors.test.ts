@@ -17,15 +17,12 @@ describe("BatchScanner error handling", () => {
   });
 
   it("captures failed scans and continues when continueOnError=true", async () => {
-    const scanBytes = vi
-      .fn()
-      .mockRejectedValueOnce("network down")
-      .mockResolvedValueOnce({
-        ok: true,
-        verdict: "clean",
-        matches: [],
-        durationMs: 3,
-      });
+    const scanBytes = vi.fn().mockRejectedValueOnce("network down").mockResolvedValueOnce({
+      ok: true,
+      verdict: "clean",
+      matches: [],
+      durationMs: 3,
+    });
 
     vi.doMock("../src/scan", () => ({
       scanBytes,
