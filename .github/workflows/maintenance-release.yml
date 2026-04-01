@@ -8,7 +8,6 @@ on:
       - package.json
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
-      - .github/dependabot.yml
       - .github/release.yml
       - .github/workflows/**
       - .github/actions/**
@@ -92,7 +91,7 @@ jobs:
             echo "release_notes_start_tag=$RELEASE_NOTES_START_TAG"
           } >> "$GITHUB_OUTPUT"
 
-          RELEVANT_FILES=$(git diff --name-only "$BASE_REF"..HEAD | grep -E '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.github/dependabot\.yml|\.github/release\.yml|\.github/workflows/.*|\.github/actions/.*|\.npmrc|\.node-version|\.nvmrc)$' || true)
+          RELEVANT_FILES=$(git diff --name-only "$BASE_REF"..HEAD | grep -E '^(package\.json|pnpm-lock\.yaml|pnpm-workspace\.yaml|\.github/release\.yml|\.github/workflows/.*|\.github/actions/.*|\.npmrc|\.node-version|\.nvmrc)$' || true)
 
           if [ -z "$RELEVANT_FILES" ]; then
             echo "should_release=false" >> "$GITHUB_OUTPUT"

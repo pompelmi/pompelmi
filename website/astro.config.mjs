@@ -47,17 +47,21 @@ export default defineConfig({
   // head must use objects { tag, attrs, content? }
   head: [
     { tag: 'meta', attrs: { property: 'og:site_name', content: 'Pompelmi' } },
+    { tag: 'meta', attrs: { property: 'og:locale', content: 'en_US' } },
     { tag: 'meta', attrs: { property: 'og:image', content: 'https://pompelmi.github.io/pompelmi/og.png' } },
     { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
     { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
     { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
+    { tag: 'meta', attrs: { name: 'theme-color', content: '#0f172a' } },
+    { tag: 'meta', attrs: { name: 'robots', content: 'index,follow,max-image-preview:large' } },
+    { tag: 'link', attrs: { rel: 'icon', href: '/pompelmi/favicon.svg' } },
+    { tag: 'link', attrs: { rel: 'manifest', href: '/pompelmi/site.webmanifest' } },
   ],
 
   editLink: {
     baseUrl: 'https://github.com/pompelmi/pompelmi/edit/main/website/src/content/docs/'
   },
   sidebar: [
-    { label: 'Overview', slug: 'index' },
     { label: 'Getting started', slug: 'getting-started' },
     { label: 'Framework guides', autogenerate: { directory: 'how-to', collapsed: false } },
     { label: 'Use cases', autogenerate: { directory: 'use-cases', collapsed: false } },
@@ -73,7 +77,8 @@ export default defineConfig({
     { label: 'Enterprise options', slug: 'enterprise' }
   ],
   tableOfContents: { minHeadingLevel: 2, maxHeadingLevel: 3 },
-  pagefind: true
+  pagefind: true,
+  disable404Route: true
 })
   ],
   markdown: {

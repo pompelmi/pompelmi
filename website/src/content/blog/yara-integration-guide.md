@@ -211,4 +211,4 @@ const scanner = createExpressAdapter({
 
 YARA integration transforms Pompelmi from a file validator into a comprehensive malware detection system. Start with basic rules and expand as you identify threats specific to your application.
 
-Ready to enhance your security posture? Check out our [YARA documentation](/pompelmi/how-to/yara/) for detailed examples.
+Ready to enhance your security posture? Continue with [When to Use Pompelmi + YARA](/pompelmi/comparisons/when-to-use-pompelmi-plus-yara/) for implementation tradeoffs and rollout guidance.

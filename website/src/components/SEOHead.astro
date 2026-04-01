@@ -13,39 +13,64 @@ const {
   title = 'Pompelmi — File upload malware scanning for Node.js',
   description = 'Fast, safe file upload scanning for Node.js. Deep ZIP inspection, MIME/size policies, optional YARA, and ready-made adapters.',
   image = '/pompelmi/og.png',
+  imageAlt = 'Pompelmi social preview',
   noindex = false,
   canonical: canonicalOverride,
   ogType = 'website',
   jsonLd = null,
-} = Astro.props
+  keywords = [],
+  siteName = 'Pompelmi',
+  author,
+  publishedTime,
+  modifiedTime,
+  section,
+} = Astro.props;
 
-const site = Astro.site?.toString().replace(/\/$/, '') || ''
-const path = Astro.url?.pathname || '/'
-const canonical = canonicalOverride || (site ? new URL(path, site).toString() : undefined)
+const site = Astro.site?.toString().replace(/\/$/, '') || '';
+const path = Astro.url?.pathname || '/';
+const canonical = canonicalOverride || (site ? new URL(path, site).toString() : undefined);
 const ogImage = image.startsWith('http')
   ? image
-  : site
-    ? new URL(image.startsWith('/') ? image : `/${image}`, site).toString()
-    : image
+    : site
+      ? new URL(image.startsWith('/') ? image : `/${image}`, site).toString()
+      : image;
+const keywordList = Array.isArray(keywords)
+  ? keywords.filter(Boolean)
+  : String(keywords || '')
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+const jsonLdNodes = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+const robots = noindex ? 'noindex,nofollow' : 'index,follow,max-image-preview:large';
 ---
 <title>{title}</title>
 <meta name="description" content={description} />
+<meta name="robots" content={robots} />
+<meta name="theme-color" content="#0f172a" />
+<meta name="format-detection" content="telephone=no" />
+{author && <meta name="author" content={author} />}
+{keywordList.length > 0 && <meta name="keywords" content={keywordList.join(', ')} />}
 {canonical && <link rel="canonical" href={canonical} />}
-{noindex && <meta name="robots" content="noindex,nofollow" />}
 
 <meta property="og:type" content={ogType} />
 {canonical && <meta property="og:url" content={canonical} />}
+<meta property="og:site_name" content={siteName} />
+<meta property="og:locale" content="en_US" />
 <meta property="og:title" content={title} />
 <meta property="og:description" content={description} />
 <meta property="og:image" content={ogImage} />
+<meta property="og:image:alt" content={imageAlt} />
+{ogType === 'article' && publishedTime && <meta property="article:published_time" content={publishedTime} />}
+{ogType === 'article' && modifiedTime && <meta property="article:modified_time" content={modifiedTime} />}
+{ogType === 'article' && author && <meta property="article:author" content={author} />}
+{ogType === 'article' && section && <meta property="article:section" content={section} />}
 
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content={title} />
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={ogImage} />
+<meta name="twitter:image:alt" content={imageAlt} />
 
-{jsonLd && (
-  Array.isArray(jsonLd)
-    ? jsonLd.map((node) => <script type="application/ld+json">{JSON.stringify(node)}</script>)
-    : <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+{jsonLdNodes.length > 0 && (
+  jsonLdNodes.map((node) => <script type="application/ld+json" set:html={JSON.stringify(node)} />)
 )}

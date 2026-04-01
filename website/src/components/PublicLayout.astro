@@ -7,10 +7,19 @@ const {
   description,
   jsonLd = null,
   ogType = 'website',
+  keywords = [],
+  canonical,
+  author,
+  publishedTime,
+  modifiedTime,
+  section,
 } = Astro.props;
 
 const basePath = import.meta.env.BASE_URL || '/';
 const withBase = (path = '') => `${basePath}${path.replace(/^\//, '')}`;
+const currentPath = Astro.url.pathname;
+const isActiveLink = (href) =>
+  currentPath === href || (href !== withBase() && currentPath.startsWith(href));
 
 const navLinks = [
   { href: withBase('getting-started/'), label: 'Docs' },
@@ -20,14 +29,31 @@ const navLinks = [
   { href: withBase('featured-in/'), label: 'Featured in' },
 ];
 
-const footerLinks = [
-  { href: withBase('getting-started/'), label: 'Getting started' },
-  { href: withBase('how-to/express/'), label: 'Express guide' },
-  { href: withBase('use-cases/'), label: 'Use cases' },
-  { href: withBase('comparisons/'), label: 'Comparisons' },
-  { href: withBase('translations/'), label: 'Translations' },
-  { href: 'https://github.com/pompelmi/pompelmi/tree/main/examples', label: 'Examples' },
-  { href: 'https://github.com/pompelmi/pompelmi', label: 'GitHub' },
+const footerGroups = [
+  {
+    title: 'Start here',
+    links: [
+      { href: withBase('getting-started/'), label: 'Getting started' },
+      { href: withBase('how-to/express/'), label: 'Express guide' },
+      { href: withBase('how-to/nextjs/'), label: 'Next.js guide' },
+    ],
+  },
+  {
+    title: 'Evaluate',
+    links: [
+      { href: withBase('use-cases/'), label: 'Use cases' },
+      { href: withBase('comparisons/'), label: 'Comparisons' },
+      { href: withBase('blog/'), label: 'Blog' },
+    ],
+  },
+  {
+    title: 'Project',
+    links: [
+      { href: withBase('translations/'), label: 'Translations' },
+      { href: 'https://github.com/pompelmi/pompelmi/tree/main/examples', label: 'Examples' },
+      { href: 'https://github.com/pompelmi/pompelmi', label: 'GitHub' },
+    ],
+  },
 ];
 ---
 
@@ -35,19 +61,55 @@ const footerLinks = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <SEOHead title={title} description={description} jsonLd={jsonLd} ogType={ogType} />
+    <SEOHead
+      title={title}
+      description={description}
+      jsonLd={jsonLd}
+      ogType={ogType}
+      keywords={keywords}
+      canonical={canonical}
+      author={author}
+      publishedTime={publishedTime}
+      modifiedTime={modifiedTime}
+      section={section}
+    />
     <link rel="icon" href="/pompelmi/favicon.svg" />
+    <link rel="manifest" href="/pompelmi/site.webmanifest" />
   </head>
-  <body class="min-h-screen bg-slate-50 text-slate-900 antialiased">
-    <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
-      <div class="mx-auto flex max-w-6xl items-center justify-between gap-6 px-4 py-4">
+  <body class="site-shell min-h-screen text-slate-900 antialiased">
+    <a href="#main-content" class="skip-link">Skip to content</a>
+    <div class="border-b border-white/70 bg-white/60">
+      <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-2 text-xs font-medium text-slate-700">
+        <p>Inspect untrusted files before storage, not after.</p>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href={withBase('getting-started/')} class="transition hover:text-slate-950">Quick start</a>
+          <a
+            href="https://github.com/pompelmi/pompelmi/tree/main/examples"
+            target="_blank"
+            rel="noopener"
+            class="transition hover:text-slate-950"
+          >
+            Examples
+          </a>
+        </div>
+      </div>
+    </div>
+    <header class="sticky top-0 z-30 border-b border-white/70 bg-white/85 backdrop-blur-xl">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4">
         <a href={withBase()} class="flex items-center gap-3 text-sm font-semibold tracking-tight text-slate-900">
           <img src={withBase('logo.svg')} alt="" class="h-7 w-auto" />
           <span>Pompelmi</span>
         </a>
-        <nav class="flex flex-wrap items-center justify-end gap-2 text-sm text-slate-600">
+        <nav class="hidden items-center justify-end gap-1 md:flex">
           {navLinks.map((link) => (
-            <a href={link.href} class="rounded-md px-3 py-1.5 transition hover:bg-slate-100 hover:text-slate-900">
+            <a
+              href={link.href}
+              aria-current={isActiveLink(link.href) ? 'page' : undefined}
+              class:list={[
+                'site-nav-link',
+                { 'site-nav-link-active': isActiveLink(link.href) },
+              ]}
+            >
               {link.label}
             </a>
           ))}
@@ -55,31 +117,82 @@ const footerLinks = [
             href="https://github.com/pompelmi/pompelmi"
             target="_blank"
             rel="noopener"
-            class="rounded-md border border-slate-300 px-3 py-1.5 font-medium text-slate-900 transition hover:border-slate-400 hover:bg-slate-100"
+            class="action-secondary px-4 py-2"
           >
             GitHub
           </a>
         </nav>
+        <details class="site-menu relative md:hidden">
+          <summary class="action-secondary cursor-pointer px-4 py-2">Menu</summary>
+          <div class="absolute right-0 top-full mt-3 w-[min(20rem,calc(100vw-2rem))] surface-panel p-2">
+            <nav class="flex flex-col gap-1">
+              {navLinks.map((link) => (
+                <a
+                  href={link.href}
+                  aria-current={isActiveLink(link.href) ? 'page' : undefined}
+                  class:list={[
+                    'site-nav-link block',
+                    { 'site-nav-link-active': isActiveLink(link.href) },
+                  ]}
+                >
+                  {link.label}
+                </a>
+              ))}
+              <a
+                href="https://github.com/pompelmi/pompelmi"
+                target="_blank"
+                rel="noopener"
+                class="site-nav-link block"
+              >
+                GitHub
+              </a>
+            </nav>
+          </div>
+        </details>
       </div>
     </header>
-    <main>
+    <main id="main-content">
       <slot />
     </main>
-    <footer class="border-t border-slate-200 bg-white">
-      <div class="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-8 text-sm text-slate-600 sm:flex-row sm:items-center sm:justify-between">
-        <p>In-process file upload security for Node.js.</p>
-        <div class="flex flex-wrap gap-4">
-          {footerLinks.map((link) => (
+    <footer class="border-t border-white/70 bg-white/75 backdrop-blur">
+      <div class="mx-auto grid max-w-6xl gap-10 px-4 py-12 md:grid-cols-[1.2fr_repeat(3,minmax(0,1fr))]">
+        <div class="space-y-4">
+          <a href={withBase()} class="inline-flex items-center gap-3 text-sm font-semibold tracking-tight text-slate-900">
+            <img src={withBase('logo.svg')} alt="" class="h-7 w-auto" />
+            <span>Pompelmi</span>
+          </a>
+          <p class="max-w-sm text-sm leading-7 text-slate-600">
+            Application-layer upload security for Node.js teams that want better file decisions before disk, object storage, or downstream processors.
+          </p>
+          <div class="flex flex-wrap gap-3">
+            <a href={withBase('getting-started/')} class="action-primary">Read the docs</a>
             <a
-              href={link.href}
-              target={link.href.startsWith('http') ? '_blank' : undefined}
-              rel={link.href.startsWith('http') ? 'noopener' : undefined}
-              class="transition hover:text-slate-900"
+              href="https://github.com/pompelmi/pompelmi/tree/main/examples"
+              target="_blank"
+              rel="noopener"
+              class="action-secondary"
             >
-              {link.label}
+              View examples
             </a>
-          ))}
+          </div>
         </div>
+        {footerGroups.map((group) => (
+          <div>
+            <p class="eyebrow">{group.title}</p>
+            <div class="mt-4 space-y-3">
+              {group.links.map((link) => (
+                <a
+                  href={link.href}
+                  target={link.href.startsWith('http') ? '_blank' : undefined}
+                  rel={link.href.startsWith('http') ? 'noopener' : undefined}
+                  class="block text-sm text-slate-600 transition hover:text-slate-950"
+                >
+                  {link.label}
+                </a>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </footer>
   </body>

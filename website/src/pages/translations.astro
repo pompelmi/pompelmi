@@ -28,21 +28,33 @@ const jsonLd = {
   title="Translations — Pompelmi"
   description="Community-maintained translated resources for Pompelmi. The English website and README remain the source of truth."
   jsonLd={jsonLd}
+  keywords={['pompelmi translations', 'pompelmi i18n', 'pompelmi translated readme']}
 >
-  <section class="mx-auto max-w-5xl px-4 py-12">
-    <div class="max-w-3xl">
-      <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Language resources</p>
-      <h1 class="mt-3 text-4xl font-semibold tracking-tight text-slate-950">Translations</h1>
-      <p class="mt-4 text-base leading-7 text-slate-600">
+  <section class="mx-auto max-w-6xl px-4 py-12 sm:py-16">
+    <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
+      <div class="max-w-3xl">
+        <p class="eyebrow">Language resources</p>
+        <h1 class="section-title">Translations</h1>
+        <p class="section-copy">
         Pompelmi&apos;s English website and root README are the maintained source of truth. The translated resources below are useful for discovery and onboarding, but they may lag behind the current API and docs structure.
-      </p>
-      <div class="mt-6 rounded-2xl border border-slate-200 bg-white p-5 text-sm leading-6 text-slate-600">
-        <p><strong class="text-slate-900">Recommended path:</strong> start with the English docs for installation, framework guides, and current examples.</p>
-        <div class="mt-3 flex flex-wrap gap-3">
-          <a href="/pompelmi/getting-started/" class="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-900 hover:bg-slate-50">English docs</a>
-          <a href="https://github.com/pompelmi/pompelmi/blob/main/README.md" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-3 py-2 font-medium text-slate-900 hover:bg-slate-50">English README</a>
-        </div>
       </div>
+      <aside class="surface-panel-soft p-6 text-sm leading-7 text-slate-600">
+        <p class="eyebrow">Recommended path</p>
+        <p class="mt-4">
+          Start with the English docs for installation, framework guides, and current examples. Use translated READMEs for orientation and onboarding support.
+        </p>
+        <div class="mt-5 flex flex-wrap gap-3">
+          <a href="/pompelmi/getting-started/" class="action-primary">English docs</a>
+          <a
+            href="https://github.com/pompelmi/pompelmi/blob/main/README.md"
+            target="_blank"
+            rel="noopener"
+            class="action-secondary"
+          >
+            English README
+          </a>
+        </div>
+      </aside>
     </div>
 
     <div class="mt-10 grid gap-4 sm:grid-cols-2">
@@ -51,7 +63,7 @@ const jsonLd = {
           href={resource.href}
           target="_blank"
           rel="noopener"
-          class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow"
+          class="grid-card p-5"
         >
           <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{resource.code}</div>
           <h2 class="mt-2 text-lg font-semibold tracking-tight text-slate-950">{resource.label}</h2>

@@ -3,42 +3,61 @@ import PublicLayout from '../components/PublicLayout.astro';
 import mentionsData from '../../../mentions/mentions.json';
 
 const basePath = import.meta.env.BASE_URL || '/';
-const heroLogoPath = `${basePath}logo.svg`;
+const to = (path = '') => `${basePath}${path.replace(/^\//, '')}`;
+const heroLogoPath = to('logo.svg');
 const quickStartSnippet = `npm install pompelmi`;
 
 const startPaths = [
-  { href: '/pompelmi/how-to/express/', label: 'Express', note: 'Multer + upload guard' },
-  { href: '/pompelmi/how-to/nextjs/', label: 'Next.js', note: 'App Router route handler' },
-  { href: '/pompelmi/how-to/nestjs/', label: 'NestJS', note: 'Module + interceptor' },
-  { href: '/pompelmi/how-to/fastify/', label: 'Fastify', note: 'preHandler upload gate' },
-  { href: '/pompelmi/how-to/koa/', label: 'Koa', note: 'Middleware-first route' },
-  { href: '/pompelmi/how-to/nuxt-nitro/', label: 'Nuxt/Nitro', note: 'scanBytes in Nitro' },
-  { href: '/pompelmi/use-cases/cicd-artifact-scanning/', label: 'CI/CD', note: 'Scan artifacts before promotion' },
-  { href: '/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/', label: 'S3 / object storage', note: 'Quarantine then promote' },
+  { href: 'how-to/express/', label: 'Express', note: 'Multer with a memory-backed upload guard.' },
+  { href: 'how-to/nextjs/', label: 'Next.js', note: 'Node runtime route handlers for App Router.' },
+  { href: 'how-to/nestjs/', label: 'NestJS', note: 'Module, interceptor, and service integrations.' },
+  { href: 'how-to/fastify/', label: 'Fastify', note: 'Early blocking in `preHandler` before storage.' },
+  { href: 'how-to/koa/', label: 'Koa', note: 'Middleware-first byte inspection for routes.' },
+  { href: 'how-to/nuxt-nitro/', label: 'Nuxt/Nitro', note: 'In-process scanning inside Nitro handlers.' },
+  { href: 'use-cases/cicd-artifact-scanning/', label: 'CI/CD', note: 'Scan build artifacts before promotion.' },
+  { href: 'tutorials/secure-s3-presigned-uploads-with-malware-scanning/', label: 'S3 / object storage', note: 'Quarantine, inspect, then promote.' },
 ];
 
 const useCases = [
-  { href: '/pompelmi/use-cases/document-upload-security/', title: 'Document uploads', note: 'PDF and Office workflows with review-friendly handling.' },
-  { href: '/pompelmi/use-cases/image-upload-security/', title: 'Image uploads', note: 'Raster routes, SVG separation, and storage decisions.' },
-  { href: '/pompelmi/use-cases/archive-zip-upload-security/', title: 'ZIP and archive uploads', note: 'Depth, expansion, entry-count, and traversal controls.' },
-  { href: '/pompelmi/use-cases/quarantine-inspect-first-store-later/', title: 'Quarantine workflows', note: 'Inspect first, store later, and promote only after review.' },
+  { href: 'use-cases/document-upload-security/', title: 'Document uploads', note: 'PDF and Office workflows with review-friendly handling.' },
+  { href: 'use-cases/image-upload-security/', title: 'Image uploads', note: 'Raster routes, SVG separation, and storage decisions.' },
+  { href: 'use-cases/archive-zip-upload-security/', title: 'ZIP and archive uploads', note: 'Depth, expansion, entry-count, and traversal controls.' },
+  { href: 'use-cases/quarantine-inspect-first-store-later/', title: 'Quarantine workflows', note: 'Inspect first, store later, and promote only after review.' },
 ];
 
 const orientation = [
   {
-    href: '/pompelmi/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/',
+    href: 'comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/',
     title: 'Why not just extension checks?',
     note: 'Because filenames and client MIME claims are only the outermost layer.',
   },
   {
-    href: '/pompelmi/comparisons/pompelmi-vs-clamav-for-file-uploads/',
+    href: 'comparisons/pompelmi-vs-clamav-for-file-uploads/',
     title: 'Why not just ClamAV?',
     note: 'Signature scanning helps, but the upload gate still needs route-level and structural controls.',
   },
   {
-    href: '/pompelmi/comparisons/pompelmi-vs-cloud-malware-scanning-apis/',
+    href: 'comparisons/pompelmi-vs-cloud-malware-scanning-apis/',
     title: 'Why not a cloud API?',
     note: 'Sending files to a third party changes the privacy and latency story for every upload.',
+  },
+];
+
+const featuredArticles = [
+  {
+    href: 'blog/secure-file-uploads-nodejs/',
+    title: 'Secure file uploads in Node.js',
+    note: 'A broad architecture walk-through before you choose a framework-specific guide.',
+  },
+  {
+    href: 'blog/scan-file-uploads-express-before-storage/',
+    title: 'Scan file uploads before storage in Express',
+    note: 'A concrete route design for the most common Node.js upload stack.',
+  },
+  {
+    href: 'blog/scan-files-before-s3-upload-nodejs/',
+    title: 'Scan files before S3 upload in Node.js',
+    note: 'How quarantine-and-promote flows fit object storage and presigned uploads.',
   },
 ];
 
@@ -46,6 +65,36 @@ const featuredMentions = [...mentionsData.items]
   .filter((item) => item.date)
   .sort((a, b) => b.date.localeCompare(a.date))
   .slice(0, 4);
+
+const proofPoints = [
+  {
+    label: 'Decision point',
+    value: 'Inspect bytes before disk, object storage, or downstream processors.',
+  },
+  {
+    label: 'Deployment model',
+    value: 'Local-first and privacy-friendly, without forcing a cloud scanning hop.',
+  },
+  {
+    label: 'Extensible stack',
+    value: 'Use it alone or alongside YARA, ClamAV, quarantine queues, and review flows.',
+  },
+];
+
+const guardrails = [
+  {
+    title: 'Verify what the file really is',
+    note: 'MIME, magic bytes, extension checks, and structural signals work together instead of trusting one field.',
+  },
+  {
+    title: 'Constrain dangerous formats early',
+    note: 'Archive depth, expansion, traversal, and suspicious document structures are handled before storage.',
+  },
+  {
+    title: 'Return a real verdict to the app',
+    note: 'Block, allow, or quarantine with reason codes your route and operations team can actually use.',
+  },
+];
 
 const worksWith = [
   'pompelmi',
@@ -60,6 +109,20 @@ const worksWith = [
 const jsonLd = {
   '@context': 'https://schema.org',
   '@graph': [
+    {
+      '@type': 'WebSite',
+      name: 'Pompelmi',
+      url: 'https://pompelmi.github.io/pompelmi/',
+      description:
+        'In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks and optional YARA.',
+    },
+    {
+      '@type': 'WebPage',
+      name: 'Pompelmi',
+      url: 'https://pompelmi.github.io/pompelmi/',
+      description:
+        'Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, risky document structures, and optional YARA.',
+    },
     {
       '@type': 'Organization',
       name: 'Pompelmi',
@@ -81,167 +144,251 @@ const jsonLd = {
 ---
 
 <PublicLayout
-  title="Pompelmi — In-process file upload security for Node.js"
-  description="Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, risky document structures, and optional YARA."
+  title="Pompelmi — Inspect untrusted uploads before storage"
+  description="In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, risky document structures, and optional YARA."
   jsonLd={jsonLd}
+  keywords={[
+    'node.js file upload security',
+    'secure file uploads',
+    'upload malware scanning',
+    'zip bomb protection',
+    'mime sniffing',
+    'yara node.js',
+  ]}
 >
-  <section class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-16 sm:py-20">
-      <div class="max-w-4xl">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Open-source core · MIT · Node.js 18+</p>
-        <img src={heroLogoPath} alt="" class="mt-6 h-16 w-auto sm:h-20" />
-        <h1 class="mt-4 text-4xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
-          In-process file upload security for Node.js.
+  <section class="border-b border-slate-200/70">
+    <div class="mx-auto grid max-w-6xl gap-10 px-4 py-16 sm:py-20 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:py-24">
+      <div>
+        <p class="eyebrow">Open-source core · MIT · Node.js 18+</p>
+        <img src={heroLogoPath} alt="" class="mt-6 h-14 w-auto sm:h-16" />
+        <h1 class="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
+          Inspect untrusted uploads before they reach storage.
         </h1>
         <p class="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-          Pompelmi is an upload gate for teams that want to inspect untrusted files before storage. It focuses on the application layer: spoofed file types, archive abuse, risky document structures, and optional YARA when you need more specific matching.
+          Pompelmi gives Node.js teams an application-layer upload boundary. It helps routes make better decisions about spoofed file types, archive abuse, risky document structures, and optional YARA matching before bytes land in the wrong place.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
-          <a href="/pompelmi/getting-started/" class="rounded-md bg-slate-950 px-4 py-2.5 text-sm font-medium text-white hover:bg-slate-800">
-            Start with the docs
-          </a>
-          <a href="https://github.com/pompelmi/pompelmi/tree/main/examples" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50">
+          <a href={to('getting-started/')} class="action-primary">Start with the docs</a>
+          <a
+            href="https://github.com/pompelmi/pompelmi/tree/main/examples"
+            target="_blank"
+            rel="noopener"
+            class="action-secondary"
+          >
             Browse examples
           </a>
-          <a href="https://github.com/pompelmi/pompelmi/stargazers" target="_blank" rel="noopener" class="rounded-md border border-slate-300 px-4 py-2.5 text-sm font-medium text-slate-900 hover:bg-slate-50">
+          <a
+            href="https://github.com/pompelmi/pompelmi/stargazers"
+            target="_blank"
+            rel="noopener"
+            class="action-ghost"
+          >
             Star on GitHub
           </a>
         </div>
-        <div class="mt-8 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Install</p>
-          <pre class="mt-3 overflow-x-auto rounded-xl bg-slate-950 px-4 py-4 text-sm text-slate-100"><code>{quickStartSnippet}</code></pre>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="border-b border-slate-200 bg-slate-50">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Choose your path</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Start from your framework or workflow</h2>
-        <p class="mt-4 text-sm leading-7 text-slate-600">
-          If you want the broader decision pages first, start with
-          <a href="/pompelmi/blog/secure-file-uploads-nodejs/" class="font-medium text-blue-700 hover:text-blue-800">secure file uploads in Node.js</a>,
-          <a href="/pompelmi/blog/scan-file-uploads-express-before-storage/" class="font-medium text-blue-700 hover:text-blue-800">scan file uploads before storage in Express</a>,
-          or
-          <a href="/pompelmi/blog/scan-files-before-s3-upload-nodejs/" class="font-medium text-blue-700 hover:text-blue-800">scan files before S3 upload in Node.js</a>.
-        </p>
-      </div>
-      <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {startPaths.map((path) => (
-          <a href={path.href} class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
-            <h3 class="text-lg font-semibold tracking-tight text-slate-950">{path.label}</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{path.note}</p>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="grid gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Who it is for</p>
-          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Teams that need a real upload boundary</h2>
-          <div class="mt-6 space-y-4 text-sm leading-7 text-slate-600">
-            <p>Good fits include public or semi-trusted upload endpoints, privacy-sensitive systems, document-heavy business flows, and product teams that want upload checks inside the application path rather than behind a cloud dependency.</p>
-            <p>Pompelmi is not presented as a full antivirus replacement. It is an application-layer control that works well on its own, or alongside YARA, ClamAV, and broader storage or review workflows.</p>
-          </div>
-        </div>
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Works with</p>
-          <ul class="mt-4 space-y-2 text-sm text-slate-700">
-            {worksWith.map((pkg) => (
-              <li class="rounded-md border border-slate-200 bg-white px-3 py-2 font-mono">{pkg}</li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="border-b border-slate-200 bg-slate-50">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Use cases</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Problem-first pages for real upload flows</h2>
-      </div>
-      <div class="mt-8 grid gap-4 lg:grid-cols-2">
-        {useCases.map((useCase) => (
-          <a href={useCase.href} class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
-            <h3 class="text-lg font-semibold tracking-tight text-slate-950">{useCase.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{useCase.note}</p>
-          </a>
-        ))}
-      </div>
-      <div class="mt-6">
-        <a href="/pompelmi/use-cases/" class="text-sm font-medium text-blue-700 hover:text-blue-800">See all use cases</a>
-      </div>
-    </div>
-  </section>
-
-  <section class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Orientation</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">Three comparisons teams ask first</h2>
-      </div>
-      <div class="mt-8 grid gap-4 lg:grid-cols-3">
-        {orientation.map((item) => (
-          <a href={item.href} class="rounded-2xl border border-slate-200 bg-slate-50 p-5 transition hover:border-blue-300 hover:bg-white">
-            <h3 class="text-lg font-semibold tracking-tight text-slate-950">{item.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{item.note}</p>
-          </a>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <section class="border-b border-slate-200 bg-slate-50">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="max-w-3xl">
-        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Featured in</p>
-        <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">External references that help evaluate the project quickly</h2>
-      </div>
-      <div class="mt-8 grid gap-4 lg:grid-cols-2">
-        {featuredMentions.map((item) => (
-          <a href={item.url} target="_blank" rel="noopener" class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-300 hover:shadow">
-            <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              {item.publisher}{item.date ? ` · ${item.date}` : ''}
+        <dl class="mt-10 grid gap-3 sm:grid-cols-3">
+          {proofPoints.map((item) => (
+            <div class="mini-stat p-4">
+              <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</dt>
+              <dd class="mt-2 text-sm leading-6 text-slate-700">{item.value}</dd>
             </div>
-            <h3 class="mt-2 text-lg font-semibold tracking-tight text-slate-950">{item.title}</h3>
-            <p class="mt-2 text-sm leading-6 text-slate-600">{item.snippet}</p>
-          </a>
-        ))}
+          ))}
+        </dl>
       </div>
-      <div class="mt-6">
-        <a href="/pompelmi/featured-in/" class="text-sm font-medium text-blue-700 hover:text-blue-800">See the full featured page</a>
+
+      <div class="space-y-4">
+        <div class="surface-panel p-6 sm:p-7">
+          <div class="flex flex-wrap items-center justify-between gap-3">
+            <p class="eyebrow">Quick start</p>
+            <span class="pill">Local-first</span>
+          </div>
+          <pre class="mt-4 overflow-x-auto rounded-2xl bg-slate-950 px-4 py-4 text-sm text-slate-100"><code>{quickStartSnippet}</code></pre>
+          <div class="mt-6 grid gap-3">
+            {guardrails.map((item) => (
+              <div class="rounded-2xl border border-slate-200/80 bg-white/90 p-4">
+                <h2 class="text-lg font-semibold tracking-tight text-slate-950">{item.title}</h2>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{item.note}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="surface-panel-soft p-6">
+          <p class="eyebrow">Works with</p>
+          <div class="mt-4 flex flex-wrap gap-2">
+            {worksWith.map((pkg) => (
+              <span class="rounded-full border border-slate-200 bg-white px-3 py-2 font-mono text-xs text-slate-700">
+                {pkg}
+              </span>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   </section>
 
-  <section class="border-b border-slate-200 bg-white">
-    <div class="mx-auto max-w-6xl px-4 py-14">
-      <div class="grid gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+  <section class="border-b border-slate-200/70">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:py-16">
+      <div class="grid gap-8 lg:grid-cols-[1fr_320px]">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Translations</p>
-          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-slate-950">English is the source of truth, but translated resources are available</h2>
-          <p class="mt-4 max-w-3xl text-sm leading-7 text-slate-600">
-            The public docs and root README are maintained in English. Community-maintained translated READMEs are available for discovery and onboarding without duplicating the whole site.
+          <p class="eyebrow">Choose your path</p>
+          <h2 class="section-title">Start from your framework or workflow</h2>
+          <p class="section-copy">
+            If you want the broader architecture first, start with one of the high-intent decision pages before wiring code into a specific route stack.
           </p>
-          <div class="mt-5">
-            <a href="/pompelmi/translations/" class="text-sm font-medium text-blue-700 hover:text-blue-800">Browse translations</a>
+          <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {startPaths.map((path) => (
+              <a href={to(path.href)} class="grid-card p-5">
+                <h3 class="text-lg font-semibold tracking-tight text-slate-950">{path.label}</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{path.note}</p>
+              </a>
+            ))}
           </div>
         </div>
-        <div class="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Keep going</p>
-          <div class="mt-4 space-y-3 text-sm">
-            <a href="/pompelmi/blog/" class="block rounded-md border border-slate-200 bg-white px-3 py-3 font-medium text-slate-900 hover:border-blue-300">Browse the blog</a>
-            <a href="/pompelmi/comparisons/" class="block rounded-md border border-slate-200 bg-white px-3 py-3 font-medium text-slate-900 hover:border-blue-300">Read comparisons</a>
-            <a href="https://github.com/pompelmi/pompelmi" target="_blank" rel="noopener" class="block rounded-md border border-slate-200 bg-white px-3 py-3 font-medium text-slate-900 hover:border-blue-300">Inspect the source on GitHub</a>
+
+        <aside class="surface-panel-soft p-6">
+          <p class="eyebrow">Read before you build</p>
+          <div class="mt-4 space-y-3">
+            {featuredArticles.map((article) => (
+              <a href={to(article.href)} class="list-card block p-4">
+                <h3 class="text-base font-semibold tracking-tight text-slate-950">{article.title}</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{article.note}</p>
+              </a>
+            ))}
           </div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-slate-200/70">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:py-16">
+      <div class="grid gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+        <div>
+          <p class="eyebrow">Who it is for</p>
+          <h2 class="section-title">Teams that need a real upload boundary</h2>
+          <p class="section-copy">
+            Good fits include public or semi-trusted upload endpoints, privacy-sensitive systems, document-heavy business flows, and product teams that want the upload decision inside the application path rather than behind a generic cloud dependency.
+          </p>
+          <div class="mt-8 grid gap-4 sm:grid-cols-2">
+            {useCases.map((useCase) => (
+              <a href={to(useCase.href)} class="grid-card p-5">
+                <h3 class="text-lg font-semibold tracking-tight text-slate-950">{useCase.title}</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{useCase.note}</p>
+              </a>
+            ))}
+          </div>
+          <a href={to('use-cases/')} class="action-ghost mt-6">See all use cases</a>
+        </div>
+
+        <div class="space-y-4">
+          <div class="surface-panel p-6">
+            <p class="eyebrow">Three evaluation questions</p>
+            <div class="mt-4 space-y-3">
+              {orientation.map((item) => (
+                <a href={to(item.href)} class="list-card block p-4">
+                  <h3 class="text-base font-semibold tracking-tight text-slate-950">{item.title}</h3>
+                  <p class="mt-2 text-sm leading-6 text-slate-600">{item.note}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div class="surface-panel-soft p-6">
+            <p class="eyebrow">What Pompelmi is not</p>
+            <div class="mt-4 space-y-4 text-sm leading-7 text-slate-600">
+              <p>
+                It is not positioned as a complete antivirus replacement. It is an application-layer control for the upload boundary.
+              </p>
+              <p>
+                It works well on its own, or alongside YARA, ClamAV, storage isolation, and human review flows when your environment needs deeper detection or post-upload triage.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="border-b border-slate-200/70">
+    <div class="mx-auto max-w-6xl px-4 py-14 sm:py-16">
+      <div class="grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
+        <div>
+          <p class="eyebrow">External proof</p>
+          <h2 class="section-title">Signals that help teams evaluate the project quickly</h2>
+          <p class="section-copy">
+            Pompelmi keeps the product story grounded: open source, practical docs, and public references that let teams inspect the tradeoffs for themselves.
+          </p>
+          <div class="mt-8 grid gap-4 md:grid-cols-2">
+            {featuredMentions.map((item) => (
+              <a
+                href={item.url}
+                target="_blank"
+                rel="noopener"
+                class="grid-card p-5"
+              >
+                <div class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  {item.publisher}{item.date ? ` · ${item.date}` : ''}
+                </div>
+                <h3 class="mt-2 text-lg font-semibold tracking-tight text-slate-950">{item.title}</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-600">{item.snippet}</p>
+              </a>
+            ))}
+          </div>
+          <a href={to('featured-in/')} class="action-ghost mt-6">See the full featured page</a>
+        </div>
+
+        <div class="space-y-4">
+          <div class="surface-panel-soft p-6">
+            <p class="eyebrow">Translations</p>
+            <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+              English is the maintained source of truth, but translated resources are available.
+            </h2>
+            <p class="mt-4 text-sm leading-7 text-slate-600">
+              The public docs and root README stay focused in English. Community-maintained translations help with discovery and onboarding without duplicating the whole site.
+            </p>
+            <a href={to('translations/')} class="action-secondary mt-5">Browse translations</a>
+          </div>
+
+          <div class="surface-panel p-6">
+            <p class="eyebrow">Keep going</p>
+            <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">Pick the next best page for your team</h2>
+            <p class="mt-3 text-sm leading-7 text-slate-600">
+              The docs are the canonical integration surface. The blog and comparison pages help with architecture and rollout decisions before the first route ships.
+            </p>
+            <div class="mt-5 space-y-3 text-sm">
+              <a href={to('blog/')} class="list-card block px-4 py-3 font-medium text-slate-900">Browse the blog</a>
+              <a href={to('comparisons/')} class="list-card block px-4 py-3 font-medium text-slate-900">Read comparisons</a>
+              <a href={to('getting-started/')} class="list-card block px-4 py-3 font-medium text-slate-900">Start with the docs</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+    <div class="overflow-hidden rounded-[2rem] bg-slate-950 px-6 py-10 text-white shadow-[0_26px_80px_-42px_rgba(15,23,42,0.75)] sm:px-10">
+      <p class="text-xs font-semibold uppercase tracking-[0.24em] text-sky-200">Ship with confidence</p>
+      <div class="mt-4 grid gap-8 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div>
+          <h2 class="max-w-3xl text-3xl font-semibold tracking-tight sm:text-4xl">
+            Make the upload decision where your application still has context.
+          </h2>
+          <p class="mt-4 max-w-3xl text-base leading-7 text-slate-300">
+            That means route-specific policy, better observability, and a cleaner line between "accepted", "blocked", and "quarantine for review".
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3">
+          <a href={to('getting-started/')} class="action-secondary">Read the docs</a>
+          <a
+            href="https://github.com/pompelmi/pompelmi"
+            target="_blank"
+            rel="noopener"
+            class="inline-flex items-center justify-center rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-slate-900"
+          >
+            Inspect the source
+          </a>
         </div>
       </div>
     </div>
