@@ -177,4 +177,21 @@ describe("CommonHeuristicsScanner", () => {
       expect(result.some((m) => m.rule === "pe_executable_signature")).toBe(true);
     });
   });
+
+  describe("EICAR detection", () => {
+    it("flags the EICAR antivirus test string with metadata", async () => {
+      const result = await CommonHeuristicsScanner.scan(
+        Buffer.from(
+          "X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*",
+          "latin1",
+        ),
+      );
+      const match = result.find((m) => m.rule === "eicar_test_file");
+
+      expect(match?.severity).toBe("high");
+      expect(match?.meta).toEqual({
+        note: "EICAR standard antivirus test file detected",
+      });
+    });
+  });
 });

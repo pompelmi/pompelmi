@@ -171,4 +171,17 @@ describe("QuarantineManager (FilesystemQuarantineStorage)", () => {
     expect(report.byStatus.pending).toBe(1);
     expect(report.generatedAt).toBeTruthy();
   });
+
+  it("listEntries and countEntries delegate to storage-backed queries", async () => {
+    const created = await manager.quarantine(sampleBytes, makeSuspiciousReport(), {
+      originalName: "query-me.pdf",
+      sizeBytes: 4,
+    });
+
+    const entries = await manager.listEntries({ status: "pending" });
+    const count = await manager.countEntries({ status: "pending" });
+
+    expect(entries.map((entry) => entry.id)).toContain(created.id);
+    expect(count).toBe(1);
+  });
 });

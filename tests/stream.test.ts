@@ -145,5 +145,35 @@ describe("stream scanning", () => {
       expect(result.durationMs).toBeGreaterThanOrEqual(0);
       expect(typeof result.durationMs).toBe("number");
     });
+
+    it("should fail open to empty matches if scanAll throws", async () => {
+      const stream = Readable.from([Buffer.from("test")]);
+
+      const result = await scanStream(stream, {
+        scanAll: async () => {
+          throw new Error("engine failed");
+        },
+      });
+
+      expect(result.matches).toEqual([]);
+      expect(result.verdict).toBe("clean");
+    });
+
+    it("should mark the scan suspicious when it times out before processing data", async () => {
+      const stream = Readable.from(
+        (async function* () {
+          await new Promise((resolve) => setTimeout(resolve, 20));
+          yield Buffer.from("late chunk");
+        })(),
+      );
+
+      const result = await scanStream(stream, {
+        scanAll: async () => [],
+        timeoutMs: 1,
+      });
+
+      expect(result.timedOut).toBe(true);
+      expect(result.verdict).toBe("suspicious");
+    });
   });
 });

@@ -162,7 +162,7 @@ export function composeScanners(...args: any[]): ScanFn {
       if (opts.parallel) {
         // Parallel execution — collect all results then return
         const results = await Promise.allSettled(
-          entries.map(([name, scanner]) =>
+          entries.map(([_name, scanner]) =>
             runWithTimeout(() => toScanFn(scanner)(input, ctx), opts.timeoutMsPerScanner),
           ),
         );
@@ -220,10 +220,8 @@ export function composeScanners(...args: any[]): ScanFn {
 }
 
 export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}): Scanner {
-  const scanners: Scanner[] = [];
-
-  // Always include heuristics (EICAR, PHP webshells, JS obfuscation, PE hints, etc.)
-  scanners.push(CommonHeuristicsScanner);
+  const baseScanners: Scanner[] = [CommonHeuristicsScanner];
+  const dynamicScannerPromises: Array<Promise<Scanner | null>> = [];
 
   // Add decompilation scanners based on preset
   if (
@@ -233,62 +231,62 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
     opts.enableDecompilation
   ) {
     const depth =
-      preset === "decompilation-deep"
+      preset === "decompilation-deep" || preset === "malware-analysis"
         ? "deep"
         : preset === "decompilation-basic"
           ? "basic"
           : opts.decompilationDepth || "basic";
+    let importModule: ((specifier: string) => Promise<any>) | undefined;
 
-    if (
-      !opts.decompilationEngine ||
-      opts.decompilationEngine === "binaryninja-hlil" ||
-      opts.decompilationEngine === "both"
-    ) {
-      try {
-        // Dynamic import to avoid bundling issues - using Function to bypass TypeScript type checking
-        const importModule = new Function("specifier", "return import(specifier)");
-        importModule("@pompelmi/engine-binaryninja")
-          .then((mod: any) => {
-            const binjaScanner = mod.createBinaryNinjaScanner({
-              timeout: opts.decompilationTimeout || opts.timeout || 30000,
-              depth,
-              pythonPath: opts.pythonPath,
-              binaryNinjaPath: opts.binaryNinjaPath,
-            });
-            scanners.push(binjaScanner);
-          })
-          .catch(() => {
-            // Binary Ninja engine not available - silently skip
-          });
-      } catch {
-        // Engine not installed
-      }
+    try {
+      // Dynamic import to avoid bundling issues - using Function to bypass TypeScript type checking
+      importModule = new Function("specifier", "return import(specifier)") as (
+        specifier: string,
+      ) => Promise<any>;
+    } catch {
+      importModule = undefined;
     }
 
     if (
-      !opts.decompilationEngine ||
-      opts.decompilationEngine === "ghidra-pcode" ||
-      opts.decompilationEngine === "both"
+      importModule &&
+      (!opts.decompilationEngine ||
+        opts.decompilationEngine === "binaryninja-hlil" ||
+        opts.decompilationEngine === "both")
     ) {
-      try {
-        // Dynamic import for Ghidra engine (when implemented) - using Function to bypass TypeScript type checking
-        const importModule = new Function("specifier", "return import(specifier)");
+      dynamicScannerPromises.push(
+        importModule("@pompelmi/engine-binaryninja")
+          .then(
+            (mod: any) =>
+              mod.createBinaryNinjaScanner({
+                timeout: opts.decompilationTimeout || opts.timeout || 30000,
+                depth,
+                pythonPath: opts.pythonPath,
+                binaryNinjaPath: opts.binaryNinjaPath,
+              }) as Scanner,
+          )
+          .catch(() => null),
+      );
+    }
+
+    if (
+      importModule &&
+      (!opts.decompilationEngine ||
+        opts.decompilationEngine === "ghidra-pcode" ||
+        opts.decompilationEngine === "both")
+    ) {
+      dynamicScannerPromises.push(
         importModule("@pompelmi/engine-ghidra")
-          .then((mod: any) => {
-            const ghidraScanner = mod.createGhidraScanner({
-              timeout: opts.decompilationTimeout || opts.timeout || 30000,
-              depth,
-              ghidraPath: opts.ghidraPath,
-              analyzeHeadless: opts.analyzeHeadless,
-            });
-            scanners.push(ghidraScanner);
-          })
-          .catch(() => {
-            // Ghidra engine not available - silently skip
-          });
-      } catch {
-        // Engine not installed
-      }
+          .then(
+            (mod: any) =>
+              mod.createGhidraScanner({
+                timeout: opts.decompilationTimeout || opts.timeout || 30000,
+                depth,
+                ghidraPath: opts.ghidraPath,
+                analyzeHeadless: opts.analyzeHeadless,
+              }) as Scanner,
+          )
+          .catch(() => null),
+      );
     }
   }
 
@@ -297,14 +295,22 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
     // CommonHeuristicsScanner is already added above for all presets
   }
 
-  if (scanners.length === 0) {
-    // Fallback scanner that returns no matches
-    return async (_input: any, _ctx?: any) => {
-      return [] as Match[];
-    };
-  }
+  let composedScannerPromise: Promise<ScanFn> | undefined;
 
-  return composeScanners(...scanners);
+  const getComposedScanner = async (): Promise<ScanFn> => {
+    composedScannerPromise ??= Promise.all(dynamicScannerPromises).then((dynamicScanners) =>
+      composeScanners(
+        ...baseScanners,
+        ...dynamicScanners.filter((scanner): scanner is Scanner => scanner !== null),
+      ),
+    );
+    return composedScannerPromise;
+  };
+
+  return async (input, ctx) => {
+    const scanner = await getComposedScanner();
+    return scanner(input, ctx);
+  };
 }
 
 // Preset configurations

@@ -24,6 +24,51 @@ function makeManager(overrides: Partial<HipaaConfig> = {}): HipaaComplianceManag
   return new HipaaComplianceManager({ enabled: true, ...overrides });
 }
 
+const tempDirs = new Set<string>();
+
+function createTempDir(prefix: string = "hipaa-test"): string {
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), `${prefix}-`));
+  tempDirs.add(tempDir);
+  return tempDir;
+}
+
+function createTempFile(prefix: string, contents: Buffer | string = "data"): string {
+  const tempDir = createTempDir(prefix);
+  const tempFile = path.join(tempDir, "data.bin");
+  fs.writeFileSync(tempFile, contents);
+  return tempFile;
+}
+
+async function waitForFileContents(
+  filePath: string,
+  expectedText: string,
+  timeoutMs: number = 1000,
+): Promise<string> {
+  const deadline = Date.now() + timeoutMs;
+
+  while (Date.now() < deadline) {
+    try {
+      const contents = fs.readFileSync(filePath, "utf8");
+      if (contents.includes(expectedText)) {
+        return contents;
+      }
+    } catch {
+      // Keep polling until the async write completes.
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 10));
+  }
+
+  return fs.readFileSync(filePath, "utf8");
+}
+
+afterEach(() => {
+  for (const tempDir of tempDirs) {
+    fs.rmSync(tempDir, { recursive: true, force: true });
+  }
+  tempDirs.clear();
+});
+
 // ─── sanitizeFilename ───────────────────────────────────────────────────────
 
 describe("HipaaComplianceManager.sanitizeFilename", () => {
@@ -276,6 +321,38 @@ describe("HipaaComplianceManager.createSecureTempPath", () => {
     const m = makeManager();
     expect(m.createSecureTempPath()).not.toBe(m.createSecureTempPath());
   });
+
+  it("creates the secure temp directory when it is missing", () => {
+    const secureTempDir = path.join(os.tmpdir(), "pompelmi-secure");
+    fs.rmSync(secureTempDir, { recursive: true, force: true });
+    const m = makeManager();
+
+    const createdPath = m.createSecureTempPath("mkdir-test");
+
+    expect(path.dirname(createdPath)).toBe(secureTempDir);
+    expect(fs.existsSync(secureTempDir)).toBe(true);
+  });
+
+  it("falls back to the system temp dir when secure temp dir creation throws", async () => {
+    const originalTmpdir = process.env.TMPDIR;
+    const fakeTmpRoot = path.join(createTempDir("hipaa-fake-tmp"), "not-a-directory");
+    fs.writeFileSync(fakeTmpRoot, "not a directory");
+
+    process.env.TMPDIR = fakeTmpRoot;
+
+    try {
+      const m = makeManager();
+      const createdPath = m.createSecureTempPath("fallback");
+
+      expect(path.dirname(createdPath)).toBe(fakeTmpRoot);
+    } finally {
+      if (originalTmpdir === undefined) {
+        delete process.env.TMPDIR;
+      } else {
+        process.env.TMPDIR = originalTmpdir;
+      }
+    }
+  });
 });
 
 // ─── secureFileCleanup ──────────────────────────────────────────────────────
@@ -284,12 +361,7 @@ describe("HipaaComplianceManager.secureFileCleanup", () => {
   let tmpFile: string;
 
   beforeEach(() => {
-    tmpFile = path.join(os.tmpdir(), `hipaa-test-${Date.now()}.bin`);
-    fs.writeFileSync(tmpFile, Buffer.from("hello world"));
-  });
-
-  afterEach(() => {
-    if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+    tmpFile = createTempFile("hipaa-test", Buffer.from("hello world"));
   });
 
   it("deletes the file when enabled", async () => {
@@ -323,6 +395,29 @@ describe("HipaaComplianceManager.secureFileCleanup", () => {
     expect(events.some((e) => e.eventType === "temp_file_deleted" && !e.details.success)).toBe(
       true,
     );
+  });
+
+  it("calls garbage collection when clearing sensitive data and gc is available", () => {
+    const gc = vi.fn();
+    const globalWithGc = global as typeof global & { gc?: () => void };
+    const originalGc = globalWithGc.gc;
+
+    globalWithGc.gc = gc;
+
+    try {
+      const m = makeManager({ memoryProtection: true });
+      m.auditLog("file_scan", { action: "scan", success: true });
+
+      m.clearSensitiveData();
+
+      expect(gc).toHaveBeenCalledTimes(1);
+    } finally {
+      if (originalGc === undefined) {
+        delete globalWithGc.gc;
+      } else {
+        globalWithGc.gc = originalGc;
+      }
+    }
   });
 });
 
@@ -358,7 +453,9 @@ describe("createHipaaError", () => {
   it("logs an error_occurred audit event", () => {
     initializeHipaaCompliance({ enabled: true });
     createHipaaError("oops", "upload");
-    const events = getHipaaManager()!.getAuditEvents();
+    const manager = getHipaaManager();
+    expect(manager).toBeDefined();
+    const events = manager?.getAuditEvents() ?? [];
     expect(events.some((e) => e.eventType === "error_occurred")).toBe(true);
   });
 
@@ -368,6 +465,15 @@ describe("createHipaaError", () => {
     // verify no crash and return type.
     const err = createHipaaError("plain", "ctx");
     expect(err).toBeInstanceOf(Error);
+  });
+
+  it("returns the raw error when the module has no initialized manager", async () => {
+    vi.resetModules();
+    const hipaa = await import("../src/hipaa-compliance");
+    const raw = new Error("raw error");
+
+    expect(hipaa.createHipaaError(raw)).toBe(raw);
+    expect(hipaa.createHipaaError("string only").message).toBe("string only");
   });
 });
 
@@ -395,10 +501,37 @@ describe("HipaaTemp", () => {
 
   describe("cleanup without manager", () => {
     it("falls back to plain unlink and does not throw", async () => {
-      // Create a real temp file and clean it up
-      const tmpPath = path.join(os.tmpdir(), `hipaa-temp-test-${Date.now()}.bin`);
-      fs.writeFileSync(tmpPath, "data");
+      const tmpPath = createTempFile("hipaa-temp-test");
       await expect(HipaaTemp.cleanup(tmpPath)).resolves.toBeUndefined();
     });
+  });
+
+  it("uses plain temp utilities when no manager is initialized in a fresh module", async () => {
+    vi.resetModules();
+    const hipaa = await import("../src/hipaa-compliance");
+    const tmpPath = createTempFile("hipaa-temp-fresh");
+
+    const createdPath = hipaa.HipaaTemp.createPath("fresh");
+
+    expect(path.dirname(createdPath)).toBe(os.tmpdir());
+    await expect(hipaa.HipaaTemp.cleanup(tmpPath)).resolves.toBeUndefined();
+  });
+});
+
+describe("HipaaComplianceManager.audit log file writing", () => {
+  it("writes audit events to the configured log file", async () => {
+    const auditLogPath = path.join(createTempDir("hipaa-audit"), "audit.log");
+    const m = makeManager({ auditLogPath });
+
+    m.auditLog("file_scan", { action: "scan", success: true });
+    const contents = await waitForFileContents(auditLogPath, '"eventType":"file_scan"');
+    expect(contents).toContain('"eventType":"file_scan"');
+  });
+
+  it("silently ignores audit log write failures", async () => {
+    const m = makeManager({ auditLogPath: "/no/such/dir/audit.log" });
+
+    expect(() => m.auditLog("file_scan", { action: "scan", success: true })).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 10));
   });
 });
