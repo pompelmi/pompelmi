@@ -41,7 +41,7 @@
     "@types/tar-stream": "^3.1.4",
     "@vitest/coverage-v8": "4.1.2",
     "tsup": "8.5.1",
-    "vitest": "2.1.9"
+    "vitest": "4.1.2"
   },
   "dependencies": {
     "tar-stream": "^3.1.7"
