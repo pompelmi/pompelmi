@@ -112,10 +112,14 @@ export class BatchScanner {
         currentIndex++;
 
         // Remove completed promises from queue
-        promise.finally(() => {
-          const idx = processingQueue.indexOf(promise);
-          if (idx > -1) processingQueue.splice(idx, 1);
-        });
+        promise
+          .finally(() => {
+            const idx = processingQueue.indexOf(promise);
+            if (idx > -1) processingQueue.splice(idx, 1);
+          })
+          .catch(() => {
+            // Rejections are handled by the main queue waits; swallow the cleanup chain.
+          });
       }
 
       // Wait for at least one task to complete before continuing

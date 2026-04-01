@@ -5,7 +5,7 @@
  * Verifies that the named-scanner array form of composeScanners —
  * exactly as shown in the README — compiles and runs correctly.
  */
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   CommonHeuristicsScanner,
   type ComposeScannerOptions,
@@ -151,6 +151,20 @@ describe("composeScanners — functional behaviour", () => {
     expect(result).toHaveLength(2);
   });
 
+  it("parallel + tagSourceName tags fulfilled results with their source name", async () => {
+    const scanner = composeScanners(
+      [
+        ["a", suspiciousScanner],
+        ["b", suspiciousScanner],
+      ],
+      { parallel: true, tagSourceName: true },
+    );
+    const result = await scanner(BYTES);
+
+    expect(result[0]?.meta?._sourceName).toBe("a");
+    expect(result[1]?.meta?._sourceName).toBe("b");
+  });
+
   it("timeoutMsPerScanner — skips scanners that exceed the timeout", async () => {
     const scanner = composeScanners(
       [
@@ -164,6 +178,23 @@ describe("composeScanners — functional behaviour", () => {
     expect(result).toHaveLength(1);
     expect(result[0].rule).toBe("test_rule");
   }, 5000);
+
+  it("timeoutMsPerScanner handles scanner rejections through the timeout wrapper", async () => {
+    const fastFailure: Scanner = async () => {
+      throw new Error("fast failure");
+    };
+    const scanner = composeScanners(
+      [
+        ["fail", fastFailure],
+        ["ok", suspiciousScanner],
+      ],
+      { timeoutMsPerScanner: 100 },
+    );
+
+    const result = await scanner(BYTES);
+    expect(result).toHaveLength(1);
+    expect(result[0].rule).toBe("test_rule");
+  });
 
   it("empty array — returns empty result without throwing", async () => {
     const scanner = composeScanners([], {});
@@ -181,6 +212,46 @@ describe("composeScanners — functional behaviour", () => {
     ]);
     const result = await scanner(BYTES);
     expect(result).toHaveLength(1);
+  });
+
+  it("stopOn: suspicious stops after a suspicious match", async () => {
+    let secondRan = false;
+    const second: Scanner = async () => {
+      secondRan = true;
+      return [];
+    };
+
+    const scanner = composeScanners(
+      [
+        ["suspicious", suspiciousScanner],
+        ["second", second],
+      ],
+      { stopOn: "suspicious" },
+    );
+
+    await scanner(BYTES);
+    expect(secondRan).toBe(false);
+  });
+
+  it("stopOn: clean treats matches without severity as clean and stops", async () => {
+    let secondRan = false;
+    const cleanMatch: Scanner = async () => [{ rule: "no_severity" }];
+    const second: Scanner = async () => {
+      secondRan = true;
+      return [];
+    };
+
+    const scanner = composeScanners(
+      [
+        ["cleanish", cleanMatch],
+        ["second", second],
+      ],
+      { stopOn: "clean" },
+    );
+
+    const result = await scanner(BYTES);
+    expect(result[0].rule).toBe("no_severity");
+    expect(secondRan).toBe(false);
   });
 });
 
@@ -211,5 +282,73 @@ describe("composeScanners — TypeScript type exports", () => {
     };
     const scanner = composeScanners(entries, opts);
     expect(typeof scanner).toBe("function");
+  });
+});
+
+describe("createPresetScanner — dynamic decompilation imports", () => {
+  const RealFunction = globalThis.Function;
+
+  it("configures Binary Ninja and Ghidra scanners when dynamic imports resolve", async () => {
+    const createBinaryNinjaScanner = vi.fn(() => noopScanner);
+    const createGhidraScanner = vi.fn(() => noopScanner);
+
+    function MockFunction(this: unknown) {
+      return (specifier: string) => {
+        if (specifier === "@pompelmi/engine-binaryninja") {
+          return Promise.resolve({ createBinaryNinjaScanner });
+        }
+        if (specifier === "@pompelmi/engine-ghidra") {
+          return Promise.resolve({ createGhidraScanner });
+        }
+        return Promise.reject(new Error(`unexpected import: ${specifier}`));
+      };
+    }
+
+    vi.stubGlobal("Function", MockFunction as unknown as FunctionConstructor);
+
+    const { createPresetScanner } = await import("../src/presets");
+    const scanner = createPresetScanner("malware-analysis", {
+      decompilationTimeout: 1234,
+      binaryNinjaPath: "/Applications/Binary Ninja.app",
+      pythonPath: "/usr/bin/python3",
+      ghidraPath: "/opt/ghidra",
+      analyzeHeadless: "/opt/ghidra/support/analyzeHeadless",
+    });
+
+    expect(typeof scanner).toBe("function");
+
+    await Promise.resolve();
+    await Promise.resolve();
+
+    expect(createBinaryNinjaScanner).toHaveBeenCalledWith({
+      timeout: 1234,
+      depth: "deep",
+      pythonPath: "/usr/bin/python3",
+      binaryNinjaPath: "/Applications/Binary Ninja.app",
+    });
+    expect(createGhidraScanner).toHaveBeenCalledWith({
+      timeout: 1234,
+      depth: "deep",
+      ghidraPath: "/opt/ghidra",
+      analyzeHeadless: "/opt/ghidra/support/analyzeHeadless",
+    });
+
+    vi.stubGlobal("Function", RealFunction);
+  });
+
+  it("silently skips decompilation imports when the Function constructor is unavailable", async () => {
+    function ThrowingFunction() {
+      throw new Error("disabled");
+    }
+
+    vi.stubGlobal("Function", ThrowingFunction as unknown as FunctionConstructor);
+
+    const { createPresetScanner } = await import("../src/presets");
+    const scanner = createPresetScanner("malware-analysis");
+
+    expect(typeof scanner).toBe("function");
+    await expect(scanner(BYTES)).resolves.toEqual([]);
+
+    vi.stubGlobal("Function", RealFunction);
   });
 });

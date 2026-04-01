@@ -276,6 +276,35 @@ describe("HipaaComplianceManager.createSecureTempPath", () => {
     const m = makeManager();
     expect(m.createSecureTempPath()).not.toBe(m.createSecureTempPath());
   });
+
+  it("creates the secure temp directory when it is missing", () => {
+    const secureTempDir = path.join(os.tmpdir(), "pompelmi-secure");
+    fs.rmSync(secureTempDir, { recursive: true, force: true });
+    const m = makeManager();
+
+    const createdPath = m.createSecureTempPath("mkdir-test");
+
+    expect(path.dirname(createdPath)).toBe(secureTempDir);
+    expect(fs.existsSync(secureTempDir)).toBe(true);
+  });
+
+  it("falls back to the system temp dir when secure temp dir creation throws", async () => {
+    const originalTmpdir = process.env.TMPDIR;
+    const fakeTmpRoot = path.join(os.tmpdir(), `hipaa-fake-tmp-${Date.now()}`);
+    fs.writeFileSync(fakeTmpRoot, "not a directory");
+
+    process.env.TMPDIR = fakeTmpRoot;
+
+    try {
+      const m = makeManager();
+      const createdPath = m.createSecureTempPath("fallback");
+
+      expect(path.dirname(createdPath)).toBe(fakeTmpRoot);
+    } finally {
+      process.env.TMPDIR = originalTmpdir;
+      fs.unlinkSync(fakeTmpRoot);
+    }
+  });
 });
 
 // ─── secureFileCleanup ──────────────────────────────────────────────────────
@@ -324,6 +353,18 @@ describe("HipaaComplianceManager.secureFileCleanup", () => {
       true,
     );
   });
+
+  it("calls garbage collection when clearing sensitive data and gc is available", () => {
+    const gc = vi.fn();
+    (global as typeof global & { gc?: () => void }).gc = gc;
+    const m = makeManager({ memoryProtection: true });
+    m.auditLog("file_scan", { action: "scan", success: true });
+
+    m.clearSensitiveData();
+
+    expect(gc).toHaveBeenCalledTimes(1);
+    delete (global as typeof global & { gc?: () => void }).gc;
+  });
 });
 
 // ─── module-level helpers ───────────────────────────────────────────────────
@@ -369,6 +410,15 @@ describe("createHipaaError", () => {
     const err = createHipaaError("plain", "ctx");
     expect(err).toBeInstanceOf(Error);
   });
+
+  it("returns the raw error when the module has no initialized manager", async () => {
+    vi.resetModules();
+    const hipaa = await import("../src/hipaa-compliance");
+    const raw = new Error("raw error");
+
+    expect(hipaa.createHipaaError(raw)).toBe(raw);
+    expect(hipaa.createHipaaError("string only").message).toBe("string only");
+  });
 });
 
 // ─── HipaaTemp ──────────────────────────────────────────────────────────────
@@ -400,5 +450,39 @@ describe("HipaaTemp", () => {
       fs.writeFileSync(tmpPath, "data");
       await expect(HipaaTemp.cleanup(tmpPath)).resolves.toBeUndefined();
     });
+  });
+
+  it("uses plain temp utilities when no manager is initialized in a fresh module", async () => {
+    vi.resetModules();
+    const hipaa = await import("../src/hipaa-compliance");
+    const tmpPath = path.join(os.tmpdir(), `hipaa-temp-fresh-${Date.now()}.bin`);
+    fs.writeFileSync(tmpPath, "data");
+
+    const createdPath = hipaa.HipaaTemp.createPath("fresh");
+
+    expect(path.dirname(createdPath)).toBe(os.tmpdir());
+    await expect(hipaa.HipaaTemp.cleanup(tmpPath)).resolves.toBeUndefined();
+  });
+});
+
+describe("HipaaComplianceManager.audit log file writing", () => {
+  it("writes audit events to the configured log file", async () => {
+    const auditLogPath = path.join(os.tmpdir(), `hipaa-audit-${Date.now()}.log`);
+    const m = makeManager({ auditLogPath });
+
+    m.auditLog("file_scan", { action: "scan", success: true });
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    const contents = fs.readFileSync(auditLogPath, "utf8");
+    expect(contents).toContain('"eventType":"file_scan"');
+
+    fs.unlinkSync(auditLogPath);
+  });
+
+  it("silently ignores audit log write failures", async () => {
+    const m = makeManager({ auditLogPath: "/no/such/dir/audit.log" });
+
+    expect(() => m.auditLog("file_scan", { action: "scan", success: true })).not.toThrow();
+    await new Promise((resolve) => setTimeout(resolve, 10));
   });
 });

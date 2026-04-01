@@ -233,7 +233,7 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
     opts.enableDecompilation
   ) {
     const depth =
-      preset === "decompilation-deep"
+      preset === "decompilation-deep" || preset === "malware-analysis"
         ? "deep"
         : preset === "decompilation-basic"
           ? "basic"
@@ -295,13 +295,6 @@ export function createPresetScanner(preset: PresetName, opts: PresetOptions = {}
   // Add other scanners for advanced presets
   if (preset === "advanced" || preset === "malware-analysis") {
     // CommonHeuristicsScanner is already added above for all presets
-  }
-
-  if (scanners.length === 0) {
-    // Fallback scanner that returns no matches
-    return async (_input: any, _ctx?: any) => {
-      return [] as Match[];
-    };
   }
 
   return composeScanners(...scanners);
