@@ -40,8 +40,21 @@ const keywordList = Array.isArray(keywords)
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
-const jsonLdNodes = Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : [];
+const jsonLdNodes = (Array.isArray(jsonLd) ? jsonLd : jsonLd ? [jsonLd] : []).map((node) => {
+  if (!node || typeof node !== 'object') {
+    throw new TypeError('SEOHead expects jsonLd to be an object or array of objects.');
+  }
+
+  return node;
+});
 const robots = noindex ? 'noindex,nofollow' : 'index,follow,max-image-preview:large';
+const serializeJsonLd = (node) =>
+  JSON.stringify(node)
+    .replace(/</g, '\\u003C')
+    .replace(/>/g, '\\u003E')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
 ---
 <title>{title}</title>
 <meta name="description" content={description} />
@@ -72,5 +85,5 @@ const robots = noindex ? 'noindex,nofollow' : 'index,follow,max-image-preview:la
 <meta name="twitter:image:alt" content={imageAlt} />
 
 {jsonLdNodes.length > 0 && (
-  jsonLdNodes.map((node) => <script type="application/ld+json" set:html={JSON.stringify(node)} />)
+  jsonLdNodes.map((node) => <script type="application/ld+json" set:html={serializeJsonLd(node)} />)
 )}
