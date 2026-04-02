@@ -1,8 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
 
-// Client‑only demo: no network calls. We scan in the browser and never upload files.
-// Shows: choose button + dropzone, progress, log, and simple detections (magic bytes + EICAR).
-
 type Verdict = 'malicious' | 'clean' | 'suspicious';
 
 type ScanFinding = {
@@ -16,57 +13,116 @@ type ScanResult = {
   fileName: string;
   size: number;
   mime: string;
+  browserMime: string;
   ext: string;
   verdict: Verdict;
   findings: ScanFinding[];
+  notes: string[];
 };
 
 const EICAR_ASCII =
   'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*';
+const EICAR_BYTES = new TextEncoder().encode(EICAR_ASCII);
+const PDF_RISK_TOKENS = ['/JavaScript', '/OpenAction', '/AA', '/Launch'];
+const SVG_RISK_TOKENS = ['<script', 'onload=', 'foreignobject'];
+const MIME_BY_EXT: Record<string, string> = {
+  exe: 'application/x-msdownload',
+  jpeg: 'image/jpeg',
+  jpg: 'image/jpeg',
+  json: 'application/json',
+  pdf: 'application/pdf',
+  png: 'image/png',
+  svg: 'image/svg+xml',
+  txt: 'text/plain',
+  zip: 'application/zip',
+};
 
-const asBytes = (s: string) => new TextEncoder().encode(s);
-const EICAR_BYTES = asBytes(EICAR_ASCII);
+const textDecoder = new TextDecoder();
 
 function findBytes(hay: Uint8Array, needle: Uint8Array): number {
-  // naive search (fine for demo)
   outer: for (let i = 0; i <= hay.length - needle.length; i++) {
     for (let j = 0; j < needle.length; j++) {
       if (hay[i + j] !== needle[j]) continue outer;
     }
     return i;
   }
+
   return -1;
 }
 
-function getExt(name: string) {
-  const m = name.toLowerCase().match(/\.([a-z0-9]+)$/);
-  return m ? m[1] : '';
+function readTextPrefix(buf: Uint8Array, limit = 65536): string {
+  return textDecoder.decode(buf.subarray(0, Math.min(buf.length, limit))).toLowerCase();
+}
+
+function getExt(name: string): string {
+  const match = name.toLowerCase().match(/\.([a-z0-9]+)$/);
+  return match ? match[1] : '';
 }
 
 function detectMime(buf: Uint8Array): string {
   const h = buf.subarray(0, 16);
   const hex = (n: number) => n.toString(16).padStart(2, '0');
   const sig = Array.from(h).map(hex).join('');
+
   if (sig.startsWith('89504e470d0a1a0a')) return 'image/png';
   if (sig.startsWith('ffd8ff')) return 'image/jpeg';
   if (sig.startsWith('25504446')) return 'application/pdf';
   if (sig.startsWith('504b0304')) return 'application/zip';
-  if (sig.startsWith('7b0a') || sig.startsWith('7b22')) return 'application/json';
-  // basic text check
+  if (sig.startsWith('4d5a')) return 'application/x-msdownload';
+
+  const prefix = readTextPrefix(buf, 4096);
+
+  if (prefix.includes('<svg')) return 'image/svg+xml';
+  if (prefix.trimStart().startsWith('{') || prefix.trimStart().startsWith('[')) {
+    return 'application/json';
+  }
+
   const ascii = buf.slice(0, 1024);
   const printable = ascii.every((b) => b === 9 || b === 10 || b === 13 || (b >= 32 && b <= 126));
   return printable ? 'text/plain' : 'application/octet-stream';
 }
 
-function bytesToSize(n: number) {
-  const u = ['B', 'KB', 'MB', 'GB'];
-  let i = 0;
-  let v = n;
-  while (v >= 1024 && i < u.length - 1) {
-    v /= 1024;
-    i++;
+function bytesToSize(n: number): string {
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let index = 0;
+  let value = n;
+
+  while (value >= 1024 && index < units.length - 1) {
+    value /= 1024;
+    index++;
   }
-  return `${v.toFixed(1)} ${u[i]}`;
+
+  return `${value.toFixed(1)} ${units[index]}`;
+}
+
+function verdictClasses(verdict: Verdict): string {
+  if (verdict === 'malicious') {
+    return 'border border-red-200 bg-red-50 text-red-700';
+  }
+
+  if (verdict === 'suspicious') {
+    return 'border border-amber-200 bg-amber-50 text-amber-800';
+  }
+
+  return 'border border-emerald-200 bg-emerald-50 text-emerald-700';
+}
+
+function findingClasses(severity: ScanFinding['severity']): string {
+  if (severity === 'high') return 'bg-red-500';
+  if (severity === 'medium') return 'bg-amber-500';
+  return 'bg-sky-500';
+}
+
+function verdictFromFindings(findings: ScanFinding[]): Verdict {
+  if (findings.some((finding) => finding.severity === 'high')) {
+    return 'malicious';
+  }
+
+  if (findings.length > 0) {
+    return 'suspicious';
+  }
+
+  return 'clean';
 }
 
 export default function DemoUpload() {
@@ -76,205 +132,300 @@ export default function DemoUpload() {
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const push = (s: string) => setLog((L) => [s, ...L]);
+  const push = (message: string) => setLog((existing) => [message, ...existing]);
 
   const scanFile = useCallback(async (file: File): Promise<ScanResult> => {
-    // Read file
     const buf = new Uint8Array(await file.arrayBuffer());
     const mime = detectMime(buf);
     const ext = getExt(file.name);
-
+    const browserMime = file.type || 'not reported';
     const findings: ScanFinding[] = [];
-    let verdict: Verdict = 'clean';
+    const notes: string[] = [];
+    const prefix = readTextPrefix(buf);
+    const expectedMime = ext ? MIME_BY_EXT[ext] : undefined;
 
-    // EICAR detection (ASCII sequence)
     if (findBytes(buf, EICAR_BYTES) !== -1) {
       findings.push({
-        id: 'EICAR',
+        id: 'eicar-test-string',
         title: 'EICAR test string found',
         description:
-          'This is a harmless test string used to verify anti‑virus pipelines. It is flagged to prove the demo is wired up.',
+          'This harmless test string is commonly used to verify that a malware-detection path is wired up end to end.',
         severity: 'high',
       });
-      verdict = 'malicious';
     }
 
-    // Suspicious heuristics (demo only)
-    if (mime === 'application/octet-stream' && file.size > 5 * 1024 * 1024) {
+    if (expectedMime && expectedMime !== mime) {
       findings.push({
-        id: 'opaque-large',
-        title: 'Large opaque binary',
-        description: 'Large unknown binaries may warrant deeper inspection.',
+        id: 'extension-mismatch',
+        title: 'Extension does not match detected type',
+        description: `The filename suggests ${expectedMime}, but the first bytes look like ${mime}.`,
         severity: 'medium',
       });
-      verdict = verdict === 'malicious' ? 'malicious' : 'suspicious';
+    }
+
+    if (
+      file.type &&
+      file.type !== mime &&
+      file.type !== 'application/octet-stream' &&
+      !(file.type === 'text/plain' && mime === 'application/json')
+    ) {
+      findings.push({
+        id: 'browser-mime-mismatch',
+        title: 'Browser MIME does not match detected type',
+        description: `The browser reported ${file.type}, but the preview detected ${mime}.`,
+        severity: 'low',
+      });
+    }
+
+    if (mime === 'application/pdf') {
+      const tokens = PDF_RISK_TOKENS.filter((token) => prefix.includes(token.toLowerCase()));
+      if (tokens.length > 0) {
+        findings.push({
+          id: 'pdf-risky-actions',
+          title: 'Risky PDF actions detected',
+          description: `Found PDF markers such as ${tokens.join(', ')}.`,
+          severity: 'medium',
+        });
+      }
+    }
+
+    if (mime === 'image/svg+xml') {
+      const tokens = SVG_RISK_TOKENS.filter((token) => prefix.includes(token));
+      if (tokens.length > 0) {
+        findings.push({
+          id: 'svg-active-content',
+          title: 'Active SVG content detected',
+          description: `Found SVG markers such as ${tokens.join(', ')}.`,
+          severity: 'medium',
+        });
+      }
+    }
+
+    if (mime === 'application/x-msdownload') {
+      findings.push({
+        id: 'pe-header',
+        title: 'Executable header detected',
+        description: 'The file starts with an MZ header and should not be treated like a normal document upload.',
+        severity: 'medium',
+      });
+    }
+
+    if (mime === 'application/octet-stream' && file.size > 5 * 1024 * 1024) {
+      findings.push({
+        id: 'opaque-binary',
+        title: 'Large opaque binary',
+        description: 'Unknown binaries usually need a stricter backend policy than a normal form upload.',
+        severity: 'medium',
+      });
+    }
+
+    if (mime === 'application/zip') {
+      notes.push(
+        'Archive bytes detected. This browser preview does not unpack ZIPs. Real backend integration adds traversal, expansion, entry-count, and nesting checks.',
+      );
+    }
+
+    if (findings.length === 0) {
+      notes.push(
+        'No preview-visible findings. Server-side policy, archive controls, and optional YARA still belong on the real upload path.',
+      );
     }
 
     return {
       fileName: file.name,
       size: file.size,
       mime,
+      browserMime,
       ext,
-      verdict,
+      verdict: verdictFromFindings(findings),
       findings,
+      notes,
     };
   }, []);
 
   const handleFiles = useCallback(
     async (files: FileList | null) => {
       if (!files || files.length === 0) return;
+
       setProgress(0);
       const next: ScanResult[] = [];
+
       for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        push(`Scanning ${f.name} …`);
-        const r = await scanFile(f);
-        next.push(r);
+        const file = files[i];
+        push(`previewing ${file.name}`);
+        const result = await scanFile(file);
+        next.push(result);
         setProgress(Math.round(((i + 1) / files.length) * 100));
-        push(`${f.name} → ${r.verdict.toUpperCase()}`);
+        push(`${file.name} -> ${result.verdict}`);
       }
-      setResults((old) => [...next, ...old]);
+
+      setResults((existing) => [...next, ...existing]);
       setProgress(null);
     },
-    [scanFile]
+    [scanFile],
   );
 
   const onDrop = useCallback(
-    (e: React.DragEvent<HTMLDivElement>) => {
-      e.preventDefault();
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
       setDragOver(false);
-      handleFiles(e.dataTransfer.files);
+      void handleFiles(event.dataTransfer.files);
     },
-    [handleFiles]
+    [handleFiles],
   );
 
   return (
     <section className="space-y-6">
-      <div className="flex flex-col md:flex-row items-center gap-4">
+      <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+        <p className="font-semibold text-slate-900">Client-side preview only</p>
+        <p className="mt-2">
+          This widget reads selected files locally. It never uploads them, and it does not claim to run the full backend policy path.
+        </p>
+      </div>
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <button
           onClick={() => inputRef.current?.click()}
-          className="w-full md:w-auto inline-flex items-center justify-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all transform hover:scale-105 hover:from-blue-700 hover:to-purple-700"
+          className="action-primary w-full sm:w-auto"
+          type="button"
         >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-          </svg>
-          Choose file(s) and scan
+          Choose file(s)
         </button>
         <input
           ref={inputRef}
           type="file"
           multiple
           className="hidden"
-          onChange={(e) => handleFiles(e.currentTarget.files)}
+          onChange={(event) => {
+            void handleFiles(event.currentTarget.files);
+            event.currentTarget.value = '';
+          }}
         />
-        <p className="text-sm text-gray-500 italic">Files are scanned entirely in your browser. Nothing is uploaded.</p>
+        <p className="text-sm leading-6 text-slate-600">
+          Files stay in your browser for this preview.
+        </p>
       </div>
 
       <div
-        onDragOver={(e) => {
-          e.preventDefault();
+        onDragOver={(event) => {
+          event.preventDefault();
           setDragOver(true);
         }}
         onDragLeave={() => setDragOver(false)}
         onDrop={onDrop}
-        className={`relative border-3 border-dashed rounded-2xl p-12 text-center transition-all ${
-          dragOver 
-            ? 'border-blue-500 bg-blue-50 scale-105' 
-            : 'border-gray-300 bg-gray-50 hover:border-gray-400'
+        className={`rounded-[1.75rem] border border-dashed p-8 text-center transition ${
+          dragOver
+            ? 'border-sky-400 bg-sky-50'
+            : 'border-slate-300 bg-white/80 hover:border-slate-400'
         }`}
       >
-        <div className="flex flex-col items-center gap-4">
-          <div className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-            dragOver ? 'bg-blue-500 scale-110' : 'bg-gray-200'
-          }`}>
-            <svg className={`w-10 h-10 ${dragOver ? 'text-white' : 'text-gray-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-lg font-semibold text-gray-700">Drag & drop files here</p>
-            <p className="text-sm text-gray-500 mt-1">or click the button above to select</p>
-          </div>
-        </div>
+        <p className="text-base font-semibold tracking-tight text-slate-950">
+          Drag files here to preview a verdict
+        </p>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          Useful tests: a normal PDF or PNG, a renamed file, or a text file containing the EICAR test string.
+        </p>
       </div>
 
       {progress !== null && (
-        <div className="glass rounded-xl p-5 border-2 border-blue-200">
-          <div className="flex justify-between items-center mb-3">
-            <span className="font-semibold text-gray-700">Scanning files...</span>
-            <span className="text-sm font-bold text-blue-600">{progress.toFixed(0)}%</span>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div className="flex items-center justify-between gap-3 text-sm">
+            <span className="font-medium text-slate-900">Reading selected files</span>
+            <span className="font-semibold text-slate-700">{progress.toFixed(0)}%</span>
           </div>
-          <div className="h-3 w-full bg-gray-200 rounded-full overflow-hidden">
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-200">
             <div
-              className="h-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all duration-300 ease-out"
+              className="h-2 rounded-full bg-slate-900 transition-all duration-300"
               style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
             />
           </div>
         </div>
       )}
 
+      {results.length === 0 && (
+        <div className="rounded-2xl border border-slate-200 bg-white/85 p-5">
+          <p className="text-sm font-semibold text-slate-900">What makes this preview useful</p>
+          <ul className="mt-3 list-disc space-y-2 pl-5 text-sm leading-6 text-slate-600">
+            <li>Try a file whose extension does not match its actual bytes.</li>
+            <li>Try a ZIP to see where the browser preview stops and the server path begins.</li>
+            <li>Try an EICAR test file to confirm how a high-confidence verdict is presented.</li>
+          </ul>
+        </div>
+      )}
+
       {results.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500 to-emerald-600 flex items-center justify-center">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-            </div>
-            <h3 className="text-xl font-bold">Scan Results</h3>
+        <div className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Preview results</h3>
+            <span className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              {results.length} file{results.length === 1 ? '' : 's'}
+            </span>
           </div>
           <ul className="space-y-3">
-            {results.map((r, i) => (
-              <li key={i} className="glass rounded-2xl p-5 border-2 border-transparent hover:border-blue-300 transition-all">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="font-mono text-base font-semibold text-gray-800 break-all">{r.fileName}</div>
-                    <div className="text-sm text-gray-600 mt-1 flex flex-wrap gap-3">
-                      <span className="inline-flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
-                        {bytesToSize(r.size)}
-                      </span>
-                      <span>•</span>
-                      <span>{r.mime}</span>
-                      {r.ext && (
-                        <>
-                          <span>•</span>
-                          <span className="font-mono">.{r.ext}</span>
-                        </>
-                      )}
+            {results.map((result, index) => (
+              <li
+                key={`${result.fileName}-${index}`}
+                className="rounded-2xl border border-slate-200 bg-white/90 p-5 shadow-[0_18px_50px_-38px_rgba(15,23,42,0.5)]"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1">
+                    <div className="break-all font-mono text-sm font-semibold text-slate-900">
+                      {result.fileName}
+                    </div>
+                    <div className="mt-3 grid gap-2 text-sm leading-6 text-slate-600 sm:grid-cols-2">
+                      <div>
+                        <span className="font-medium text-slate-900">Detected type:</span> {result.mime}
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-900">Browser MIME:</span> {result.browserMime}
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-900">Extension:</span>{' '}
+                        {result.ext ? `.${result.ext}` : 'none'}
+                      </div>
+                      <div>
+                        <span className="font-medium text-slate-900">Size:</span> {bytesToSize(result.size)}
+                      </div>
                     </div>
                   </div>
+
                   <span
-                    className={`inline-flex items-center gap-2 text-sm font-bold px-5 py-2 rounded-full whitespace-nowrap ${
-                      r.verdict === 'malicious'
-                        ? 'bg-red-100 text-red-700 border-2 border-red-300'
-                        : r.verdict === 'suspicious'
-                        ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-300'
-                        : 'bg-green-100 text-green-700 border-2 border-green-300'
-                    }`}
+                    className={`inline-flex rounded-full px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] ${verdictClasses(result.verdict)}`}
                   >
-                    {r.verdict === 'malicious' && '✗'}
-                    {r.verdict === 'clean' && '✓'}
-                    {r.verdict === 'suspicious' && '⚠'}
-                    {r.verdict.toUpperCase()}
+                    {result.verdict}
                   </span>
                 </div>
-                {r.findings.length > 0 && (
-                  <ul className="mt-4 space-y-2">
-                    {r.findings.map((f) => (
-                      <li key={f.id} className="flex items-start gap-3 bg-white/50 rounded-lg p-3 border border-gray-200">
-                        <div className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
-                          f.severity === 'high' ? 'bg-red-500' : f.severity === 'medium' ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}></div>
-                        <div className="text-sm">
-                          <span className="font-semibold text-gray-800">{f.title}</span>
-                          {f.description && <span className="text-gray-600"> — {f.description}</span>}
-                        </div>
-                      </li>
+
+                {result.findings.length > 0 && (
+                  <div className="mt-4">
+                    <p className="text-sm font-semibold text-slate-900">Signals</p>
+                    <ul className="mt-3 space-y-2">
+                      {result.findings.map((finding) => (
+                        <li
+                          key={finding.id}
+                          className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600"
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`mt-2 h-2 w-2 flex-shrink-0 rounded-full ${findingClasses(finding.severity)}`}
+                            />
+                            <div>
+                              <div className="font-semibold text-slate-900">{finding.title}</div>
+                              {finding.description && <p className="mt-1">{finding.description}</p>}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {result.notes.length > 0 && (
+                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm leading-6 text-slate-600">
+                    {result.notes.map((note, noteIndex) => (
+                      <p key={`${result.fileName}-note-${noteIndex}`}>{note}</p>
                     ))}
-                  </ul>
+                  </div>
                 )}
               </li>
             ))}
@@ -283,17 +434,15 @@ export default function DemoUpload() {
       )}
 
       {log.length > 0 && (
-        <details className="glass rounded-2xl p-5 border-2 border-gray-200">
-          <summary className="font-semibold text-gray-700 cursor-pointer hover:text-blue-600 transition-colors flex items-center gap-2">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            Scan Log ({log.length} entries)
-          </summary>
-          <ul className="mt-4 space-y-1 max-h-64 overflow-y-auto">
-            {log.map((l, i) => (
-              <li key={i} className="font-mono text-sm text-gray-600 bg-gray-50 rounded px-3 py-1">
-                {l}
+        <details className="rounded-2xl border border-slate-200 bg-white/85 p-4 text-sm leading-6 text-slate-600">
+          <summary className="cursor-pointer font-semibold text-slate-900">Preview log</summary>
+          <ul className="mt-3 space-y-2">
+            {log.map((entry, index) => (
+              <li
+                key={`${entry}-${index}`}
+                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 font-mono text-xs text-slate-600"
+              >
+                {entry}
               </li>
             ))}
           </ul>

@@ -1,82 +1,25 @@
-<div align="center">
-  <img src="assets/logo.svg" alt="Pompelmi logo" width="160" />
-  <h1>Pompelmi — in-process file upload security for Node.js</h1>
-  <p>Scan and block risky uploads before storage — no cloud API, no daemon, no required data egress.</p>
-  <p>
-    <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm version" src="https://img.shields.io/npm/v/pompelmi"></a>
-    <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img alt="CI" src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?label=ci"></a>
-    <a href="https://codecov.io/gh/pompelmi/pompelmi"><img alt="Codecov" src="https://codecov.io/gh/pompelmi/pompelmi/branch/main/graph/badge.svg?flag=core"></a>
-    <a href="https://github.com/pompelmi/pompelmi/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/pompelmi/pompelmi"></a>
-    <a href="https://www.npmjs.com/package/pompelmi"><img alt="npm downloads" src="https://img.shields.io/npm/dm/pompelmi"></a>
-  </p>
-  <p>
-    <a href="https://github.com/sorrycc/awesome-javascript"><img alt="Mentioned in Awesome JavaScript" src="https://img.shields.io/badge/mentioned-Awesome%20JavaScript-f59e0b"></a>
-    <a href="https://github.com/dzharii/awesome-typescript"><img alt="Mentioned in Awesome TypeScript" src="https://img.shields.io/badge/mentioned-Awesome%20TypeScript-3178C6"></a>
-    <a href="https://nodeweekly.com/issues/594"><img alt="Featured in Node Weekly #594" src="https://img.shields.io/badge/featured-Node%20Weekly%20%23594-339933?logo=node.js&logoColor=white"></a>
-    <a href="https://bytes.dev/archives/429"><img alt="Featured in Bytes #429" src="https://img.shields.io/badge/featured-Bytes%20%23429-111111"></a>
-  </p>
-  <p>
-    <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon"><img alt="Featured in Detection Engineering Weekly #124" src="https://img.shields.io/badge/featured-Detection%20Engineering%20Weekly%20%23124-0A84FF?logo=substack&logoColor=white"></a>
-    <a href="https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/"><img alt="Featured on Stack Overflow by Ryan Donovan" src="https://img.shields.io/badge/featured-Stack%20Overflow-F48024?logo=stackoverflow&logoColor=white"></a>
-    <a href="https://stackoverflow.blog/newsletter/issue-319-dogfooding-your-sdlc/"><img alt="Featured in The Overflow #319" src="https://img.shields.io/badge/featured-The%20Overflow%20%23319-F48024?logo=stackoverflow&logoColor=white"></a>
-    <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img alt="Featured in Help Net Security" src="https://img.shields.io/badge/featured-Help%20Net%20Security-2563eb"></a>
-  </p>
-</div>
+# Pompelmi
 
-> **Why:** Upload endpoints are part of your attack surface. Pompelmi inspects untrusted files _before_ they hit storage or downstream processors.
-> **How:** in-process scanning + policy packs (MIME sniffing, archive abuse checks, risky structures) with optional YARA.
-> **Works with:** Express, Next.js, NestJS, Fastify, Koa (plus adapters in `packages/`).
+In-process file upload security for Node.js. Inspect untrusted files before storage so your application can reject, quarantine, or accept with context.
 
-## Demo
+[![npm version](https://img.shields.io/npm/v/pompelmi)](https://www.npmjs.com/package/pompelmi)
+[![CI](https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?label=ci)](https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml)
+[![GitHub stars](https://img.shields.io/github/stars/pompelmi/pompelmi)](https://github.com/pompelmi/pompelmi/stargazers)
 
-![Pompelmi demo](assets/malware-detection-node-demo.gif)
+Pompelmi helps reduce:
 
-## Install
+- MIME / extension spoofing and magic-byte mismatches
+- risky archive structures such as ZIP bombs, traversal, and deep nesting
+- risky document and binary patterns such as PDF actions, Office macro hints, PE signatures, and polyglot files
+- store-first upload flows that need a clean / suspicious / malicious verdict before persistence
+- known malicious matches when you plug in YARA or another scanner
 
-```bash
-npm install pompelmi
-```
-
-Requires Node.js 18+.
-
-## Try in 5 minutes
-
-1. Install:
-
-```bash
-npm install pompelmi
-```
-
-2. Create `scan-test.mjs`:
-
-```js
-import { scanBytes } from "pompelmi";
-import { readFileSync } from "node:fs";
-
-const buffer = readFileSync("./package.json");
-
-const report = await scanBytes(buffer, {
-  filename: "package.json",
-  mimeType: "application/json",
-});
-
-console.log("Verdict:", report.verdict);
-console.log("Reasons:", report.reasons);
-console.log("Duration:", report.durationMs, "ms");
-```
-
-3. Run it:
-
-```bash
-node scan-test.mjs
-```
-
-Next: see the demo under [examples/demo](./examples/demo) (upload route) or the docs [Getting started](https://pompelmi.github.io/pompelmi/getting-started/) guide.
+Install: `npm install pompelmi`
 
 ## Quick Start
 
 ```ts
-import { scanBytes, STRICT_PUBLIC_UPLOAD } from "pompelmi";
+import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
 const report = await scanBytes(file.buffer, {
   filename: file.originalname,
@@ -85,51 +28,76 @@ const report = await scanBytes(file.buffer, {
   failClosed: true,
 });
 
-if (report.verdict !== "clean") {
+if (report.verdict !== 'clean') {
   return res.status(422).json({
-    error: "Upload blocked",
+    error: 'Upload blocked',
     verdict: report.verdict,
     reasons: report.reasons,
   });
 }
 ```
 
-## Start Here
+Need a local scan in under a minute? Start with [Getting started](https://pompelmi.github.io/pompelmi/getting-started/). Want a preview of the verdict flow first? Open the [browser preview](https://pompelmi.github.io/pompelmi/#browser-preview). Want a minimal server route? See [examples/demo](./examples/demo).
 
-- Express: [Docs](https://pompelmi.github.io/pompelmi/how-to/express/) · [Examples](./examples/express-minimal)
-- Next.js: [Docs](https://pompelmi.github.io/pompelmi/how-to/nextjs/) · [Examples](./examples/next-app-router)
+If Pompelmi fits the way you handle upload risk, a GitHub star helps more Node.js teams find the project.
+
+## Why It Exists
+
+Upload endpoints are part of your attack surface. A file can look harmless at the form layer and only become dangerous after storage, extraction, rendering, or downstream parsing.
+
+Pompelmi keeps the first decision inside the application path, where the route still knows the file class, the trust level, and the right failure mode.
+
+## Where It Fits
+
+- public or semi-trusted upload endpoints that should inspect first and store later
+- memory-backed multipart routes in Express, Next.js, NestJS, Fastify, and Koa
+- quarantine and promotion workflows for S3 or other object storage
+- document, image, and archive routes that need different policies
+- CI/CD or internal artifact scanning before promotion
+
+## Integrations
+
+- Express: [Docs](https://pompelmi.github.io/pompelmi/how-to/express/) · [Example](./examples/express-minimal)
+- Next.js: [Docs](https://pompelmi.github.io/pompelmi/how-to/nextjs/) · [Example](./examples/next-app-router)
 - NestJS: [Docs](https://pompelmi.github.io/pompelmi/how-to/nestjs/) · [Example app](./examples/nestjs-app)
 - Fastify: [Docs](https://pompelmi.github.io/pompelmi/how-to/fastify/) · [Package](./packages/fastify-plugin)
 - Koa: [Docs](https://pompelmi.github.io/pompelmi/how-to/koa/) · [Package](./packages/koa-middleware)
-- CI/CD: [Use case](https://pompelmi.github.io/pompelmi/use-cases/cicd-artifact-scanning/) · [Blog](https://pompelmi.github.io/pompelmi/blog/cicd-scan-build-artifacts/)
+- Nuxt/Nitro: [Docs](https://pompelmi.github.io/pompelmi/how-to/nuxt-nitro/)
 - S3 / object storage: [Tutorial](https://pompelmi.github.io/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/) · [Use case](https://pompelmi.github.io/pompelmi/use-cases/s3-presigned-upload-security/)
+- CI/CD: [Use case](https://pompelmi.github.io/pompelmi/use-cases/cicd-artifact-scanning/) · [Blog](https://pompelmi.github.io/pompelmi/blog/cicd-scan-build-artifacts/)
 
-## Go Deeper
+## Docs and Examples
 
 - [Docs home](https://pompelmi.github.io/pompelmi/)
+- [Getting started](https://pompelmi.github.io/pompelmi/getting-started/)
 - [Use cases](https://pompelmi.github.io/pompelmi/use-cases/)
 - [Comparisons](https://pompelmi.github.io/pompelmi/comparisons/)
 - [Tutorials](https://pompelmi.github.io/pompelmi/tutorials/)
-- [Featured in](https://pompelmi.github.io/pompelmi/featured-in/)
-- [Translations](https://pompelmi.github.io/pompelmi/translations/)
 - [Examples index](./examples/README.md)
 - [Demo example](./examples/demo)
+- [Featured in](https://pompelmi.github.io/pompelmi/featured-in/)
+- [Translations](https://pompelmi.github.io/pompelmi/translations/)
 - [Contributing](./CONTRIBUTING.md)
 - [Security](./SECURITY.md)
 - [Roadmap](./ROADMAP.md)
 
+## Demo
+
+![Pompelmi demo](assets/malware-detection-node-demo.gif)
+
+The website includes a client-side [browser preview](https://pompelmi.github.io/pompelmi/#browser-preview) for fast evaluation. The repo also ships a minimal [Express upload gate demo](./examples/demo) that returns `clean`, `suspicious`, or `malicious` before storage.
+
 ## What It Checks
 
-Upload endpoints are part of your attack surface. A renamed executable, a risky PDF, or a hostile archive can look harmless until it is stored, unpacked, served, or parsed by another system.
+Pompelmi is designed for the upload boundary, not as a full antivirus replacement.
 
-Pompelmi adds checks at the upload boundary for:
+It can combine:
 
-- MIME spoofing and magic-byte mismatches
-- Archive abuse such as ZIP bombs, traversal, and deep nesting
-- Polyglot files and risky document structures
-- Optional YARA-based signature matching
-
-The goal is simple: inspect first, store later.
+- MIME sniffing, magic-byte checks, and extension allowlists
+- archive controls such as ZIP bombs, traversal, entry counts, expansion limits, and nesting limits
+- common heuristics for risky PDFs, Office macro hints, executables, and other suspicious structures
+- optional YARA-based signature matching
+- route-level `clean`, `suspicious`, and `malicious` decisions with quarantine-friendly workflows
 
 ## Ecosystem
 

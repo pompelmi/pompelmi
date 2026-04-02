@@ -9,7 +9,7 @@
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/pompelmi/favicon.svg",
+      "src": "/pompelmi/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

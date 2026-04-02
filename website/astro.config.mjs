@@ -54,7 +54,7 @@ export default defineConfig({
     { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
     { tag: 'meta', attrs: { name: 'theme-color', content: '#0f172a' } },
     { tag: 'meta', attrs: { name: 'robots', content: 'index,follow,max-image-preview:large' } },
-    { tag: 'link', attrs: { rel: 'icon', href: '/pompelmi/favicon.svg' } },
+    { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: '/pompelmi/logo.svg' } },
     { tag: 'link', attrs: { rel: 'manifest', href: '/pompelmi/site.webmanifest' } },
   ],
 

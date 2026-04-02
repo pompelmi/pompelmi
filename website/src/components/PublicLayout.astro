@@ -73,8 +73,8 @@ const footerGroups = [
       modifiedTime={modifiedTime}
       section={section}
     />
-    <link rel="icon" href="/pompelmi/favicon.svg" />
-    <link rel="manifest" href="/pompelmi/site.webmanifest" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href={withBase('logo.svg')} />
+    <link rel="manifest" href={withBase('site.webmanifest')} />
   </head>
   <body class="site-shell min-h-screen text-slate-900 antialiased">
     <a href="#main-content" class="skip-link">Skip to content</a>
