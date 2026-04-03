@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="72" y1="48" x2="1118" y2="612" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#020617"/>
+      <stop offset="0.58" stop-color="#0F172A"/>
+      <stop offset="1" stop-color="#172554"/>
+    </linearGradient>
+    <radialGradient id="glowA" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(1012 126) rotate(143.58) scale(421 337)">
+      <stop stop-color="#0EA5E9" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#0EA5E9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(214 544) rotate(-17.27) scale(402 228)">
+      <stop stop-color="#F59E0B" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M36 0H0V36" stroke="#334155" stroke-width="1"/>
+    </pattern>
+    <filter id="shadow" x="652" y="64" width="468" height="494" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="18"/>
+      <feGaussianBlur stdDeviation="20"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.00784314 0 0 0 0 0.0666667 0 0 0 0 0.207843 0 0 0 0.45 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+    <filter id="softShadow" x="52" y="401" width="634" height="124" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+      <feOffset dy="12"/>
+      <feGaussianBlur stdDeviation="14"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.00784314 0 0 0 0 0.0666667 0 0 0 0 0.207843 0 0 0 0.28 0"/>
+      <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_1_1"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_1_1" result="shape"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" rx="0" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.24"/>
+  <rect x="48" y="48" width="1104" height="534" rx="28" stroke="#1E293B" stroke-width="1.5"/>
+  <circle cx="1012" cy="126" r="421" fill="url(#glowA)"/>
+  <circle cx="214" cy="544" r="286" fill="url(#glowB)"/>
+
+  <text x="84" y="96" fill="#7DD3FC" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="20" font-weight="700" letter-spacing="3.4">OPEN-SOURCE UPLOAD SECURITY FOR NODE.JS</text>
+
+  <text x="84" y="176" fill="#F8FAFC" font-family="Iowan Old Style, Georgia, serif" font-size="60" font-weight="600" letter-spacing="-1.6">
+    <tspan x="84" dy="0">Inspect untrusted</tspan>
+    <tspan x="84" dy="72">uploads before</tspan>
+    <tspan x="84" dy="72">storage</tspan>
+  </text>
+
+  <text x="84" y="364" fill="#CBD5E1" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="26" font-weight="500">
+    <tspan x="84" dy="0">MIME and extension spoofing, archive abuse, risky</tspan>
+    <tspan x="84" dy="36">document and binary signals, and optional YARA.</tspan>
+  </text>
+
+  <g filter="url(#softShadow)">
+    <rect x="84" y="429" width="574" height="68" rx="20" fill="#0F172A" fill-opacity="0.9" stroke="#1E293B" stroke-width="1.5"/>
+  </g>
+  <rect x="104" y="447" width="122" height="32" rx="16" fill="#1E293B"/>
+  <text x="124" y="468" fill="#E2E8F0" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">MIME spoofing</text>
+  <rect x="240" y="447" width="118" height="32" rx="16" fill="#1E293B"/>
+  <text x="264" y="468" fill="#E2E8F0" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">Archives</text>
+  <rect x="372" y="447" width="170" height="32" rx="16" fill="#1E293B"/>
+  <text x="394" y="468" fill="#E2E8F0" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">Risky documents</text>
+  <rect x="556" y="447" width="82" height="32" rx="16" fill="#7C2D12"/>
+  <text x="583" y="468" fill="#FDE68A" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">YARA</text>
+
+  <g filter="url(#shadow)">
+    <rect x="700" y="86" width="352" height="414" rx="28" fill="#F8FAFC"/>
+    <rect x="700.75" y="86.75" width="350.5" height="412.5" rx="27.25" stroke="#E2E8F0" stroke-width="1.5"/>
+  </g>
+
+  <text x="732" y="130" fill="#0C4A6E" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="18" font-weight="700" letter-spacing="2.2">ROUTE VERDICT</text>
+  <text x="732" y="168" fill="#0F172A" font-family="Iowan Old Style, Georgia, serif" font-size="34" font-weight="600" letter-spacing="-0.6">Inspect first, then store.</text>
+
+  <rect x="732" y="194" width="288" height="170" rx="20" fill="#020617"/>
+  <text x="756" y="234" fill="#7DD3FC" font-family="Menlo, Consolas, Monaco, monospace" font-size="17" font-weight="700">npm install pompelmi</text>
+  <text x="756" y="276" fill="#E2E8F0" font-family="Menlo, Consolas, Monaco, monospace" font-size="15">const report = await scanBytes(...)</text>
+  <text x="756" y="306" fill="#E2E8F0" font-family="Menlo, Consolas, Monaco, monospace" font-size="15">if (report.verdict !== 'clean') {</text>
+  <text x="774" y="336" fill="#FCA5A5" font-family="Menlo, Consolas, Monaco, monospace" font-size="15">return rejectUpload(report)</text>
+  <text x="756" y="366" fill="#E2E8F0" font-family="Menlo, Consolas, Monaco, monospace" font-size="15">}</text>
+
+  <rect x="732" y="392" width="78" height="34" rx="17" fill="#DCFCE7"/>
+  <text x="756" y="414" fill="#166534" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">clean</text>
+  <rect x="820" y="392" width="118" height="34" rx="17" fill="#FEF3C7"/>
+  <text x="846" y="414" fill="#92400E" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">suspicious</text>
+  <rect x="948" y="392" width="88" height="34" rx="17" fill="#FEE2E2"/>
+  <text x="966" y="414" fill="#B91C1C" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="16" font-weight="700">malicious</text>
+
+  <circle cx="748" cy="454" r="5" fill="#38BDF8"/>
+  <text x="764" y="460" fill="#334155" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="17" font-weight="600">Route-level decisions</text>
+  <circle cx="748" cy="484" r="5" fill="#38BDF8"/>
+  <text x="764" y="490" fill="#334155" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="17" font-weight="600">Archive and document checks</text>
+  <circle cx="748" cy="514" r="5" fill="#F59E0B"/>
+  <text x="764" y="520" fill="#334155" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="17" font-weight="600">Optional YARA when you need it</text>
+
+  <text x="84" y="566" fill="#FDBA74" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-1.5">pom</text>
+  <text x="190" y="566" fill="#FB4A3B" font-family="Avenir Next, Helvetica Neue, Arial, sans-serif" font-size="54" font-weight="700" letter-spacing="-1.5">pelmi</text>
+</svg>

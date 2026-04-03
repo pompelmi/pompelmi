@@ -9,6 +9,12 @@ Pompelmi is most useful when you treat uploaded files as untrusted input and mak
 
 If you want the wider architecture first, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/) before picking a framework-specific path.
 
+## Fastest ways to evaluate it
+
+- Want to inspect the verdict UX without sending a file anywhere? Open the [browser preview](/pompelmi/#browser-preview).
+- Want a real route with a form and JSON response? Run the [Express demo](https://github.com/pompelmi/pompelmi/tree/main/examples/demo).
+- Want the broader example set first? Start with the [examples index](https://github.com/pompelmi/pompelmi/tree/main/examples).
+
 ## 1. Install the core package
 
 ```bash

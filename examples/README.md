@@ -1,12 +1,14 @@
 # Examples
 
-This directory contains runnable examples for evaluating Pompelmi in real application flows.
+This directory contains runnable examples for evaluating Pompelmi in real upload flows.
 
 ## Start here
 
-- `demo/`: Small end-to-end upload demo with a browser form and JSON scan response.
+- `scan-one-file.ts`: Fastest local sanity check for `scanBytes()`.
+- `demo/`: Tiny Express upload gate with a browser form and JSON verdict response.
+- `express-minimal/`: Smallest server route you can adapt into a real application.
 
-## High-signal examples for production evaluation
+## Production-oriented examples
 
 - `express/production.ts`: Express upload endpoint with fail-closed policy and production scanner composition.
 - `quarantine-workflow.ts`: End-to-end quarantine and review flow using `pompelmi/quarantine` and `pompelmi/audit`.
@@ -27,9 +29,9 @@ This directory contains runnable examples for evaluating Pompelmi in real applic
 ## Suggested evaluation order
 
 1. Run `scan-one-file.ts` to verify local setup.
-2. Run `express/production.ts` to validate endpoint behavior.
-3. Run `quarantine-workflow.ts` to evaluate review/approval operations.
-4. Adapt policy values to your real upload profile.
+2. Run `demo/` or `express-minimal/` to see a real route-level verdict flow.
+3. Run `express/production.ts` or `quarantine-workflow.ts` to evaluate rollout patterns.
+4. Open the framework example closest to your stack.
 
 ## Running examples
 

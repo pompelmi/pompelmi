@@ -1,8 +1,14 @@
 # Demo (Express upload gate)
 
-![Demo GIF placeholder](./demo.gif)
+![Pompelmi Express upload gate demo](./demo.gif)
 
-This example runs a tiny Express server that scans an uploaded file before you store it.
+This example runs a tiny Express server that scans an uploaded file before storage and returns a route-level verdict.
+
+## What it shows
+
+- memory-backed multipart upload handling
+- `clean`, `suspicious`, or `malicious` JSON verdicts
+- HTTP `422` when the route blocks the upload
 
 ## Run
 
@@ -27,6 +33,7 @@ Open: http://localhost:3000
 curl -F "file=@package.json;type=application/json" http://localhost:3000/upload
 ```
 
-## Replace the GIF
+## Next step
 
-Replace `demo.gif` with a short screen recording once you're happy with the UX.
+- [Root README](../../README.md) for positioning, quick start, and proof points
+- [Getting started](https://pompelmi.github.io/pompelmi/getting-started/) for the broader integration path

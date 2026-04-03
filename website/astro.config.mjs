@@ -37,7 +37,7 @@ export default defineConfig({
     starlight({
   title: 'Pompelmi',
   description:
-    'In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, and risky document structures.',
+    'Open-source upload security for Node.js. Inspect untrusted files before storage with checks for spoofing, archive abuse, risky document and binary signals, and optional YARA.',
 
   // v0.33+ => social is an ARRAY of links
   social: [

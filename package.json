@@ -1,7 +1,7 @@
 {
   "name": "pompelmi",
-  "version": "0.35.2",
-  "description": "Secure file uploads for Node.js. Scan untrusted files before storage with in-process, local-first checks for MIME spoofing, archive bombs, risky document structures, and optional YARA.",
+  "version": "0.35.3",
+  "description": "Inspect untrusted uploads before storage in Node.js. Open-source upload security with checks for spoofing, archive abuse, risky document and binary signals, and optional YARA.",
   "main": "./dist/pompelmi.cjs",
   "module": "./dist/pompelmi.esm.js",
   "type": "module",

@@ -3,19 +3,23 @@ import PublicLayout from '../components/PublicLayout.astro';
 import DemoUpload from '../components/DemoUpload';
 import mentionsData from '../../../mentions/mentions.json';
 
+type Mention = (typeof mentionsData.items)[number];
+
 const basePath = import.meta.env.BASE_URL || '/';
 const to = (path = '') => `${basePath}${path.replace(/^\//, '')}`;
 const heroLogoPath = to('logo.svg');
 const quickStartSnippet = `import { scanBytes, STRICT_PUBLIC_UPLOAD } from 'pompelmi';
 
-const report = await scanBytes(file.buffer, {
-  filename: file.originalname,
-  mimeType: file.mimetype,
+const report = await scanBytes(req.file.buffer, {
+  filename: req.file.originalname,
+  mimeType: req.file.mimetype,
   policy: STRICT_PUBLIC_UPLOAD,
   failClosed: true,
 });
 
-if (report.verdict !== 'clean') return rejectUpload(report);`;
+if (report.verdict !== 'clean') {
+  return rejectUpload(report);
+}`;
 
 const startPaths = [
   { href: 'how-to/express/', label: 'Express', note: 'Multer with a memory-backed upload guard.' },
@@ -38,18 +42,23 @@ const useCases = [
 const orientation = [
   {
     href: 'comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/',
-    title: 'Why not just extension checks?',
-    note: 'Because filenames and client MIME claims are only the outermost layer.',
+    title: 'Browser MIME and extension checks',
+    note: 'Useful for fast UX hints, but filenames and client MIME claims are attacker-controlled.',
+  },
+  {
+    href: 'comparisons/file-type-validation-vs-malware-scanning/',
+    title: 'Simple file-type checks',
+    note: 'Useful for apparent type validation, but not risky internal structure or route policy decisions.',
   },
   {
     href: 'comparisons/pompelmi-vs-clamav-for-file-uploads/',
-    title: 'Why not just ClamAV?',
-    note: 'Signature scanning helps, but the upload gate still needs route-level and structural controls.',
+    title: 'Antivirus-only thinking',
+    note: 'Signature matches help, but upload routes still need spoofing checks and storage decisions.',
   },
   {
-    href: 'comparisons/pompelmi-vs-cloud-malware-scanning-apis/',
-    title: 'Why not a cloud API?',
-    note: 'Sending files to a third party changes the privacy and latency story for every upload.',
+    href: 'use-cases/quarantine-inspect-first-store-later/',
+    title: 'Route-level upload security',
+    note: 'Keep the first decision where the application still knows file class, trust level, and failure mode.',
   },
 ];
 
@@ -71,10 +80,33 @@ const featuredArticles = [
   },
 ];
 
-const featuredMentions = [...mentionsData.items]
-  .filter((item) => item.date)
-  .sort((a, b) => b.date.localeCompare(a.date))
-  .slice(0, 4);
+const featuredMentions = [
+  'Defense against uploads: Q&A with OSS file scanner, pompelmi',
+  'Pompelmi: Open-source secure file upload scanning for Node.js',
+  'Node Weekly Issue 594',
+  'Awesome JavaScript',
+]
+  .map((title) => mentionsData.items.find((item) => item.title === title))
+  .filter((item): item is Mention => Boolean(item));
+
+const heroProofLinks = [
+  {
+    href: 'https://nodeweekly.com/issues/594',
+    label: 'Node Weekly',
+  },
+  {
+    href: 'https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/',
+    label: 'Stack Overflow',
+  },
+  {
+    href: 'https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/',
+    label: 'Help Net Security',
+  },
+  {
+    href: 'https://github.com/sorrycc/awesome-javascript',
+    label: 'Awesome JavaScript',
+  },
+];
 
 const proofPoints = [
   {
@@ -136,14 +168,14 @@ const jsonLd = {
       name: 'Pompelmi',
       url: 'https://pompelmi.github.io/pompelmi/',
       description:
-        'In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks and optional YARA.',
+        'Open-source upload security for Node.js. Inspect untrusted files before storage with checks for spoofing, archive abuse, risky document and binary signals, and optional YARA.',
     },
     {
       '@type': 'WebPage',
       name: 'Pompelmi',
       url: 'https://pompelmi.github.io/pompelmi/',
       description:
-        'Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, risky document structures, and optional YARA.',
+        'Inspect untrusted files before storage with open-source upload security for Node.js, including spoofing checks, archive abuse detection, risky document and binary signals, and optional YARA.',
     },
     {
       '@type': 'Organization',
@@ -155,7 +187,7 @@ const jsonLd = {
       '@type': 'SoftwareSourceCode',
       name: 'Pompelmi',
       description:
-        'In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks and optional YARA.',
+        'Open-source upload security for Node.js. Inspect untrusted files before storage with checks for spoofing, archive abuse, risky document and binary signals, and optional YARA.',
       programmingLanguage: ['TypeScript', 'JavaScript'],
       runtimePlatform: 'Node.js',
       codeRepository: 'https://github.com/pompelmi/pompelmi',
@@ -167,14 +199,14 @@ const jsonLd = {
 
 <PublicLayout
   title="Pompelmi — Inspect untrusted uploads before storage"
-  description="In-process file upload security for Node.js. Inspect untrusted files before storage with local-first checks for spoofed files, archive abuse, risky document structures, and optional YARA."
+  description="Open-source upload security for Node.js. Inspect untrusted files before storage with checks for spoofing, archive abuse, risky document and binary signals, and optional YARA."
   jsonLd={jsonLd}
   keywords={[
-    'node.js file upload security',
+    'upload security node.js',
     'secure file uploads',
-    'upload malware scanning',
-    'zip bomb protection',
+    'file upload security',
     'mime sniffing',
+    'archive security',
     'yara node.js',
   ]}
 >
@@ -184,14 +216,21 @@ const jsonLd = {
         <p class="eyebrow">Open-source core · MIT · Node.js 18+</p>
         <img src={heroLogoPath} alt="" class="mt-6 h-14 w-auto sm:h-16" />
         <h1 class="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl">
-          Inspect untrusted uploads before they reach storage.
+          Inspect untrusted uploads before storage.
         </h1>
         <p class="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
-          Pompelmi gives Node.js teams an application-layer upload boundary. It helps routes compare claimed file metadata with real file content, apply archive controls, flag risky structures, and add optional YARA before bytes land in storage.
+          Pompelmi gives Node.js teams an application-layer upload boundary. It helps routes catch spoofed types, archive abuse, risky document or binary signals, and optional YARA matches before bytes become durable state.
         </p>
         <div class="mt-8 flex flex-wrap gap-3">
           <a href={to('getting-started/')} class="action-primary">Start with the docs</a>
-          <a href="#browser-preview" class="action-secondary">Preview the browser demo</a>
+          <a
+            href="https://github.com/pompelmi/pompelmi/tree/main/examples/demo"
+            target="_blank"
+            rel="noopener"
+            class="action-secondary"
+          >
+            View the Express demo
+          </a>
           <a
             href="https://github.com/pompelmi/pompelmi/stargazers"
             target="_blank"
@@ -201,7 +240,25 @@ const jsonLd = {
             Star on GitHub
           </a>
         </div>
-        <dl class="mt-10 grid gap-3 sm:grid-cols-3">
+        <p class="mt-4 text-sm leading-6 text-slate-600">
+          Want a zero-setup look first? Jump to the <a href="#browser-preview" class="font-semibold text-sky-800">browser preview</a>.
+        </p>
+        <div class="mt-8">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Mentioned in</p>
+          <div class="mt-3 flex flex-wrap gap-2">
+            {heroProofLinks.map((item) => (
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener"
+                class="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:-translate-y-0.5 hover:border-sky-300 hover:text-slate-950"
+              >
+                {item.label}
+              </a>
+            ))}
+          </div>
+        </div>
+        <dl class="mt-8 grid gap-3 sm:grid-cols-3">
           {proofPoints.map((item) => (
             <div class="mini-stat p-4">
               <dt class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">{item.label}</dt>
@@ -215,11 +272,11 @@ const jsonLd = {
         <div class="surface-panel p-6 sm:p-7">
           <div class="flex flex-wrap items-center justify-between gap-3">
             <p class="eyebrow">Minimal route decision</p>
-            <span class="pill">Node.js 18+</span>
+            <span class="pill">npm install pompelmi</span>
           </div>
           <pre class="mt-4 overflow-x-auto rounded-2xl bg-slate-950 px-4 py-4 text-sm text-slate-100"><code>{quickStartSnippet}</code></pre>
           <p class="mt-4 text-sm leading-6 text-slate-600">
-            Install with <code>npm install pompelmi</code>, then wire the upload verdict into reject, quarantine, or promote logic.
+            Start with the core package, then wire the verdict into reject, quarantine, or promote logic. Framework adapters are optional.
           </p>
           <div class="mt-6 grid gap-3">
             {guardrails.map((item) => (
@@ -341,7 +398,7 @@ const jsonLd = {
           <p class="eyebrow">Who it is for</p>
           <h2 class="section-title">Teams that need a real upload boundary</h2>
           <p class="section-copy">
-            Good fits include public or semi-trusted upload endpoints, privacy-sensitive systems, document-heavy business flows, and product teams that want the upload decision inside the application path rather than behind a generic cloud dependency.
+            Good fits include public or semi-trusted upload endpoints, privacy-sensitive systems, document-heavy business flows, and product teams that want the first decision inside the application path rather than behind a generic scanning dependency.
           </p>
           <div class="mt-8 grid gap-4 sm:grid-cols-2">
             {useCases.map((useCase) => (
@@ -356,7 +413,13 @@ const jsonLd = {
 
         <div class="space-y-4">
           <div class="surface-panel p-6">
-            <p class="eyebrow">Three evaluation questions</p>
+            <p class="eyebrow">Why not just X?</p>
+            <h3 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">
+              Different upload checks solve different parts of the problem.
+            </h3>
+            <p class="mt-3 text-sm leading-7 text-slate-600">
+              Pompelmi is the route-level layer that connects type validation, structural checks, and storage decisions.
+            </p>
             <div class="mt-4 space-y-3">
               {orientation.map((item) => (
                 <a href={to(item.href)} class="list-card block p-4">
@@ -371,7 +434,7 @@ const jsonLd = {
             <p class="eyebrow">What Pompelmi is not</p>
             <div class="mt-4 space-y-4 text-sm leading-7 text-slate-600">
               <p>
-                It is not positioned as a complete antivirus replacement. It is an application-layer control for the upload boundary.
+                It is not positioned as a complete antivirus replacement. It is upload security for the application boundary.
               </p>
               <p>
                 It works well on its own, or alongside YARA, ClamAV, storage isolation, and human review flows when your environment needs deeper detection or post-upload triage.
@@ -388,9 +451,9 @@ const jsonLd = {
       <div class="grid gap-8 lg:grid-cols-[1.08fr_0.92fr]">
         <div>
           <p class="eyebrow">External proof</p>
-          <h2 class="section-title">Signals that help teams evaluate the project quickly</h2>
+          <h2 class="section-title">Public references that help teams evaluate the project quickly</h2>
           <p class="section-copy">
-            Pompelmi keeps the product story grounded: open source, practical docs, and public references that let teams inspect the tradeoffs for themselves.
+            Pompelmi keeps the story grounded: open source, practical docs, and public references that let teams inspect the tradeoffs for themselves.
           </p>
           <div class="mt-8 grid gap-4 md:grid-cols-2">
             {featuredMentions.map((item) => (
@@ -460,7 +523,7 @@ const jsonLd = {
             rel="noopener"
             class="inline-flex items-center justify-center rounded-full border border-slate-600 px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:border-sky-300 hover:bg-slate-900"
           >
-            Inspect the source
+            Browse GitHub
           </a>
         </div>
       </div>
