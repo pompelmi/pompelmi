@@ -5,8 +5,10 @@ NestJS integration module for the Pompelmi malware scanner.
 ## Installation
 
 ```bash
-npm install @pompelmi/nestjs @pompelmi/core
+npm install pompelmi @pompelmi/nestjs
 ```
+
+If you use NestJS upload interceptors, make sure your app also has `@nestjs/platform-express` and `multer`.
 
 ## Quick Start
 
@@ -114,7 +116,7 @@ Dynamic module with the following static methods:
 
 Injectable service providing:
 
-- `scan(input: Buffer | Readable | string, options?: ScanOptions): Promise<ScanReport>`
+- `scan(input: Buffer | Readable | string, options?: ScanOptions): Promise<PompelmiScanReport>`
 - `isMalware(input: Buffer | Readable | string, options?: ScanOptions): Promise<boolean>`
 
 ### PompelmiInterceptor

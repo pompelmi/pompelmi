@@ -12,6 +12,27 @@ export interface PompelmiScanner {
  */
 export interface PompelmiModuleOptions extends ScanOptions {
   /**
+   * Stop scanning after the first malicious indicator.
+   *
+   * This is accepted for compatibility with existing Pompelmi examples.
+   */
+  failFast?: boolean;
+
+  /**
+   * Maximum archive recursion depth.
+   *
+   * This is accepted for compatibility with existing Pompelmi examples.
+   */
+  maxDepth?: number;
+
+  /**
+   * Heuristic score threshold (0-100) for consumers that layer custom scanners.
+   *
+   * This is accepted for compatibility with existing Pompelmi examples.
+   */
+  heuristicThreshold?: number;
+
+  /**
    * Optional custom scanner instance.
    * If not provided, the default scanner from @pompelmi/core will be used.
    */

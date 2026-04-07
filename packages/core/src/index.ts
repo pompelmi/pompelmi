@@ -2,7 +2,7 @@
  * @pompelmi/core
  *
  * Canonical API surface used by framework adapters (@pompelmi/cli,
- * @pompelmi/nestjs-integration, etc.).
+ * @pompelmi/nestjs, etc.).
  *
  * This package is a thin facade over the root `pompelmi` package that
  * provides a unified `scan()` function accepting Buffer, Readable stream,

@@ -21,7 +21,7 @@ Use `PompelmiInterceptor` when you want the framework to reject obviously bad up
 ```ts
 import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { PompelmiInterceptor } from '@pompelmi/nestjs-integration';
+import { PompelmiInterceptor } from '@pompelmi/nestjs';
 import { memoryStorage } from 'multer';
 
 @Controller('upload')

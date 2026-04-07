@@ -10,6 +10,7 @@
     "moduleResolution": "bundler",
     "target": "ES2022",
     "lib": ["ES2022"],
+    "types": ["node", "multer"],
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,

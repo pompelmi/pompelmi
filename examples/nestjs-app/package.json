@@ -2,7 +2,7 @@
   "name": "pompelmi-nestjs-example",
   "version": "1.0.0",
   "private": true,
-  "description": "Example NestJS application demonstrating @pompelmi/nestjs integration",
+  "description": "Example NestJS application demonstrating the @pompelmi/nestjs package",
   "scripts": {
     "start": "tsx src/main.ts",
     "start:dev": "tsx watch src/main.ts",
@@ -13,7 +13,7 @@
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
-    "@pompelmi/nestjs-integration": "workspace:*",
+    "@pompelmi/nestjs": "workspace:*",
     "@pompelmi/core": "workspace:*",
     "reflect-metadata": "^0.2.0",
     "rxjs": "^7.8.1"

@@ -206,9 +206,9 @@ importers:
       '@pompelmi/core':
         specifier: workspace:*
         version: link:../../packages/core
-      '@pompelmi/nestjs-integration':
+      '@pompelmi/nestjs':
         specifier: workspace:*
-        version: link:../../packages/nestjs-integration
+        version: link:../../packages/nestjs
       reflect-metadata:
         specifier: ^0.2.0
         version: 0.2.2
@@ -633,7 +633,7 @@ importers:
         specifier: 2.1.9
         version: 2.1.9(@types/node@25.5.0)
 
-  packages/nestjs-integration:
+  packages/nestjs:
     dependencies:
       '@pompelmi/core':
         specifier: workspace:*

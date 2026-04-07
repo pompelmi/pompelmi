@@ -8,7 +8,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common";
 import { FileInterceptor, FilesInterceptor } from "@nestjs/platform-express";
-import { PompelmiInterceptor } from "@pompelmi/nestjs-integration";
+import { PompelmiInterceptor } from "@pompelmi/nestjs";
 import type { ScanService } from "./scan.service";
 
 @Controller("upload")

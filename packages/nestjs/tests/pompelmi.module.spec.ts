@@ -1,5 +1,6 @@
 import { Test, type TestingModule } from "@nestjs/testing";
 import { beforeEach, describe, expect, it } from "vitest";
+import { Module } from "@nestjs/common";
 import { POMPELMI_MODULE_OPTIONS } from "../src/interfaces";
 import { PompelmiInterceptor } from "../src/pompelmi.interceptor";
 import { PompelmiModule } from "../src/pompelmi.module";
@@ -75,9 +76,17 @@ describe("PompelmiModule", () => {
         }
       }
 
+      @Module({
+        providers: [ConfigService],
+        exports: [ConfigService],
+      })
+      class ConfigModule {}
+
       const module: TestingModule = await Test.createTestingModule({
         imports: [
+          ConfigModule,
           PompelmiModule.forRootAsync({
+            imports: [ConfigModule],
             useFactory: (config: ConfigService) => ({
               failFast: config.get("SCAN_FAIL_FAST"),
               heuristicThreshold: config.get("SCAN_THRESHOLD"),
@@ -85,7 +94,6 @@ describe("PompelmiModule", () => {
             inject: [ConfigService],
           }),
         ],
-        providers: [ConfigService],
       }).compile();
 
       const service = module.get(PompelmiService);
@@ -121,11 +129,9 @@ describe("PompelmiModule", () => {
     });
 
     it("should throw error if no configuration method provided", async () => {
-      await expect(
-        Test.createTestingModule({
-          imports: [PompelmiModule.forRootAsync({} as any)],
-        }).compile(),
-      ).rejects.toThrow("Invalid PompelmiModuleAsyncOptions");
+      expect(() => PompelmiModule.forRootAsync({} as any)).toThrow(
+        "Invalid PompelmiModuleAsyncOptions",
+      );
     });
   });
 });

@@ -2,11 +2,12 @@ import {
   BadRequestException,
   type CallHandler,
   type ExecutionContext,
+  Inject,
   Injectable,
   type NestInterceptor,
 } from "@nestjs/common";
 import type { Observable } from "rxjs";
-import type { PompelmiService } from "./pompelmi.service.js";
+import { PompelmiService } from "./pompelmi.service.js";
 
 const invalidFilenameCharacters = new RegExp("[\\u0000-\\u001F\\u007F]", "g");
 const invalidLogFilenameCharacters = new RegExp("[\\u0000-\\u001F\\u007F%]", "g");
@@ -36,7 +37,7 @@ const invalidLogFilenameCharacters = new RegExp("[\\u0000-\\u001F\\u007F%]", "g"
  */
 @Injectable()
 export class PompelmiInterceptor implements NestInterceptor {
-  constructor(private readonly pompelmiService: PompelmiService) {}
+  constructor(@Inject(PompelmiService) private readonly pompelmiService: PompelmiService) {}
 
   async intercept(context: ExecutionContext, next: CallHandler): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest();
@@ -104,7 +105,7 @@ export class PompelmiInterceptor implements NestInterceptor {
         message: "Malware detected in uploaded file",
         details: {
           verdict: result.verdict,
-          findings: (result.matches || []).map((m) => m.rule),
+          findings: result.findings,
           filename: sanitizedFilename,
           mimetype: file.mimetype,
           size: file.size,
@@ -122,7 +123,7 @@ export class PompelmiInterceptor implements NestInterceptor {
       // In a production system, you might want to log this
       console.warn("Suspicious file detected", {
         filename: sanitizedFilename,
-        findings: (result.matches || []).map((m) => m.rule),
+        findings: result.findings,
       });
     }
   }

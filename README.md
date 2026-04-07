@@ -119,7 +119,7 @@ Pompelmi keeps the first decision inside the application path, where the route s
 
 - Express: [Docs](https://pompelmi.github.io/pompelmi/how-to/express/) · [Minimal example](./examples/express-minimal) · [Demo](./examples/demo)
 - Next.js: [Docs](https://pompelmi.github.io/pompelmi/how-to/nextjs/) · [Example](./examples/next-app-router)
-- NestJS: [Docs](https://pompelmi.github.io/pompelmi/how-to/nestjs/) · [Example app](./examples/nestjs-app)
+- NestJS: [Docs](https://pompelmi.github.io/pompelmi/how-to/nestjs/) · [Package](./packages/nestjs) · [Example app](./examples/nestjs-app)
 - Fastify: [Docs](https://pompelmi.github.io/pompelmi/how-to/fastify/) · [Package](./packages/fastify-plugin)
 - Koa: [Docs](https://pompelmi.github.io/pompelmi/how-to/koa/) · [Package](./packages/koa-middleware)
 - Nuxt/Nitro: [Docs](https://pompelmi.github.io/pompelmi/how-to/nuxt-nitro/)

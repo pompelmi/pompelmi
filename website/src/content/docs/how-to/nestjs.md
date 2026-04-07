@@ -10,16 +10,17 @@ For the broader upload-boundary model that this controller flow fits into, see [
 ## Install
 
 ```bash
-npm install pompelmi @pompelmi/nestjs-integration
-npm install @nestjs/platform-express multer
+npm install pompelmi @pompelmi/nestjs
 ```
+
+If you use `FileInterceptor()` as shown below, make sure your Nest app also has `@nestjs/platform-express` and `multer`.
 
 ## Register the module
 
 ```ts
 // app.module.ts
 import { Module } from '@nestjs/common';
-import { PompelmiModule } from '@pompelmi/nestjs-integration';
+import { PompelmiModule } from '@pompelmi/nestjs';
 import {
   CommonHeuristicsScanner,
   composeScanners,
@@ -45,7 +46,7 @@ export class AppModule {}
 ```ts
 import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { PompelmiInterceptor } from '@pompelmi/nestjs-integration';
+import { PompelmiInterceptor } from '@pompelmi/nestjs';
 import { memoryStorage } from 'multer';
 
 @Controller('upload')
@@ -67,7 +68,7 @@ export class UploadController {
 ## Important behavior
 
 - `PompelmiInterceptor` requires `memoryStorage()` so the bytes are available before persistence.
-- The current interceptor blocks `malicious` uploads and logs `suspicious` ones. If you want custom quarantine behavior for `suspicious`, inject `PompelmiService` and handle the `ScanReport` directly.
+- The current interceptor blocks `malicious` uploads and logs `suspicious` ones. If you want custom quarantine behavior for `suspicious`, inject `PompelmiService` and handle the `PompelmiScanReport` directly.
 - Keep object storage or database writes outside the interceptor path until you have the verdict you want.
 
 ## Continue

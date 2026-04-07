@@ -1,10 +1,11 @@
 {
-  "name": "@pompelmi/nestjs-integration",
+  "name": "@pompelmi/nestjs",
   "version": "0.1.0",
   "description": "NestJS module for Pompelmi in-process file upload security — PompelmiModule, PompelmiService, and PompelmiInterceptor for automatic upload scanning without cloud dependencies.",
   "license": "MIT",
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "engines": {
     "node": ">=18.17"
@@ -60,10 +61,19 @@
     "vitest": "4.1.2"
   },
   "sideEffects": false,
+  "private": false,
   "typings": "dist/index.d.ts",
+  "keywords": [
+    "pompelmi",
+    "nestjs",
+    "security",
+    "malware",
+    "uploads",
+    "file-upload"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/pompelmi/pompelmi",
-    "directory": "packages/nestjs-integration"
+    "directory": "packages/nestjs"
   }
 }

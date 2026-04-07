@@ -1,6 +1,5 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import type { ScanReport } from "@pompelmi/core";
-import type { PompelmiService } from "@pompelmi/nestjs-integration";
+import type { PompelmiScanReport, PompelmiService } from "@pompelmi/nestjs";
 
 @Injectable()
 export class ScanService {
@@ -9,7 +8,7 @@ export class ScanService {
   /**
    * Scan an uploaded file.
    */
-  async scanFile(file: Express.Multer.File): Promise<ScanReport> {
+  async scanFile(file: Express.Multer.File): Promise<PompelmiScanReport> {
     if (!file.buffer) {
       throw new BadRequestException("File buffer not available");
     }
@@ -33,7 +32,7 @@ export class ScanService {
   /**
    * Scan text content.
    */
-  async scanContent(content: string): Promise<ScanReport> {
+  async scanContent(content: string): Promise<PompelmiScanReport> {
     const result = await this.pompelmi.scan(content);
 
     if (result.verdict === "malicious") {
