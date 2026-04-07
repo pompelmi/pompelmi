@@ -1,6 +1,6 @@
+import { Module } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
 import { beforeEach, describe, expect, it } from "vitest";
-import { Module } from "@nestjs/common";
 import { POMPELMI_MODULE_OPTIONS } from "../src/interfaces";
 import { PompelmiInterceptor } from "../src/pompelmi.interceptor";
 import { PompelmiModule } from "../src/pompelmi.module";

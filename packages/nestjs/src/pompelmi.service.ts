@@ -1,6 +1,6 @@
 import type { Readable } from "node:stream";
 import { Inject, Injectable } from "@nestjs/common";
-import { type ScanOptions, type ScanReport as CoreScanReport, scan } from "@pompelmi/core";
+import { type ScanReport as CoreScanReport, type ScanOptions, scan } from "@pompelmi/core";
 import { POMPELMI_MODULE_OPTIONS, type PompelmiModuleOptions } from "./interfaces.js";
 
 export type PompelmiScanInput = Buffer | Readable | string;
@@ -36,10 +36,7 @@ export class PompelmiService {
    * }
    * ```
    */
-  async scan(
-    input: PompelmiScanInput,
-    options?: ScanOptions,
-  ): Promise<PompelmiScanReport> {
+  async scan(input: PompelmiScanInput, options?: ScanOptions): Promise<PompelmiScanReport> {
     const mergedOptions = { ...this.options, ...options };
     const normalizedInput = typeof input === "string" ? Buffer.from(input) : input;
     const result = await scan(normalizedInput, mergedOptions);
@@ -78,7 +75,10 @@ export class PompelmiService {
     return { ...this.options };
   }
 
-  private getProcessedBytes(input: Exclude<PompelmiScanInput, string> | Buffer, result: CoreScanReport) {
+  private getProcessedBytes(
+    input: Exclude<PompelmiScanInput, string> | Buffer,
+    result: CoreScanReport,
+  ) {
     if (Buffer.isBuffer(input)) {
       return input.byteLength;
     }
