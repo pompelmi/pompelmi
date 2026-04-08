@@ -19,7 +19,7 @@ Start with the public path whenever possible. Public questions improve the docs,
 
 Useful public entry points:
 
-- [Documentation](https://pompelmi.github.io/pompelmi/)
+- [Documentation](https://pompelmi.app/)
 - [GitHub Discussions](https://github.com/pompelmi/pompelmi/discussions)
 - [GitHub Issues](https://github.com/pompelmi/pompelmi/issues)
 - [Roadmap](https://github.com/pompelmi/pompelmi/blob/main/ROADMAP.md)

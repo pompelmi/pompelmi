@@ -25,4 +25,4 @@ Pompelmi and ClamAV solve related but different problems.
 
 - [When to use Pompelmi + YARA](./when-to-use-pompelmi-plus-yara/)
 - [Do you need antivirus for file uploads?](./do-you-need-antivirus-for-file-uploads/)
-- [Pompelmi vs ClamAV vs custom pipelines](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
+- [Pompelmi vs ClamAV vs custom pipelines](/blog/pompelmi-vs-clamav-comparison/)

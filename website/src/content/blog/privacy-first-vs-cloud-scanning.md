@@ -155,7 +155,7 @@ Cloud scanning APIs offer broad signature coverage at the cost of data leaving y
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: When to use Pompelmi vs ClamAV vs custom pipelines](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
-- [Blog: Secure upload architecture for regulated industries](/pompelmi/blog/secure-upload-architecture-regulated-industries/)
+- [Blog: When to use Pompelmi vs ClamAV vs custom pipelines](/blog/pompelmi-vs-clamav-comparison/)
+- [Blog: Secure upload architecture for regulated industries](/blog/secure-upload-architecture-regulated-industries/)

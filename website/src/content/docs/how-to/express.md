@@ -7,7 +7,7 @@ This is the canonical Express integration path for Pompelmi.
 
 Use it when you already accept files through Multer and want a clear allow, quarantine, or reject decision before writing anything to disk or object storage.
 
-For the longer reasoning behind this route shape, see [How to Scan File Uploads in Express Before Storage](/pompelmi/blog/scan-file-uploads-express-before-storage/).
+For the longer reasoning behind this route shape, see [How to Scan File Uploads in Express Before Storage](/blog/scan-file-uploads-express-before-storage/).
 
 ## Install
 
@@ -93,7 +93,7 @@ app.post(
 
 ## Continue
 
-- [How to scan file uploads in Express before storage](/pompelmi/blog/scan-file-uploads-express-before-storage/)
+- [How to scan file uploads in Express before storage](/blog/scan-file-uploads-express-before-storage/)
 - [How to scan file uploads in Multer](../tutorials/how-to-scan-file-uploads-in-multer/)
 - [Document upload security](../use-cases/document-upload-security/)
 - [Secure S3 presigned uploads with malware scanning](../tutorials/secure-s3-presigned-uploads-with-malware-scanning/)

@@ -425,8 +425,8 @@ async function expireOldQuarantineEntries() {
 
 **Resources:**
 
-- [Blog: Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
-- [Docs: getting started](/pompelmi/getting-started/)
-- [Blog: Reason codes and security observability](/pompelmi/blog/reason-codes-security-observability/)
-- [Blog: Secure upload architecture for regulated industries](/pompelmi/blog/secure-upload-architecture-regulated-industries/)
-- [Blog: Privacy-first scanning vs cloud APIs](/pompelmi/blog/privacy-first-vs-cloud-scanning/)
+- [Blog: Scan files before S3 upload in Node.js](/blog/scan-files-before-s3-upload-nodejs/)
+- [Docs: getting started](/getting-started/)
+- [Blog: Reason codes and security observability](/blog/reason-codes-security-observability/)
+- [Blog: Secure upload architecture for regulated industries](/blog/secure-upload-architecture-regulated-industries/)
+- [Blog: Privacy-first scanning vs cloud APIs](/blog/privacy-first-vs-cloud-scanning/)

@@ -30,4 +30,4 @@ const scanner = composeScanners(
 
 - [CI/CD artifact scanning](./cicd-artifact-scanning/)
 - [Pompelmi vs ClamAV for file uploads](../comparisons/pompelmi-vs-clamav-for-file-uploads/)
-- [Preventing ZIP bombs](/pompelmi/blog/preventing-zip-bombs/)
+- [Preventing ZIP bombs](/blog/preventing-zip-bombs/)

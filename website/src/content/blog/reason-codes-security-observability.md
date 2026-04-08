@@ -279,7 +279,7 @@ const guard = createUploadGuard({
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: EICAR testing — verify your scanner works](/pompelmi/blog/eicar-testing-upload-scanners/)
-- [Blog: Using Pompelmi in CI/CD](/pompelmi/blog/cicd-scan-build-artifacts/)
+- [Blog: EICAR testing — verify your scanner works](/blog/eicar-testing-upload-scanners/)
+- [Blog: Using Pompelmi in CI/CD](/blog/cicd-scan-build-artifacts/)

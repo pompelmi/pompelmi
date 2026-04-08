@@ -57,4 +57,4 @@ export default defineEventHandler(async (event) => {
 
 ## Where to go next
 
-Use the canonical [Nuxt/Nitro guide](/pompelmi/how-to/nuxt-nitro/) for the shortest setup. If you plan to upload directly to object storage, continue to [secure S3 presigned uploads with malware scanning](/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/). The repo is the best place to follow current examples and package changes: [pompelmi/pompelmi](https://github.com/pompelmi/pompelmi).
+Use the canonical [Nuxt/Nitro guide](/how-to/nuxt-nitro/) for the shortest setup. If you plan to upload directly to object storage, continue to [secure S3 presigned uploads with malware scanning](/tutorials/secure-s3-presigned-uploads-with-malware-scanning/). The repo is the best place to follow current examples and package changes: [pompelmi/pompelmi](https://github.com/pompelmi/pompelmi).

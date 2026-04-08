@@ -101,12 +101,12 @@ That keeps the initial security decision local to your own infrastructure withou
 
 The safest Node.js approach is not "scan after S3." It is "do not trust live S3 until the scan is done." For app-server uploads, scan before `PutObject`. For presigned uploads, quarantine first and promote only after `clean`.
 
-If your product already uses direct object storage, start with the canonical [secure S3 presigned uploads tutorial](/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/) and build promotion logic instead of retroactive cleanup.
+If your product already uses direct object storage, start with the canonical [secure S3 presigned uploads tutorial](/tutorials/secure-s3-presigned-uploads-with-malware-scanning/) and build promotion logic instead of retroactive cleanup.
 
 ## Related reading
 
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Secure S3 presigned uploads with malware scanning](/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
-- [S3 / presigned upload security](/pompelmi/use-cases/s3-presigned-upload-security/)
-- [Quarantine / inspect-first-store-later workflows](/pompelmi/use-cases/quarantine-inspect-first-store-later/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Secure S3 presigned uploads with malware scanning](/tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
+- [S3 / presigned upload security](/use-cases/s3-presigned-upload-security/)
+- [Quarantine / inspect-first-store-later workflows](/use-cases/quarantine-inspect-first-store-later/)
 - [Quarantine workflow example on GitHub](https://github.com/pompelmi/pompelmi/blob/main/examples/quarantine-workflow.ts)

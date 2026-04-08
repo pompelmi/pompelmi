@@ -91,8 +91,8 @@ If your application accepts archives today, start with the archive use-case docs
 
 ## Related reading
 
-- [Archive / ZIP upload security](/pompelmi/use-cases/archive-zip-upload-security/)
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Secure file uploads in Next.js](/pompelmi/how-to/nextjs/)
-- [Preventing ZIP bombs](/pompelmi/blog/preventing-zip-bombs/)
-- [Common file upload mistakes in Node.js](/pompelmi/blog/common-file-upload-mistakes-nodejs/)
+- [Archive / ZIP upload security](/use-cases/archive-zip-upload-security/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Secure file uploads in Next.js](/how-to/nextjs/)
+- [Preventing ZIP bombs](/blog/preventing-zip-bombs/)
+- [Common file upload mistakes in Node.js](/blog/common-file-upload-mistakes-nodejs/)

@@ -84,12 +84,12 @@ That is the missing layer in most "secure upload" examples that only show extens
 
 Multer remains a good parser for Node.js uploads, but it needs help at the trust boundary. Keep uploads in memory, enforce route-specific limits, scan before storage, and make archive handling an explicit policy instead of an afterthought.
 
-If you want the shortest implementation path, start with [how to scan file uploads in Multer](/pompelmi/tutorials/how-to-scan-file-uploads-in-multer/) and then tighten the policy for the file types your product actually accepts.
+If you want the shortest implementation path, start with [how to scan file uploads in Multer](/tutorials/how-to-scan-file-uploads-in-multer/) and then tighten the policy for the file types your product actually accepts.
 
 ## Related reading
 
-- [How to scan file uploads in Express before storage](/pompelmi/blog/scan-file-uploads-express-before-storage/)
-- [How to scan file uploads in Multer](/pompelmi/tutorials/how-to-scan-file-uploads-in-multer/)
-- [Secure file uploads in Express](/pompelmi/how-to/express/)
-- [Archive / ZIP upload security](/pompelmi/use-cases/archive-zip-upload-security/)
+- [How to scan file uploads in Express before storage](/blog/scan-file-uploads-express-before-storage/)
+- [How to scan file uploads in Multer](/tutorials/how-to-scan-file-uploads-in-multer/)
+- [Secure file uploads in Express](/how-to/express/)
+- [Archive / ZIP upload security](/use-cases/archive-zip-upload-security/)
 - [Express + Multer example on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples/express-multer-presets)

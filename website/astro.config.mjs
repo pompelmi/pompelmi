@@ -27,8 +27,7 @@ function addMermaidClass() {
 }
 
 export default defineConfig({
-  site: 'https://pompelmi.github.io/pompelmi',
-  base: '/pompelmi/',
+  site: 'https://pompelmi.app',
   output: 'static',
   integrations: [
     react(),
@@ -48,14 +47,14 @@ export default defineConfig({
   head: [
     { tag: 'meta', attrs: { property: 'og:site_name', content: 'Pompelmi' } },
     { tag: 'meta', attrs: { property: 'og:locale', content: 'en_US' } },
-    { tag: 'meta', attrs: { property: 'og:image', content: 'https://pompelmi.github.io/pompelmi/og.png' } },
+    { tag: 'meta', attrs: { property: 'og:image', content: 'https://pompelmi.app/og.png' } },
     { tag: 'meta', attrs: { property: 'og:image:width', content: '1200' } },
     { tag: 'meta', attrs: { property: 'og:image:height', content: '630' } },
     { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' } },
     { tag: 'meta', attrs: { name: 'theme-color', content: '#0f172a' } },
     { tag: 'meta', attrs: { name: 'robots', content: 'index,follow,max-image-preview:large' } },
-    { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: '/pompelmi/logo.svg' } },
-    { tag: 'link', attrs: { rel: 'manifest', href: '/pompelmi/site.webmanifest' } },
+    { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', sizes: 'any', href: '/logo.svg' } },
+    { tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' } },
   ],
 
   editLink: {
@@ -70,9 +69,9 @@ export default defineConfig({
     { label: 'Reference', autogenerate: { directory: 'reference', collapsed: true } },
     { label: 'Explanations', autogenerate: { directory: 'explaination', collapsed: true } },
     { label: 'Production readiness', slug: 'production-readiness' },
-    { label: 'Featured in', link: '/pompelmi/featured-in/' },
-    { label: 'Translations', link: '/pompelmi/translations/' },
-    { label: 'Blog', link: '/pompelmi/blog/' },
+    { label: 'Featured in', link: '/featured-in/' },
+    { label: 'Translations', link: '/translations/' },
+    { label: 'Blog', link: '/blog/' },
     { label: 'Support', slug: 'support' },
     { label: 'Enterprise options', slug: 'enterprise' }
   ],

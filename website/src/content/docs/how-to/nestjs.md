@@ -5,7 +5,7 @@ description: Add in-process upload scanning to NestJS with PompelmiModule, Pompe
 
 This is the shortest NestJS path when you want upload scanning to fit into modules, interceptors, and controller decorators.
 
-For the broader upload-boundary model that this controller flow fits into, see [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+For the broader upload-boundary model that this controller flow fits into, see [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/).
 
 ## Install
 
@@ -73,7 +73,7 @@ export class UploadController {
 
 ## Continue
 
-- [Secure file uploads in NestJS](/pompelmi/blog/nestjs-secure-file-uploads/)
+- [Secure file uploads in NestJS](/blog/nestjs-secure-file-uploads/)
 - [Quarantine / inspect-first-store-later workflows](../use-cases/quarantine-inspect-first-store-later/)
 - [Do you need antivirus for file uploads?](../comparisons/do-you-need-antivirus-for-file-uploads/)
 - [NestJS example on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples/nestjs-app)

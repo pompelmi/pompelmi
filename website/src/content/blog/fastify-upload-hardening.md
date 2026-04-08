@@ -63,4 +63,4 @@ app.post('/upload', {
 
 ## Where to go next
 
-The canonical integration page is [secure file uploads in Fastify](/pompelmi/how-to/fastify/). For archive-heavy routes, continue to [archive / ZIP upload security](/pompelmi/use-cases/archive-zip-upload-security/). For runnable code and package sources, use the [GitHub repo](https://github.com/pompelmi/pompelmi).
+The canonical integration page is [secure file uploads in Fastify](/how-to/fastify/). For archive-heavy routes, continue to [archive / ZIP upload security](/use-cases/archive-zip-upload-security/). For runnable code and package sources, use the [GitHub repo](https://github.com/pompelmi/pompelmi).

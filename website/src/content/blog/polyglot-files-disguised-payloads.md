@@ -200,7 +200,7 @@ Polyglot files exploit the gap between "this file claims to be X" and "this file
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: Why extension checks are not enough](/pompelmi/blog/mime-sniffing-magic-bytes/)
-- [Blog: YARA integration for Node.js upload security](/pompelmi/blog/yara-integration-guide/)
+- [Blog: Why extension checks are not enough](/blog/mime-sniffing-magic-bytes/)
+- [Blog: YARA integration for Node.js upload security](/blog/yara-integration-guide/)

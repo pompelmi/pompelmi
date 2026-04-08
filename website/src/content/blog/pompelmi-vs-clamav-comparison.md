@@ -257,7 +257,7 @@ Pompelmi's built-in heuristics are the right starting point for most Node.js upl
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: Privacy-first upload security vs cloud scanning APIs](/pompelmi/blog/privacy-first-vs-cloud-scanning/)
-- [Blog: YARA integration for Node.js upload security](/pompelmi/blog/yara-integration-guide/)
+- [Blog: Privacy-first upload security vs cloud scanning APIs](/blog/privacy-first-vs-cloud-scanning/)
+- [Blog: YARA integration for Node.js upload security](/blog/yara-integration-guide/)

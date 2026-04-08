@@ -52,4 +52,4 @@ The current interceptor blocks `malicious` uploads and logs `suspicious` ones. I
 
 ## Where to go next
 
-Use the canonical [NestJS guide](/pompelmi/how-to/nestjs/) for module setup. If your route needs a review queue, continue to [quarantine / inspect-first-store-later workflows](/pompelmi/use-cases/quarantine-inspect-first-store-later/). Runnable code lives in the [NestJS example](https://github.com/pompelmi/pompelmi/tree/main/examples/nestjs-app).
+Use the canonical [NestJS guide](/how-to/nestjs/) for module setup. If your route needs a review queue, continue to [quarantine / inspect-first-store-later workflows](/use-cases/quarantine-inspect-first-store-later/). Runnable code lives in the [NestJS example](https://github.com/pompelmi/pompelmi/tree/main/examples/nestjs-app).

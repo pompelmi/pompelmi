@@ -5,7 +5,7 @@ description: "Understand the validation layers that matter in a Node.js upload r
 
 File upload validation is not one check. It is a stack of checks with different purposes.
 
-For the broader route-design view of where validation fits, see [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+For the broader route-design view of where validation fits, see [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/).
 
 ## Validation layers that actually matter
 
@@ -39,5 +39,5 @@ The more powerful the file format, the narrower the route and policy should be.
 
 - [Node.js file upload security checklist](./nodejs-file-upload-security-checklist/)
 - [File-type validation vs malware scanning](../comparisons/file-type-validation-vs-malware-scanning/)
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
 - [Defense in depth for file uploads](../use-cases/defense-in-depth-for-file-uploads/)

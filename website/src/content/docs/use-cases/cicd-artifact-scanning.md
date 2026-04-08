@@ -21,6 +21,6 @@ Use the JSON output to fail a pipeline on anything that should not be promoted.
 
 ## Continue
 
-- [Using Pompelmi in CI/CD to scan build artifacts](/pompelmi/blog/cicd-scan-build-artifacts/)
+- [Using Pompelmi in CI/CD to scan build artifacts](/blog/cicd-scan-build-artifacts/)
 - [Archive / ZIP upload security](./archive-zip-upload-security/)
 - [Node.js file upload security checklist](../tutorials/nodejs-file-upload-security-checklist/)

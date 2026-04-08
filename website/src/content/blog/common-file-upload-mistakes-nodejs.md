@@ -10,7 +10,7 @@ tags: ["security", "nodejs", "mistakes", "best-practices", "tutorial"]
 
 Upload security is one of those areas where the obvious implementation is also the vulnerable one. These mistakes appear in production code regularly. Some lead to trivial exploits; others enable server-side execution or data exfiltration. Let's catalog them.
 
-If you want the broader model before diving into the failure cases, start with [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+If you want the broader model before diving into the failure cases, start with [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/).
 
 ---
 
@@ -37,7 +37,7 @@ const guard = createUploadGuard({ failClosed: true });
 app.post('/upload', upload.single('file'), guard, storeFile);
 ```
 
-For the route-level version of this pattern, see [How to Scan File Uploads in Express Before Storage](/pompelmi/blog/scan-file-uploads-express-before-storage/).
+For the route-level version of this pattern, see [How to Scan File Uploads in Express Before Storage](/blog/scan-file-uploads-express-before-storage/).
 
 ---
 
@@ -420,7 +420,7 @@ Note: `scanBytes` from `pompelmi` uses the configured scanners. This health chec
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
-- [Blog: File upload security checklist](/pompelmi/blog/file-upload-security-checklist/)
-- [Blog: Testing your upload scanner with EICAR and Vitest](/pompelmi/blog/eicar-testing-upload-scanners/)
-- [Blog: Reason codes and security observability with Pompelmi](/pompelmi/blog/reason-codes-security-observability/)
+- [Docs: getting started](/getting-started/)
+- [Blog: File upload security checklist](/blog/file-upload-security-checklist/)
+- [Blog: Testing your upload scanner with EICAR and Vitest](/blog/eicar-testing-upload-scanners/)
+- [Blog: Reason codes and security observability with Pompelmi](/blog/reason-codes-security-observability/)

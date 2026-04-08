@@ -166,9 +166,9 @@ Prevent slow scans from blocking your application:
 ```
 
 **Related posts:**
-- [Pompelmi vs ClamAV: choosing the right scanner](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
-- [Reason codes and security observability](/pompelmi/blog/reason-codes-security-observability/)
-- [CI/CD: scanning build artifacts with Pompelmi](/pompelmi/blog/cicd-scan-build-artifacts/)
+- [Pompelmi vs ClamAV: choosing the right scanner](/blog/pompelmi-vs-clamav-comparison/)
+- [Reason codes and security observability](/blog/reason-codes-security-observability/)
+- [CI/CD: scanning build artifacts with Pompelmi](/blog/cicd-scan-build-artifacts/)
 
 ```javascript
 app.post('/upload', upload.single('file'), async (req, res) => {
@@ -211,4 +211,4 @@ const scanner = createExpressAdapter({
 
 YARA integration transforms Pompelmi from a file validator into a comprehensive malware detection system. Start with basic rules and expand as you identify threats specific to your application.
 
-Ready to enhance your security posture? Continue with [When to Use Pompelmi + YARA](/pompelmi/comparisons/when-to-use-pompelmi-plus-yara/) for implementation tradeoffs and rollout guidance.
+Ready to enhance your security posture? Continue with [When to Use Pompelmi + YARA](/comparisons/when-to-use-pompelmi-plus-yara/) for implementation tradeoffs and rollout guidance.

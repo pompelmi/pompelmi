@@ -110,8 +110,8 @@ If you are deciding whether to add it, start with the comparison docs on when YA
 
 ## Related reading
 
-- [When to use Pompelmi + YARA](/pompelmi/comparisons/when-to-use-pompelmi-plus-yara/)
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Pompelmi vs ClamAV for file uploads](/pompelmi/comparisons/pompelmi-vs-clamav-for-file-uploads/)
-- [CI/CD artifact scanning](/pompelmi/use-cases/cicd-artifact-scanning/)
-- [Advanced malware detection with YARA integration](/pompelmi/blog/yara-integration-guide/)
+- [When to use Pompelmi + YARA](/comparisons/when-to-use-pompelmi-plus-yara/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Pompelmi vs ClamAV for file uploads](/comparisons/pompelmi-vs-clamav-for-file-uploads/)
+- [CI/CD artifact scanning](/use-cases/cicd-artifact-scanning/)
+- [Advanced malware detection with YARA integration](/blog/yara-integration-guide/)

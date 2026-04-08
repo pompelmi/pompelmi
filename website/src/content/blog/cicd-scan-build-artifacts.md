@@ -280,7 +280,7 @@ The Pompelmi CLI brings the same in-process scanning available in your web serve
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: EICAR testing — verify your scanner works](/pompelmi/blog/eicar-testing-upload-scanners/)
-- [Blog: Reason codes and observability](/pompelmi/blog/reason-codes-security-observability/)
+- [Blog: EICAR testing — verify your scanner works](/blog/eicar-testing-upload-scanners/)
+- [Blog: Reason codes and observability](/blog/reason-codes-security-observability/)

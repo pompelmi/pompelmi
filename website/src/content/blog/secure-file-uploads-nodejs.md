@@ -102,13 +102,13 @@ This is where many Node.js systems still fail. They scan, but they write to the 
 
 Secure file uploads in Node.js are about ordering and control, not just a bigger allowlist. Put limits at the parser, validate what the route expects, inspect the bytes, handle archives explicitly, and keep storage behind the verdict.
 
-If you are implementing this now, start with [Getting started](/pompelmi/getting-started/) and then jump into the framework guide that matches your actual route instead of inventing a generic one-size-fits-all upload policy.
+If you are implementing this now, start with [Getting started](/getting-started/) and then jump into the framework guide that matches your actual route instead of inventing a generic one-size-fits-all upload policy.
 
 ## Related reading
 
-- [How to scan file uploads in Express before storage](/pompelmi/blog/scan-file-uploads-express-before-storage/)
-- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
-- [Node.js file upload security checklist](/pompelmi/tutorials/nodejs-file-upload-security-checklist/)
-- [File-type validation vs malware scanning](/pompelmi/comparisons/file-type-validation-vs-malware-scanning/)
-- [Defense in depth for file uploads](/pompelmi/use-cases/defense-in-depth-for-file-uploads/)
+- [How to scan file uploads in Express before storage](/blog/scan-file-uploads-express-before-storage/)
+- [Scan files before S3 upload in Node.js](/blog/scan-files-before-s3-upload-nodejs/)
+- [Node.js file upload security checklist](/tutorials/nodejs-file-upload-security-checklist/)
+- [File-type validation vs malware scanning](/comparisons/file-type-validation-vs-malware-scanning/)
+- [Defense in depth for file uploads](/use-cases/defense-in-depth-for-file-uploads/)
 - [Examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)

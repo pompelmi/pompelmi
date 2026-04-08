@@ -148,13 +148,13 @@ If your route should hard-block both `suspicious` and `malicious`, keep `stopOn:
 
 The safest way to scan file uploads in Express is to make the route itself the trust boundary: parse with Multer, inspect in memory, return a verdict, and only then store the bytes. That keeps security logic close to the real upload path instead of pushing it into cleanup jobs after the fact.
 
-For a production-ready starting point, use the canonical [Express guide](/pompelmi/how-to/express/) and adapt the route policy to the file types you actually accept.
+For a production-ready starting point, use the canonical [Express guide](/how-to/express/) and adapt the route policy to the file types you actually accept.
 
 ## Related reading
 
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [How to scan file uploads in Multer](/pompelmi/tutorials/how-to-scan-file-uploads-in-multer/)
-- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
-- [Extension checks vs MIME sniffing vs content inspection](/pompelmi/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
-- [Quarantine / inspect-first-store-later workflows](/pompelmi/use-cases/quarantine-inspect-first-store-later/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [How to scan file uploads in Multer](/tutorials/how-to-scan-file-uploads-in-multer/)
+- [Scan files before S3 upload in Node.js](/blog/scan-files-before-s3-upload-nodejs/)
+- [Extension checks vs MIME sniffing vs content inspection](/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
+- [Quarantine / inspect-first-store-later workflows](/use-cases/quarantine-inspect-first-store-later/)
 - [Express examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples/express-minimal)

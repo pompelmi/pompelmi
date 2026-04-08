@@ -98,8 +98,8 @@ const scanner = composeScanners(
 ZIP bombs remain a significant threat, but with proper defenses, they're completely preventable. Pompelmi's comprehensive approach ensures your application stays safe without sacrificing legitimate functionality.
 
 **Related posts:**
-- [MIME sniffing and magic bytes](/pompelmi/blog/mime-sniffing-magic-bytes/)
-- [17 common file upload security mistakes](/pompelmi/blog/common-file-upload-mistakes-nodejs/)
-- [Pompelmi vs ClamAV: choosing the right scanner](/pompelmi/blog/pompelmi-vs-clamav-comparison/)
+- [MIME sniffing and magic bytes](/blog/mime-sniffing-magic-bytes/)
+- [17 common file upload security mistakes](/blog/common-file-upload-mistakes-nodejs/)
+- [Pompelmi vs ClamAV: choosing the right scanner](/blog/pompelmi-vs-clamav-comparison/)
 
-Ready to protect your application? Check out our [Getting Started guide](/pompelmi/getting-started/).
+Ready to protect your application? Check out our [Getting Started guide](/getting-started/).

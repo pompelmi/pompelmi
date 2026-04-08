@@ -110,12 +110,12 @@ If the browser writes straight into a live bucket, you did not build a scan-befo
 
 Secure file uploads in Next.js App Router start with a route handler that makes the trust decision before storage. That keeps validation, inspection, and verdict handling close to the real upload boundary instead of spreading them across client code and background cleanup.
 
-The fastest production path is the canonical [Next.js guide](/pompelmi/how-to/nextjs/), then a storage workflow that only promotes files after the route or worker returns `clean`.
+The fastest production path is the canonical [Next.js guide](/how-to/nextjs/), then a storage workflow that only promotes files after the route or worker returns `clean`.
 
 ## Related reading
 
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Secure file uploads in Next.js](/pompelmi/how-to/nextjs/)
-- [Secure S3 presigned uploads with malware scanning](/pompelmi/tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
-- [Pompelmi vs cloud malware scanning APIs](/pompelmi/comparisons/pompelmi-vs-cloud-malware-scanning-apis/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Secure file uploads in Next.js](/how-to/nextjs/)
+- [Secure S3 presigned uploads with malware scanning](/tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
+- [Pompelmi vs cloud malware scanning APIs](/comparisons/pompelmi-vs-cloud-malware-scanning-apis/)
 - [Next.js examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples/next-app-router)

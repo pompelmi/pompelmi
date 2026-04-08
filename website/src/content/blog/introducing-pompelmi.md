@@ -75,9 +75,9 @@ Join us in making file uploads safer for everyone. Star us on [GitHub](https://g
 
 ## Learn More
 
-- [Documentation](/pompelmi/getting-started/)
+- [Documentation](/getting-started/)
 - [GitHub Repository](https://github.com/pompelmi/pompelmi)
-- [API Reference](/pompelmi/reference/ui-react/)
-- [Blog: Securing Express file uploads](/pompelmi/blog/express-file-upload-security/)
-- [Blog: Preventing ZIP bombs](/pompelmi/blog/preventing-zip-bombs/)
-- [Blog: 17 common upload security mistakes](/pompelmi/blog/common-file-upload-mistakes-nodejs/)
+- [API Reference](/reference/ui-react/)
+- [Blog: Securing Express file uploads](/blog/express-file-upload-security/)
+- [Blog: Preventing ZIP bombs](/blog/preventing-zip-bombs/)
+- [Blog: 17 common upload security mistakes](/blog/common-file-upload-mistakes-nodejs/)

@@ -88,8 +88,8 @@ jobs:
         run: |
           test -f website/dist/sitemap-index.xml
           test -f website/dist/sitemap-0.xml
-          grep -q '<loc>https://pompelmi.github.io/pompelmi/sitemap-0.xml</loc>' website/dist/sitemap-index.xml
-          grep -q '<loc>https://pompelmi.github.io/pompelmi/</loc>' website/dist/sitemap-0.xml
+          grep -q '<loc>https://pompelmi.app/sitemap-0.xml</loc>' website/dist/sitemap-index.xml
+          grep -q '<loc>https://pompelmi.app/</loc>' website/dist/sitemap-0.xml
 
       - name: Setup Pages
         uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0

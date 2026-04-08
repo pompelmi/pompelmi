@@ -5,7 +5,7 @@ description: Secure a Next.js App Router upload route with @pompelmi/next-upload
 
 Use this guide when your Next.js application accepts uploads through an App Router route handler and you want the upload decision to stay inside your own infrastructure.
 
-If you want the broader Node.js model behind this pattern, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+If you want the broader Node.js model behind this pattern, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/).
 
 ## Install
 
@@ -71,8 +71,8 @@ export const POST = createNextUploadHandler({
 
 ## Continue
 
-- [Next.js file upload security patterns](/pompelmi/blog/nextjs-file-upload-security/)
-- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
+- [Next.js file upload security patterns](/blog/nextjs-file-upload-security/)
+- [Scan files before S3 upload in Node.js](/blog/scan-files-before-s3-upload-nodejs/)
 - [Secure S3 presigned uploads with malware scanning](../tutorials/secure-s3-presigned-uploads-with-malware-scanning/)
 - [Pompelmi vs cloud malware scanning APIs](../comparisons/pompelmi-vs-cloud-malware-scanning-apis/)
 - [Next.js examples on GitHub](https://github.com/pompelmi/pompelmi/tree/main/examples)

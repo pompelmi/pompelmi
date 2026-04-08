@@ -21,4 +21,4 @@ Start with the built-in upload gate. Add YARA when your threat model needs patte
 
 - [Pompelmi vs ClamAV for file uploads](./pompelmi-vs-clamav-for-file-uploads/)
 - [CI/CD artifact scanning](../use-cases/cicd-artifact-scanning/)
-- [Advanced malware detection with YARA integration](/pompelmi/blog/yara-integration-guide/)
+- [Advanced malware detection with YARA integration](/blog/yara-integration-guide/)

@@ -34,10 +34,10 @@ const formatDate = (date) =>
 const published = formatDate(post.data.pubDate);
 const updated = post.data.updatedDate ? formatDate(post.data.updatedDate) : null;
 const authorName = post.data.author ?? 'Pompelmi Team';
-const articleUrl = `https://pompelmi.github.io/pompelmi/blog/${post.id}/`;
+const articleUrl = `https://pompelmi.app/blog/${post.id}/`;
 const nextSteps = [
   {
-    href: '/pompelmi/getting-started/',
+    href: '/getting-started/',
     title: 'Start with the docs',
     note: 'Pick a framework guide and wire your first upload route.',
   },
@@ -71,7 +71,7 @@ const jsonLd = {
         name: 'Pompelmi',
         logo: {
           '@type': 'ImageObject',
-          url: 'https://pompelmi.github.io/pompelmi/logo.svg',
+          url: 'https://pompelmi.app/logo.svg',
         },
       },
       mainEntityOfPage: articleUrl,
@@ -84,13 +84,13 @@ const jsonLd = {
           '@type': 'ListItem',
           position: 1,
           name: 'Home',
-          item: 'https://pompelmi.github.io/pompelmi/',
+          item: 'https://pompelmi.app/',
         },
         {
           '@type': 'ListItem',
           position: 2,
           name: 'Blog',
-          item: 'https://pompelmi.github.io/pompelmi/blog/',
+          item: 'https://pompelmi.app/blog/',
         },
         {
           '@type': 'ListItem',
@@ -117,9 +117,9 @@ const jsonLd = {
 >
   <section class="mx-auto max-w-6xl px-4 py-10 sm:py-12">
     <nav class="text-sm text-slate-500">
-      <a href="/pompelmi/" class="hover:text-slate-900">Home</a>
+      <a href="/" class="hover:text-slate-900">Home</a>
       <span class="mx-2">/</span>
-      <a href="/pompelmi/blog/" class="hover:text-slate-900">Blog</a>
+      <a href="/blog/" class="hover:text-slate-900">Blog</a>
       <span class="mx-2">/</span>
       <span>{post.data.title}</span>
     </nav>
@@ -200,7 +200,7 @@ const jsonLd = {
         <h2 class="mt-3 text-2xl font-semibold tracking-tight text-slate-950">Related articles</h2>
         <div class="mt-4 grid gap-4 md:grid-cols-3">
           {relatedPosts.map((related) => (
-            <a href={`/pompelmi/blog/${related.id}/`} class="grid-card p-5">
+            <a href={`/blog/${related.id}/`} class="grid-card p-5">
               <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
                 {formatDate(related.data.updatedDate ?? related.data.pubDate)}
               </p>

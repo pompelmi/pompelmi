@@ -7,11 +7,11 @@ Start with one upload route and one clear decision: inspect first, store later.
 
 Pompelmi is most useful when you treat uploaded files as untrusted input and make a policy decision before persistence or downstream parsing.
 
-If you want the wider architecture first, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/) before picking a framework-specific path.
+If you want the wider architecture first, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/) before picking a framework-specific path.
 
 ## Fastest ways to evaluate it
 
-- Want to inspect the verdict UX without sending a file anywhere? Open the [browser preview](/pompelmi/#browser-preview).
+- Want to inspect the verdict UX without sending a file anywhere? Open the [browser preview](/#browser-preview).
 - Want a real route with a form and JSON response? Run the [Express demo](https://github.com/pompelmi/pompelmi/tree/main/examples/demo).
 - Want the broader example set first? Start with the [examples index](https://github.com/pompelmi/pompelmi/tree/main/examples).
 
@@ -97,8 +97,8 @@ The most common safe sequence is:
 
 ## Next steps
 
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Scan files before S3 upload in Node.js](/pompelmi/blog/scan-files-before-s3-upload-nodejs/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Scan files before S3 upload in Node.js](/blog/scan-files-before-s3-upload-nodejs/)
 - [How to scan file uploads in Multer](./tutorials/how-to-scan-file-uploads-in-multer/)
 - [Node.js file upload validation best practices](./tutorials/nodejs-file-upload-validation-best-practices/)
 - [Quarantine / inspect-first-store-later workflows](./use-cases/quarantine-inspect-first-store-later/)

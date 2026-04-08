@@ -69,4 +69,4 @@ router.post(
 
 ## Where to go next
 
-Start with the canonical [Koa guide](/pompelmi/how-to/koa/). For broader validation strategy, continue to [Node.js file upload validation best practices](/pompelmi/tutorials/nodejs-file-upload-validation-best-practices/). Examples and package code live in the [repository](https://github.com/pompelmi/pompelmi).
+Start with the canonical [Koa guide](/how-to/koa/). For broader validation strategy, continue to [Node.js file upload validation best practices](/tutorials/nodejs-file-upload-validation-best-practices/). Examples and package code live in the [repository](https://github.com/pompelmi/pompelmi).

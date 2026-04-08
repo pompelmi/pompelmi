@@ -5,7 +5,7 @@ description: Add an early upload gate to Fastify with @fastify/multipart, @pompe
 
 Fastify is a good fit for upload security because you can make the decision in a `preHandler` before the main route runs.
 
-If you want the wider Node.js context behind that pattern, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/pompelmi/blog/secure-file-uploads-nodejs/).
+If you want the wider Node.js context behind that pattern, read [Secure file uploads in Node.js: Beyond Extension and MIME Checks](/blog/secure-file-uploads-nodejs/).
 
 ## Install
 
@@ -73,6 +73,6 @@ app.post(
 
 ## Continue
 
-- [Fastify upload hardening](/pompelmi/blog/fastify-upload-hardening/)
+- [Fastify upload hardening](/blog/fastify-upload-hardening/)
 - [Archive / ZIP upload security](../use-cases/archive-zip-upload-security/)
 - [Extension checks vs MIME sniffing vs content inspection](../comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)

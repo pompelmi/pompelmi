@@ -313,7 +313,7 @@ Regulated environments demand that upload security is auditable, predictable, an
 
 **Resources:**
 
-- [Docs: getting started](/pompelmi/getting-started/)
+- [Docs: getting started](/getting-started/)
 - [GitHub: pompelmi/pompelmi](https://github.com/pompelmi/pompelmi)
-- [Blog: Privacy-first upload security vs cloud scanning APIs](/pompelmi/blog/privacy-first-vs-cloud-scanning/)
-- [Blog: Upload quarantine and review flows for suspicious files](/pompelmi/blog/upload-quarantine-review-flows/)
+- [Blog: Privacy-first upload security vs cloud scanning APIs](/blog/privacy-first-vs-cloud-scanning/)
+- [Blog: Upload quarantine and review flows for suspicious files](/blog/upload-quarantine-review-flows/)

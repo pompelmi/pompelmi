@@ -109,12 +109,12 @@ It also keeps security behavior easier to reason about. The upload either reache
 
 Fastify upload security is strongest when the trust decision happens in `preHandler`, before your main route writes anything durable. That gives you a small, explicit upload boundary instead of a best-effort cleanup job after storage.
 
-The fastest way to implement that pattern is the canonical [Fastify guide](/pompelmi/how-to/fastify/) with route-specific policies for the file types your application actually accepts.
+The fastest way to implement that pattern is the canonical [Fastify guide](/how-to/fastify/) with route-specific policies for the file types your application actually accepts.
 
 ## Related reading
 
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
-- [Secure file uploads in Fastify](/pompelmi/how-to/fastify/)
-- [Archive / ZIP upload security](/pompelmi/use-cases/archive-zip-upload-security/)
-- [Extension checks vs MIME sniffing vs content inspection](/pompelmi/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
+- [Secure file uploads in Fastify](/how-to/fastify/)
+- [Archive / ZIP upload security](/use-cases/archive-zip-upload-security/)
+- [Extension checks vs MIME sniffing vs content inspection](/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
 - [Fastify package source on GitHub](https://github.com/pompelmi/pompelmi/tree/main/packages/fastify-plugin)

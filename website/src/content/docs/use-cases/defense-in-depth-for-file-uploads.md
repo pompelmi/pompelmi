@@ -23,6 +23,6 @@ Pompelmi covers the application-layer upload gate. It does not replace auth, sto
 ## Continue
 
 - [File-type validation vs malware scanning](../comparisons/file-type-validation-vs-malware-scanning/)
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)
 - [Quarantine / inspect-first-store-later workflows](./quarantine-inspect-first-store-later/)
 - [Production readiness](../production-readiness/)

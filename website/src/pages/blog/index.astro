@@ -9,21 +9,21 @@ const blogPosts = (await getCollection('blog'))
     return bDate.valueOf() - aDate.valueOf();
   });
 const [featuredPost, ...remainingPosts] = blogPosts;
-const toBlog = (id) => `/pompelmi/blog/${id}/`;
+const toBlog = (id) => `/blog/${id}/`;
 
 const featuredLinks = [
   {
-    href: '/pompelmi/use-cases/',
+    href: '/use-cases/',
     title: 'Use cases',
     description: 'Document, image, PDF, archive, S3, CI/CD, and quarantine workflows.',
   },
   {
-    href: '/pompelmi/comparisons/',
+    href: '/comparisons/',
     title: 'Comparisons',
     description: 'Extension checks vs MIME sniffing, Pompelmi vs ClamAV, and cloud API tradeoffs.',
   },
   {
-    href: '/pompelmi/getting-started/',
+    href: '/getting-started/',
     title: 'Start here',
     description: 'Install the core package, pick a framework guide, and test the upload gate locally.',
   },
@@ -41,7 +41,7 @@ const jsonLd = {
   '@type': 'Blog',
   name: 'Pompelmi Blog',
   description: 'Technical guides, decision pages, and upload-security deep dives for Node.js teams.',
-  url: 'https://pompelmi.github.io/pompelmi/blog/',
+  url: 'https://pompelmi.app/blog/',
 };
 ---
 

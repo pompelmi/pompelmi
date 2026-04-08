@@ -2,14 +2,14 @@
   "name": "Pompelmi",
   "short_name": "Pompelmi",
   "description": "In-process file upload security for Node.js.",
-  "start_url": "/pompelmi/",
-  "scope": "/pompelmi/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#0f172a",
   "icons": [
     {
-      "src": "/pompelmi/logo.svg",
+      "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any"

@@ -98,7 +98,7 @@ If you are tightening an existing upload path, keep both layers and make sure st
 
 ## Related reading
 
-- [File-type validation vs malware scanning](/pompelmi/comparisons/file-type-validation-vs-malware-scanning/)
-- [Node.js file upload validation best practices](/pompelmi/tutorials/nodejs-file-upload-validation-best-practices/)
-- [Extension checks vs MIME sniffing vs content inspection](/pompelmi/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
-- [Secure file uploads in Node.js: Beyond extension and MIME checks](/pompelmi/blog/secure-file-uploads-nodejs/)
+- [File-type validation vs malware scanning](/comparisons/file-type-validation-vs-malware-scanning/)
+- [Node.js file upload validation best practices](/tutorials/nodejs-file-upload-validation-best-practices/)
+- [Extension checks vs MIME sniffing vs content inspection](/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/)
+- [Secure file uploads in Node.js: Beyond extension and MIME checks](/blog/secure-file-uploads-nodejs/)

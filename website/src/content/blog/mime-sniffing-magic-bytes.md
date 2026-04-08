@@ -57,4 +57,4 @@ That layered approach keeps the route fast while still making the trust decision
 
 ## Where to go next
 
-Use the decision-page version of this topic at [extension checks vs MIME sniffing vs content inspection](/pompelmi/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/). For runnable code and framework routes, start with the [docs](/pompelmi/getting-started/), inspect the [examples](https://github.com/pompelmi/pompelmi/tree/main/examples), or follow the [repo on GitHub](https://github.com/pompelmi/pompelmi).
+Use the decision-page version of this topic at [extension checks vs MIME sniffing vs content inspection](/comparisons/extension-checks-vs-mime-sniffing-vs-content-inspection/). For runnable code and framework routes, start with the [docs](/getting-started/), inspect the [examples](https://github.com/pompelmi/pompelmi/tree/main/examples), or follow the [repo on GitHub](https://github.com/pompelmi/pompelmi).
