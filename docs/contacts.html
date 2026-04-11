@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contacts — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="contacts.html" class="active">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Contacts</span>
+      <li><a href="#links">Links</a></li>
+      <li><a href="#bugs">Report a bug</a></li>
+      <li><a href="#contributing">Contributing</a></li>
+      <li><a href="#license">License</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="links">
+      <h2>Links</h2>
+      <table>
+        <tr>
+          <th>Resource</th>
+          <th>URL</th>
+        </tr>
+        <tr>
+          <td>Source code (GitHub)</td>
+          <td><a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a></td>
+        </tr>
+        <tr>
+          <td>npm package</td>
+          <td><a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a></td>
+        </tr>
+        <tr>
+          <td>Bug tracker</td>
+          <td><a href="https://github.com/pompelmi/pompelmi/issues">github.com/pompelmi/pompelmi/issues</a></td>
+        </tr>
+        <tr>
+          <td>ClamAV project</td>
+          <td><a href="https://www.clamav.net/">clamav.net</a></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="bugs">
+      <h2>Report a bug</h2>
+      <p>
+        Use the <a href="https://github.com/pompelmi/pompelmi/issues">GitHub issue tracker</a>
+        to report bugs or unexpected behaviour.
+      </p>
+
+      <h3>Before opening an issue</h3>
+      <ol>
+        <li>Check that ClamAV is installed and <code>clamscan --version</code> works.</li>
+        <li>Run <code>freshclam</code> to rule out stale definitions.</li>
+        <li>Search existing issues for the same problem.</li>
+      </ol>
+
+      <h3>What to include in a bug report</h3>
+      <ul>
+        <li>Operating system and version (e.g. <code>Ubuntu 22.04</code>, <code>macOS 14.4</code>).</li>
+        <li>Node.js version: <code>node --version</code></li>
+        <li>pompelmi version: <code>npm list pompelmi</code></li>
+        <li>ClamAV version: <code>clamscan --version</code></li>
+        <li>The exact error message or unexpected output.</li>
+        <li>A minimal code example that reproduces the problem.</li>
+      </ul>
+
+      <div class="note">
+        Do not include real malicious files or samples in issue reports.
+        If you need to demonstrate a malicious detection, use the
+        <a href="https://www.eicar.org/download-anti-malware-testfile/">EICAR test file</a>.
+      </div>
+    </div>
+
+    <div class="section" id="contributing">
+      <h2>Contributing</h2>
+      <p>
+        Contributions are welcome. The project is kept intentionally small.
+        Please read the following before submitting a pull request.
+      </p>
+
+      <h3>Getting started</h3>
+<pre>git clone https://github.com/pompelmi/pompelmi.git
+cd pompelmi
+npm install</pre>
+
+      <h3>Running tests</h3>
+<pre>npm test</pre>
+
+      <p>
+        Unit tests run without ClamAV — they mock <code>cross-spawn</code> using Node's
+        built-in <code>node:test</code> runner. Integration tests scan real EICAR files
+        and are skipped automatically if <code>clamscan</code> is not found in <code>PATH</code>.
+      </p>
+
+      <h3>Linting</h3>
+<pre>npm run lint</pre>
+
+      <p>
+        The project uses ESLint with the <code>@eslint/js</code> recommended ruleset.
+        Fix all lint errors before submitting a PR.
+      </p>
+
+      <h3>What is in scope</h3>
+      <ul>
+        <li>Bug fixes in <code>ClamAVScanner.js</code>.</li>
+        <li>Improved error messages.</li>
+        <li>Test coverage improvements.</li>
+        <li>Documentation corrections.</li>
+        <li>TypeScript declaration file (<code>.d.ts</code>).</li>
+      </ul>
+
+      <h3>What is out of scope</h3>
+      <ul>
+        <li>Adding a clamd daemon connection. This would be a separate package.</li>
+        <li>Streaming / buffer scanning. Out of scope for v1.</li>
+        <li>Recursive directory scanning. Out of scope for v1.</li>
+        <li>Switching the dependency from cross-spawn to something else without a strong reason.</li>
+      </ul>
+
+      <h3>Pull request guidelines</h3>
+      <ul>
+        <li>One logical change per PR.</li>
+        <li>Include a test for any changed behaviour.</li>
+        <li>Do not bump <code>package.json</code> version in a PR; that is done at release time.</li>
+        <li>Describe what the PR does and why in the PR body.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="license">
+      <h2>License</h2>
+      <p>
+        pompelmi is released under the
+        <a href="https://opensource.org/licenses/ISC">ISC License</a>.
+      </p>
+<pre>ISC License
+
+Copyright (c) 2024 pompelmi contributors
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

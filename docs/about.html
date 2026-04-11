@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>About — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html" class="active">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">About</span>
+      <li><a href="#what">What it is</a></li>
+      <li><a href="#why">Why it exists</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#modules">Modules</a></li>
+      <li><a href="#deps">Dependencies</a></li>
+      <li><a href="#decisions">Design decisions</a></li>
+      <li><a href="#limits">Limitations</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="what">
+      <h2>What pompelmi is</h2>
+      <p>
+        <strong>pompelmi</strong> is a Node.js library that provides antivirus file scanning
+        by delegating to <a href="https://www.clamav.net/">ClamAV</a>, the open-source
+        antivirus engine. It exposes a single async function, <code>scan(filePath)</code>,
+        which returns a Promise resolving to one of three strings:
+        <code>"Clean"</code>, <code>"Malicious"</code>, or <code>"ScanError"</code>.
+      </p>
+      <p>
+        The name <em>pompelmi</em> is the Italian plural of <em>pompelmo</em> (grapefruit).
+        It was chosen because grapefruits are bright, sharp, and slightly bitter &mdash;
+        much like a good security check.
+      </p>
+    </div>
+
+    <div class="section" id="why">
+      <h2>Why it exists</h2>
+      <p>
+        Most Node.js antivirus integrations either require running a persistent ClamAV daemon
+        (clamd), parse raw stdout from <code>clamscan</code>, or wrap a native C extension.
+        pompelmi takes the simplest possible path:
+      </p>
+      <ul>
+        <li>Spawn <code>clamscan</code> as a child process.</li>
+        <li>Read the exit code when it finishes.</li>
+        <li>Map that code to a string constant and resolve the Promise.</li>
+      </ul>
+      <p>
+        No daemon. No stdout parsing. No native bindings. The result is a library that is
+        trivial to install, audit, and reason about.
+      </p>
+    </div>
+
+    <div class="section" id="how">
+      <h2>How it works</h2>
+      <p>
+        When you call <code>pompelmi.scan('/path/to/file')</code>, the following happens:
+      </p>
+      <ol>
+        <li>The file path is checked with <code>fs.existsSync</code>. If missing, the Promise rejects immediately.</li>
+        <li><code>cross-spawn</code> launches <code>clamscan --no-summary &lt;filePath&gt;</code> as a child process.</li>
+        <li>pompelmi listens for the <code>close</code> event on the child process.</li>
+        <li>The exit code is looked up in the <code>SCAN_RESULTS</code> map: <code>0 → "Clean"</code>, <code>1 → "Malicious"</code>, <code>2 → "ScanError"</code>.</li>
+        <li>The Promise resolves with the matching string, or rejects if the code is unrecognised.</li>
+      </ol>
+      <p>
+        The <code>--no-summary</code> flag suppresses ClamAV's final statistics output,
+        keeping stdout clean. pompelmi never reads stdout at all; only the exit code matters.
+      </p>
+    </div>
+
+    <div class="section" id="architecture">
+      <h2>Architecture</h2>
+      <p>The data flow from a calling application to a scan result:</p>
+<pre>your code
+    |
+    | pompelmi.scan(filePath)
+    v
+ClamAVScanner.js
+    |
+    | cross-spawn('clamscan', ['--no-summary', filePath])
+    v
+clamscan (system binary)
+    |
+    | exit code: 0 / 1 / 2
+    v
+SCAN_RESULTS map  (config.js)
+    |
+    | "Clean" / "Malicious" / "ScanError"
+    v
+Promise resolved → your code</pre>
+
+      <p>
+        The installer and updater helpers follow the same pattern: they spawn the appropriate
+        system package manager or <code>freshclam</code> and report success or failure via
+        the exit code.
+      </p>
+    </div>
+
+    <div class="section" id="modules">
+      <h2>Modules</h2>
+      <table>
+        <tr>
+          <th>File</th>
+          <th>Exports</th>
+          <th>Purpose</th>
+        </tr>
+        <tr>
+          <td><code>index.js</code></td>
+          <td><code>pompelmi</code></td>
+          <td>Public entry point. Re-exports <code>{ scan }</code>.</td>
+        </tr>
+        <tr>
+          <td><code>ClamAVScanner.js</code></td>
+          <td><code>scan(filePath)</code></td>
+          <td>Spawns <code>clamscan</code>, maps exit code, returns Promise.</td>
+        </tr>
+        <tr>
+          <td><code>ClamAVInstaller.js</code></td>
+          <td><code>ClamAVInstaller()</code></td>
+          <td>Installs ClamAV using the platform's package manager.</td>
+        </tr>
+        <tr>
+          <td><code>ClamAVDatabaseUpdater.js</code></td>
+          <td><code>updateClamAVDatabase()</code></td>
+          <td>Runs <code>freshclam</code> to refresh virus definitions.</td>
+        </tr>
+        <tr>
+          <td><code>InstallerCommand.js</code></td>
+          <td><code>getInstallerCommand()</code>, <code>getUpdaterCommand()</code></td>
+          <td>Returns the correct [binary, args] pair for the current platform.</td>
+        </tr>
+        <tr>
+          <td><code>config.js</code></td>
+          <td><code>INSTALLER_COMMANDS</code>, <code>UPDATER_COMMANDS</code>, <code>DB_PATHS</code>, <code>SCAN_RESULTS</code></td>
+          <td>Frozen config object. Single source of truth for all commands and result strings.</td>
+        </tr>
+        <tr>
+          <td><code>constants.js</code></td>
+          <td><code>PLATFORM</code></td>
+          <td>Exports <code>process.platform</code> so it can be mocked in tests.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="deps">
+      <h2>Dependencies</h2>
+      <table>
+        <tr>
+          <th>Package</th>
+          <th>Version</th>
+          <th>Why</th>
+        </tr>
+        <tr>
+          <td><a href="https://www.npmjs.com/package/cross-spawn">cross-spawn</a></td>
+          <td>^7.0.6</td>
+          <td>
+            Node's built-in <code>child_process.spawn</code> has edge cases on Windows
+            (PATHEXT, quoting). cross-spawn handles these transparently without changing
+            the API.
+          </td>
+        </tr>
+      </table>
+      <p>There are no other runtime dependencies.</p>
+
+      <h3>Dev dependencies</h3>
+      <table>
+        <tr>
+          <th>Package</th>
+          <th>Purpose</th>
+        </tr>
+        <tr>
+          <td><code>eslint</code>, <code>@eslint/js</code>, <code>globals</code></td>
+          <td>Static analysis. Configured in <code>eslint.config.mjs</code>.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="decisions">
+      <h2>Design decisions</h2>
+
+      <h3>Why not use the clamd daemon?</h3>
+      <p>
+        The ClamAV daemon (<code>clamd</code>) provides faster repeated scanning because
+        it keeps virus definitions in memory. However, it requires managing a background
+        service, a socket or TCP connection, and additional configuration. pompelmi
+        prioritises simplicity: spawn a process, get a result, done. For high-throughput
+        scanning pipelines, switching to a clamd-based approach is reasonable, but that
+        is outside pompelmi's scope.
+      </p>
+
+      <h3>Why return a string instead of a boolean or number?</h3>
+      <p>
+        A boolean (<code>true/false</code>) would collapse the three-state result into two,
+        losing the <code>"ScanError"</code> case which represents a distinct and actionable
+        condition: the scan failed and the file's safety is unknown. A number would require
+        callers to remember what <code>2</code> means.
+        A string is self-documenting and safe to log, serialize, and switch on.
+      </p>
+
+      <h3>Why freeze the config object?</h3>
+      <p>
+        <code>config.js</code> exports a frozen object. This prevents accidental mutation
+        of shared configuration at runtime. Because config values are looked up on every
+        scan, a mutation bug could silently change behaviour across all scans in a process.
+      </p>
+
+      <h3>Why cross-spawn instead of execa or shelljs?</h3>
+      <p>
+        cross-spawn has a minimal surface area, is widely used, and does exactly one thing.
+        Heavier alternatives like <code>execa</code> add promise wrappers and output parsing
+        on top of what pompelmi needs, which is just an exit code.
+      </p>
+    </div>
+
+    <div class="section" id="limits">
+      <h2>Limitations</h2>
+      <ul>
+        <li>
+          <strong>Requires ClamAV on the host.</strong>
+          pompelmi does not bundle or download ClamAV. The <code>clamscan</code> binary must
+          be in <code>PATH</code>.
+        </li>
+        <li>
+          <strong>Virus definitions must be kept up to date manually.</strong>
+          ClamAV's detection quality depends on fresh definitions. Run <code>freshclam</code>
+          regularly or set up a cron job.
+        </li>
+        <li>
+          <strong>Scanning speed depends on file size.</strong>
+          Each call spawns a new <code>clamscan</code> process, which loads definitions
+          from disk every time. For bulk scanning, consider batching calls or switching
+          to the clamd socket.
+        </li>
+        <li>
+          <strong>No directory scanning.</strong>
+          <code>scan()</code> accepts a single file path. ClamAV supports recursive directory
+          scanning, but pompelmi does not currently expose that option.
+        </li>
+        <li>
+          <strong>No streaming support.</strong>
+          The file must exist on disk. Scanning a stream or buffer directly is not supported.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

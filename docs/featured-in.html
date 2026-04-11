@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Featured In — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<style>
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    margin: 16px 0;
+  }
+  .grid a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #ccc;
+    padding: 16px 24px;
+    text-decoration: none;
+    width: calc(25% - 18px);
+    min-width: 130px;
+  }
+  .grid a:hover {
+    background: #f4f4f4;
+    text-decoration: none;
+  }
+  .grid img {
+    max-height: 36px;
+    max-width: 160px;
+    object-fit: contain;
+  }
+  .grid a span {
+    display: block;
+    font-size: 11px;
+    color: #666;
+    margin-top: 8px;
+    text-align: center;
+    font-family: Georgia, serif;
+  }
+  .grid a strong {
+    display: block;
+    font-size: 13px;
+    color: #333;
+    text-align: center;
+    font-family: Georgia, serif;
+  }
+  .grid a:hover strong {
+    color: #b84f2e;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html" class="active">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#press">Press</a></li>
+      <li><a href="#newsletters">Newsletters</a></li>
+      <li><a href="#community">Community</a></li>
+      <li><a href="#lists">Open Source Lists</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <p>Places where pompelmi has been written about, interviewed, or featured.</p>
+
+    <div class="section" id="press">
+      <h2>Press &amp; Media</h2>
+
+      <div class="grid">
+
+        <a href="https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Stack_Overflow_logo.svg/960px-Stack_Overflow_logo.svg.png" alt="Stack Overflow">
+          <span>Q&amp;A Interview &mdash; Feb 2026</span>
+        </a>
+
+        <a href="https://stackoverflow.blog/newsletter/issue-319-dogfooding-your-sdlc/" target="_blank">
+          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Stack_Overflow_logo.svg/960px-Stack_Overflow_logo.svg.png" alt="Stack Overflow">
+          <span>The Overflow #319 &mdash; Mar 2026</span>
+        </a>
+
+        <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/" target="_blank">
+          <img src="https://wirexsystems.com/wp-content/uploads/2016/09/helpnetsecurity-logo.jpg" alt="Help Net Security" style="max-height: 56px; max-width: 56px;">
+          <span>Feature Article &mdash; Feb 2026</span>
+        </a>
+
+        <a href="https://www.helpnetsecurity.com/2026/02/26/hottest-cybersecurity-open-source-tools-of-the-month-february-2026/" target="_blank">
+          <img src="https://wirexsystems.com/wp-content/uploads/2016/09/helpnetsecurity-logo.jpg" alt="Help Net Security" style="max-height: 56px; max-width: 56px;">
+          <span>Hottest OSS Tools Feb 2026</span>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="section" id="newsletters">
+      <h2>Newsletters</h2>
+
+      <div class="grid">
+
+        <a href="https://nodeweekly.com/issues/594" target="_blank">
+          <img src="https://cooperpress.com/images/publications/node.png" alt="Node Weekly">
+          <span>Issue #594 &mdash; Sep 2025</span>
+        </a>
+
+        <a href="https://bytes.dev/archives/429" target="_blank">
+          <img src="https://bytes.dev/images/bytes-icon.png" alt="Bytes">
+          <span>Issue #429 &mdash; Oct 2025</span>
+        </a>
+
+        <a href="https://www.detectionengineering.net/p/det-eng-weekly-issue-124-the-defcon" target="_blank">
+          <strong>Detection Engineering Weekly</strong>
+          <span>Issue #124 &mdash; Aug 2025</span>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="section" id="community">
+      <h2>Community</h2>
+
+      <div class="grid">
+
+        <a href="https://news.ycombinator.com/item?id=46948697" target="_blank">
+          <strong>Hacker News</strong>
+          <span>Show HN</span>
+        </a>
+
+        <a href="https://dev.to/sonotommy/secure-nodejs-file-uploads-in-minutes-with-pompelmi-3jfe" target="_blank">
+          <img src="https://media2.dev.to/dynamic/image/quality=100/https://dev-to-uploads.s3.amazonaws.com/uploads/logos/resized_logo_UQww2soKuUsjaOGNB38o.png" alt="DEV Community">
+          <span>Tutorial &mdash; Aug 2025</span>
+        </a>
+
+        <a href="https://dev.to/sonotommy/10-open-source-projects-youll-actually-use-in-2026-2ig9" target="_blank">
+          <img src="https://media2.dev.to/dynamic/image/quality=100/https://dev-to-uploads.s3.amazonaws.com/uploads/logos/resized_logo_UQww2soKuUsjaOGNB38o.png" alt="DEV Community">
+          <span>10 OSS Projects for 2026</span>
+        </a>
+
+        <a href="https://dev.to/sonotommy/this-open-source-tool-scans-uploads-before-they-become-a-problem-j4o" target="_blank">
+          <img src="https://media2.dev.to/dynamic/image/quality=100/https://dev-to-uploads.s3.amazonaws.com/uploads/logos/resized_logo_UQww2soKuUsjaOGNB38o.png" alt="DEV Community">
+          <span>Open Source Tool Spotlight</span>
+        </a>
+
+      </div>
+    </div>
+
+    <div class="section" id="lists">
+      <h2>Open Source Lists</h2>
+
+      <div class="grid">
+
+        <a href="https://github.com/sorrycc/awesome-javascript" target="_blank">
+          <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png" alt="GitHub">
+          <span>awesome-javascript</span>
+        </a>
+
+        <a href="https://github.com/dzharii/awesome-typescript" target="_blank">
+          <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Logo.png" alt="GitHub">
+          <span>awesome-typescript</span>
+        </a>
+
+        <a href="https://socket.dev/npm/package/pompelmi" target="_blank">
+          <strong>Socket</strong>
+          <span>npm Security Analysis</span>
+        </a>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quickstart — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html" class="active">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Quickstart</span>
+      <li><a href="#prereqs">Prerequisites</a></li>
+      <li><a href="#step1">1. Install ClamAV</a></li>
+      <li><a href="#step2">2. Update definitions</a></li>
+      <li><a href="#step3">3. Install pompelmi</a></li>
+      <li><a href="#step4">4. First scan</a></li>
+      <li><a href="#step5">5. Handle errors</a></li>
+      <li><a href="#examples">More examples</a></li>
+      <li><a href="#errors">Common errors</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="prereqs">
+      <h2>Prerequisites</h2>
+      <table>
+        <tr>
+          <th>Requirement</th>
+          <th>Minimum version</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td>Node.js</td>
+          <td>18.x</td>
+          <td>18+ required (uses built-in <code>node:test</code> runner). Test with <code>node --version</code>.</td>
+        </tr>
+        <tr>
+          <td>npm</td>
+          <td>6.x</td>
+          <td>Comes with Node.js.</td>
+        </tr>
+        <tr>
+          <td>ClamAV</td>
+          <td>0.103+</td>
+          <td>Must be installed on the host system. See Step 1.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="step1">
+      <h2>Step 1 &mdash; Install ClamAV</h2>
+      <p>
+        pompelmi delegates to the <code>clamscan</code> system binary. Install ClamAV
+        for your operating system before proceeding.
+      </p>
+
+      <span class="platform-label">macOS &mdash; Homebrew</span>
+<pre>brew install clamav</pre>
+
+      <span class="platform-label">Linux &mdash; Debian / Ubuntu</span>
+<pre>sudo apt-get update
+sudo apt-get install -y clamav clamav-daemon</pre>
+
+      <span class="platform-label">Linux &mdash; RHEL / CentOS / Fedora</span>
+<pre>sudo dnf install -y clamav clamav-update</pre>
+
+      <span class="platform-label">Windows &mdash; Chocolatey</span>
+<pre>choco install clamav -y</pre>
+
+      <span class="platform-label">Windows &mdash; manual</span>
+      <p>Download the installer from <a href="https://www.clamav.net/downloads">clamav.net/downloads</a>
+        and follow the setup wizard. Make sure the ClamAV bin directory is added to
+        <code>PATH</code>.</p>
+
+      <p>Verify the installation:</p>
+<pre>clamscan --version</pre>
+
+      <div class="tip">
+        On macOS, Homebrew installs <code>clamscan</code> to <code>/opt/homebrew/bin</code>
+        (Apple Silicon) or <code>/usr/local/bin</code> (Intel). Both are on the default PATH
+        after a standard Homebrew setup.
+      </div>
+    </div>
+
+    <div class="section" id="step2">
+      <h2>Step 2 &mdash; Update virus definitions</h2>
+      <p>
+        ClamAV ships with no virus definitions. You must download them before the first scan.
+        This is done with <code>freshclam</code>.
+      </p>
+
+      <span class="platform-label">macOS and Windows</span>
+<pre>freshclam</pre>
+
+      <span class="platform-label">Linux</span>
+<pre>sudo freshclam</pre>
+
+      <div class="warn">
+        On Linux, the <code>clamav-freshclam</code> service may be running in the background
+        and will lock the database files. Stop it before running freshclam manually:
+<pre>sudo systemctl stop clamav-freshclam
+sudo freshclam
+sudo systemctl start clamav-freshclam</pre>
+      </div>
+
+      <p>
+        freshclam downloads the main.cvd, daily.cvd, and bytecode.cvd definition files.
+        The download is several hundred megabytes on first run.
+        Subsequent runs are incremental.
+      </p>
+
+      <div class="note">
+        Schedule <code>freshclam</code> to run daily (cron, systemd timer, or Task Scheduler)
+        to keep definitions current. Stale definitions reduce detection quality.
+      </div>
+    </div>
+
+    <div class="section" id="step3">
+      <h2>Step 3 &mdash; Install pompelmi</h2>
+<pre>npm install pompelmi</pre>
+
+      <p>Or with yarn:</p>
+<pre>yarn add pompelmi</pre>
+
+      <p>Verify it installed:</p>
+<pre>node -e "const p = require('pompelmi'); console.log(typeof p.scan)"
+# function</pre>
+    </div>
+
+    <div class="section" id="step4">
+      <h2>Step 4 &mdash; Run your first scan</h2>
+      <p>Create a file called <code>scan.js</code>:</p>
+<pre>const pompelmi = require('pompelmi');
+
+pompelmi.scan(process.argv[2])
+  .then(result =&gt; {
+    console.log('Result:', result);
+    process.exit(result === 'Malicious' ? 1 : 0);
+  })
+  .catch(err =&gt; {
+    console.error('Error:', err.message);
+    process.exit(2);
+  });</pre>
+
+      <p>Run it against any file:</p>
+<pre>node scan.js /etc/hosts
+# Result: Clean</pre>
+
+      <div class="tip">
+        To test the malicious detection path, ClamAV ships with a built-in test signature
+        called the <a href="https://www.eicar.org/download-anti-malware-testfile/">EICAR test file</a>.
+        It is a harmless string that every AV engine detects as malware for testing purposes:
+<pre>echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' &gt; /tmp/eicar.txt
+node scan.js /tmp/eicar.txt
+# Result: Malicious</pre>
+      </div>
+    </div>
+
+    <div class="section" id="step5">
+      <h2>Step 5 &mdash; Handle errors properly</h2>
+      <p>
+        <code>scan()</code> rejects the Promise in three situations. Always attach a
+        <code>.catch()</code> or use <code>try/catch</code> in an async function.
+      </p>
+<pre>const pompelmi = require('pompelmi');
+const path = require('path');
+
+async function safeScan(filePath) {
+  // Resolve to absolute path to avoid ambiguity
+  const abs = path.resolve(filePath);
+
+  let result;
+  try {
+    result = await pompelmi.scan(abs);
+  } catch (err) {
+    if (err.message.startsWith('File not found')) {
+      console.error('The file does not exist:', abs);
+      return null;
+    }
+    if (err.message.startsWith('Unexpected exit code')) {
+      console.error('ClamAV returned an unknown exit code.');
+      return null;
+    }
+    // clamscan binary not found or other OS error
+    console.error('ClamAV error:', err.message);
+    return null;
+  }
+
+  return result;
+}
+
+safeScan('./upload.zip').then(console.log);</pre>
+    </div>
+
+    <div class="section" id="examples">
+      <h2>More examples</h2>
+
+      <h3>Scanning uploaded files in Express</h3>
+<pre>const express = require('express');
+const multer  = require('multer');
+const pompelmi = require('pompelmi');
+const path = require('path');
+const fs   = require('fs');
+
+const upload = multer({ dest: '/tmp/uploads/' });
+const app    = express();
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  const filePath = req.file.path;
+
+  try {
+    const result = await pompelmi.scan(filePath);
+
+    if (result === 'Malicious') {
+      fs.unlinkSync(filePath);
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (result === 'ScanError') {
+      // Scan failed — treat as untrusted, reject upload
+      fs.unlinkSync(filePath);
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected as precaution.' });
+    }
+
+    // Clean — move to permanent storage
+    const dest = path.join('/var/app/uploads', req.file.filename);
+    fs.renameSync(filePath, dest);
+    res.json({ status: 'ok', file: req.file.filename });
+
+  } catch (err) {
+    fs.unlinkSync(filePath);
+    res.status(500).json({ error: 'Scan failed: ' + err.message });
+  }
+});
+
+app.listen(3000);</pre>
+
+      <h3>Scanning multiple files in sequence</h3>
+<pre>const pompelmi = require('pompelmi');
+const fs = require('fs');
+
+async function scanDirectory(dirPath) {
+  const files = fs.readdirSync(dirPath)
+    .map(f =&gt; `${dirPath}/${f}`)
+    .filter(f =&gt; fs.statSync(f).isFile());
+
+  const results = [];
+
+  for (const file of files) {
+    const result = await pompelmi.scan(file);
+    results.push({ file, result });
+    if (result !== 'Clean') {
+      console.warn(`[${result}] ${file}`);
+    }
+  }
+
+  return results;
+}
+
+scanDirectory('./downloads').then(results =&gt; {
+  const malicious = results.filter(r =&gt; r.result === 'Malicious');
+  console.log(`Scanned ${results.length} files. ${malicious.length} malicious.`);
+});</pre>
+
+      <h3>Parallel scanning with Promise.all</h3>
+<pre>const pompelmi = require('pompelmi');
+
+async function scanAll(filePaths) {
+  const settled = await Promise.allSettled(
+    filePaths.map(f =&gt; pompelmi.scan(f).then(r =&gt; ({ file: f, result: r })))
+  );
+
+  return settled.map(s =&gt;
+    s.status === 'fulfilled'
+      ? s.value
+      : { file: '?', result: 'Error', error: s.reason.message }
+  );
+}
+
+scanAll(['/tmp/a.zip', '/tmp/b.pdf', '/tmp/c.exe'])
+  .then(results =&gt; console.table(results));</pre>
+
+      <div class="note">
+        Parallel scanning spawns one <code>clamscan</code> process per file simultaneously.
+        On systems with limited RAM, scanning tens of files in parallel may cause memory
+        pressure because each process loads ClamAV definitions independently. Prefer
+        sequential scanning for large batches.
+      </div>
+    </div>
+
+    <div class="section" id="errors">
+      <h2>Common errors</h2>
+      <table>
+        <tr>
+          <th>Error message</th>
+          <th>Cause</th>
+          <th>Fix</th>
+        </tr>
+        <tr>
+          <td><code>File not found: /path/to/file</code></td>
+          <td>The path passed to <code>scan()</code> does not exist on disk.</td>
+          <td>Check the path. Use <code>path.resolve()</code> to avoid relative-path bugs.</td>
+        </tr>
+        <tr>
+          <td><code>ENOENT</code></td>
+          <td><code>clamscan</code> is not in <code>PATH</code>.</td>
+          <td>Install ClamAV (Step 1) and ensure it is on the system <code>PATH</code>.</td>
+        </tr>
+        <tr>
+          <td><code>Unexpected exit code: N</code></td>
+          <td>ClamAV returned an exit code other than 0, 1, or 2.</td>
+          <td>Run <code>clamscan --version</code> to check if ClamAV is healthy. Exit code 50+ usually indicates a config or permission error.</td>
+        </tr>
+        <tr>
+          <td>Scan always returns <code>ScanError</code></td>
+          <td>ClamAV definitions are missing, corrupted, or the process lacks read permissions.</td>
+          <td>Run <code>freshclam</code> to download/repair definitions. Check file permissions.</td>
+        </tr>
+        <tr>
+          <td><code>LibClamAV Error: cli_loaddbdir()</code></td>
+          <td>Virus database not found by ClamAV.</td>
+          <td>Run <code>freshclam</code> to populate the database directory.</td>
+        </tr>
+        <tr>
+          <td>Permission denied on the file</td>
+          <td>The process does not have read access to the file.</td>
+          <td>Check file permissions. pompelmi runs <code>clamscan</code> as the current user.</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

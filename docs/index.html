@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pompelmi — Node.js antivirus scanning</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+<style>
+  /* ── index-specific: hero block ── */
+  .hero {
+    border: 1px solid #ccc;
+    background: #fdf5f2;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .hero h2 {
+    font-size: 20px;
+    color: #b84f2e;
+    border: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 0 !important;
+  }
+  .hero p {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .hero pre {
+    margin-bottom: 0;
+  }
+  .feature-grid {
+    width: 100%;
+  }
+  .feature-grid td {
+    width: 50%;
+    vertical-align: top;
+    padding: 8px 12px;
+    border: 1px solid #ccc;
+    background: #f9f3f0;
+    font-size: 13px;
+  }
+  .feature-grid td strong {
+    display: block;
+    margin-bottom: 3px;
+    color: #333;
+  }
+  .nav-cards {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+  }
+  .nav-cards td {
+    width: 25%;
+    border: 1px solid #ccc;
+    padding: 10px 12px;
+    vertical-align: top;
+    font-size: 13px;
+    background: #f9f3f0;
+  }
+  .nav-cards td a {
+    font-size: 14px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .nav-cards td span {
+    color: #555;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html" class="active">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#example">Example</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pages">Documentation</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="hero">
+      <h2>pompelmi v1.0.0</h2>
+      <p>
+        A minimal Node.js wrapper around <a href="https://www.clamav.net/">ClamAV</a>
+        that scans any file and returns a plain string:
+        <strong>Clean</strong>, <strong>Malicious</strong>, or <strong>ScanError</strong>.
+        No daemons. No cloud. No native bindings.
+      </p>
+<pre>npm install pompelmi</pre>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+      <p>pompelmi requires <a href="https://nodejs.org/">Node.js</a> &ge; 14 and
+        <a href="https://www.clamav.net/">ClamAV</a> installed on the host system.</p>
+
+      <span class="platform-label">Install the npm package</span>
+<pre>npm install pompelmi</pre>
+
+      <span class="platform-label">Install ClamAV (macOS)</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+
+      <span class="platform-label">Install ClamAV (Linux)</span>
+<pre>sudo apt-get install -y clamav clamav-daemon &amp;&amp; sudo freshclam</pre>
+
+      <span class="platform-label">Install ClamAV (Windows)</span>
+<pre>choco install clamav -y</pre>
+
+      <div class="note">
+        pompelmi checks automatically whether ClamAV is already installed before running
+        any install command. If <code>clamscan</code> is already in <code>PATH</code>,
+        the installation step is skipped entirely. You never need to run it more than once.
+      </div>
+
+      <h3>Updating the Virus Database</h3>
+      <p>After installing ClamAV, download virus definitions with <code>freshclam</code>:</p>
+<pre>freshclam          # macOS / Windows
+sudo freshclam     # Linux</pre>
+
+      <div class="note">
+        pompelmi checks automatically whether the virus database file is already present
+        on disk before running <code>freshclam</code>. If the database exists, the update
+        step is skipped. No need to run it manually more than once.
+      </div>
+
+      <p>See <a href="quickstart.html">Quickstart</a> for the full step-by-step guide.</p>
+    </div>
+
+    <div class="section" id="example">
+      <h2>Example</h2>
+<pre>const pompelmi = require('pompelmi');
+
+async function scanUpload(filePath) {
+  const result = await pompelmi.scan(filePath);
+
+  if (result === 'Malicious') {
+    throw new Error('Upload rejected: malware detected');
+  }
+  if (result === 'ScanError') {
+    console.warn('Scan incomplete — treating file as untrusted');
+  }
+
+  return result; // "Clean" | "Malicious" | "ScanError"
+}
+
+scanUpload('./uploads/document.pdf')
+  .then(r =&gt; console.log('Scan result:', r))
+  .catch(err =&gt; console.error(err.message));</pre>
+    </div>
+
+    <div class="section" id="features">
+      <h2>Features</h2>
+      <table class="feature-grid">
+        <tr>
+          <td><strong>One function</strong>Call <code>pompelmi.scan(path)</code> and await a string. No config objects, no callbacks.</td>
+          <td><strong>Predictable results</strong>Always one of <code>"Clean"</code>, <code>"Malicious"</code>, or <code>"ScanError"</code>. Easy to switch on.</td>
+        </tr>
+        <tr>
+          <td><strong>Cross-platform</strong>Works on macOS, Linux, and Windows wherever ClamAV is available.</td>
+          <td><strong>No daemon required</strong>Uses <code>clamscan</code> directly. No clamd socket, no background process to manage.</td>
+        </tr>
+        <tr>
+          <td><strong>Single dependency</strong>Only <a href="https://www.npmjs.com/package/cross-spawn">cross-spawn</a> for reliable subprocess handling across platforms.</td>
+          <td><strong>Exit-code mapped</strong>ClamAV exit codes are mapped directly. No stdout parsing, no regex.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="pages">
+      <h2>Documentation</h2>
+      <table class="nav-cards">
+        <tr>
+          <td>
+            <a href="about.html">About</a>
+            <span>How pompelmi works, architecture, design decisions, and dependencies.</span>
+          </td>
+          <td>
+            <a href="quickstart.html">Quickstart</a>
+            <span>Step-by-step: install ClamAV, update definitions, write your first scan.</span>
+          </td>
+          <td>
+            <a href="api.html">API Reference</a>
+            <span>Full reference for <code>scan()</code>, installer, updater, config, and error types.</span>
+          </td>
+          <td>
+            <a href="contacts.html">Contacts</a>
+            <span>GitHub, npm, how to report bugs and contribute.</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

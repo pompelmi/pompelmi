@@ -1,0 +1,27 @@
+# Test files
+test/
+*.test.js
+__tests__/
+
+# Dev config
+.gitignore
+.eslintrc*
+.prettierrc*
+
+# Community / governance docs (kept in repo, not needed in the package)
+SECURITY.md
+DISCLAIMER.md
+CHANGELOG.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+
+# Docs
+docs/
+examples/
+
+# CI/CD
+.github/
+.travis.yml
+
+# Coverage
+coverage/

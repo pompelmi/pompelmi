@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Reference — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="../src/grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html" class="active">API</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">API</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#scan">scan()</a></li>
+      <li><a href="#installer">ClamAVInstaller()</a></li>
+      <li><a href="#updater">updateClamAVDatabase()</a></li>
+      <li><a href="#config">config</a></li>
+      <li><a href="#constants">constants</a></li>
+      <li><a href="#errors">Error types</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Overview</h2>
+      <p>
+        The public API surface of pompelmi is intentionally small.
+        The main entry point exports a single object with one method:
+      </p>
+<pre>const pompelmi = require('pompelmi');
+// pompelmi.scan — the only public method</pre>
+
+      <p>
+        The installer and updater are internal utilities exposed as named exports from
+        their own modules. They are not re-exported from <code>index.js</code>.
+      </p>
+
+      <table>
+        <tr>
+          <th>Symbol</th>
+          <th>Module</th>
+          <th>Type</th>
+          <th>Public?</th>
+        </tr>
+        <tr>
+          <td><code>pompelmi.scan</code></td>
+          <td><code>index.js</code></td>
+          <td>Function → Promise</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><code>ClamAVInstaller</code></td>
+          <td><code>ClamAVInstaller.js</code></td>
+          <td>Function → Promise</td>
+          <td>Internal</td>
+        </tr>
+        <tr>
+          <td><code>updateClamAVDatabase</code></td>
+          <td><code>ClamAVDatabaseUpdater.js</code></td>
+          <td>Function → Promise</td>
+          <td>Internal</td>
+        </tr>
+        <tr>
+          <td><code>SCAN_RESULTS</code></td>
+          <td><code>config.js</code></td>
+          <td>Frozen object</td>
+          <td>Internal</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ── scan() ── -->
+    <div class="section" id="scan">
+      <h2>pompelmi.scan(filePath)</h2>
+      <p>
+        Scans a file for malware using ClamAV and returns a Promise that resolves to
+        a result string.
+      </p>
+
+      <h3>Signature</h3>
+<pre>pompelmi.scan(filePath: string): Promise&lt;string&gt;</pre>
+
+      <h3>Parameters</h3>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>filePath</code></td>
+          <td><code>string</code></td>
+          <td>Yes</td>
+          <td>
+            Absolute or relative path to the file to scan.
+            Relative paths are resolved from the current working directory
+            (<code>process.cwd()</code>).
+          </td>
+        </tr>
+      </table>
+
+      <h3>Return value</h3>
+      <p>
+        A <code>Promise&lt;string&gt;</code> that resolves to one of the following:
+      </p>
+      <table>
+        <tr>
+          <th>Value</th>
+          <th>ClamAV exit code</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td class="result-clean"><code>"Clean"</code></td>
+          <td class="code-cell">0</td>
+          <td>No known threats found in the file.</td>
+        </tr>
+        <tr>
+          <td class="result-malicious"><code>"Malicious"</code></td>
+          <td class="code-cell">1</td>
+          <td>A virus or malware signature was matched.</td>
+        </tr>
+        <tr>
+          <td class="result-scanerror"><code>"ScanError"</code></td>
+          <td class="code-cell">2</td>
+          <td>
+            The scan itself failed (I/O error, encrypted archive, permission denied).
+            The file's safety is <strong>unknown</strong> — treat as untrusted.
+          </td>
+        </tr>
+      </table>
+
+      <h3>Rejection reasons</h3>
+      <p>The Promise rejects (throws in async/await) in these cases:</p>
+      <table>
+        <tr>
+          <th>Message pattern</th>
+          <th>Cause</th>
+        </tr>
+        <tr>
+          <td><code>filePath must be a string</code></td>
+          <td>The argument passed to <code>scan()</code> is not a string.</td>
+        </tr>
+        <tr>
+          <td><code>File not found: &lt;path&gt;</code></td>
+          <td><code>fs.existsSync(filePath)</code> returned false before spawning ClamAV.</td>
+        </tr>
+        <tr>
+          <td><code>ENOENT</code></td>
+          <td><code>clamscan</code> binary not found in <code>PATH</code>.</td>
+        </tr>
+        <tr>
+          <td><code>Unexpected exit code: &lt;n&gt;</code></td>
+          <td>ClamAV exited with a code not in the <code>SCAN_RESULTS</code> map.</td>
+        </tr>
+        <tr>
+          <td><code>Process killed by signal: &lt;SIGNAL&gt;</code></td>
+          <td>The <code>clamscan</code> process was terminated by a signal (e.g. <code>SIGKILL</code>).</td>
+        </tr>
+      </table>
+
+      <h3>Example</h3>
+<pre>const pompelmi = require('pompelmi');
+
+// Promise style
+pompelmi.scan('/var/uploads/report.pdf')
+  .then(result =&gt; {
+    switch (result) {
+      case 'Clean':     /* proceed */                   break;
+      case 'Malicious': /* reject file */               break;
+      case 'ScanError': /* treat as untrusted, reject */ break;
+    }
+  })
+  .catch(err =&gt; console.error(err.message));
+
+// async/await style
+async function check(path) {
+  const result = await pompelmi.scan(path);
+  return result;
+}</pre>
+
+      <h3>Notes</h3>
+      <ul>
+        <li>
+          <code>scan()</code> spawns a new <code>clamscan</code> process for every call.
+          There is no connection pooling or caching.
+        </li>
+        <li>
+          The ClamAV flag <code>--no-summary</code> is always passed, suppressing the
+          "Infected files: N" footer line from stdout.
+        </li>
+        <li>
+          pompelmi does not read stdout or stderr from <code>clamscan</code>.
+          Only the exit code is used.
+        </li>
+        <li>
+          The file is not modified or copied. ClamAV reads it in-place.
+        </li>
+      </ul>
+    </div>
+
+    <!-- ── ClamAVInstaller ── -->
+    <div class="section" id="installer">
+      <h2>ClamAVInstaller()</h2>
+      <p>
+        Internal utility function that installs ClamAV using the platform's package manager.
+        Not exported from the main <code>index.js</code>.
+      </p>
+
+      <h3>Import</h3>
+<pre>const { ClamAVInstaller } = require('pompelmi/src/ClamAVInstaller');</pre>
+
+      <h3>Signature</h3>
+<pre>ClamAVInstaller(): Promise&lt;string&gt;</pre>
+
+      <h3>Behaviour</h3>
+      <p>Reads <code>process.platform</code> and spawns the corresponding install command:</p>
+      <table>
+        <tr>
+          <th>Platform (<code>process.platform</code>)</th>
+          <th>Command executed</th>
+        </tr>
+        <tr>
+          <td><code>darwin</code></td>
+          <td><code>brew install clamav</code></td>
+        </tr>
+        <tr>
+          <td><code>linux</code></td>
+          <td><code>sudo apt-get install -y clamav clamav-daemon</code></td>
+        </tr>
+        <tr>
+          <td><code>win32</code></td>
+          <td><code>choco install clamav -y</code></td>
+        </tr>
+        <tr>
+          <td>other</td>
+          <td>Logs <code>"Current platform is not supported."</code> and returns.</td>
+        </tr>
+      </table>
+
+      <p>
+        Output from the package manager is piped to the terminal (<code>stdio: 'inherit'</code>).
+        The function returns a <code>Promise&lt;string&gt;</code> that resolves with a status
+        message on success or skip, and rejects with an <code>Error</code> if the install
+        process exits with a non-zero code or if spawning the package manager fails.
+      </p>
+
+      <div class="warn">
+        On Linux this spawns <code>sudo apt-get</code>, which may prompt for a password.
+        This function is intended for use in setup scripts, not in production application code.
+      </div>
+    </div>
+
+    <!-- ── updateClamAVDatabase ── -->
+    <div class="section" id="updater">
+      <h2>updateClamAVDatabase()</h2>
+      <p>
+        Internal utility that runs <code>freshclam</code> to download or update ClamAV
+        virus definitions. Not exported from the main <code>index.js</code>.
+      </p>
+
+      <h3>Import</h3>
+<pre>const { updateClamAVDatabase } = require('pompelmi/src/ClamAVDatabaseUpdater');</pre>
+
+      <h3>Signature</h3>
+<pre>updateClamAVDatabase(): Promise&lt;string&gt;</pre>
+
+      <h3>Behaviour</h3>
+      <table>
+        <tr>
+          <th>Platform</th>
+          <th>Command executed</th>
+        </tr>
+        <tr>
+          <td><code>darwin</code></td>
+          <td><code>freshclam</code></td>
+        </tr>
+        <tr>
+          <td><code>linux</code></td>
+          <td><code>sudo freshclam</code></td>
+        </tr>
+        <tr>
+          <td><code>win32</code></td>
+          <td><code>freshclam</code></td>
+        </tr>
+        <tr>
+          <td>other</td>
+          <td>Logs <code>"Current platform is not supported."</code> and returns.</td>
+        </tr>
+      </table>
+
+      <p>
+        Logs <code>"Downloading virus definitions..."</code> before starting.
+        Returns a <code>Promise&lt;string&gt;</code> that resolves with
+        <code>"Database updated successfully!"</code> on exit code 0, and rejects
+        with an <code>Error</code> on any non-zero exit code or spawn failure.
+      </p>
+    </div>
+
+    <!-- ── config ── -->
+    <div class="section" id="config">
+      <h2>config</h2>
+      <p>
+        The frozen configuration object in <code>src/config.js</code>. It is the single
+        source of truth for all subprocess commands and result strings.
+      </p>
+
+      <h3>Shape</h3>
+<pre>module.exports = Object.freeze({
+  INSTALLER_COMMANDS: Object.freeze({
+    win32:  ['choco',  ['install', 'clamav', '-y']],
+    darwin: ['brew',   ['install', 'clamav']],
+    linux:  ['sudo',   ['apt-get', 'install', '-y', 'clamav', 'clamav-daemon']],
+  }),
+  UPDATER_COMMANDS: Object.freeze({
+    win32:  ['freshclam', []],
+    darwin: ['freshclam', []],
+    linux:  ['sudo',      ['freshclam']],
+  }),
+  DB_PATHS: Object.freeze({
+    darwin: '/usr/local/share/clamav/main.cvd',
+    linux:  '/var/lib/clamav/main.cvd',
+    win32:  'C:\\ProgramData\\ClamAV\\main.cvd',
+  }),
+  SCAN_RESULTS: Object.freeze({
+    0: 'Clean',
+    1: 'Malicious',
+    2: 'ScanError',
+  }),
+});</pre>
+
+      <h3>DB_PATHS</h3>
+      <p>
+        Maps <code>process.platform</code> to the path where <code>main.cvd</code> is expected.
+        Used by <code>updateClamAVDatabase()</code> to skip <code>freshclam</code> if the
+        database is already present.
+      </p>
+
+      <h3>SCAN_RESULTS</h3>
+      <p>
+        Maps ClamAV exit codes to result strings. The map is frozen to prevent accidental
+        mutation. If ClamAV returns an exit code that is not a key in this object,
+        <code>scan()</code> rejects with <code>"Unexpected exit code: N"</code>.
+      </p>
+
+      <table>
+        <tr>
+          <th>Key (exit code)</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td class="code-cell">0</td>
+          <td><code>"Clean"</code></td>
+        </tr>
+        <tr>
+          <td class="code-cell">1</td>
+          <td><code>"Malicious"</code></td>
+        </tr>
+        <tr>
+          <td class="code-cell">2</td>
+          <td><code>"ScanError"</code></td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ── constants ── -->
+    <div class="section" id="constants">
+      <h2>constants</h2>
+      <p>
+        <code>src/constants.js</code> exports <code>PLATFORM</code>, which is
+        simply <code>process.platform</code>.
+      </p>
+<pre>// src/constants.js
+module.exports = {
+  PLATFORM: process.platform,
+};</pre>
+      <p>
+        Exporting the platform constant separately makes it replaceable in tests
+        without monkey-patching <code>process</code>.
+      </p>
+
+      <h3>Known platform values</h3>
+      <table>
+        <tr>
+          <th><code>process.platform</code></th>
+          <th>OS</th>
+          <th>Supported</th>
+        </tr>
+        <tr>
+          <td><code>darwin</code></td>
+          <td>macOS</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><code>linux</code></td>
+          <td>Linux</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><code>win32</code></td>
+          <td>Windows (32 and 64-bit)</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><code>freebsd</code>, <code>openbsd</code>, etc.</td>
+          <td>Other Unix</td>
+          <td>No (installer/updater only; scan works if clamscan is in PATH)</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ── errors ── -->
+    <div class="section" id="errors">
+      <h2>Error types</h2>
+      <p>
+        All errors thrown by pompelmi are plain <code>Error</code> instances.
+        There are no custom error classes. You can distinguish them by
+        inspecting <code>err.message</code>.
+      </p>
+      <table>
+        <tr>
+          <th>Message</th>
+          <th>Source</th>
+          <th>Recovery</th>
+        </tr>
+        <tr>
+          <td><code>filePath must be a string</code></td>
+          <td><code>ClamAVScanner.js</code> input guard</td>
+          <td>Pass a string path to <code>scan()</code>.</td>
+        </tr>
+        <tr>
+          <td><code>File not found: &lt;path&gt;</code></td>
+          <td><code>ClamAVScanner.js</code> pre-flight check</td>
+          <td>Verify the file path before calling <code>scan()</code>.</td>
+        </tr>
+        <tr>
+          <td><code>ENOENT</code></td>
+          <td>OS / cross-spawn</td>
+          <td>Install ClamAV and ensure <code>clamscan</code> is in <code>PATH</code>.</td>
+        </tr>
+        <tr>
+          <td><code>Unexpected exit code: &lt;n&gt;</code></td>
+          <td><code>ClamAVScanner.js</code> close handler</td>
+          <td>
+            Inspect the exit code. ClamAV exit codes above 2 indicate internal
+            ClamAV errors. Check ClamAV logs (<code>/var/log/clamav/</code>).
+          </td>
+        </tr>
+        <tr>
+          <td><code>Process killed by signal: &lt;SIGNAL&gt;</code></td>
+          <td><code>ClamAVScanner.js</code> close handler</td>
+          <td>
+            The <code>clamscan</code> process was killed externally (e.g. OOM killer).
+            Retry the scan or investigate system resources.
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ── typescript ── -->
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+      <p>
+        pompelmi does not ship TypeScript type declarations.
+        If you are using TypeScript, add a local declaration file to your project:
+      </p>
+
+      <span class="platform-label">pompelmi.d.ts</span>
+<pre>declare module 'pompelmi' {
+  type ScanResult = 'Clean' | 'Malicious' | 'ScanError';
+
+  const pompelmi: {
+    scan(filePath: string): Promise&lt;ScanResult&gt;;
+  };
+
+  export = pompelmi;
+}</pre>
+
+      <p>
+        Place this file anywhere TypeScript can find it (e.g. <code>src/types/pompelmi.d.ts</code>)
+        and ensure your <code>tsconfig.json</code> includes it.
+      </p>
+
+      <div class="note">
+        If you would like official <code>@types/pompelmi</code> declarations,
+        open an issue on <a href="https://github.com/pompelmi/pompelmi">GitHub</a>.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+  "name": "pompelmi",
+  "version": "1.0.0",
+  "description": "ClamAV for humans — scan any file and get back Clean, Malicious, or ScanError. No daemons. No cloud. No native bindings.",
+  "license": "ISC",
+  "author": "pompelmi contributors",
+  "homepage": "https://github.com/pompelmi/pompelmi#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pompelmi/pompelmi/issues"
+  },
+  "keywords": [
+    "clamav",
+    "antivirus",
+    "malware",
+    "virus",
+    "scan",
+    "security",
+    "file-scan"
+  ],
+  "type": "commonjs",
+  "main": "./src/index.js",
+  "scripts": {
+    "test": "node --test test/unit.test.js && node test/scan.test.js",
+    "lint": "eslint src/"
+  },
+  "dependencies": {
+    "cross-spawn": "^7.0.6"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.0",
+    "globals": "^17.4.0"
+  }
+}
