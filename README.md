@@ -10,7 +10,7 @@
   <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi.svg" alt="npm version"></a>
   <img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="license">
   <img src="https://img.shields.io/badge/platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg" alt="platform">
-  <a href="https://github.com/pompelmi/pompelmi/actions"><img src="https://img.shields.io/github/actions/workflow/status/pompelmi/pompelmi/ci.yml?branch=main" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/pompelmi?activeTab=dependencies"><img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies"></a>
 </p>
 
 ---
