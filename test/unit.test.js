@@ -238,6 +238,255 @@ describe('ClamAVInstaller', () => {
     });
 });
 
+// ─── ClamdScanner ─────────────────────────────────────────────────────────────
+
+describe('ClamdScanner', () => {
+    // Why not load() here?
+    //
+    // `net` and `fs` are true Node.js built-ins.  When load() patches them it
+    // mutates properties on the live module object and then immediately restores
+    // them after require() returns — before any test code ever runs.  Because
+    // ClamdScanner.js holds a reference to the *same* live object, the mock is
+    // already gone by the time scanViaClamd() is called.
+    //
+    // Solution: require the real modules once so we share the same object
+    // references as ClamdScanner.js, then use t.mock.method() inside each test.
+    // t.mock patches the property in-place and auto-restores it when the test
+    // ends — no manual cleanup needed.
+    const net = require('net');
+    const fs  = require('fs');
+    const { scanViaClamd } = require('../src/ClamdScanner.js');
+
+    const EXISTING_FILE = __filename;
+
+    /**
+     * Builds a mock TCP socket for the narrow subset of events/methods that
+     * ClamdScanner uses.
+     *
+     * Timing: createConnection() returns the socket synchronously; scanViaClamd
+     * then attaches all listeners synchronously; the first event (connect/error/
+     * timeout) fires on the next tick — so every listener is already wired up.
+     *
+     * end() schedules the clamd reply on the next tick after the terminating
+     * chunk has been written, matching real clamd behaviour.
+     */
+    function makeClamdSocket({
+        response     = 'stream: OK',
+        connectError = null,
+        emitTimeout  = false,
+    } = {}) {
+        const socket     = new EventEmitter();
+        socket.destroyed = false;
+        socket.written   = [];   // lets the protocol-sanity test inspect writes
+        socket.setTimeout = () => {};
+        socket.write      = (buf) => socket.written.push(buf);
+        socket.destroy    = () => { socket.destroyed = true; };
+        socket.end        = () => {
+            process.nextTick(() => {
+                socket.emit('data', Buffer.from(response));
+                socket.emit('end');
+            });
+        };
+        // Schedule first event so listeners are attached before it fires
+        process.nextTick(() => {
+            if (connectError)     socket.emit('error', new Error(connectError));
+            else if (emitTimeout) socket.emit('timeout');
+            else                  socket.emit('connect');
+        });
+        return socket;
+    }
+
+    /**
+     * Returns a mock Readable that fires events on the next tick.
+     * It is created inside the 'connect' handler so one nextTick is enough for
+     * scanViaClamd to attach 'data'/'end'/'error' listeners first.
+     */
+    function makeMockStream({ streamError = null } = {}) {
+        const stream = new EventEmitter();
+        process.nextTick(() => {
+            if (streamError) stream.emit('error', new Error(streamError));
+            else {
+                stream.emit('data', Buffer.from('test file bytes'));
+                stream.emit('end');
+            }
+        });
+        return stream;
+    }
+
+    // ── Input validation ──────────────────────────────────────────────────────
+
+    it('rejects if filePath is not a string', async () => {
+        // No I/O at all — no mocking needed.
+        await assert.rejects(() => scanViaClamd(42), /filePath must be a string/);
+    });
+
+    it('rejects if file does not exist', async (t) => {
+        t.mock.method(fs, 'existsSync', () => false);
+        await assert.rejects(() => scanViaClamd(EXISTING_FILE), /File not found/);
+    });
+
+    // ── Response parsing ──────────────────────────────────────────────────────
+
+    it('"stream: OK"              → "Clean"', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: OK' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE), 'Clean');
+    });
+
+    it('"stream: ... FOUND"       → "Malicious"', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: EICAR-Test-Signature FOUND' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE), 'Malicious');
+    });
+
+    it('any other clamd response  → "ScanError"', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'ERROR: Could not connect' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE), 'ScanError');
+    });
+
+    // ── Error paths ───────────────────────────────────────────────────────────
+
+    it('socket error (ECONNREFUSED) → rejects with that error', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ connectError: 'ECONNREFUSED' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        // createReadStream is never reached when the socket errors before connect
+        await assert.rejects(() => scanViaClamd(EXISTING_FILE), /ECONNREFUSED/);
+    });
+
+    it('socket timeout              → rejects with timeout message', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ emitTimeout: true }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        await assert.rejects(() => scanViaClamd(EXISTING_FILE), /timed out/);
+    });
+
+    it('file read stream error      → rejects with that error', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket());
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream({ streamError: 'EACCES' }));
+        await assert.rejects(() => scanViaClamd(EXISTING_FILE), /EACCES/);
+    });
+
+    // ── Protocol sanity ───────────────────────────────────────────────────────
+
+    it('sends zINSTREAM command, chunk header, chunk data, and terminator', async (t) => {
+        const fileChunk = Buffer.from('hello world');
+        let   capturedSocket;
+
+        t.mock.method(net, 'createConnection', () => {
+            capturedSocket = makeClamdSocket({ response: 'stream: OK' });
+            return capturedSocket;
+        });
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'createReadStream', () => {
+            const stream = new EventEmitter();
+            process.nextTick(() => { stream.emit('data', fileChunk); stream.emit('end'); });
+            return stream;
+        });
+
+        await scanViaClamd(EXISTING_FILE);
+
+        const w = capturedSocket.written;
+        // [0] zINSTREAM\0 command
+        assert.deepEqual(w[0], Buffer.from('zINSTREAM\0'));
+        // [1] 4-byte big-endian chunk length
+        const header = Buffer.allocUnsafe(4);
+        header.writeUInt32BE(fileChunk.length, 0);
+        assert.deepEqual(w[1], header);
+        // [2] chunk data
+        assert.deepEqual(w[2], fileChunk);
+        // [3] four zero bytes — terminating chunk
+        assert.deepEqual(w[3], Buffer.alloc(4));
+    });
+});
+
+// ─── ClamAVScanner — TCP routing ──────────────────────────────────────────────
+
+describe('ClamAVScanner (TCP routing)', () => {
+    const EXISTING_FILE = __filename;
+
+    /**
+     * Loads ClamAVScanner with the ClamdScanner module replaced by a spy.
+     * The spy records every call to scanViaClamd and resolves with `clamdResult`.
+     * cross-spawn is mocked with spawnClose(0) so the CLI path resolves too.
+     */
+    function scannerWithSpy(clamdResult = 'Clean') {
+        let clamdCalls = 0;
+        let lastFilePath;
+        let lastOptions;
+
+        const spy = {
+            scanViaClamd: (fp, opts) => {
+                clamdCalls++;
+                lastFilePath = fp;
+                lastOptions  = opts;
+                return Promise.resolve(clamdResult);
+            },
+        };
+
+        const { scan } = load('../src/ClamAVScanner.js', {
+            '../src/ClamdScanner.js': spy,
+            'cross-spawn': spawnClose(0),
+        });
+
+        return {
+            scan,
+            getClamdCalls:   () => clamdCalls,
+            getLastFilePath: () => lastFilePath,
+            getLastOptions:  () => lastOptions,
+        };
+    }
+
+    // ── Clamd path ────────────────────────────────────────────────────────────
+
+    it('routes to clamd when { port } is given', async () => {
+        const { scan, getClamdCalls } = scannerWithSpy();
+        const result = await scan(EXISTING_FILE, { port: 3310 });
+        assert.equal(result, 'Clean');
+        assert.equal(getClamdCalls(), 1);
+    });
+
+    it('routes to clamd when { host } is given', async () => {
+        const { scan, getClamdCalls } = scannerWithSpy();
+        const result = await scan(EXISTING_FILE, { host: '192.168.1.100' });
+        assert.equal(result, 'Clean');
+        assert.equal(getClamdCalls(), 1);
+    });
+
+    it('routes to clamd when { host, port } are both given', async () => {
+        const { scan, getClamdCalls, getLastOptions } = scannerWithSpy();
+        await scan(EXISTING_FILE, { host: '10.0.0.5', port: 3310 });
+        assert.equal(getClamdCalls(), 1);
+        assert.deepEqual(getLastOptions(), { host: '10.0.0.5', port: 3310 });
+    });
+
+    it('forwards filePath and options unchanged to scanViaClamd', async () => {
+        const { scan, getLastFilePath, getLastOptions } = scannerWithSpy();
+        await scan(EXISTING_FILE, { host: 'clamd-svc', port: 9999, timeout: 5000 });
+        assert.equal(getLastFilePath(), EXISTING_FILE);
+        assert.deepEqual(getLastOptions(), { host: 'clamd-svc', port: 9999, timeout: 5000 });
+    });
+
+    // ── CLI path ──────────────────────────────────────────────────────────────
+
+    it('uses the CLI path when called without options', async () => {
+        const { scan, getClamdCalls } = scannerWithSpy();
+        const result = await scan(EXISTING_FILE);
+        assert.equal(result, 'Clean');
+        assert.equal(getClamdCalls(), 0);
+    });
+
+    it('uses the CLI path when called with an empty options object {}', async () => {
+        const { scan, getClamdCalls } = scannerWithSpy();
+        const result = await scan(EXISTING_FILE, {});
+        assert.equal(result, 'Clean');
+        assert.equal(getClamdCalls(), 0);
+    });
+});
+
 // ─── ClamAVDatabaseUpdater ────────────────────────────────────────────────────
 
 describe('ClamAVDatabaseUpdater', () => {

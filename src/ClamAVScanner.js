@@ -1,6 +1,7 @@
 const spawn = require("cross-spawn");
 const fs = require("fs");
 const { SCAN_RESULTS } = require('./config.js');
+const { scanViaClamd } = require('./ClamdScanner.js');
 
 const MESSAGES = {
     FILE_NOT_FOUND:        (filePath) => `File not found: ${filePath}`,
@@ -8,7 +9,12 @@ const MESSAGES = {
     PROCESS_KILLED:        (signal)   => `Process killed by signal: ${signal}`,
 };
 
-function scan(filePath) {
+function scan(filePath, options = {}) {
+    // When a host or port is provided, delegate to the clamd TCP path.
+    if (options.host !== undefined || options.port !== undefined) {
+        return scanViaClamd(filePath, options);
+    }
+
     return new Promise((resolve, reject) => {
         if (typeof filePath !== 'string') {
             return reject(new Error('filePath must be a string'));

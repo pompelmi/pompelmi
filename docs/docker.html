@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Docker — pompelmi</title>
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="index.html">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="index.html">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="docker.html" class="active">Docker</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Docker</span>
+      <li><a href="#why">Why Docker?</a></li>
+      <li><a href="#compose">docker-compose.yml</a></li>
+      <li><a href="#firstboot">First boot</a></li>
+      <li><a href="#usage">Usage</a></li>
+      <li><a href="#appintegration">App integration</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why">
+      <h2>Why use Docker?</h2>
+      <p>
+        The default pompelmi path spawns a local <code>clamscan</code> binary. That works
+        great, but it means ClamAV must be installed on every machine that runs your code.
+        If you prefer to keep your application container lean, or if you are running in an
+        environment where installing system packages is not practical, running ClamAV in its
+        own container is the cleaner option.
+      </p>
+      <p>
+        The trade-off is a TCP hop instead of a process fork. In practice, on a local or
+        private network, the latency difference is negligible compared to the scan time itself.
+      </p>
+    </div>
+
+    <div class="section" id="compose">
+      <h2>docker-compose.yml</h2>
+      <p>
+        Drop this into your project. It starts a clamd instance on port 3310 and persists
+        virus definitions across restarts using a named volume.
+      </p>
+
+<pre>services:
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_db:/var/lib/clamav   # definitions survive restarts
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      retries: 3
+      start_period: 120s            # see First boot below
+
+volumes:
+  clamav_db:</pre>
+
+      <span class="platform-label">Start the container</span>
+<pre>docker compose up -d</pre>
+
+      <span class="platform-label">Check it is healthy</span>
+<pre>docker compose ps
+# clamav   running (healthy)</pre>
+    </div>
+
+    <div class="section" id="firstboot">
+      <h2>First boot &mdash; expect 1&ndash;2 minutes</h2>
+      <p>
+        The very first time the container starts, ClamAV downloads its virus definition
+        database (~300&nbsp;MB). This takes <strong>1&ndash;2 minutes</strong> depending
+        on your connection speed. clamd will not accept scan requests until the download
+        is complete.
+      </p>
+      <p>
+        The <code>start_period: 120s</code> in the healthcheck gives it that runway.
+        During this window the container reports <code>starting</code>, not
+        <code>healthy</code>. That is expected &mdash; do not restart it.
+      </p>
+
+      <div class="note">
+        On every subsequent start the definitions load straight from the
+        <code>clamav_db</code> volume, so startup is fast. Only the very first
+        cold start (or after a volume wipe) triggers the long download.
+      </div>
+
+      <div class="warn">
+        Do not send scan requests while the container is still in <code>starting</code>
+        state. clamd will refuse the connection and pompelmi will reject with
+        <code>ECONNREFUSED</code>. Use the healthcheck or a retry mechanism in your
+        application startup path.
+      </div>
+    </div>
+
+    <div class="section" id="usage">
+      <h2>Using it with pompelmi</h2>
+      <p>
+        Once the container is healthy, point pompelmi at it by passing <code>host</code>
+        and <code>port</code>. No other changes to your code are needed.
+      </p>
+
+<pre>const pompelmi = require('pompelmi');
+
+const result = await pompelmi.scan('/path/to/upload.zip', {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+// "Clean" | "Malicious" | "ScanError" — exactly the same as the CLI path</pre>
+
+      <p>
+        See <a href="api.html#scan-options">API &rarr; options object</a> for the full
+        list of options including <code>timeout</code>.
+      </p>
+    </div>
+
+    <div class="section" id="appintegration">
+      <h2>App integration</h2>
+      <p>
+        If your application runs in the same Compose file, use <code>depends_on</code>
+        with a health condition so your app waits for clamd to be ready before it starts
+        accepting traffic.
+      </p>
+
+<pre>services:
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_db:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      retries: 3
+      start_period: 120s
+
+  app:
+    build: .
+    depends_on:
+      clamav:
+        condition: service_healthy
+    environment:
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: "3310"
+
+volumes:
+  clamav_db:</pre>
+
+      <div class="tip">
+        Inside a Compose network, use the service name as the hostname. In the example
+        above, <code>host: 'clamav'</code> (not <code>'127.0.0.1'</code>) is the correct
+        value for <code>CLAMAV_HOST</code>.
+      </div>
+    </div>
+
+    <div class="section" id="troubleshooting">
+      <h2>Troubleshooting</h2>
+      <table>
+        <tr>
+          <th>Symptom</th>
+          <th>Likely cause</th>
+          <th>Fix</th>
+        </tr>
+        <tr>
+          <td><code>ECONNREFUSED</code></td>
+          <td>clamd is not yet running or still downloading definitions.</td>
+          <td>Wait for the healthcheck to report <code>healthy</code>, then retry.</td>
+        </tr>
+        <tr>
+          <td>Container stays <code>starting</code> for more than 5 minutes</td>
+          <td>Definition download stalled or <code>start_period</code> is too short.</td>
+          <td>Check <code>docker compose logs clamav</code>. Increase <code>start_period</code> if on a slow connection.</td>
+        </tr>
+        <tr>
+          <td><code>clamd connection timed out</code></td>
+          <td>The file is very large, or the container is under heavy load.</td>
+          <td>Increase <code>timeout</code> in <code>options</code>, or check container CPU/memory.</td>
+        </tr>
+        <tr>
+          <td>Always returns <code>"ScanError"</code></td>
+          <td>Definitions are present but corrupted, or clamd restarted mid-stream.</td>
+          <td>Run <code>docker compose restart clamav</code> and wait for <code>healthy</code>.</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

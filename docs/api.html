@@ -26,6 +26,7 @@
   <a href="about.html">About</a>
   <a href="quickstart.html">Quickstart</a>
   <a href="api.html" class="active">API</a>
+  <a href="docker.html">Docker</a>
   <a href="contacts.html">Contacts</a>
   <a href="featured-in.html">Featured In</a>
   <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
@@ -39,6 +40,8 @@
       <span class="sidebar-label">API</span>
       <li><a href="#overview">Overview</a></li>
       <li><a href="#scan">scan()</a></li>
+      <li><a href="#scan-options">options object</a></li>
+      <li><a href="#scan-docker">Docker / TCP</a></li>
       <li><a href="#installer">ClamAVInstaller()</a></li>
       <li><a href="#updater">updateClamAVDatabase()</a></li>
       <li><a href="#config">config</a></li>
@@ -100,14 +103,23 @@
 
     <!-- ── scan() ── -->
     <div class="section" id="scan">
-      <h2>pompelmi.scan(filePath)</h2>
+      <h2>pompelmi.scan(filePath, [options])</h2>
       <p>
-        Scans a file for malware using ClamAV and returns a Promise that resolves to
-        a result string.
+        Scans a file for malware and returns a Promise that resolves to a result string.
+        By default it spawns a local <code>clamscan</code> process. Pass <code>host</code>
+        or <code>port</code> in <code>options</code> to scan via a clamd TCP socket instead
+        (e.g. a Docker container).
       </p>
 
       <h3>Signature</h3>
-<pre>pompelmi.scan(filePath: string): Promise&lt;string&gt;</pre>
+<pre>pompelmi.scan(
+  filePath: string,
+  options?: {
+    host?:    string;   // default: '127.0.0.1'
+    port?:    number;   // default: 3310
+    timeout?: number;   // default: 15000 ms (TCP path only)
+  }
+): Promise&lt;"Clean" | "Malicious" | "ScanError"&gt;</pre>
 
       <h3>Parameters</h3>
       <table>
@@ -123,38 +135,50 @@
           <td>Yes</td>
           <td>
             Absolute or relative path to the file to scan.
-            Relative paths are resolved from the current working directory
-            (<code>process.cwd()</code>).
+            The file must exist on the local filesystem before the call is made.
+          </td>
+        </tr>
+        <tr>
+          <td><code>options</code></td>
+          <td><code>object</code></td>
+          <td>No</td>
+          <td>
+            Optional configuration. Omit entirely to use the local <code>clamscan</code> CLI.
+            See <a href="#scan-options">options object</a> below.
           </td>
         </tr>
       </table>
 
       <h3>Return value</h3>
       <p>
-        A <code>Promise&lt;string&gt;</code> that resolves to one of the following:
+        A Promise that resolves to one of the following regardless of which backend is used:
       </p>
       <table>
         <tr>
           <th>Value</th>
-          <th>ClamAV exit code</th>
+          <th>CLI exit code</th>
+          <th>clamd response</th>
           <th>Meaning</th>
         </tr>
         <tr>
           <td class="result-clean"><code>"Clean"</code></td>
           <td class="code-cell">0</td>
+          <td><code>stream: OK</code></td>
           <td>No known threats found in the file.</td>
         </tr>
         <tr>
           <td class="result-malicious"><code>"Malicious"</code></td>
           <td class="code-cell">1</td>
+          <td><code>stream: &lt;name&gt; FOUND</code></td>
           <td>A virus or malware signature was matched.</td>
         </tr>
         <tr>
           <td class="result-scanerror"><code>"ScanError"</code></td>
           <td class="code-cell">2</td>
+          <td>anything else</td>
           <td>
-            The scan itself failed (I/O error, encrypted archive, permission denied).
-            The file's safety is <strong>unknown</strong> — treat as untrusted.
+            The scan itself failed. The file's safety is <strong>unknown</strong> —
+            treat as untrusted.
           </td>
         </tr>
       </table>
@@ -164,68 +188,147 @@
       <table>
         <tr>
           <th>Message pattern</th>
+          <th>Backend</th>
           <th>Cause</th>
         </tr>
         <tr>
           <td><code>filePath must be a string</code></td>
+          <td>both</td>
           <td>The argument passed to <code>scan()</code> is not a string.</td>
         </tr>
         <tr>
           <td><code>File not found: &lt;path&gt;</code></td>
-          <td><code>fs.existsSync(filePath)</code> returned false before spawning ClamAV.</td>
+          <td>both</td>
+          <td><code>fs.existsSync(filePath)</code> returned false before anything was spawned or connected.</td>
         </tr>
         <tr>
           <td><code>ENOENT</code></td>
+          <td>CLI</td>
           <td><code>clamscan</code> binary not found in <code>PATH</code>.</td>
         </tr>
         <tr>
           <td><code>Unexpected exit code: &lt;n&gt;</code></td>
+          <td>CLI</td>
           <td>ClamAV exited with a code not in the <code>SCAN_RESULTS</code> map.</td>
         </tr>
         <tr>
           <td><code>Process killed by signal: &lt;SIGNAL&gt;</code></td>
+          <td>CLI</td>
           <td>The <code>clamscan</code> process was terminated by a signal (e.g. <code>SIGKILL</code>).</td>
+        </tr>
+        <tr>
+          <td><code>ECONNREFUSED</code></td>
+          <td>TCP</td>
+          <td>Nothing is listening on <code>host:port</code>. Check that clamd is running.</td>
+        </tr>
+        <tr>
+          <td><code>clamd connection timed out after Nms</code></td>
+          <td>TCP</td>
+          <td>The socket was idle for longer than <code>options.timeout</code>.</td>
+        </tr>
+        <tr>
+          <td>OS I/O error (e.g. <code>EACCES</code>)</td>
+          <td>TCP</td>
+          <td>The local file could not be read while streaming it to clamd.</td>
         </tr>
       </table>
 
       <h3>Example</h3>
 <pre>const pompelmi = require('pompelmi');
 
-// Promise style
-pompelmi.scan('/var/uploads/report.pdf')
-  .then(result =&gt; {
-    switch (result) {
-      case 'Clean':     /* proceed */                   break;
-      case 'Malicious': /* reject file */               break;
-      case 'ScanError': /* treat as untrusted, reject */ break;
-    }
-  })
-  .catch(err =&gt; console.error(err.message));
+// Local clamscan — no options needed
+const result = await pompelmi.scan('/var/uploads/report.pdf');
 
-// async/await style
-async function check(path) {
-  const result = await pompelmi.scan(path);
-  return result;
+switch (result) {
+  case 'Clean':     /* proceed */                    break;
+  case 'Malicious': /* reject file */                break;
+  case 'ScanError': /* treat as untrusted, reject */ break;
 }</pre>
 
       <h3>Notes</h3>
       <ul>
         <li>
-          <code>scan()</code> spawns a new <code>clamscan</code> process for every call.
-          There is no connection pooling or caching.
+          The CLI path spawns a new <code>clamscan</code> process for every call.
+          There is no process pooling or caching.
         </li>
         <li>
-          The ClamAV flag <code>--no-summary</code> is always passed, suppressing the
-          "Infected files: N" footer line from stdout.
+          The TCP path opens a new socket per call and streams the file using ClamAV's
+          <code>INSTREAM</code> protocol. The socket is destroyed immediately after
+          the result is received.
         </li>
         <li>
-          pompelmi does not read stdout or stderr from <code>clamscan</code>.
-          Only the exit code is used.
-        </li>
-        <li>
-          The file is not modified or copied. ClamAV reads it in-place.
+          The file is never modified or copied. Both backends read it in-place.
         </li>
       </ul>
+    </div>
+
+    <!-- ── options object ── -->
+    <div class="section" id="scan-options">
+      <h2>options object</h2>
+      <p>
+        All properties are optional. Omitting <code>options</code> entirely (or passing
+        an empty object) selects the local CLI path.
+        Setting <code>host</code> or <code>port</code> selects the TCP path.
+      </p>
+      <table>
+        <tr>
+          <th>Property</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>host</code></td>
+          <td><code>string</code></td>
+          <td><code>'127.0.0.1'</code></td>
+          <td>Hostname or IP address of the clamd instance.</td>
+        </tr>
+        <tr>
+          <td><code>port</code></td>
+          <td><code>number</code></td>
+          <td><code>3310</code></td>
+          <td>TCP port clamd is listening on.</td>
+        </tr>
+        <tr>
+          <td><code>timeout</code></td>
+          <td><code>number</code></td>
+          <td><code>15000</code></td>
+          <td>
+            Milliseconds of socket inactivity before the call rejects with a timeout error.
+            Applies to the TCP path only; has no effect on the CLI path.
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ── Docker / TCP ── -->
+    <div class="section" id="scan-docker">
+      <h2>Docker / TCP scanning</h2>
+      <p>
+        If ClamAV runs in a Docker container (or anywhere on the network), pass
+        <code>host</code> and/or <code>port</code>. Everything else — the result
+        strings, the rejection behaviour, the file path argument — stays identical.
+      </p>
+
+<pre>const pompelmi = require('pompelmi');
+
+// Docker on localhost
+const result = await pompelmi.scan('/path/to/upload.zip', {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+// Remote clamd with a tight timeout
+const result2 = await pompelmi.scan('/path/to/upload.zip', {
+  host: 'clamd-svc.internal',
+  port: 3310,
+  timeout: 5_000,
+});</pre>
+
+      <div class="note">
+        See <a href="docker.html">Docker</a> for a ready-to-use
+        <code>docker-compose.yml</code> and first-boot notes.
+      </div>
     </div>
 
     <!-- ── ClamAVInstaller ── -->
@@ -498,8 +601,14 @@ module.exports = {
 <pre>declare module 'pompelmi' {
   type ScanResult = 'Clean' | 'Malicious' | 'ScanError';
 
+  interface ScanOptions {
+    host?:    string;
+    port?:    number;
+    timeout?: number;
+  }
+
   const pompelmi: {
-    scan(filePath: string): Promise&lt;ScanResult&gt;;
+    scan(filePath: string, options?: ScanOptions): Promise&lt;ScanResult&gt;;
   };
 
   export = pompelmi;

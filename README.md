@@ -22,7 +22,8 @@ A minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that scans an
 - [Quickstart](#quickstart)
 - [How it works](#how-it-works)
 - [API](#api)
-  - [pompelmi.scan()](#pompelmiscanfilepath)
+  - [pompelmi.scan()](#pompelmiscanfilepath-options)
+- [Docker / remote scanning](#docker--remote-scanning)
 - [Internal utilities](#internal-utilities)
   - [ClamAVInstaller()](#clamavinstaller)
   - [updateClamAVDatabase()](#updateclamavdatabase)
@@ -62,15 +63,16 @@ No stdout parsing. No regex. No surprises.
 
 ## API
 
-### `pompelmi.scan(filePath)`
+### `pompelmi.scan(filePath, [options])`
 
 ```ts
-pompelmi.scan(filePath: string): Promise<"Clean" | "Malicious" | "ScanError">
+pompelmi.scan(filePath: string, options?: { host?: string; port?: number; timeout?: number }): Promise<"Clean" | "Malicious" | "ScanError">
 ```
 
 | Parameter  | Type     | Description                             |
 |------------|----------|-----------------------------------------|
 | `filePath` | `string` | Absolute or relative path to the file. |
+| `options`  | `object` | Optional. Omit to use the local `clamscan` CLI. Pass `host` / `port` to scan via a clamd TCP socket instead. See [docs/api.md](./docs/api.md) for the full reference. |
 
 **Resolves** to one of:
 
@@ -113,6 +115,21 @@ async function safeScan(filePath) {
   }
 }
 ```
+
+## Docker / remote scanning
+
+If ClamAV runs in a Docker container (or anywhere on the network), pass `host` and `port` — everything else stays the same.
+
+```js
+const result = await pompelmi.scan('/path/to/upload.zip', {
+  host: '127.0.0.1',
+  port: 3310,
+});
+```
+
+See [docs/docker.md](./docs/docker.md) for the `docker-compose.yml` snippet and first-boot notes.
+
+---
 
 ## Internal utilities
 

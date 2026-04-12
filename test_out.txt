@@ -1,0 +1,74 @@
+ClamAV is already installed, skipping.
+Current platform is not supported.
+Installation completed successfully!
+Virus database already present, skipping.
+Current platform is not supported.
+Downloading virus definitions...
+Database updated successfully!
+Downloading virus definitions...
+Downloading virus definitions...
+▶ InstallerCommand
+  ▶ getInstallerCommand
+    ✔ darwin  → brew install clamav (1.172833ms)
+    ✔ linux   → sudo apt-get install (0.163833ms)
+    ✔ win32   → choco install clamav (0.07125ms)
+    ✔ unknown → [null, []] (0.054792ms)
+  ✔ getInstallerCommand (1.877625ms)
+  ▶ getUpdaterCommand
+    ✔ darwin  → freshclam (0.094625ms)
+    ✔ linux   → sudo freshclam (0.255ms)
+    ✔ win32   → freshclam (0.055834ms)
+    ✔ unknown → [null, []] (0.308416ms)
+  ✔ getUpdaterCommand (0.965833ms)
+✔ InstallerCommand (3.261333ms)
+▶ ClamAVScanner
+  ✔ rejects if filePath is not a string (10.062042ms)
+  ✔ rejects if file does not exist (0.441042ms)
+  ✔ exit code 0  → resolves to "Clean" (0.847959ms)
+  ✔ exit code 1  → resolves to "Malicious" (0.890875ms)
+  ✔ exit code 2  → resolves to "ScanError" (0.5805ms)
+  ✔ exit code 99 → rejects with exit code message (0.535625ms)
+  ✔ spawn error  → rejects with the error (0.550542ms)
+  ✔ signal kill  → rejects with signal name (0.405667ms)
+✔ ClamAVScanner (14.502167ms)
+▶ ClamAVInstaller
+  ✔ resolves if ClamAV is already installed (1.17225ms)
+  ✔ resolves with platform-not-supported message (1.279459ms)
+  ✔ resolves after successful installation (0.755125ms)
+  ✔ rejects when installation exits non-zero (0.553375ms)
+  ✔ rejects on spawn error (0.969208ms)
+✔ ClamAVInstaller (4.845042ms)
+▶ ClamdScanner
+  ✔ rejects if filePath is not a string (0.186125ms)
+  ✔ rejects if file does not exist (0.371125ms)
+  ✔ "stream: OK"              → "Clean" (0.388458ms)
+  ✔ "stream: ... FOUND"       → "Malicious" (0.163792ms)
+  ✔ any other clamd response  → "ScanError" (0.294458ms)
+  ✔ socket error (ECONNREFUSED) → rejects with that error (0.187ms)
+  ✔ socket timeout              → rejects with timeout message (0.119208ms)
+  ✔ file read stream error      → rejects with that error (0.118084ms)
+  ✔ sends zINSTREAM command, chunk header, chunk data, and terminator (0.327083ms)
+✔ ClamdScanner (2.320125ms)
+▶ ClamAVScanner (TCP routing)
+  ✔ routes to clamd when { port } is given (2.303ms)
+  ✔ routes to clamd when { host } is given (0.207792ms)
+  ✔ routes to clamd when { host, port } are both given (0.27525ms)
+  ✔ forwards filePath and options unchanged to scanViaClamd (0.267083ms)
+  ✔ uses the CLI path when called without options (0.31125ms)
+  ✔ uses the CLI path when called with an empty options object {} (0.318041ms)
+✔ ClamAVScanner (TCP routing) (3.793958ms)
+▶ ClamAVDatabaseUpdater
+  ✔ resolves if database is already present (0.793833ms)
+  ✔ resolves with platform-not-supported message (0.326166ms)
+  ✔ resolves after successful update (0.37675ms)
+  ✔ rejects when update exits non-zero (0.330167ms)
+  ✔ rejects on spawn error (0.545833ms)
+✔ ClamAVDatabaseUpdater (2.478542ms)
+ℹ tests 41
+ℹ suites 8
+ℹ pass 41
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 107.87375
