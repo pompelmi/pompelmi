@@ -4,7 +4,7 @@
   "description": "ClamAV for humans — scan any file and get back Clean, Malicious, or ScanError. No daemons. No cloud. No native bindings.",
   "license": "ISC",
   "author": "pompelmi contributors",
-  "homepage": "https://github.com/pompelmi/pompelmi#readme",
+  "homepage": "https://pompelmi.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/pompelmi/pompelmi.git"
