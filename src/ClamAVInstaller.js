@@ -1,4 +1,4 @@
-const spawn = require("cross-spawn");
+const { nativeSpawn: spawn } = require('./spawn.js');
 const { execSync } = require("child_process");
 const { getInstallerCommand } = require('./InstallerCommand.js');
 const { PLATFORM } = require('./constants.js')

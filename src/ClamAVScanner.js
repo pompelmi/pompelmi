@@ -1,4 +1,4 @@
-const spawn = require("cross-spawn");
+const { nativeSpawn: spawn } = require('./spawn.js');
 const fs = require("fs");
 const { SCAN_RESULTS } = require('./config.js');
 const { scanViaClamd } = require('./ClamdScanner.js');

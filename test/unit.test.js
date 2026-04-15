@@ -5,9 +5,13 @@ const assert = require('node:assert/strict');
 const { EventEmitter } = require('events');
 const path = require('path');
 
+// Pull in the Verdict constants once — they are module-level singletons, so the
+// same Symbol instances are returned whether required here or inside source files.
+const { Verdict } = require('../src/verdicts.js');
+
 // ─── Spawn mock helpers ───────────────────────────────────────────────────────
 
-/** Returns a spawn mock that emits 'close' with the given code and signal. */
+/** Returns a nativeSpawn mock that emits 'close' with the given code and signal. */
 function spawnClose(code, signal = null) {
     return () => {
         const child = new EventEmitter();
@@ -16,7 +20,7 @@ function spawnClose(code, signal = null) {
     };
 }
 
-/** Returns a spawn mock that emits 'error'. */
+/** Returns a nativeSpawn mock that emits 'error'. */
 function spawnError(message) {
     return () => {
         const child = new EventEmitter();
@@ -31,7 +35,7 @@ function spawnError(message) {
  * Loads `targetPath` fresh with selected dependencies replaced.
  *
  * Keys in `mocks` are module identifiers as you would pass to require():
- *   - npm package names  ('cross-spawn')
+ *   - npm package names  ('some-package')
  *   - built-in names     ('child_process')
  *   - paths relative to this test file  ('../src/constants.js')
  *
@@ -136,15 +140,52 @@ describe('InstallerCommand', () => {
     });
 });
 
+// ─── Verdict ──────────────────────────────────────────────────────────────────
+
+describe('Verdict', () => {
+    it('exports exactly three Symbol constants', () => {
+        assert.equal(typeof Verdict.Clean,     'symbol');
+        assert.equal(typeof Verdict.Malicious, 'symbol');
+        assert.equal(typeof Verdict.ScanError, 'symbol');
+    });
+
+    it('each constant is unique', () => {
+        assert.notEqual(Verdict.Clean,     Verdict.Malicious);
+        assert.notEqual(Verdict.Clean,     Verdict.ScanError);
+        assert.notEqual(Verdict.Malicious, Verdict.ScanError);
+    });
+
+    it('constants carry the expected description', () => {
+        assert.equal(Verdict.Clean.description,     'Clean');
+        assert.equal(Verdict.Malicious.description, 'Malicious');
+        assert.equal(Verdict.ScanError.description, 'ScanError');
+    });
+
+    it('is frozen (no accidental mutation)', () => {
+        assert.ok(Object.isFrozen(Verdict));
+    });
+
+    it('re-requiring verdicts.js returns the same Symbol instances', () => {
+        // Symbols are module-level singletons — critical for === comparisons.
+        const { Verdict: V2 } = require('../src/verdicts.js');
+        assert.equal(Verdict.Clean,     V2.Clean);
+        assert.equal(Verdict.Malicious, V2.Malicious);
+        assert.equal(Verdict.ScanError, V2.ScanError);
+    });
+});
+
 // ─── ClamAVScanner ────────────────────────────────────────────────────────────
 
 describe('ClamAVScanner', () => {
     const EXISTING_FILE = __filename;
     const MISSING_FILE  = path.join(__dirname, '__nonexistent_test_file__');
 
-    /** Returns a freshly loaded ClamAVScanner with spawn replaced by spawnMock. */
+    /**
+     * Returns a freshly loaded ClamAVScanner with nativeSpawn replaced by spawnMock.
+     * The spawn module is mocked via its path so there is no cross-spawn dependency.
+     */
     function scanner(spawnMock) {
-        return load('../src/ClamAVScanner.js', { 'cross-spawn': spawnMock });
+        return load('../src/ClamAVScanner.js', { '../src/spawn.js': { nativeSpawn: spawnMock } });
     }
 
     it('rejects if filePath is not a string', async () => {
@@ -157,19 +198,19 @@ describe('ClamAVScanner', () => {
         await assert.rejects(() => scan(MISSING_FILE), /File not found/);
     });
 
-    it('exit code 0  → resolves to "Clean"', async () => {
+    it('exit code 0  → resolves to Verdict.Clean', async () => {
         const { scan } = scanner(spawnClose(0));
-        assert.equal(await scan(EXISTING_FILE), 'Clean');
+        assert.equal(await scan(EXISTING_FILE), Verdict.Clean);
     });
 
-    it('exit code 1  → resolves to "Malicious"', async () => {
+    it('exit code 1  → resolves to Verdict.Malicious', async () => {
         const { scan } = scanner(spawnClose(1));
-        assert.equal(await scan(EXISTING_FILE), 'Malicious');
+        assert.equal(await scan(EXISTING_FILE), Verdict.Malicious);
     });
 
-    it('exit code 2  → resolves to "ScanError"', async () => {
+    it('exit code 2  → resolves to Verdict.ScanError', async () => {
         const { scan } = scanner(spawnClose(2));
-        assert.equal(await scan(EXISTING_FILE), 'ScanError');
+        assert.equal(await scan(EXISTING_FILE), Verdict.ScanError);
     });
 
     it('exit code 99 → rejects with exit code message', async () => {
@@ -197,8 +238,8 @@ describe('ClamAVInstaller', () => {
 
     function installer({ alreadyInstalled, spawnMock, platform = 'darwin' }) {
         return load('../src/ClamAVInstaller.js', {
-            [CONSTANTS]:     { PLATFORM: platform },
-            'cross-spawn':   spawnMock,
+            [CONSTANTS]:         { PLATFORM: platform },
+            '../src/spawn.js':   { nativeSpawn: spawnMock },
             // child_process is a built-in; load() patches execSync in-place.
             'child_process': {
                 execSync: alreadyInstalled
@@ -325,27 +366,27 @@ describe('ClamdScanner', () => {
         await assert.rejects(() => scanViaClamd(EXISTING_FILE), /File not found/);
     });
 
-    // ── Response parsing ──────────────────────────────────────────────────────
+    // ── Response parsing → Verdict Symbols ───────────────────────────────────
 
-    it('"stream: OK"              → "Clean"', async (t) => {
+    it('"stream: OK"              → Verdict.Clean', async (t) => {
         t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: OK' }));
         t.mock.method(fs,  'existsSync',       () => true);
         t.mock.method(fs,  'createReadStream', () => makeMockStream());
-        assert.equal(await scanViaClamd(EXISTING_FILE), 'Clean');
+        assert.equal(await scanViaClamd(EXISTING_FILE), Verdict.Clean);
     });
 
-    it('"stream: ... FOUND"       → "Malicious"', async (t) => {
+    it('"stream: ... FOUND"       → Verdict.Malicious', async (t) => {
         t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: EICAR-Test-Signature FOUND' }));
         t.mock.method(fs,  'existsSync',       () => true);
         t.mock.method(fs,  'createReadStream', () => makeMockStream());
-        assert.equal(await scanViaClamd(EXISTING_FILE), 'Malicious');
+        assert.equal(await scanViaClamd(EXISTING_FILE), Verdict.Malicious);
     });
 
-    it('any other clamd response  → "ScanError"', async (t) => {
+    it('any other clamd response  → Verdict.ScanError', async (t) => {
         t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'ERROR: Could not connect' }));
         t.mock.method(fs,  'existsSync',       () => true);
         t.mock.method(fs,  'createReadStream', () => makeMockStream());
-        assert.equal(await scanViaClamd(EXISTING_FILE), 'ScanError');
+        assert.equal(await scanViaClamd(EXISTING_FILE), Verdict.ScanError);
     });
 
     // ── Error paths ───────────────────────────────────────────────────────────
@@ -411,9 +452,9 @@ describe('ClamAVScanner (TCP routing)', () => {
     /**
      * Loads ClamAVScanner with the ClamdScanner module replaced by a spy.
      * The spy records every call to scanViaClamd and resolves with `clamdResult`.
-     * cross-spawn is mocked with spawnClose(0) so the CLI path resolves too.
+     * nativeSpawn is mocked with spawnClose(0) so the CLI path resolves too.
      */
-    function scannerWithSpy(clamdResult = 'Clean') {
+    function scannerWithSpy(clamdResult = Verdict.Clean) {
         let clamdCalls = 0;
         let lastFilePath;
         let lastOptions;
@@ -429,7 +470,7 @@ describe('ClamAVScanner (TCP routing)', () => {
 
         const { scan } = load('../src/ClamAVScanner.js', {
             '../src/ClamdScanner.js': spy,
-            'cross-spawn': spawnClose(0),
+            '../src/spawn.js': { nativeSpawn: spawnClose(0) },
         });
 
         return {
@@ -445,14 +486,14 @@ describe('ClamAVScanner (TCP routing)', () => {
     it('routes to clamd when { port } is given', async () => {
         const { scan, getClamdCalls } = scannerWithSpy();
         const result = await scan(EXISTING_FILE, { port: 3310 });
-        assert.equal(result, 'Clean');
+        assert.equal(result, Verdict.Clean);
         assert.equal(getClamdCalls(), 1);
     });
 
     it('routes to clamd when { host } is given', async () => {
         const { scan, getClamdCalls } = scannerWithSpy();
         const result = await scan(EXISTING_FILE, { host: '192.168.1.100' });
-        assert.equal(result, 'Clean');
+        assert.equal(result, Verdict.Clean);
         assert.equal(getClamdCalls(), 1);
     });
 
@@ -475,14 +516,14 @@ describe('ClamAVScanner (TCP routing)', () => {
     it('uses the CLI path when called without options', async () => {
         const { scan, getClamdCalls } = scannerWithSpy();
         const result = await scan(EXISTING_FILE);
-        assert.equal(result, 'Clean');
+        assert.equal(result, Verdict.Clean);
         assert.equal(getClamdCalls(), 0);
     });
 
     it('uses the CLI path when called with an empty options object {}', async () => {
         const { scan, getClamdCalls } = scannerWithSpy();
         const result = await scan(EXISTING_FILE, {});
-        assert.equal(result, 'Clean');
+        assert.equal(result, Verdict.Clean);
         assert.equal(getClamdCalls(), 0);
     });
 });
@@ -503,9 +544,9 @@ describe('ClamAVDatabaseUpdater', () => {
             : path.join(__dirname, '__nonexistent_db__');        // guaranteed to not exist
 
         return load('../src/ClamAVDatabaseUpdater.js', {
-            [CONSTANTS]: { PLATFORM: platform },
-            [CONFIG]:    { ...realConfig, DB_PATHS: { [platform]: dbPath } },
-            'cross-spawn': spawnMock,
+            [CONSTANTS]:       { PLATFORM: platform },
+            [CONFIG]:          { ...realConfig, DB_PATHS: { [platform]: dbPath } },
+            '../src/spawn.js': { nativeSpawn: spawnMock },
         });
     }
 

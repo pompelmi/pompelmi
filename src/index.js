@@ -1,5 +1,4 @@
-const { scan } = require('./ClamAVScanner.js');
+const { scan }    = require('./ClamAVScanner.js');
+const { Verdict } = require('./verdicts.js');
 
-const pompelmi = { scan };
-
-module.exports = pompelmi;
+module.exports = { scan, Verdict };

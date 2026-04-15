@@ -15,7 +15,7 @@
 
 ---
 
-A minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that scans any file and returns a plain string: `"Clean"`, `"Malicious"`, or `"ScanError"`. No daemons. No cloud. No native bindings.
+A minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that scans any file and returns a typed `Verdict` Symbol: `Verdict.Clean`, `Verdict.Malicious`, or `Verdict.ScanError`. No daemons. No cloud. No native bindings. Zero runtime dependencies.
 
 ## Table of contents
 
@@ -43,12 +43,11 @@ npm install pompelmi
 ```
 
 ```js
-const pompelmi = require('pompelmi');
+const { scan, Verdict } = require('pompelmi');
 
-const result = await pompelmi.scan('/path/to/file.zip');
-// "Clean" | "Malicious" | "ScanError"
+const result = await scan('/path/to/file.zip');
 
-if (result === 'Malicious') {
+if (result === Verdict.Malicious) {
   throw new Error('File rejected: malware detected');
 }
 ```
@@ -66,21 +65,26 @@ No stdout parsing. No regex. No surprises.
 ### `pompelmi.scan(filePath, [options])`
 
 ```ts
-pompelmi.scan(filePath: string, options?: { host?: string; port?: number; timeout?: number }): Promise<"Clean" | "Malicious" | "ScanError">
+scan(filePath: string, options?: { host?: string; port?: number; timeout?: number }): Promise<symbol>
+// resolves to one of: Verdict.Clean | Verdict.Malicious | Verdict.ScanError
 ```
 
 | Parameter  | Type     | Description                             |
 |------------|----------|-----------------------------------------|
 | `filePath` | `string` | Absolute or relative path to the file. |
-| `options`  | `object` | Optional. Omit to use the local `clamscan` CLI. Pass `host` / `port` to scan via a clamd TCP socket instead. See [docs/api.md](./docs/api.md) for the full reference. |
+| `options`  | `object` | Optional. Omit to use the local `clamscan` CLI. Pass `host` / `port` to scan via a clamd TCP socket instead. See [docs/api.html](./docs/api.html) for the full reference. |
 
 **Resolves** to one of:
 
-| Result        | ClamAV exit code | Meaning                                                                                              |
-|---------------|:---:|------------------------------------------------------------------------------------------------------|
-| `"Clean"`     |  0  | No threats found.                                                                                    |
-| `"Malicious"` |  1  | A known virus or malware signature was matched.                                                      |
-| `"ScanError"` |  2  | The scan itself failed (I/O error, encrypted archive, permission denied). File status is unknown — treat as untrusted. |
+| Result             | ClamAV exit code | Meaning                                                                                              |
+|--------------------|:---:|------------------------------------------------------------------------------------------------------|
+| `Verdict.Clean`     |  0  | No threats found.                                                                                    |
+| `Verdict.Malicious` |  1  | A known virus or malware signature was matched.                                                      |
+| `Verdict.ScanError` |  2  | The scan itself failed (I/O error, encrypted archive, permission denied). File status is unknown — treat as untrusted. |
+
+> **Reading the verdict as a string** — each Verdict Symbol carries a `.description` property
+> (`Verdict.Clean.description === 'Clean'`) for logging or serialisation without comparing against
+> raw strings in application logic.
 
 **Rejects** with an `Error` in these cases:
 
@@ -95,20 +99,20 @@ pompelmi.scan(filePath: string, options?: { host?: string; port?: number; timeou
 **Example — full error handling:**
 
 ```js
-const pompelmi = require('pompelmi');
+const { scan, Verdict } = require('pompelmi');
 const path = require('path');
 
 async function safeScan(filePath) {
   try {
-    const result = await pompelmi.scan(path.resolve(filePath));
+    const result = await scan(path.resolve(filePath));
 
-    if (result === 'ScanError') {
+    if (result === Verdict.ScanError) {
       // The scan could not complete — treat the file as untrusted.
       console.warn('Scan incomplete, rejecting file as precaution.');
       return null;
     }
 
-    return result; // "Clean" or "Malicious"
+    return result; // Verdict.Clean or Verdict.Malicious
   } catch (err) {
     console.error('Scan failed:', err.message);
     return null;
@@ -200,7 +204,7 @@ npm test
 
 The test suite has two parts:
 
-- **Unit tests** (`test/unit.test.js`) — run with Node's built-in test runner. Mock `cross-spawn` and platform dependencies; no ClamAV installation required.
+- **Unit tests** (`test/unit.test.js`) — run with Node's built-in test runner. Mock `nativeSpawn` from `src/spawn.js` and platform dependencies via require-cache injection; no ClamAV installation required.
 - **Integration tests** (`test/scan.test.js`) — spawn real `clamscan` processes against EICAR test files. Skipped automatically if `clamscan` is not found in PATH.
 
 ## Contributing

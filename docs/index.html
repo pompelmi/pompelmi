@@ -110,12 +110,12 @@
   <div id="content">
 
     <div class="hero">
-      <h2>pompelmi v1.0.0</h2>
+      <h2>pompelmi v1.2.0</h2>
       <p>
         A minimal Node.js wrapper around <a href="https://www.clamav.net/">ClamAV</a>
-        that scans any file and returns a plain string:
-        <strong>Clean</strong>, <strong>Malicious</strong>, or <strong>ScanError</strong>.
-        No daemons. No cloud. No native bindings.
+        that scans any file and returns a typed <strong>Verdict</strong> Symbol:
+        <strong>Verdict.Clean</strong>, <strong>Verdict.Malicious</strong>, or <strong>Verdict.ScanError</strong>.
+        No daemons. No cloud. No native bindings. Zero runtime dependencies.
       </p>
 <pre>npm install pompelmi</pre>
     </div>
@@ -159,23 +159,23 @@ sudo freshclam     # Linux</pre>
 
     <div class="section" id="example">
       <h2>Example</h2>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 
 async function scanUpload(filePath) {
-  const result = await pompelmi.scan(filePath);
+  const result = await scan(filePath);
 
-  if (result === 'Malicious') {
+  if (result === Verdict.Malicious) {
     throw new Error('Upload rejected: malware detected');
   }
-  if (result === 'ScanError') {
+  if (result === Verdict.ScanError) {
     console.warn('Scan incomplete — treating file as untrusted');
   }
 
-  return result; // "Clean" | "Malicious" | "ScanError"
+  return result; // Verdict.Clean | Verdict.Malicious | Verdict.ScanError
 }
 
 scanUpload('./uploads/document.pdf')
-  .then(r =&gt; console.log('Scan result:', r))
+  .then(r =&gt; console.log('Scan result:', r.description))
   .catch(err =&gt; console.error(err.message));</pre>
     </div>
 
@@ -184,14 +184,14 @@ scanUpload('./uploads/document.pdf')
       <table class="feature-grid">
         <tr>
           <td><strong>One function</strong>Call <code>pompelmi.scan(path)</code> and await a string. No config objects, no callbacks.</td>
-          <td><strong>Predictable results</strong>Always one of <code>"Clean"</code>, <code>"Malicious"</code>, or <code>"ScanError"</code>. Easy to switch on.</td>
+          <td><strong>Typed verdicts</strong>Returns <code>Verdict.Clean</code>, <code>Verdict.Malicious</code>, or <code>Verdict.ScanError</code> — Symbol constants that make typos a compile-time error.</td>
         </tr>
         <tr>
           <td><strong>Cross-platform</strong>Works on macOS, Linux, and Windows wherever ClamAV is available.</td>
           <td><strong>No daemon required</strong>Uses <code>clamscan</code> directly. No clamd socket, no background process to manage.</td>
         </tr>
         <tr>
-          <td><strong>Single dependency</strong>Only <a href="https://www.npmjs.com/package/cross-spawn">cross-spawn</a> for reliable subprocess handling across platforms.</td>
+          <td><strong>Zero runtime dependencies</strong>Uses Node's built-in <code>child_process</code> for subprocess handling. Nothing to audit, nothing to patch.</td>
           <td><strong>Exit-code mapped</strong>ClamAV exit codes are mapped directly. No stdout parsing, no regex.</td>
         </tr>
       </table>
@@ -232,7 +232,7 @@ scanUpload('./uploads/document.pdf')
 </div>
 
 <div id="footer">
-  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

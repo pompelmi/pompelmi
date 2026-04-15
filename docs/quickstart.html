@@ -160,12 +160,12 @@ sudo systemctl start clamav-freshclam</pre>
     <div class="section" id="step4">
       <h2>Step 4 &mdash; Run your first scan</h2>
       <p>Create a file called <code>scan.js</code>:</p>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 
-pompelmi.scan(process.argv[2])
+scan(process.argv[2])
   .then(result =&gt; {
-    console.log('Result:', result);
-    process.exit(result === 'Malicious' ? 1 : 0);
+    console.log('Result:', result.description);
+    process.exit(result === Verdict.Malicious ? 1 : 0);
   })
   .catch(err =&gt; {
     console.error('Error:', err.message);
@@ -192,7 +192,7 @@ node scan.js /tmp/eicar.txt
         <code>scan()</code> rejects the Promise in three situations. Always attach a
         <code>.catch()</code> or use <code>try/catch</code> in an async function.
       </p>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 const path = require('path');
 
 async function safeScan(filePath) {
@@ -201,7 +201,7 @@ async function safeScan(filePath) {
 
   let result;
   try {
-    result = await pompelmi.scan(abs);
+    result = await scan(abs);
   } catch (err) {
     if (err.message.startsWith('File not found')) {
       console.error('The file does not exist:', abs);
@@ -216,10 +216,10 @@ async function safeScan(filePath) {
     return null;
   }
 
-  return result;
+  return result; // Verdict.Clean | Verdict.Malicious | Verdict.ScanError
 }
 
-safeScan('./upload.zip').then(console.log);</pre>
+safeScan('./upload.zip').then(r =&gt; console.log(r?.description));</pre>
     </div>
 
     <div class="section" id="examples">
@@ -228,7 +228,7 @@ safeScan('./upload.zip').then(console.log);</pre>
       <h3>Scanning uploaded files in Express</h3>
 <pre>const express = require('express');
 const multer  = require('multer');
-const pompelmi = require('pompelmi');
+const { scan, Verdict } = require('pompelmi');
 const path = require('path');
 const fs   = require('fs');
 
@@ -239,14 +239,14 @@ app.post('/upload', upload.single('file'), async (req, res) =&gt; {
   const filePath = req.file.path;
 
   try {
-    const result = await pompelmi.scan(filePath);
+    const result = await scan(filePath);
 
-    if (result === 'Malicious') {
+    if (result === Verdict.Malicious) {
       fs.unlinkSync(filePath);
       return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
     }
 
-    if (result === 'ScanError') {
+    if (result === Verdict.ScanError) {
       // Scan failed — treat as untrusted, reject upload
       fs.unlinkSync(filePath);
       return res.status(422).json({ error: 'Scan incomplete. Upload rejected as precaution.' });
@@ -266,7 +266,7 @@ app.post('/upload', upload.single('file'), async (req, res) =&gt; {
 app.listen(3000);</pre>
 
       <h3>Scanning multiple files in sequence</h3>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 const fs = require('fs');
 
 async function scanDirectory(dirPath) {
@@ -277,10 +277,10 @@ async function scanDirectory(dirPath) {
   const results = [];
 
   for (const file of files) {
-    const result = await pompelmi.scan(file);
-    results.push({ file, result });
-    if (result !== 'Clean') {
-      console.warn(`[${result}] ${file}`);
+    const result = await scan(file);
+    results.push({ file, verdict: result.description });
+    if (result !== Verdict.Clean) {
+      console.warn(`[${result.description}] ${file}`);
     }
   }
 
@@ -288,22 +288,22 @@ async function scanDirectory(dirPath) {
 }
 
 scanDirectory('./downloads').then(results =&gt; {
-  const malicious = results.filter(r =&gt; r.result === 'Malicious');
+  const malicious = results.filter(r =&gt; r.verdict === 'Malicious');
   console.log(`Scanned ${results.length} files. ${malicious.length} malicious.`);
 });</pre>
 
       <h3>Parallel scanning with Promise.all</h3>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan } = require('pompelmi');
 
 async function scanAll(filePaths) {
   const settled = await Promise.allSettled(
-    filePaths.map(f =&gt; pompelmi.scan(f).then(r =&gt; ({ file: f, result: r })))
+    filePaths.map(f =&gt; scan(f).then(r =&gt; ({ file: f, verdict: r.description })))
   );
 
   return settled.map(s =&gt;
     s.status === 'fulfilled'
       ? s.value
-      : { file: '?', result: 'Error', error: s.reason.message }
+      : { file: '?', verdict: 'Error', error: s.reason.message }
   );
 }
 
@@ -363,7 +363,7 @@ scanAll(['/tmp/a.zip', '/tmp/b.pdf', '/tmp/c.exe'])
 </div>
 
 <div id="footer">
-  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

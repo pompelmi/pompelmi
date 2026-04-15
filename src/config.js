@@ -1,3 +1,5 @@
+const { Verdict } = require('./verdicts.js');
+
 module.exports = Object.freeze({
     INSTALLER_COMMANDS: Object.freeze({
         win32:  ['choco',  ['install', 'clamav', '-y']],
@@ -15,8 +17,8 @@ module.exports = Object.freeze({
         win32:  'C:\\ProgramData\\ClamAV\\main.cvd',
     }),
     SCAN_RESULTS: Object.freeze({
-        0: 'Clean',
-        1: 'Malicious',
-        2: 'ScanError'
+        0: Verdict.Clean,
+        1: Verdict.Malicious,
+        2: Verdict.ScanError,
     }),
 });

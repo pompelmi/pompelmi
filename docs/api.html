@@ -39,6 +39,7 @@
     <ul>
       <span class="sidebar-label">API</span>
       <li><a href="#overview">Overview</a></li>
+      <li><a href="#verdict">Verdict</a></li>
       <li><a href="#scan">scan()</a></li>
       <li><a href="#scan-options">options object</a></li>
       <li><a href="#scan-docker">Docker / TCP</a></li>
@@ -57,10 +58,12 @@
       <h2>Overview</h2>
       <p>
         The public API surface of pompelmi is intentionally small.
-        The main entry point exports a single object with one method:
+        The main entry point exports two things: the <code>scan</code> function and the
+        <code>Verdict</code> constants object.
       </p>
-<pre>const pompelmi = require('pompelmi');
-// pompelmi.scan — the only public method</pre>
+<pre>const { scan, Verdict } = require('pompelmi');
+// scan    — the scan function
+// Verdict — frozen object of Symbol constants for comparing results</pre>
 
       <p>
         The installer and updater are internal utilities exposed as named exports from
@@ -69,15 +72,21 @@
 
       <table>
         <tr>
-          <th>Symbol</th>
+          <th>Export</th>
           <th>Module</th>
           <th>Type</th>
           <th>Public?</th>
         </tr>
         <tr>
-          <td><code>pompelmi.scan</code></td>
+          <td><code>scan</code></td>
           <td><code>index.js</code></td>
-          <td>Function → Promise</td>
+          <td>Function → Promise&lt;symbol&gt;</td>
+          <td>Yes</td>
+        </tr>
+        <tr>
+          <td><code>Verdict</code></td>
+          <td><code>index.js</code> → <code>verdicts.js</code></td>
+          <td>Frozen object of Symbols</td>
           <td>Yes</td>
         </tr>
         <tr>
@@ -101,25 +110,77 @@
       </table>
     </div>
 
+    <!-- ── Verdict ── -->
+    <div class="section" id="verdict">
+      <h2>Verdict</h2>
+      <p>
+        A frozen object of Symbol constants exported from <code>src/verdicts.js</code>
+        and re-exported from <code>index.js</code>. Always compare scan results against
+        these constants with <code>===</code> — never against raw strings.
+      </p>
+
+      <h3>Constants</h3>
+      <table>
+        <tr>
+          <th>Constant</th>
+          <th><code>.description</code></th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td><code>Verdict.Clean</code></td>
+          <td><code>'Clean'</code></td>
+          <td>No threats detected.</td>
+        </tr>
+        <tr>
+          <td><code>Verdict.Malicious</code></td>
+          <td><code>'Malicious'</code></td>
+          <td>A virus or malware signature was matched.</td>
+        </tr>
+        <tr>
+          <td><code>Verdict.ScanError</code></td>
+          <td><code>'ScanError'</code></td>
+          <td>The scan failed; treat the file as untrusted.</td>
+        </tr>
+      </table>
+
+      <h3>Why Symbols?</h3>
+      <p>
+        String-based verdicts are fragile: a typo such as <code>'Cleaan'</code>
+        compiles and runs silently but always evaluates to <code>false</code>.
+        With Symbols, any unknown property on <code>Verdict</code> is
+        <code>undefined</code>, making the mistake visible immediately.
+        Symbols also prevent accidental equality with third-party string values.
+      </p>
+
+      <h3>Logging / serialisation</h3>
+      <p>
+        Each Symbol carries a <code>.description</code> string for human-readable output:
+      </p>
+<pre>const { Verdict } = require('pompelmi');
+console.log(Verdict.Clean.description);      // 'Clean'
+console.log(String(Verdict.Malicious));      // 'Symbol(Malicious)'
+JSON.stringify({ verdict: result.description }); // {"verdict":"Clean"}</pre>
+    </div>
+
     <!-- ── scan() ── -->
     <div class="section" id="scan">
       <h2>pompelmi.scan(filePath, [options])</h2>
       <p>
-        Scans a file for malware and returns a Promise that resolves to a result string.
-        By default it spawns a local <code>clamscan</code> process. Pass <code>host</code>
-        or <code>port</code> in <code>options</code> to scan via a clamd TCP socket instead
-        (e.g. a Docker container).
+        Scans a file for malware and returns a Promise that resolves to a <code>Verdict</code>
+        Symbol. By default it spawns a local <code>clamscan</code> process via Node's native
+        <code>child_process.spawn</code>. Pass <code>host</code> or <code>port</code> in
+        <code>options</code> to scan via a clamd TCP socket instead (e.g. a Docker container).
       </p>
 
       <h3>Signature</h3>
-<pre>pompelmi.scan(
+<pre>scan(
   filePath: string,
   options?: {
     host?:    string;   // default: '127.0.0.1'
     port?:    number;   // default: 3310
     timeout?: number;   // default: 15000 ms (TCP path only)
   }
-): Promise&lt;"Clean" | "Malicious" | "ScanError"&gt;</pre>
+): Promise&lt;symbol&gt;  // resolves to Verdict.Clean | Verdict.Malicious | Verdict.ScanError</pre>
 
       <h3>Parameters</h3>
       <table>
@@ -151,7 +212,9 @@
 
       <h3>Return value</h3>
       <p>
-        A Promise that resolves to one of the following regardless of which backend is used:
+        A Promise that resolves to one of the following <code>Verdict</code> Symbols,
+        regardless of which backend is used. Compare using <code>===</code> against the
+        exported constants — never against raw strings.
       </p>
       <table>
         <tr>
@@ -161,19 +224,19 @@
           <th>Meaning</th>
         </tr>
         <tr>
-          <td class="result-clean"><code>"Clean"</code></td>
+          <td class="result-clean"><code>Verdict.Clean</code></td>
           <td class="code-cell">0</td>
           <td><code>stream: OK</code></td>
           <td>No known threats found in the file.</td>
         </tr>
         <tr>
-          <td class="result-malicious"><code>"Malicious"</code></td>
+          <td class="result-malicious"><code>Verdict.Malicious</code></td>
           <td class="code-cell">1</td>
           <td><code>stream: &lt;name&gt; FOUND</code></td>
           <td>A virus or malware signature was matched.</td>
         </tr>
         <tr>
-          <td class="result-scanerror"><code>"ScanError"</code></td>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
           <td class="code-cell">2</td>
           <td>anything else</td>
           <td>
@@ -182,6 +245,10 @@
           </td>
         </tr>
       </table>
+      <p>
+        To get the human-readable name for logging or serialisation use
+        <code>result.description</code> — e.g. <code>Verdict.Clean.description === 'Clean'</code>.
+      </p>
 
       <h3>Rejection reasons</h3>
       <p>The Promise rejects (throws in async/await) in these cases:</p>
@@ -234,16 +301,19 @@
       </table>
 
       <h3>Example</h3>
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 
 // Local clamscan — no options needed
-const result = await pompelmi.scan('/var/uploads/report.pdf');
+const result = await scan('/var/uploads/report.pdf');
 
 switch (result) {
-  case 'Clean':     /* proceed */                    break;
-  case 'Malicious': /* reject file */                break;
-  case 'ScanError': /* treat as untrusted, reject */ break;
-}</pre>
+  case Verdict.Clean:     /* proceed */                    break;
+  case Verdict.Malicious: /* reject file */                break;
+  case Verdict.ScanError: /* treat as untrusted, reject */ break;
+}
+
+// Human-readable label for logging:
+console.log(result.description); // 'Clean' | 'Malicious' | 'ScanError'</pre>
 
       <h3>Notes</h3>
       <ul>
@@ -310,20 +380,22 @@ switch (result) {
         strings, the rejection behaviour, the file path argument — stays identical.
       </p>
 
-<pre>const pompelmi = require('pompelmi');
+<pre>const { scan, Verdict } = require('pompelmi');
 
 // Docker on localhost
-const result = await pompelmi.scan('/path/to/upload.zip', {
+const result = await scan('/path/to/upload.zip', {
   host: '127.0.0.1',
   port: 3310,
 });
 
 // Remote clamd with a tight timeout
-const result2 = await pompelmi.scan('/path/to/upload.zip', {
+const result2 = await scan('/path/to/upload.zip', {
   host: 'clamd-svc.internal',
   port: 3310,
   timeout: 5_000,
-});</pre>
+});
+
+if (result === Verdict.Malicious) { /* reject */ }</pre>
 
       <div class="note">
         See <a href="docker.html">Docker</a> for a ready-to-use
@@ -434,11 +506,15 @@ const result2 = await pompelmi.scan('/path/to/upload.zip', {
       <h2>config</h2>
       <p>
         The frozen configuration object in <code>src/config.js</code>. It is the single
-        source of truth for all subprocess commands and result strings.
+        source of truth for all subprocess commands and exit-code mappings.
+        <code>SCAN_RESULTS</code> maps ClamAV exit codes to <code>Verdict</code> Symbols
+        (defined in <code>src/verdicts.js</code>).
       </p>
 
       <h3>Shape</h3>
-<pre>module.exports = Object.freeze({
+<pre>const { Verdict } = require('./verdicts.js');
+
+module.exports = Object.freeze({
   INSTALLER_COMMANDS: Object.freeze({
     win32:  ['choco',  ['install', 'clamav', '-y']],
     darwin: ['brew',   ['install', 'clamav']],
@@ -455,9 +531,9 @@ const result2 = await pompelmi.scan('/path/to/upload.zip', {
     win32:  'C:\\ProgramData\\ClamAV\\main.cvd',
   }),
   SCAN_RESULTS: Object.freeze({
-    0: 'Clean',
-    1: 'Malicious',
-    2: 'ScanError',
+    0: Verdict.Clean,
+    1: Verdict.Malicious,
+    2: Verdict.ScanError,
   }),
 });</pre>
 
@@ -470,9 +546,9 @@ const result2 = await pompelmi.scan('/path/to/upload.zip', {
 
       <h3>SCAN_RESULTS</h3>
       <p>
-        Maps ClamAV exit codes to result strings. The map is frozen to prevent accidental
-        mutation. If ClamAV returns an exit code that is not a key in this object,
-        <code>scan()</code> rejects with <code>"Unexpected exit code: N"</code>.
+        Maps ClamAV exit codes to <code>Verdict</code> Symbols. The map is frozen to
+        prevent accidental mutation. If ClamAV returns an exit code that is not a key
+        in this object, <code>scan()</code> rejects with <code>"Unexpected exit code: N"</code>.
       </p>
 
       <table>
@@ -482,15 +558,15 @@ const result2 = await pompelmi.scan('/path/to/upload.zip', {
         </tr>
         <tr>
           <td class="code-cell">0</td>
-          <td><code>"Clean"</code></td>
+          <td><code>Verdict.Clean</code></td>
         </tr>
         <tr>
           <td class="code-cell">1</td>
-          <td><code>"Malicious"</code></td>
+          <td><code>Verdict.Malicious</code></td>
         </tr>
         <tr>
           <td class="code-cell">2</td>
-          <td><code>"ScanError"</code></td>
+          <td><code>Verdict.ScanError</code></td>
         </tr>
       </table>
     </div>
@@ -567,7 +643,7 @@ module.exports = {
         </tr>
         <tr>
           <td><code>ENOENT</code></td>
-          <td>OS / cross-spawn</td>
+          <td>OS / child_process</td>
           <td>Install ClamAV and ensure <code>clamscan</code> is in <code>PATH</code>.</td>
         </tr>
         <tr>
@@ -599,7 +675,8 @@ module.exports = {
 
       <span class="platform-label">pompelmi.d.ts</span>
 <pre>declare module 'pompelmi' {
-  type ScanResult = 'Clean' | 'Malicious' | 'ScanError';
+  /** Opaque Symbol returned by scan(). Compare with Verdict constants. */
+  type ScanVerdict = typeof Verdict[keyof typeof Verdict];
 
   interface ScanOptions {
     host?:    string;
@@ -607,17 +684,31 @@ module.exports = {
     timeout?: number;
   }
 
-  const pompelmi: {
-    scan(filePath: string, options?: ScanOptions): Promise&lt;ScanResult&gt;;
-  };
+  const Verdict: Readonly&lt;{
+    Clean:     unique symbol;
+    Malicious: unique symbol;
+    ScanError: unique symbol;
+  }&gt;;
 
-  export = pompelmi;
+  function scan(filePath: string, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+
+  export { scan, Verdict };
 }</pre>
 
       <p>
         Place this file anywhere TypeScript can find it (e.g. <code>src/types/pompelmi.d.ts</code>)
         and ensure your <code>tsconfig.json</code> includes it.
       </p>
+      <p>Usage in TypeScript:</p>
+<pre>import { scan, Verdict } from 'pompelmi';
+
+const result = await scan('/path/to/file.pdf');
+if (result === Verdict.Malicious) { /* ... */ }
+
+// Narrowing helper (optional):
+function verdictLabel(v: typeof Verdict[keyof typeof Verdict]): string {
+  return v.description ?? String(v);
+}</pre>
 
       <div class="note">
         If you would like official <code>@types/pompelmi</code> declarations,
@@ -629,7 +720,7 @@ module.exports = {
 </div>
 
 <div id="footer">
-  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

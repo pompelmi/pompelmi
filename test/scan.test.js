@@ -1,6 +1,7 @@
 const path = require('path');
 const { execSync } = require('child_process');
 const pompelmi = require('../src/index.js');
+const { Verdict } = require('../src/verdicts.js');
 
 function isClamAVInstalled() {
     try {
@@ -27,10 +28,10 @@ async function runTests() {
         try {
             const result = await pompelmi.scan(filePath);
             if (result === expected) {
-                console.log(`✅ ${label}: ${result}`);
+                console.log(`✅ ${label}: ${String(result)}`);
                 passed++;
             } else {
-                console.error(`❌ ${label}: Expected "${expected}", got "${result}"`);
+                console.error(`❌ ${label}: Expected ${String(expected)}, got ${String(result)}`);
                 failed++;
             }
         } catch (err) {
@@ -38,7 +39,7 @@ async function runTests() {
                 console.log(`✅ ${label}: ${err.message}`);
                 passed++;
             } else {
-                console.error(`❌ ${label}: Expected "${expected}", got "${err.message}"`);
+                console.error(`❌ ${label}: Expected ${String(expected)}, got ${err.message}`);
                 failed++;
             }
         }
@@ -47,9 +48,9 @@ async function runTests() {
     console.log("\n--- ClamAV Scanner Tests ---\n");
 
     const ghostPath = path.join(__dirname, 'ghost.txt');
-    await test("Clean file",         path.join(__dirname, 'clean.txt'), 'Clean');
-    await test("Malicious file",     path.join(__dirname, 'eicar.txt'), 'Malicious');
-    await test("Malicious zip",      path.join(__dirname, 'eicar.zip'), 'Malicious');
+    await test("Clean file",         path.join(__dirname, 'clean.txt'), Verdict.Clean);
+    await test("Malicious file",     path.join(__dirname, 'eicar.txt'), Verdict.Malicious);
+    await test("Malicious zip",      path.join(__dirname, 'eicar.zip'), Verdict.Malicious);
     await test("File non esistente", ghostPath, `File not found: ${ghostPath}`);
 
     console.log(`\n--- Results: ${passed} passed, ${failed} failed ---\n`);

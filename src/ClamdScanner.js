@@ -1,7 +1,8 @@
 'use strict';
 
-const net = require('net');
-const fs  = require('fs');
+const net            = require('net');
+const fs             = require('fs');
+const { Verdict }    = require('./verdicts.js');
 
 // ClamAV INSTREAM protocol:
 //   1. Send "zINSTREAM\0"
@@ -13,9 +14,9 @@ const CHUNK_SIZE     = 64 * 1024;  // 64 KB — well within clamd's default Stre
 
 function parseClamdResponse(raw) {
     const text = raw.toString('utf8').trim();
-    if (text === 'stream: OK')      return 'Clean';
-    if (text.endsWith(' FOUND'))    return 'Malicious';
-    return 'ScanError';
+    if (text === 'stream: OK')    return Verdict.Clean;
+    if (text.endsWith(' FOUND'))  return Verdict.Malicious;
+    return Verdict.ScanError;
 }
 
 /**
