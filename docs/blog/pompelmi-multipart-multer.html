@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning multipart uploads with pompelmi and Multer — pompelmi</title>
+<meta name="description" content="Deep dive into Multer configuration and pompelmi scanning for multipart file uploads: storage engines, file filters, size limits, and field-by-field scanning patterns.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#storage">DiskStorage</a></li>
+      <li><a href="#filefilter">File filter</a></li>
+      <li><a href="#single">Single file</a></li>
+      <li><a href="#fields">Multiple fields</a></li>
+      <li><a href="#sizelimits">Size limits</a></li>
+      <li><a href="#custom-storage">Custom storage</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning multipart uploads with pompelmi and Multer</h2>
+      <p>
+        Multer is the standard multipart/form-data middleware for Node.js. This guide
+        covers the full Multer configuration surface — DiskStorage, file filters,
+        field-level scanning, size limits — and shows how pompelmi fits into each
+        pattern.
+      </p>
+      <p>
+        The core rule: configure Multer to use <code>DiskStorage</code> (not the
+        default <code>MemoryStorage</code>) so that pompelmi always receives a path
+        on disk. Memory buffers require writing a temp file yourself before scanning;
+        DiskStorage avoids that extra step entirely.
+      </p>
+    </div>
+
+    <div class="section" id="storage">
+      <h2>DiskStorage configuration</h2>
+<pre>const multer  = require('multer');
+const path    = require('path');
+const crypto  = require('crypto');
+const os      = require('os');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) =&gt; {
+    // Always write to a dedicated temp directory
+    cb(null, os.tmpdir());
+  },
+  filename: (req, file, cb) =&gt; {
+    // Use a random hex prefix to avoid filename collisions and
+    // to prevent path traversal attacks in the original filename
+    const randomPrefix = crypto.randomBytes(8).toString('hex');
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, randomPrefix + ext);
+  }
+});
+
+const upload = multer({ storage });</pre>
+
+      <div class="warn">
+        Never use <code>file.originalname</code> directly as the filename on disk.
+        It is user-controlled and can contain path traversal sequences (<code>../</code>).
+        Always sanitize or replace the filename, as shown above.
+      </div>
+    </div>
+
+    <div class="section" id="filefilter">
+      <h2>File filter — pre-scan MIME type check</h2>
+      <p>
+        Multer's <code>fileFilter</code> runs before the file is written to disk.
+        Use it to reject obviously wrong content types immediately, before paying
+        the cost of a ClamAV scan.
+      </p>
+<pre>const ALLOWED_MIME_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'application/pdf',
+  'application/zip',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+]);
+
+const upload = multer({
+  storage,
+  fileFilter: (req, file, cb) =&gt; {
+    if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      cb(null, true);  // Accept
+    } else {
+      cb(new Error('File type not allowed: ' + file.mimetype), false);
+    }
+  },
+  limits: { fileSize: 20 * 1024 * 1024 }   // 20 MB
+});</pre>
+
+      <div class="note">
+        <code>file.mimetype</code> comes from the <code>Content-Type</code> header
+        in the multipart part — it is user-supplied and trivially spoofable. MIME
+        filtering is a convenience gate, not a security control. ClamAV scanning
+        is the security control.
+      </div>
+    </div>
+
+    <div class="section" id="single">
+      <h2>Single file upload with scanning</h2>
+<pre>const express = require('express');
+const { scan, Verdict } = require('pompelmi');
+const fs   = require('fs');
+const path = require('path');
+
+const app = express();
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const { path: tmpPath, originalname } = req.file;
+
+  let verdict;
+  try {
+    verdict = await scan(tmpPath);
+  } catch (err) {
+    fs.unlinkSync(tmpPath);
+    return res.status(500).json({ error: 'Scan failed: ' + err.message });
+  }
+
+  if (verdict === Verdict.Malicious) {
+    fs.unlinkSync(tmpPath);
+    return res.status(400).json({ error: 'Malware detected.' });
+  }
+
+  if (verdict === Verdict.ScanError) {
+    fs.unlinkSync(tmpPath);
+    return res.status(422).json({ error: 'Scan incomplete. Rejected as precaution.' });
+  }
+
+  const dest = path.join('/var/app/uploads', req.file.filename);
+  fs.renameSync(tmpPath, dest);
+  res.json({ status: 'ok', file: originalname });
+});</pre>
+    </div>
+
+    <div class="section" id="fields">
+      <h2>Scanning files from multiple named fields</h2>
+      <p>
+        <code>upload.fields()</code> accepts an array of field definitions.
+        <code>req.files</code> is then a map of field name to array of file objects.
+        Scan each field's files independently.
+      </p>
+<pre>app.post(
+  '/submit',
+  upload.fields([
+    { name: 'resume',     maxCount: 1 },
+    { name: 'coverLetter', maxCount: 1 }
+  ]),
+  async (req, res) =&gt; {
+    const allFiles = [
+      ...(req.files['resume']      || []),
+      ...(req.files['coverLetter'] || [])
+    ];
+
+    if (!allFiles.length) {
+      return res.status(400).json({ error: 'No files provided.' });
+    }
+
+    const accepted = [];
+
+    for (const file of allFiles) {
+      let verdict;
+      try {
+        verdict = await scan(file.path);
+      } catch (err) {
+        allFiles.forEach(f =&gt; { try { fs.unlinkSync(f.path); } catch (_) {} });
+        return res.status(500).json({ error: err.message });
+      }
+
+      if (verdict !== Verdict.Clean) {
+        // Delete all temp files and abort
+        allFiles.forEach(f =&gt; { try { fs.unlinkSync(f.path); } catch (_) {} });
+        const code = verdict === Verdict.Malicious ? 400 : 422;
+        return res.status(code).json({
+          error: verdict === Verdict.Malicious
+            ? 'Malware detected in ' + file.originalname
+            : 'Scan incomplete for ' + file.originalname
+        });
+      }
+
+      const dest = path.join('/var/app/uploads', file.filename);
+      fs.renameSync(file.path, dest);
+      accepted.push({ field: file.fieldname, name: file.originalname });
+    }
+
+    res.json({ status: 'ok', files: accepted });
+  }
+);</pre>
+    </div>
+
+    <div class="section" id="sizelimits">
+      <h2>Size limits and error handling</h2>
+      <p>
+        When Multer's size limit is exceeded it calls <code>next(err)</code> with a
+        <code>MulterError</code>. Register an error middleware to catch it and return
+        a meaningful response.
+      </p>
+<pre>const multer = require('multer');
+
+// Error middleware — must be registered AFTER routes
+app.use((err, req, res, next) =&gt; {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      return res.status(413).json({ error: 'File too large. Maximum size is 20 MB.' });
+    }
+    return res.status(400).json({ error: 'Upload error: ' + err.message });
+  }
+
+  if (err.message === 'File type not allowed: ' + err.message.split(': ')[1]) {
+    return res.status(415).json({ error: err.message });
+  }
+
+  next(err); // Pass unknown errors to the default handler
+});</pre>
+    </div>
+
+    <div class="section" id="custom-storage">
+      <h2>Custom storage engine that scans on write</h2>
+      <p>
+        For tighter integration, implement a Multer custom storage engine. The
+        <code>_handleFile</code> method writes the upload to a temp file, scans it,
+        and either promotes it or rejects the upload before the route handler sees
+        the file.
+      </p>
+<pre>// storage/scannedDiskStorage.js
+const multer = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const path   = require('path');
+const fs     = require('fs');
+const crypto = require('crypto');
+const os     = require('os');
+
+class ScannedDiskStorage {
+  constructor(options = {}) {
+    this.destination = options.destination || os.tmpdir();
+    this.finalDir    = options.finalDir    || '/var/app/uploads';
+  }
+
+  _handleFile(req, file, cb) {
+    const tmpName = crypto.randomBytes(12).toString('hex') +
+                    path.extname(file.originalname).toLowerCase();
+    const tmpPath = path.join(this.destination, tmpName);
+    const outStream = fs.createWriteStream(tmpPath);
+
+    file.stream.pipe(outStream);
+
+    outStream.on('error', cb);
+    outStream.on('finish', async () =&gt; {
+      let verdict;
+      try {
+        verdict = await scan(tmpPath);
+      } catch (err) {
+        fs.unlinkSync(tmpPath);
+        return cb(err);
+      }
+
+      if (verdict === Verdict.Malicious) {
+        fs.unlinkSync(tmpPath);
+        return cb(new Error('MALWARE_DETECTED'));
+      }
+
+      if (verdict === Verdict.ScanError) {
+        fs.unlinkSync(tmpPath);
+        return cb(new Error('SCAN_INCOMPLETE'));
+      }
+
+      // Clean — move to final directory immediately
+      const finalPath = path.join(this.finalDir, tmpName);
+      fs.rename(tmpPath, finalPath, (renameErr) =&gt; {
+        if (renameErr) return cb(renameErr);
+        cb(null, {
+          path:         finalPath,
+          filename:     tmpName,
+          originalname: file.originalname,
+          size:         outStream.bytesWritten
+        });
+      });
+    });
+  }
+
+  _removeFile(req, file, cb) {
+    fs.unlink(file.path, cb);
+  }
+}
+
+module.exports = ScannedDiskStorage;</pre>
+
+      <p>Use it as a drop-in Multer storage engine:</p>
+<pre>const ScannedDiskStorage = require('./storage/scannedDiskStorage');
+
+const upload = multer({
+  storage: new ScannedDiskStorage({ finalDir: '/var/app/uploads' })
+});
+
+app.post('/upload', upload.single('file'), (req, res) =&gt; {
+  // req.file.path is already in finalDir — scan happened in the storage engine
+  res.json({ status: 'ok', file: req.file.originalname });
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

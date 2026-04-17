@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Building a file scanning REST API with Node.js and pompelmi — pompelmi</title>
+<meta name="description" content="Build a standalone file scanning microservice in Node.js using pompelmi and Express. Accepts file uploads via multipart POST and returns JSON scan results — ready to call from any backend.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#api-design">API design</a></li>
+      <li><a href="#server">Server implementation</a></li>
+      <li><a href="#health">Health endpoint</a></li>
+      <li><a href="#calling">Calling the API</a></li>
+      <li><a href="#docker">Dockerize it</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Building a file scanning REST API with Node.js and pompelmi</h2>
+      <p>
+        Instead of embedding antivirus scanning into every application that handles
+        uploads, you can build a single <strong>scanning microservice</strong> that
+        all your apps call. This keeps ClamAV in one place, makes updates and
+        monitoring centralized, and lets non-Node.js services use the scanner too.
+      </p>
+      <p>
+        This guide walks through building a minimal but production-ready scanning
+        API: a POST endpoint that accepts a file, scans it, and returns a JSON verdict.
+      </p>
+      <div class="note">
+        This guide assumes ClamAV is installed. If not, see
+        <a href="clamav-install-nodejs-macos-linux-windows.html">How to install ClamAV on macOS, Linux and Windows</a>.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>mkdir scan-api &amp;&amp; cd scan-api
+npm init -y
+npm install express multer pompelmi</pre>
+    </div>
+
+    <div class="section" id="api-design">
+      <h2>API design</h2>
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Path</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>POST</td>
+          <td>/scan</td>
+          <td>Accept a multipart file upload, scan it, return a verdict.</td>
+        </tr>
+        <tr>
+          <td>GET</td>
+          <td>/health</td>
+          <td>Return 200 if the service and ClamAV are ready, 503 otherwise.</td>
+        </tr>
+      </table>
+
+      <h3>Response format</h3>
+<pre>// Success — file scanned
+{
+  "verdict":     "clean",         // "clean" | "malicious" | "scan_error"
+  "safe":        true,            // boolean shorthand
+  "filename":    "report.pdf",
+  "size":        48219            // bytes
+}
+
+// Error — missing file or server fault
+{
+  "error": "No file provided."
+}</pre>
+    </div>
+
+    <div class="section" id="server">
+      <h2>Server implementation</h2>
+<pre>// server.js
+'use strict';
+
+const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: {
+    fileSize: parseInt(process.env.MAX_FILE_SIZE) || 100 * 1024 * 1024,  // 100 MB default
+    files:    1
+  }
+});
+
+// Map pompelmi Symbol verdicts to JSON-friendly strings
+function verdictString(v) {
+  if (v === Verdict.Clean)      return 'clean';
+  if (v === Verdict.Malicious)  return 'malicious';
+  if (v === Verdict.ScanError)  return 'scan_error';
+  return 'unknown';
+}
+
+// POST /scan
+app.post('/scan', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided. Send a multipart/form-data request with field name "file".' });
+  }
+
+  const { path: tmpPath, originalname, size } = req.file;
+
+  try {
+    const verdict = await scan(tmpPath);
+    const label   = verdictString(verdict);
+
+    // Delete temp file regardless of verdict
+    fs.unlinkSync(tmpPath);
+
+    const statusCode = verdict === Verdict.Clean ? 200
+                     : verdict === Verdict.Malicious ? 200   // 200 with verdict — caller decides what to do
+                     : 200;
+
+    return res.status(statusCode).json({
+      verdict:  label,
+      safe:     verdict === Verdict.Clean,
+      filename: originalname,
+      size
+    });
+
+  } catch (err) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    return res.status(500).json({ error: 'Scan failed: ' + err.message });
+  }
+});
+
+// Multer size limit error
+app.use((err, req, res, next) =&gt; {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File exceeds the maximum allowed size.' });
+  }
+  next(err);
+});
+
+const PORT = process.env.PORT || 4000;
+app.listen(PORT, () =&gt; console.log('Scan API listening on port', PORT));</pre>
+
+      <div class="note">
+        The <code>/scan</code> endpoint always returns HTTP 200 with a JSON body — even
+        for malicious files. This is intentional: the HTTP status code reflects whether
+        the <em>request</em> succeeded (it did — the file was scanned), not whether the
+        file was clean. Callers inspect the <code>verdict</code> field to decide what
+        to do next.
+      </div>
+    </div>
+
+    <div class="section" id="health">
+      <h2>Health endpoint</h2>
+      <p>
+        The health endpoint verifies that <code>clamscan</code> is available and the
+        virus database has been downloaded. Load balancers and container orchestrators
+        use this to determine whether the service is ready to accept traffic.
+      </p>
+<pre>const { execFile } = require('child_process');
+
+// GET /health
+app.get('/health', (req, res) =&gt; {
+  execFile('clamscan', ['--version'], { timeout: 5000 }, (err, stdout) =&gt; {
+    if (err) {
+      return res.status(503).json({
+        status:  'unavailable',
+        reason:  'clamscan binary not found or failed: ' + err.message
+      });
+    }
+
+    res.json({
+      status:  'ok',
+      clamav:  stdout.trim()   // e.g. "ClamAV 1.3.1/27392/..."
+    });
+  });
+});</pre>
+    </div>
+
+    <div class="section" id="calling">
+      <h2>Calling the API from another service</h2>
+
+      <h3>curl</h3>
+<pre>curl -s -F "file=@/path/to/file.pdf" http://localhost:4000/scan | jq .</pre>
+
+      <h3>Node.js with form-data</h3>
+<pre>npm install form-data node-fetch</pre>
+
+<pre>const FormData = require('form-data');
+const fetch    = require('node-fetch');
+const fs       = require('fs');
+
+async function scanWithApi(filePath) {
+  const form = new FormData();
+  form.append('file', fs.createReadStream(filePath));
+
+  const response = await fetch('http://scan-api:4000/scan', {
+    method:  'POST',
+    body:    form,
+    headers: form.getHeaders()
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) {
+    throw new Error('Scan API error: ' + (result.error || response.statusText));
+  }
+
+  return result;   // { verdict, safe, filename, size }
+}
+
+scanWithApi('./uploads/document.docx').then(result =&gt; {
+  if (!result.safe) {
+    console.error('File rejected:', result.verdict);
+  } else {
+    console.log('File is safe.');
+  }
+});</pre>
+
+      <h3>Python</h3>
+<pre>import requests
+
+def scan_file(path: str) -&gt; dict:
+    with open(path, 'rb') as f:
+        response = requests.post(
+            'http://scan-api:4000/scan',
+            files={'file': f}
+        )
+    response.raise_for_status()
+    return response.json()
+
+result = scan_file('./uploads/report.pdf')
+print(result['verdict'])   # 'clean', 'malicious', or 'scan_error'</pre>
+    </div>
+
+    <div class="section" id="docker">
+      <h2>Dockerize the scanning API</h2>
+<pre># Dockerfile
+FROM node:20-slim
+
+RUN apt-get update \
+ &amp;&amp; apt-get install -y --no-install-recommends clamav \
+ &amp;&amp; rm -rf /var/lib/apt/lists/*
+
+# Download virus definitions at build time
+# Mount a persistent volume in production to avoid re-downloading on every deploy
+RUN freshclam --no-warnings || true
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY server.js .
+
+ENV PORT=4000
+EXPOSE 4000
+CMD ["node", "server.js"]</pre>
+
+<pre># docker-compose.yml — run alongside your main application
+version: '3.9'
+
+services:
+  app:
+    build: ./app
+    environment:
+      - SCAN_API_URL=http://scan-api:4000
+    depends_on:
+      scan-api:
+        condition: service_healthy
+
+  scan-api:
+    build: ./scan-api
+    environment:
+      - MAX_FILE_SIZE=104857600   # 100 MB
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4000/health']
+      interval: 30s
+      start_period: 60s</pre>
+
+      <p>
+        For a more advanced deployment using a shared <code>clamd</code> daemon instead
+        of per-request <code>clamscan</code> processes, see
+        <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to use pompelmi in a NestJS application — pompelmi</title>
+<meta name="description" content="A complete guide to integrating pompelmi ClamAV antivirus scanning into NestJS using a custom interceptor, provider, and module — with full TypeScript examples.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#provider">Scan provider</a></li>
+      <li><a href="#interceptor">Interceptor</a></li>
+      <li><a href="#module">Module</a></li>
+      <li><a href="#controller">Controller</a></li>
+      <li><a href="#testing">Unit testing</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>How to use pompelmi in a NestJS application</h2>
+      <p>
+        NestJS is a TypeScript-first framework built on top of Express or Fastify.
+        The idiomatic way to add antivirus scanning is to write a NestJS
+        <em>interceptor</em> that inspects uploaded files before the controller
+        method runs. This guide builds the provider, interceptor, and module from
+        scratch without relying on any third-party NestJS wrapper.
+      </p>
+      <div class="note">
+        pompelmi scans files on disk. NestJS's <code>FileInterceptor</code> from
+        <code>@nestjs/platform-express</code> uses Multer under the hood, so the file
+        will be on disk at <code>file.path</code> by the time your interceptor runs.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi @nestjs/platform-express @nestjs/common @nestjs/core
+npm install --save-dev @types/multer</pre>
+    </div>
+
+    <div class="section" id="provider">
+      <h2>Scan provider</h2>
+      <p>
+        Encapsulate the pompelmi call in an injectable service. This makes it easy
+        to mock in unit tests and swap out the underlying scanner without touching
+        controller code.
+      </p>
+<pre>// scan/scan.service.ts
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { scan, Verdict } from 'pompelmi';
+
+export type ScanVerdict = typeof Verdict.Clean
+                        | typeof Verdict.Malicious
+                        | typeof Verdict.ScanError;
+
+@Injectable()
+export class ScanService {
+  /**
+   * Scan an absolute file path with ClamAV via pompelmi.
+   * Returns the Verdict Symbol, or throws InternalServerErrorException
+   * if clamscan is unavailable.
+   */
+  async scanFile(filePath: string): Promise&lt;ScanVerdict&gt; {
+    try {
+      return await scan(filePath) as ScanVerdict;
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException('ClamAV scan failed: ' + message);
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="interceptor">
+      <h2>Antivirus interceptor</h2>
+      <p>
+        The interceptor runs after <code>FileInterceptor</code> has written the
+        upload to disk. It calls <code>ScanService</code>, deletes the file on
+        rejection, and throws the appropriate HTTP exception.
+      </p>
+<pre>// scan/scan.interceptor.ts
+import {
+  Injectable,
+  NestInterceptor,
+  ExecutionContext,
+  CallHandler,
+  BadRequestException,
+  UnprocessableEntityException,
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { Verdict } from 'pompelmi';
+import * as fs from 'fs';
+import { ScanService } from './scan.service';
+
+@Injectable()
+export class AntivirusInterceptor implements NestInterceptor {
+  constructor(private readonly scanService: ScanService) {}
+
+  async intercept(ctx: ExecutionContext, next: CallHandler): Promise&lt;Observable&lt;unknown&gt;&gt; {
+    const request = ctx.switchToHttp().getRequest();
+    const file: Express.Multer.File | undefined = request.file;
+
+    if (!file) {
+      // No file in this request — skip scanning
+      return next.handle();
+    }
+
+    const verdict = await this.scanService.scanFile(file.path);
+
+    if (verdict === Verdict.Malicious) {
+      this.deleteFile(file.path);
+      throw new BadRequestException('Malware detected. Upload rejected.');
+    }
+
+    if (verdict === Verdict.ScanError) {
+      this.deleteFile(file.path);
+      throw new UnprocessableEntityException(
+        'Scan could not complete. Upload rejected as a precaution.'
+      );
+    }
+
+    // Verdict.Clean — continue to controller
+    return next.handle();
+  }
+
+  private deleteFile(filePath: string): void {
+    try {
+      fs.unlinkSync(filePath);
+    } catch (_) {
+      // Best-effort deletion
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="module">
+      <h2>Scan module</h2>
+      <p>
+        Bundle the service and interceptor into a module so they can be imported
+        into any feature module that needs antivirus scanning.
+      </p>
+<pre>// scan/scan.module.ts
+import { Module } from '@nestjs/common';
+import { ScanService } from './scan.service';
+import { AntivirusInterceptor } from './scan.interceptor';
+
+@Module({
+  providers: [ScanService, AntivirusInterceptor],
+  exports:   [ScanService, AntivirusInterceptor],
+})
+export class ScanModule {}</pre>
+    </div>
+
+    <div class="section" id="controller">
+      <h2>Controller</h2>
+      <p>
+        Import <code>ScanModule</code> in the feature module, then apply
+        <code>AntivirusInterceptor</code> after <code>FileInterceptor</code> on the
+        upload route.
+      </p>
+<pre>// upload/upload.controller.ts
+import {
+  Controller,
+  Post,
+  UseInterceptors,
+  UploadedFile,
+  HttpCode,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as path from 'path';
+import { AntivirusInterceptor } from '../scan/scan.interceptor';
+
+@Controller('upload')
+export class UploadController {
+  @Post()
+  @HttpCode(200)
+  @UseInterceptors(
+    // 1. FileInterceptor writes the file to disk
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: '/tmp/uploads',
+        filename: (_req, file, cb) =&gt; {
+          const unique = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, unique + path.extname(file.originalname));
+        },
+      }),
+    }),
+    // 2. AntivirusInterceptor scans the saved file
+    AntivirusInterceptor,
+  )
+  handleUpload(@UploadedFile() file: Express.Multer.File) {
+    // At this point the file is guaranteed Clean
+    return { status: 'ok', file: file.filename };
+  }
+}</pre>
+
+      <p>Register the modules in your application root:</p>
+<pre>// app.module.ts
+import { Module } from '@nestjs/common';
+import { ScanModule } from './scan/scan.module';
+import { UploadModule } from './upload/upload.module';
+
+@Module({
+  imports: [ScanModule, UploadModule],
+})
+export class AppModule {}</pre>
+
+<pre>// upload/upload.module.ts
+import { Module } from '@nestjs/common';
+import { ScanModule } from '../scan/scan.module';
+import { UploadController } from './upload.controller';
+
+@Module({
+  imports:     [ScanModule],
+  controllers: [UploadController],
+})
+export class UploadModule {}</pre>
+    </div>
+
+    <div class="section" id="testing">
+      <h2>Unit testing the interceptor</h2>
+      <p>
+        Mock <code>ScanService</code> to test the interceptor in isolation from ClamAV.
+      </p>
+<pre>// scan/scan.interceptor.spec.ts
+import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, ExecutionContext, CallHandler } from '@nestjs/common';
+import { of } from 'rxjs';
+import { Verdict } from 'pompelmi';
+import { AntivirusInterceptor } from './scan.interceptor';
+import { ScanService } from './scan.service';
+
+describe('AntivirusInterceptor', () =&gt; {
+  let interceptor: AntivirusInterceptor;
+  let scanService: jest.Mocked&lt;ScanService&gt;;
+
+  beforeEach(async () =&gt; {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AntivirusInterceptor,
+        {
+          provide: ScanService,
+          useValue: { scanFile: jest.fn() },
+        },
+      ],
+    }).compile();
+
+    interceptor = module.get(AntivirusInterceptor);
+    scanService  = module.get(ScanService);
+  });
+
+  function mockContext(filePath: string | undefined) {
+    return {
+      switchToHttp: () =&gt; ({
+        getRequest: () =&gt; ({ file: filePath ? { path: filePath } : undefined }),
+      }),
+    } as unknown as ExecutionContext;
+  }
+
+  const next: CallHandler = { handle: () =&gt; of('ok') };
+
+  it('calls next when file is clean', async () =&gt; {
+    scanService.scanFile.mockResolvedValue(Verdict.Clean);
+    const result = await interceptor.intercept(mockContext('/tmp/file.pdf'), next);
+    expect(result).toBeDefined();
+  });
+
+  it('throws BadRequestException for malicious file', async () =&gt; {
+    scanService.scanFile.mockResolvedValue(Verdict.Malicious);
+    await expect(interceptor.intercept(mockContext('/tmp/evil.exe'), next))
+      .rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('skips scan when no file is present', async () =&gt; {
+    const result = await interceptor.intercept(mockContext(undefined), next);
+    expect(scanService.scanFile).not.toHaveBeenCalled();
+    expect(result).toBeDefined();
+  });
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

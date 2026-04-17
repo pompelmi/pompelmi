@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ClamAV in Node.js: pompelmi vs clamscan vs node-clam — pompelmi</title>
+<meta name="description" content="A technical comparison of the three main approaches for ClamAV antivirus scanning in Node.js: pompelmi, clamscan, and node-clam. API surface, architecture, tradeoffs, and when to use each.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#pompelmi">pompelmi</a></li>
+      <li><a href="#clamscan">clamscan</a></li>
+      <li><a href="#node-clam">node-clam</a></li>
+      <li><a href="#comparison">Comparison table</a></li>
+      <li><a href="#performance">Performance</a></li>
+      <li><a href="#decision">Decision guide</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>ClamAV in Node.js: pompelmi vs clamscan vs node-clam</h2>
+      <p>
+        There are three actively maintained npm packages that wrap ClamAV for Node.js.
+        Each takes a fundamentally different architectural approach. Choosing the wrong
+        one for your use case means working around its assumptions rather than with them.
+        This article compares all three with working code examples.
+      </p>
+    </div>
+
+    <div class="section" id="pompelmi">
+      <h2>pompelmi</h2>
+      <p>
+        pompelmi is a minimal wrapper around the <code>clamscan</code> binary.
+        It maps ClamAV exit codes directly to Symbol-based verdicts and has zero
+        runtime dependencies.
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const verdict = await scan('/tmp/upload.pdf');
+
+switch (verdict) {
+  case Verdict.Clean:
+    console.log('File is clean');
+    break;
+  case Verdict.Malicious:
+    throw new Error('Malware detected');
+  case Verdict.ScanError:
+    console.warn('Scan could not complete');
+    break;
+}</pre>
+
+      <p><strong>Architecture:</strong> spawns one <code>clamscan</code> process per
+      file, reads the exit code, maps it to a Symbol. No parsing of stdout.
+      No daemon. No socket management.</p>
+
+      <p><strong>Typed verdicts:</strong> <code>Verdict.Clean</code>,
+      <code>Verdict.Malicious</code>, and <code>Verdict.ScanError</code> are
+      Symbol constants — strict equality comparison, no string typos possible.</p>
+
+      <p><strong>TCP/clamd support:</strong> pass <code>{ host, port }</code>
+      to connect to a remote clamd instance for production deployments.</p>
+<pre>// Remote clamd (e.g. Docker sidecar)
+const verdict = await scan('/tmp/upload.pdf', {
+  host: 'clamav',
+  port: 3310
+});</pre>
+    </div>
+
+    <div class="section" id="clamscan">
+      <h2>clamscan</h2>
+      <p>
+        <code>clamscan</code> (npm) is a feature-rich wrapper that supports both
+        the <code>clamscan</code> binary and the <code>clamd</code> daemon via a
+        unified API. It is configured through a large options object.
+      </p>
+<pre>const NodeClam = require('clamscan');
+
+const clamScan = await new NodeClam().init({
+  clamscan: {
+    path:   '/usr/bin/clamscan',
+    active: true
+  },
+  preference: 'clamscan'
+});
+
+const { isInfected, file, viruses } = await clamScan.isInfected('/tmp/upload.pdf');
+
+if (isInfected) {
+  console.error('Viruses found:', viruses);
+} else {
+  console.log('Clean:', file);
+}</pre>
+
+      <p><strong>Architecture:</strong> spawns <code>clamscan</code> or connects
+      to <code>clamd</code> depending on configuration. Parses stdout to extract
+      virus names. Returns a structured object with <code>isInfected</code> and
+      <code>viruses</code> fields.</p>
+
+      <p><strong>Virus name extraction:</strong> <code>clamscan</code> parses the
+      raw stdout output of <code>clamscan</code> to return the detected virus name(s)
+      as a string array. This is useful for logging but depends on the stability of
+      ClamAV's output format.</p>
+
+      <p><strong>Stream scanning:</strong> supports scanning a readable stream
+      directly by sending it to clamd via the INSTREAM protocol.</p>
+<pre>const stream = fs.createReadStream('/tmp/upload.pdf');
+const { isInfected } = await clamScan.scanStream(stream);</pre>
+    </div>
+
+    <div class="section" id="node-clam">
+      <h2>node-clam</h2>
+      <p>
+        <code>node-clam</code> is focused exclusively on communication with the
+        <code>clamd</code> daemon. It does not use the <code>clamscan</code> binary
+        at all. You must have <code>clamd</code> running and accessible.
+      </p>
+<pre>const NodeClam = require('node-clam');
+
+const clam = await new NodeClam().init({
+  clamdscan: {
+    socket:  false,
+    host:    '127.0.0.1',
+    port:    3310,
+    timeout: 60000,
+    active:  true
+  }
+});
+
+const { isInfected, viruses } = await clam.isInfected('/tmp/upload.pdf');
+
+if (isInfected) {
+  console.error('Infected with:', viruses.join(', '));
+}</pre>
+
+      <p><strong>Architecture:</strong> sends the file path to clamd over a TCP
+      socket. clamd reads the file from the filesystem and responds with a verdict.
+      Requires both clamd to be running and the scanned file to be accessible
+      from clamd's process.</p>
+
+      <p><strong>Stream support via INSTREAM:</strong> can send a buffer or stream
+      directly to clamd without writing a temp file, using the INSTREAM protocol:</p>
+<pre>const { isInfected } = await clam.scanBuffer(buffer);</pre>
+    </div>
+
+    <div class="section" id="comparison">
+      <h2>Side-by-side comparison</h2>
+      <table>
+        <tr>
+          <th>Feature</th>
+          <th>pompelmi</th>
+          <th>clamscan (npm)</th>
+          <th>node-clam</th>
+        </tr>
+        <tr>
+          <td>Runtime dependencies</td>
+          <td class="result-clean">Zero</td>
+          <td>Several</td>
+          <td>Few</td>
+        </tr>
+        <tr>
+          <td>Requires clamd daemon</td>
+          <td class="result-clean">No (optional)</td>
+          <td>No (optional)</td>
+          <td class="result-malicious">Yes (required)</td>
+        </tr>
+        <tr>
+          <td>Verdict type</td>
+          <td>Symbol (typed)</td>
+          <td>Boolean + string[]</td>
+          <td>Boolean + string[]</td>
+        </tr>
+        <tr>
+          <td>Virus name extraction</td>
+          <td>No</td>
+          <td>Yes (stdout parse)</td>
+          <td>Yes (clamd response)</td>
+        </tr>
+        <tr>
+          <td>Stream / buffer scanning</td>
+          <td>No (file path only)</td>
+          <td>Yes (via clamd)</td>
+          <td>Yes (INSTREAM)</td>
+        </tr>
+        <tr>
+          <td>TCP / remote clamd</td>
+          <td>Yes</td>
+          <td>Yes</td>
+          <td>Yes (primary mode)</td>
+        </tr>
+        <tr>
+          <td>stdout parsing</td>
+          <td>No (exit codes only)</td>
+          <td>Yes</td>
+          <td>No (protocol response)</td>
+        </tr>
+        <tr>
+          <td>TypeScript types</td>
+          <td>Yes (bundled)</td>
+          <td>Partial (@types)</td>
+          <td>Yes (bundled)</td>
+        </tr>
+        <tr>
+          <td>Active maintenance</td>
+          <td>Yes</td>
+          <td>Intermittent</td>
+          <td>Yes</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="performance">
+      <h2>Performance considerations</h2>
+      <p>
+        All three packages ultimately ask ClamAV to scan a file. The performance
+        difference is mostly about startup overhead, not scanning speed.
+      </p>
+      <ul>
+        <li>
+          <strong>clamscan-mode (pompelmi, clamscan npm):</strong> each scan spawns a
+          new <code>clamscan</code> process that loads the full virus database (~200 MB)
+          into memory before scanning. On a modern server this takes 1–3 seconds per
+          file. Scanning many files in parallel spawns many processes simultaneously,
+          which can cause memory pressure.
+        </li>
+        <li>
+          <strong>clamd-mode (node-clam, pompelmi TCP, clamscan npm clamd mode):</strong>
+          <code>clamd</code> loads the database once and keeps it in memory. Each scan
+          is a TCP round-trip, typically 10–100 ms for small files. Suitable for
+          production upload endpoints that scan hundreds of files per minute.
+        </li>
+      </ul>
+      <div class="note">
+        For any deployment expecting more than a handful of uploads per minute,
+        the clamd daemon mode is strongly recommended. Use pompelmi's
+        <code>{ host, port }</code> option or node-clam to connect to a shared
+        clamd instance rather than spawning a new <code>clamscan</code> process
+        per upload.
+      </div>
+    </div>
+
+    <div class="section" id="decision">
+      <h2>Decision guide</h2>
+      <table>
+        <tr>
+          <th>Situation</th>
+          <th>Recommendation</th>
+        </tr>
+        <tr>
+          <td>Small project, infrequent uploads, minimal deps</td>
+          <td><strong>pompelmi</strong> — zero deps, simple API, works without clamd</td>
+        </tr>
+        <tr>
+          <td>Need detected virus name for logging or alerting</td>
+          <td><strong>clamscan (npm)</strong> — returns virus name from stdout</td>
+        </tr>
+        <tr>
+          <td>Production, high upload volume, clamd already running</td>
+          <td><strong>node-clam</strong> or <strong>pompelmi with TCP option</strong></td>
+        </tr>
+        <tr>
+          <td>Scan a stream or buffer without a temp file</td>
+          <td><strong>node-clam</strong> — INSTREAM protocol support</td>
+        </tr>
+        <tr>
+          <td>Containerized with clamd sidecar</td>
+          <td><strong>pompelmi</strong> (<code>{ host, port }</code>) or <strong>node-clam</strong></td>
+        </tr>
+        <tr>
+          <td>TypeScript, want compile-time safety on verdict comparisons</td>
+          <td><strong>pompelmi</strong> — Symbol verdicts prevent string comparison bugs</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

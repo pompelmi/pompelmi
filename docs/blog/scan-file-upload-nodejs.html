@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to scan file uploads for viruses in Node.js — pompelmi</title>
+<meta name="description" content="A beginner-friendly guide to adding virus scanning to Node.js file upload endpoints. Learn how ClamAV works with Node.js, what pompelmi does, and see a complete working example.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why">Why scan uploads?</a></li>
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#first-scan">Your first scan</a></li>
+      <li><a href="#express">Express example</a></li>
+      <li><a href="#verdicts">Handling verdicts</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why">
+      <h2>How to scan file uploads for viruses in Node.js</h2>
+      <p>
+        When your application accepts file uploads from users — profile pictures,
+        documents, attachments — those files can contain malware. A malicious user
+        can upload a virus-infected PDF, a trojan disguised as a spreadsheet, or a
+        script embedded in an image. If you store or serve those files without
+        scanning, you put your infrastructure and other users at risk.
+      </p>
+      <p>
+        This guide shows you how to scan every uploaded file for malware before it
+        touches your storage, using <strong>ClamAV</strong> (a free, open-source
+        antivirus engine) and <strong>pompelmi</strong> (a minimal Node.js wrapper
+        around it).
+      </p>
+      <div class="tip">
+        New to this topic? Start with
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        to set up ClamAV in under 5 minutes, then come back here for the full picture.
+      </div>
+    </div>
+
+    <div class="section" id="how-it-works">
+      <h2>How it works</h2>
+      <p>
+        The flow is straightforward:
+      </p>
+      <ol>
+        <li>The user submits a file through your upload form or API.</li>
+        <li>Your server receives the file and writes it to a temporary location on disk.</li>
+        <li>You call <code>scan(filePath)</code> — pompelmi passes the file to ClamAV.</li>
+        <li>ClamAV checks the file against its virus database and returns a result.</li>
+        <li>pompelmi returns a <strong>Verdict</strong>: <code>Verdict.Clean</code>, <code>Verdict.Malicious</code>, or <code>Verdict.ScanError</code>.</li>
+        <li>You either move the file to permanent storage (clean) or delete it and reject the request (malicious or error).</li>
+      </ol>
+      <p>
+        Nothing leaves your server. No cloud API, no data sent to a third party.
+        ClamAV runs locally as a binary (<code>clamscan</code>) that pompelmi invokes
+        as a subprocess.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install ClamAV and pompelmi</h2>
+      <p>First, install ClamAV on your system:</p>
+
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+
+      <span class="platform-label">Windows</span>
+<pre>choco install clamav -y</pre>
+
+      <p>Then install pompelmi in your Node.js project:</p>
+<pre>npm install pompelmi</pre>
+
+      <div class="note">
+        <code>freshclam</code> downloads the virus definition database. It can take a
+        few minutes on first run — the database is several hundred megabytes. You only
+        need to do this once (then keep it updated via a daily cron or service).
+      </div>
+    </div>
+
+    <div class="section" id="first-scan">
+      <h2>Your first scan</h2>
+      <p>
+        The pompelmi API has one main function: <code>scan(filePath)</code>.
+        It returns a Promise that resolves to a Verdict Symbol.
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+async function checkFile(filePath) {
+  const verdict = await scan(filePath);
+
+  if (verdict === Verdict.Clean) {
+    console.log('File is safe.');
+  } else if (verdict === Verdict.Malicious) {
+    console.log('Malware detected! Reject this file.');
+  } else if (verdict === Verdict.ScanError) {
+    console.log('Scan could not complete — treat file as untrusted.');
+  }
+}
+
+checkFile('/tmp/somefile.pdf');</pre>
+
+      <p>
+        That's the entire API surface you need to know for most use cases.
+        <code>scan()</code> is async, returns a Symbol, and throws only if
+        something went wrong at the OS level (e.g. ClamAV not found).
+      </p>
+
+      <h3>What are Verdict Symbols?</h3>
+      <p>
+        pompelmi uses JavaScript Symbols for verdict values rather than strings.
+        This means you compare with <code>===</code> just like strings, but you
+        can't accidentally introduce a typo like <code>"cLean"</code> and have
+        it silently pass.
+      </p>
+<pre>// This works correctly — strict symbol comparison
+if (verdict === Verdict.Clean) { ... }
+
+// This would never match (not the same Symbol reference)
+// if (verdict === 'Clean') { ... }   ← won't compile in TypeScript</pre>
+    </div>
+
+    <div class="section" id="express">
+      <h2>Complete Express.js upload example</h2>
+      <p>
+        Here is a working Express endpoint that accepts a file upload, scans it,
+        and either saves it or rejects the request. It uses
+        <a href="https://github.com/expressjs/multer">Multer</a> to handle
+        multipart form parsing.
+      </p>
+<pre>npm install express multer pompelmi</pre>
+
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const path = require('path');
+const fs   = require('fs');
+const os   = require('os');
+
+const app    = express();
+const upload = multer({ dest: os.tmpdir() });
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  // multer writes the file to a temp path before this handler runs
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath = req.file.path;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      // Delete the file — do not keep malware on disk
+      fs.unlinkSync(tmpPath);
+      return res.status(400).json({ error: 'Malware detected. File rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return res.status(422).json({ error: 'Scan incomplete. Rejected as a precaution.' });
+    }
+
+    // File is clean — move to your permanent storage
+    const dest = path.join('/var/app/uploads', req.file.originalname);
+    fs.renameSync(tmpPath, dest);
+
+    return res.json({ status: 'ok', file: req.file.originalname });
+
+  } catch (err) {
+    // ClamAV is not installed, or another system error
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    return res.status(500).json({ error: 'Scan failed: ' + err.message });
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on http://localhost:3000'));</pre>
+
+      <p>
+        Test it with <code>curl</code>:
+      </p>
+<pre># Upload a normal file — should return 200
+curl -F "file=@/etc/hosts" http://localhost:3000/upload
+
+# Upload the EICAR test virus — should return 400
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' \
+  &gt; /tmp/eicar.txt
+curl -F "file=@/tmp/eicar.txt" http://localhost:3000/upload</pre>
+
+      <div class="tip">
+        The EICAR string is a harmless test file that every antivirus engine
+        recognises as "malware" for testing purposes. It contains no actual malicious
+        code. Use it to verify your scan pipeline is working.
+      </div>
+    </div>
+
+    <div class="section" id="verdicts">
+      <h2>Handling each verdict correctly</h2>
+      <table>
+        <tr>
+          <th>Verdict</th>
+          <th>Meaning</th>
+          <th>Recommended action</th>
+        </tr>
+        <tr>
+          <td class="result-clean"><code>Verdict.Clean</code></td>
+          <td>No malware found in the file.</td>
+          <td>Move to permanent storage, proceed normally.</td>
+        </tr>
+        <tr>
+          <td class="result-malicious"><code>Verdict.Malicious</code></td>
+          <td>ClamAV matched a known malware signature.</td>
+          <td>Delete the temp file immediately. Return HTTP 400. Log the event.</td>
+        </tr>
+        <tr>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
+          <td>Scan ran but produced an inconclusive result (e.g. corrupted archive, read error).</td>
+          <td>Delete the temp file. Return HTTP 422. Reject unless you explicitly trust the source.</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        Never silently pass a <code>ScanError</code> through to storage. An attacker
+        can sometimes force a scan error intentionally to bypass scanning. Treat it
+        as untrusted.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using a different framework?
+          See <a href="pompelmi-with-express.html">the full Express.js integration guide</a>
+          for middleware patterns, TypeScript types, and multi-file scanning.
+        </li>
+        <li>
+          Worried about more than just viruses?
+          Read the <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>
+          for a complete picture of upload risks.
+        </li>
+        <li>
+          Running in Docker? See
+          <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

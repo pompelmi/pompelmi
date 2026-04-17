@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Using pompelmi in a Koa.js middleware pipeline — pompelmi</title>
+<meta name="description" content="How to integrate pompelmi ClamAV antivirus scanning into a Koa.js application using koa-body for multipart uploads and composable middleware.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#koabody">koa-body setup</a></li>
+      <li><a href="#basic">Basic route</a></li>
+      <li><a href="#middleware">Scan middleware</a></li>
+      <li><a href="#router">With koa-router</a></li>
+      <li><a href="#multiple">Multiple files</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Using pompelmi in a Koa.js middleware pipeline</h2>
+      <p>
+        Koa's middleware model — composable async functions that pass control via
+        <code>await next()</code> — maps cleanly onto a scanning pipeline. Add an
+        antivirus middleware before your route handler, and any malicious upload is
+        rejected before business logic runs.
+      </p>
+      <p>
+        This guide uses <a href="https://github.com/koajs/koa-body">koa-body</a> for
+        multipart parsing with disk storage, and pompelmi for ClamAV-backed scanning.
+      </p>
+      <div class="note">
+        ClamAV must be installed and <code>freshclam</code> run before this will work.
+        See the <a href="../quickstart.html">Quickstart</a>.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install koa koa-body @koa/router pompelmi</pre>
+    </div>
+
+    <div class="section" id="koabody">
+      <h2>koa-body setup</h2>
+      <p>
+        Configure koa-body to write multipart uploads to a directory on disk.
+        Without <code>formidable.uploadDir</code>, uploads are buffered in memory
+        and pompelmi would have nothing to scan.
+      </p>
+<pre>const Koa     = require('koa');
+const koaBody = require('koa-body');
+const os      = require('os');
+
+const app = new Koa();
+
+app.use(koaBody({
+  multipart: true,
+  formidable: {
+    uploadDir:    os.tmpdir(),      // Write uploads to OS temp directory
+    keepExtensions: true,           // Preserve file extension in temp name
+    maxFileSize:    50 * 1024 * 1024  // 50 MB limit
+  }
+}));</pre>
+    </div>
+
+    <div class="section" id="basic">
+      <h2>Basic upload route</h2>
+      <p>
+        After koa-body runs, <code>ctx.request.files.file</code> contains a
+        <a href="https://github.com/node-formidable/formidable">formidable</a>
+        <code>File</code> object with a <code>.filepath</code> property.
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+const fs   = require('fs');
+const path = require('path');
+
+app.use(async (ctx) =&gt; {
+  if (ctx.method !== 'POST' || ctx.path !== '/upload') return;
+
+  const file = ctx.request.files &amp;&amp; ctx.request.files.file;
+  if (!file) {
+    ctx.status = 400;
+    ctx.body   = { error: 'No file provided.' };
+    return;
+  }
+
+  const tmpPath = file.filepath;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      ctx.status = 400;
+      ctx.body   = { error: 'Malware detected. Upload rejected.' };
+      return;
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      ctx.status = 422;
+      ctx.body   = { error: 'Scan incomplete. Rejected as precaution.' };
+      return;
+    }
+
+    const dest = path.join('/var/app/uploads', file.originalFilename || file.newFilename);
+    fs.renameSync(tmpPath, dest);
+    ctx.body = { status: 'ok', file: dest };
+
+  } catch (err) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    ctx.status = 500;
+    ctx.body   = { error: err.message };
+  }
+});
+
+app.listen(3000);</pre>
+    </div>
+
+    <div class="section" id="middleware">
+      <h2>Reusable scan middleware</h2>
+      <p>
+        Extract the scanning logic into a standalone Koa middleware function. This
+        middleware short-circuits with an error response on rejection; on a clean
+        result it calls <code>await next()</code> and stores file metadata on the
+        context state for downstream handlers.
+      </p>
+<pre>// middleware/scanUpload.js
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+
+/**
+ * Koa middleware — scans ctx.request.files.file with pompelmi.
+ * Sets ctx.state.uploadedFile on success.
+ * Calls next() only when the file is Clean.
+ */
+async function scanUpload(ctx, next) {
+  const file = ctx.request.files &amp;&amp; ctx.request.files.file;
+  if (!file) {
+    ctx.status = 400;
+    ctx.body   = { error: 'No file provided.' };
+    return;
+  }
+
+  let verdict;
+  try {
+    verdict = await scan(file.filepath);
+  } catch (err) {
+    if (fs.existsSync(file.filepath)) fs.unlinkSync(file.filepath);
+    ctx.status = 500;
+    ctx.body   = { error: 'Scan failed: ' + err.message };
+    return;
+  }
+
+  if (verdict === Verdict.Malicious) {
+    fs.unlinkSync(file.filepath);
+    ctx.status = 400;
+    ctx.body   = { error: 'Malware detected.' };
+    return;
+  }
+
+  if (verdict === Verdict.ScanError) {
+    fs.unlinkSync(file.filepath);
+    ctx.status = 422;
+    ctx.body   = { error: 'Scan incomplete.' };
+    return;
+  }
+
+  ctx.state.uploadedFile = file;
+  await next();
+}
+
+module.exports = { scanUpload };</pre>
+    </div>
+
+    <div class="section" id="router">
+      <h2>Using with @koa/router</h2>
+      <p>
+        Apply the middleware per-route using <code>@koa/router</code>'s route-level
+        middleware array.
+      </p>
+<pre>const Router = require('@koa/router');
+const { scanUpload } = require('./middleware/scanUpload');
+const path = require('path');
+const fs   = require('fs');
+
+const router = new Router();
+
+router.post('/upload', scanUpload, async (ctx) =&gt; {
+  // scanUpload already verified the file is Clean
+  const file = ctx.state.uploadedFile;
+  const dest = path.join('/var/app/uploads', file.originalFilename || file.newFilename);
+  fs.renameSync(file.filepath, dest);
+  ctx.body = { status: 'ok', file: dest };
+});
+
+router.post('/documents', scanUpload, async (ctx) =&gt; {
+  const file = ctx.state.uploadedFile;
+  const dest = path.join('/var/app/documents', file.originalFilename || file.newFilename);
+  fs.renameSync(file.filepath, dest);
+  ctx.body = { status: 'ok', file: dest };
+});
+
+app.use(router.routes());
+app.use(router.allowedMethods());</pre>
+    </div>
+
+    <div class="section" id="multiple">
+      <h2>Scanning multiple files</h2>
+      <p>
+        koa-body places multiple files in an array under the field name.
+        Enable <code>formidable.multiples: true</code> and iterate:
+      </p>
+<pre>app.use(koaBody({
+  multipart: true,
+  formidable: {
+    uploadDir:  os.tmpdir(),
+    multiples:  true,           // Allow multiple files per field
+    keepExtensions: true
+  }
+}));
+
+router.post('/upload-many', async (ctx) =&gt; {
+  const rawFiles = ctx.request.files &amp;&amp; ctx.request.files.files;
+  const files    = Array.isArray(rawFiles) ? rawFiles : [rawFiles].filter(Boolean);
+
+  if (!files.length) {
+    ctx.status = 400;
+    ctx.body   = { error: 'No files provided.' };
+    return;
+  }
+
+  const accepted = [];
+
+  for (const file of files) {
+    const verdict = await scan(file.filepath);
+
+    if (verdict !== Verdict.Clean) {
+      files.forEach(f =&gt; { try { fs.unlinkSync(f.filepath); } catch (_) {} });
+      ctx.status = verdict === Verdict.Malicious ? 400 : 422;
+      ctx.body   = {
+        error: verdict === Verdict.Malicious
+          ? 'Malware detected in ' + file.originalFilename
+          : 'Scan incomplete for ' + file.originalFilename
+      };
+      return;
+    }
+
+    const dest = path.join('/var/app/uploads', file.originalFilename || file.newFilename);
+    fs.renameSync(file.filepath, dest);
+    accepted.push(dest);
+  }
+
+  ctx.body = { status: 'ok', files: accepted };
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

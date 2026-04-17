@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning files before uploading to AWS S3 in Node.js — pompelmi</title>
+<meta name="description" content="How to scan uploaded files for malware with pompelmi before uploading them to AWS S3. Includes a complete Express example with Multer, scan-then-upload flow, and S3 metadata tagging.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#why-local">Why scan locally?</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#flow">The scan-then-upload flow</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#tagging">S3 metadata tagging</a></li>
+      <li><a href="#quarantine">Quarantine bucket</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning files before uploading to AWS S3 in Node.js</h2>
+      <p>
+        Many Node.js applications accept file uploads from users and store them in
+        AWS S3. A common question is: where do you scan for malware — before or after
+        uploading to S3?
+      </p>
+      <p>
+        The answer is <strong>before</strong>. Scan on your server while the file is
+        still in a temporary location on disk. Only upload to S3 if the scan returns
+        <code>Verdict.Clean</code>. This guide shows you exactly how to set that up.
+      </p>
+      <div class="note">
+        If you're new to pompelmi, read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first, then come back here for the S3-specific pattern.
+      </div>
+    </div>
+
+    <div class="section" id="why-local">
+      <h2>Why scan locally, not in S3?</h2>
+      <p>
+        You might wonder about scanning files <em>after</em> they land in S3, using
+        a Lambda trigger or a third-party service. That approach has real problems:
+      </p>
+      <ul>
+        <li>
+          <strong>The file is accessible before it's scanned.</strong> If another
+          Lambda, worker, or user downloads the file between upload and scan, they
+          get an unscanned file. You need a quarantine bucket and complex access
+          controls to avoid this window.
+        </li>
+        <li>
+          <strong>Malicious files touch S3 at all.</strong> Even briefly storing
+          malware in S3 may violate your organization's security policy or compliance
+          requirements (PCI DSS, HIPAA, SOC 2).
+        </li>
+        <li>
+          <strong>More moving parts.</strong> Lambda triggers, EventBridge rules,
+          IAM roles — this is significant infrastructure to maintain. Scanning
+          on the server before upload is simpler.
+        </li>
+      </ul>
+      <p>
+        Scanning on the server with pompelmi means malware never reaches S3 at all.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi @aws-sdk/client-s3 multer express</pre>
+    </div>
+
+    <div class="section" id="flow">
+      <h2>The scan-then-upload flow</h2>
+      <ol>
+        <li>Multer receives the multipart upload and writes it to a local temp file.</li>
+        <li><code>scan(tmpPath)</code> calls ClamAV on the local file.</li>
+        <li>
+          If <code>Verdict.Malicious</code> or <code>Verdict.ScanError</code>:
+          delete the temp file, reject the request. S3 is never touched.
+        </li>
+        <li>
+          If <code>Verdict.Clean</code>: read the temp file and upload it to S3
+          using the AWS SDK.
+        </li>
+        <li>Delete the temp file after the S3 upload completes.</li>
+      </ol>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete Express example</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const crypto = require('crypto');
+const path   = require('path');
+const fs     = require('fs');
+const os     = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 }   // 50 MB limit
+});
+
+const s3 = new S3Client({ region: process.env.AWS_REGION || 'us-east-1' });
+
+const BUCKET = process.env.S3_BUCKET;  // Set via environment variable
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath = req.file.path;
+  let tmpDeleted = false;
+
+  try {
+    // Step 1 — Scan locally before touching S3
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected as precaution.' });
+    }
+
+    // Step 2 — File is clean, upload to S3
+    const ext       = path.extname(req.file.originalname).toLowerCase();
+    const s3Key     = 'uploads/' + crypto.randomBytes(16).toString('hex') + ext;
+    const fileStream = fs.createReadStream(tmpPath);
+
+    await s3.send(new PutObjectCommand({
+      Bucket:      BUCKET,
+      Key:         s3Key,
+      Body:        fileStream,
+      ContentType: req.file.mimetype,
+      // Tag the object to confirm it has been scanned
+      Tagging:     'scan-status=clean&amp;scanned-by=pompelmi'
+    }));
+
+    // Step 3 — Clean up temp file
+    fs.unlinkSync(tmpPath);
+    tmpDeleted = true;
+
+    res.json({
+      status: 'ok',
+      key:    s3Key,
+      url:    `https://${BUCKET}.s3.amazonaws.com/${s3Key}`
+    });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (!tmpDeleted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on :3000'));</pre>
+
+      <div class="tip">
+        Never hardcode AWS credentials. Use environment variables (<code>AWS_ACCESS_KEY_ID</code>,
+        <code>AWS_SECRET_ACCESS_KEY</code>) or, better, attach an IAM role to your EC2
+        instance or ECS task so credentials are provided automatically.
+      </div>
+    </div>
+
+    <div class="section" id="tagging">
+      <h2>S3 object tagging for audit trails</h2>
+      <p>
+        Adding S3 object tags when uploading gives you an audit trail of which files
+        were scanned, when, and by what tool. You can then write S3 bucket policies
+        that deny access to untagged objects — preventing any file that bypassed the
+        scan from being accessed.
+      </p>
+<pre>// Tagging added to PutObjectCommand
+Tagging: 'scan-status=clean&amp;scanned-by=pompelmi&amp;scan-engine=clamav'</pre>
+
+      <p>
+        An S3 bucket policy to deny access to unscanned files:
+      </p>
+<pre>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Deny",
+      "Principal": "*",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::your-bucket/uploads/*",
+      "Condition": {
+        "StringNotEquals": {
+          "s3:ExistingObjectTag/scan-status": "clean"
+        }
+      }
+    }
+  ]
+}</pre>
+
+      <div class="note">
+        S3 tag-based bucket policies provide defence-in-depth: even if a file
+        somehow bypassed scanning and reached S3, the bucket policy would prevent
+        it from being served.
+      </div>
+    </div>
+
+    <div class="section" id="quarantine">
+      <h2>Optional: quarantine bucket for rejected files</h2>
+      <p>
+        In some regulated environments you need to preserve malicious files for
+        forensic analysis rather than deleting them outright. Instead of calling
+        <code>fs.unlinkSync()</code> on rejection, upload the file to a separate,
+        private quarantine bucket.
+      </p>
+<pre>async function quarantineFile(tmpPath, originalName, verdict) {
+  const key = 'quarantine/' + Date.now() + '-' + originalName;
+
+  await s3.send(new PutObjectCommand({
+    Bucket:      process.env.QUARANTINE_BUCKET,
+    Key:         key,
+    Body:        fs.createReadStream(tmpPath),
+    // Mark the object as dangerous
+    Tagging:     'scan-status=' + verdict.description + '&amp;scanned-by=pompelmi',
+    // Block all public access at the object level (bucket policy should also block)
+    ACL:         'private'
+  }));
+
+  fs.unlinkSync(tmpPath);   // Remove from local disk after uploading to quarantine
+  return key;
+}
+
+// In the route handler:
+if (verdict === Verdict.Malicious) {
+  const qKey = await quarantineFile(tmpPath, req.file.originalname, verdict);
+  tmpDeleted = true;
+  console.warn('Malicious file quarantined at:', qKey);
+  return res.status(400).json({ error: 'Malware detected.' });
+}</pre>
+
+      <p>
+        For containerized deployments, see
+        <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>
+        for how to run ClamAV as a sidecar next to your Node.js service.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

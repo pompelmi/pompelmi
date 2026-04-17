@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to scan PDF uploads for malware in Node.js — pompelmi</title>
+<meta name="description" content="PDFs can carry malicious JavaScript, embedded executables, and exploit shellcode. Learn how to scan PDF uploads for malware in Node.js using pompelmi and ClamAV, with practical Express and Multer examples.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why-pdfs">Why PDFs are risky</a></li>
+      <li><a href="#what-clamav-catches">What ClamAV catches</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#basic">Basic scan</a></li>
+      <li><a href="#express">Express endpoint</a></li>
+      <li><a href="#validate-format">Validate PDF format</a></li>
+      <li><a href="#safe-serving">Serving PDFs safely</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why-pdfs">
+      <h2>How to scan PDF uploads for malware in Node.js</h2>
+      <p>
+        PDFs look like boring document files, but the PDF specification supports
+        embedded JavaScript, embedded executables, links that can trigger actions
+        in PDF viewers, and complex font and stream parsing that has historically
+        been a rich source of exploits.
+      </p>
+      <p>
+        If your application accepts PDF uploads — invoices, contracts, CVs,
+        reports — and then serves them to other users or opens them programmatically,
+        you need to scan them. This guide shows how to do that with pompelmi and
+        ClamAV.
+      </p>
+      <div class="note">
+        If you are new to antivirus scanning in Node.js, start with
+        <a href="scan-file-upload-nodejs.html">How to scan file uploads for viruses in Node.js</a>
+        for the fundamentals, then come back here for PDF-specific patterns.
+      </div>
+    </div>
+
+    <div class="section" id="what-clamav-catches">
+      <h2>What ClamAV catches in PDFs</h2>
+      <p>ClamAV includes signatures for PDF-based threats including:</p>
+      <ul>
+        <li>PDFs with embedded JavaScript that calls <code>app.launch()</code> or <code>this.exportDataObject()</code></li>
+        <li>PDFs that embed executable files (EXE, DLL) in their data streams</li>
+        <li>PDFs exploiting known vulnerabilities in Acrobat Reader and Foxit</li>
+        <li>PDFs used as dropper vehicles for ransomware and trojans</li>
+        <li>Polyglot files — files that are valid both as PDFs and as another executable format</li>
+      </ul>
+      <p>
+        pompelmi passes the file directly to <code>clamscan</code>, which handles
+        all of this automatically. You do not need to parse PDF structure yourself.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi multer express</pre>
+      <p>
+        ClamAV must be installed on the host system.
+        See <a href="clamav-install-nodejs-macos-linux-windows.html">How to install ClamAV on macOS, Linux and Windows</a>
+        if you haven't done that yet.
+      </p>
+    </div>
+
+    <div class="section" id="basic">
+      <h2>Scanning a PDF file</h2>
+      <p>
+        The pompelmi API is the same for every file type. Pass the absolute path
+        to <code>scan()</code>:
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+const path = require('path');
+
+async function scanPdf(filePath) {
+  const abs     = path.resolve(filePath);
+  const verdict = await scan(abs);
+
+  switch (verdict) {
+    case Verdict.Clean:
+      return { safe: true };
+
+    case Verdict.Malicious:
+      return { safe: false, reason: 'Malware detected in PDF.' };
+
+    case Verdict.ScanError:
+      // A scan error on a PDF often means a corrupted or truncated file.
+      // Treat as untrusted — do not serve or process it.
+      return { safe: false, reason: 'Scan could not complete.' };
+  }
+}
+
+scanPdf('./uploads/contract.pdf').then(console.log);</pre>
+    </div>
+
+    <div class="section" id="express">
+      <h2>Express endpoint for PDF uploads</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const path = require('path');
+const fs   = require('fs');
+const os   = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 20 * 1024 * 1024 }   // 20 MB limit
+});
+
+app.post('/upload-pdf', upload.single('pdf'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  // Reject non-PDFs based on MIME type (client-supplied, but useful as a quick filter)
+  if (req.file.mimetype !== 'application/pdf') {
+    fs.unlinkSync(req.file.path);
+    return res.status(415).json({ error: 'Only PDF files are accepted.' });
+  }
+
+  const tmpPath = req.file.path;
+  let promoted  = false;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected in PDF. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({
+        error: 'PDF could not be scanned. The file may be corrupted.'
+      });
+    }
+
+    // Clean — move to storage
+    const dest = path.join('/var/app/pdfs', req.file.originalname);
+    fs.renameSync(tmpPath, dest);
+    promoted = true;
+
+    res.json({ status: 'ok', file: req.file.originalname });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (!promoted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="validate-format">
+      <h2>Validating the PDF format before scanning</h2>
+      <p>
+        A file can be named <code>.pdf</code> without actually being a PDF. Validate
+        the file's magic bytes before scanning to catch obvious spoofs early. The PDF
+        format starts with the bytes <code>25 50 44 46</code> (<code>%PDF</code>).
+      </p>
+<pre>const fs = require('fs');
+
+/**
+ * Returns true if the file starts with the PDF magic bytes (%PDF).
+ * This is a fast, synchronous check — not a full format validation.
+ */
+function hasPdfMagicBytes(filePath) {
+  const buf = Buffer.alloc(4);
+  const fd  = fs.openSync(filePath, 'r');
+  fs.readSync(fd, buf, 0, 4, 0);
+  fs.closeSync(fd);
+  return buf.toString('ascii') === '%PDF';
+}
+
+// Use before scanning
+if (!hasPdfMagicBytes(tmpPath)) {
+  fs.unlinkSync(tmpPath);
+  return res.status(415).json({ error: 'File does not appear to be a valid PDF.' });
+}</pre>
+
+      <div class="note">
+        Magic byte validation is fast but not a replacement for ClamAV scanning.
+        A malicious PDF with correct magic bytes will still pass this check —
+        the scan is the security control. Magic byte validation is an early filter
+        to catch obvious mismatches before spending time on a full ClamAV scan.
+      </div>
+    </div>
+
+    <div class="section" id="safe-serving">
+      <h2>Serving scanned PDFs safely</h2>
+      <p>
+        Even a clean PDF should be served with appropriate HTTP headers. A PDF
+        containing JavaScript cannot execute on your server, but it can execute
+        in the user's browser if rendered inline by the PDF viewer plugin.
+      </p>
+<pre>app.get('/pdfs/:filename', (req, res) =&gt; {
+  // Strip path components to prevent directory traversal
+  const safeName = path.basename(req.params.filename);
+  const filePath = path.join('/var/app/pdfs', safeName);
+
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: 'Not found.' });
+  }
+
+  // Force download — do not render inline in the browser
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="${safeName}"`);
+
+  // Prevent the browser from sniffing the content type
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  res.sendFile(filePath);
+});</pre>
+
+      <div class="tip">
+        If you want inline PDF rendering (e.g. a document viewer in your app),
+        serve the PDF from a completely separate subdomain or from object storage
+        (S3, GCS) rather than your main application domain. This isolates any
+        PDF-embedded JavaScript from your application's cookies and origin.
+      </div>
+
+      <p>
+        For more on multi-file upload patterns see
+        <a href="pompelmi-multipart-multer.html">Scanning multipart uploads with pompelmi and Multer</a>.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

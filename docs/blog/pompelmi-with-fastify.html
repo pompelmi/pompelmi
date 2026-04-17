@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integrating pompelmi antivirus scanning in Fastify — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Fastify file upload routes using pompelmi, @fastify/multipart, and a reusable preHandler hook.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#basic">Basic route</a></li>
+      <li><a href="#prehandler">preHandler hook</a></li>
+      <li><a href="#plugin">Fastify plugin</a></li>
+      <li><a href="#schema">Schema validation</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Integrating pompelmi antivirus scanning in Fastify</h2>
+      <p>
+        Fastify's plugin system and lifecycle hooks make it straightforward to add
+        antivirus scanning at the route level or globally. This guide covers three
+        integration patterns: inline scanning in a route handler, a <code>preHandler</code>
+        hook for per-route opt-in, and a full Fastify plugin you can register across
+        your application.
+      </p>
+      <div class="note">
+        This guide uses <code>@fastify/multipart</code> for multipart parsing.
+        Install ClamAV and run <code>freshclam</code> before proceeding.
+        See the <a href="../quickstart.html">Quickstart</a>.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install fastify @fastify/multipart pompelmi</pre>
+    </div>
+
+    <div class="section" id="basic">
+      <h2>Basic upload route</h2>
+      <p>
+        <code>@fastify/multipart</code> streams the file to a temporary path via
+        <code>request.saveRequestFiles()</code>. Scan the saved path with pompelmi
+        before deciding whether to keep or delete the file.
+      </p>
+<pre>const Fastify  = require('fastify');
+const multipart = require('@fastify/multipart');
+const { scan, Verdict } = require('pompelmi');
+const fs   = require('fs');
+const path = require('path');
+const os   = require('os');
+
+const app = Fastify({ logger: true });
+app.register(multipart);
+
+app.post('/upload', async (request, reply) =&gt; {
+  // saveRequestFiles writes parts to os.tmpdir() and returns metadata
+  const files = await request.saveRequestFiles({ tmpdir: os.tmpdir() });
+
+  if (!files.length) {
+    return reply.status(400).send({ error: 'No file provided.' });
+  }
+
+  const file    = files[0];
+  const tmpPath = file.filepath;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(400).send({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(422).send({ error: 'Scan incomplete. Rejected as precaution.' });
+    }
+
+    const dest = path.join('/var/app/uploads', file.filename);
+    fs.renameSync(tmpPath, dest);
+    return reply.send({ status: 'ok', file: file.filename });
+
+  } catch (err) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    return reply.status(500).send({ error: err.message });
+  }
+});
+
+app.listen({ port: 3000 });</pre>
+    </div>
+
+    <div class="section" id="prehandler">
+      <h2>Reusable preHandler hook</h2>
+      <p>
+        Fastify lifecycle hooks are the idiomatic place for cross-cutting concerns.
+        A <code>preHandler</code> hook that scans the upload before the route handler
+        runs keeps your route handlers clean.
+      </p>
+<pre>// hooks/scanFileHook.js
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+/**
+ * Fastify preHandler hook.
+ * Saves the multipart upload, scans it, attaches metadata to request.uploadedFile,
+ * and rejects the request if the verdict is not Clean.
+ */
+async function scanFileHook(request, reply) {
+  const files = await request.saveRequestFiles({ tmpdir: os.tmpdir() });
+
+  if (!files.length) {
+    return reply.status(400).send({ error: 'No file provided.' });
+  }
+
+  const file    = files[0];
+  const tmpPath = file.filepath;
+
+  let verdict;
+  try {
+    verdict = await scan(tmpPath);
+  } catch (err) {
+    fs.unlinkSync(tmpPath);
+    return reply.status(500).send({ error: 'Scan failed: ' + err.message });
+  }
+
+  if (verdict === Verdict.Malicious) {
+    fs.unlinkSync(tmpPath);
+    return reply.status(400).send({ error: 'Malware detected.' });
+  }
+
+  if (verdict === Verdict.ScanError) {
+    fs.unlinkSync(tmpPath);
+    return reply.status(422).send({ error: 'Scan incomplete.' });
+  }
+
+  // Attach to request for the route handler
+  request.uploadedFile = file;
+}
+
+module.exports = { scanFileHook };</pre>
+
+      <p>Register the hook on individual routes:</p>
+<pre>const { scanFileHook } = require('./hooks/scanFileHook');
+
+app.post(
+  '/documents',
+  { preHandler: scanFileHook },
+  async (request, reply) =&gt; {
+    const { filepath, filename } = request.uploadedFile;
+    const dest = path.join('/var/app/documents', filename);
+    fs.renameSync(filepath, dest);
+    return reply.send({ status: 'ok', file: filename });
+  }
+);</pre>
+    </div>
+
+    <div class="section" id="plugin">
+      <h2>Fastify plugin</h2>
+      <p>
+        For application-wide use, wrap the hook in a Fastify plugin. This lets you
+        register it once and apply it selectively via route options.
+      </p>
+<pre>// plugins/pompelmi.js
+const fp = require('fastify-plugin');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+async function pompelmiPlugin(fastify, options) {
+  const tmpdir = options.tmpdir || os.tmpdir();
+
+  fastify.decorate('scanUpload', async function (request, reply) {
+    const files = await request.saveRequestFiles({ tmpdir });
+
+    if (!files.length) {
+      return reply.status(400).send({ error: 'No file provided.' });
+    }
+
+    const file    = files[0];
+    const tmpPath = file.filepath;
+
+    let verdict;
+    try {
+      verdict = await scan(tmpPath);
+    } catch (err) {
+      fs.unlinkSync(tmpPath);
+      throw err;
+    }
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(400).send({ error: 'Malware detected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(422).send({ error: 'Scan incomplete.' });
+    }
+
+    request.uploadedFile = file;
+  });
+}
+
+module.exports = fp(pompelmiPlugin, { name: 'pompelmi-scan' });</pre>
+
+      <p>Register and use:</p>
+<pre>app.register(require('./plugins/pompelmi'));
+
+app.post(
+  '/upload',
+  { preHandler: (req, reply) =&gt; app.scanUpload(req, reply) },
+  async (request, reply) =&gt; {
+    const { filepath, filename } = request.uploadedFile;
+    const dest = path.join('/var/app/uploads', filename);
+    fs.renameSync(filepath, dest);
+    return reply.send({ status: 'ok', file: filename });
+  }
+);</pre>
+    </div>
+
+    <div class="section" id="schema">
+      <h2>Combining with JSON Schema validation</h2>
+      <p>
+        Fastify validates request bodies against JSON Schema before route handlers run.
+        For multipart uploads the schema only applies to non-file fields. Attach it via
+        the route options to validate form metadata alongside the scan.
+      </p>
+<pre>app.post(
+  '/upload',
+  {
+    preHandler: scanFileHook,
+    schema: {
+      response: {
+        200: {
+          type: 'object',
+          properties: {
+            status: { type: 'string' },
+            file:   { type: 'string' }
+          }
+        }
+      }
+    }
+  },
+  async (request, reply) =&gt; {
+    const { filepath, filename } = request.uploadedFile;
+    const dest = path.join('/var/app/uploads', filename);
+    fs.renameSync(filepath, dest);
+    return { status: 'ok', file: filename };
+  }
+);</pre>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+<pre>import Fastify, { FastifyRequest, FastifyReply } from 'fastify';
+import multipart from '@fastify/multipart';
+import { scan, Verdict } from 'pompelmi';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
+const app = Fastify({ logger: true });
+app.register(multipart);
+
+app.post('/upload', async (request: FastifyRequest, reply: FastifyReply) =&gt; {
+  const files = await request.saveRequestFiles({ tmpdir: os.tmpdir() });
+
+  if (!files.length) {
+    return reply.status(400).send({ error: 'No file provided.' });
+  }
+
+  const file    = files[0];
+  const tmpPath = file.filepath;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(400).send({ error: 'Malware detected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return reply.status(422).send({ error: 'Scan incomplete.' });
+    }
+
+    const dest = path.join('/var/app/uploads', file.filename);
+    fs.renameSync(tmpPath, dest);
+    return reply.send({ status: 'ok', file: file.filename });
+
+  } catch (err: unknown) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    const message = err instanceof Error ? err.message : String(err);
+    return reply.status(500).send({ error: message });
+  }
+});
+
+app.listen({ port: 3000 });</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

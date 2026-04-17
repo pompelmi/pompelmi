@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>File upload antivirus scanning with pompelmi and Hapi.js — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Hapi.js file upload routes using pompelmi, with route lifecycle hooks and a reusable Hapi plugin pattern.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#multipart">Multipart config</a></li>
+      <li><a href="#basic">Basic route</a></li>
+      <li><a href="#extension">Route extension</a></li>
+      <li><a href="#plugin">Hapi plugin</a></li>
+      <li><a href="#validation">Payload validation</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>File upload antivirus scanning with pompelmi and Hapi.js</h2>
+      <p>
+        Hapi.js has first-class support for multipart file uploads through its
+        <code>payload.output</code> option. Unlike Multer-based frameworks, Hapi can
+        write uploads directly to disk and expose the file path, making it a natural
+        fit for pompelmi's file-path-based scanning API.
+      </p>
+      <div class="note">
+        This guide uses Hapi v21 with Node.js 18+.
+        ClamAV must be installed and definitions must be up to date.
+        See the <a href="../quickstart.html">Quickstart</a>.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install @hapi/hapi pompelmi</pre>
+    </div>
+
+    <div class="section" id="multipart">
+      <h2>Multipart payload configuration</h2>
+      <p>
+        Set <code>payload.output: 'file'</code> on the route to instruct Hapi to
+        write the upload to a temporary file and expose its path in
+        <code>request.payload</code>. Without this, Hapi buffers the upload in memory.
+      </p>
+<pre>// Route-level payload config
+{
+  payload: {
+    output: 'file',     // Write to a temp file, not a Buffer
+    parse: true,        // Auto-parse multipart
+    multipart: true,
+    maxBytes: 50 * 1024 * 1024,   // 50 MB limit
+    uploads: '/tmp/hapi-uploads'   // Temp directory
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="basic">
+      <h2>Basic upload route</h2>
+<pre>'use strict';
+
+const Hapi   = require('@hapi/hapi');
+const { scan, Verdict } = require('pompelmi');
+const fs   = require('fs');
+const path = require('path');
+
+async function init() {
+  const server = Hapi.server({ port: 3000 });
+
+  server.route({
+    method:  'POST',
+    path:    '/upload',
+    options: {
+      payload: {
+        output:    'file',
+        parse:     true,
+        multipart: true,
+        maxBytes:  50 * 1024 * 1024,
+        uploads:   '/tmp/hapi-uploads'
+      }
+    },
+    handler: async (request, h) =&gt; {
+      const upload = request.payload.file;
+
+      if (!upload) {
+        return h.response({ error: 'No file provided.' }).code(400);
+      }
+
+      const tmpPath = upload.path; // Absolute path Hapi wrote the file to
+
+      try {
+        const verdict = await scan(tmpPath);
+
+        if (verdict === Verdict.Malicious) {
+          fs.unlinkSync(tmpPath);
+          return h.response({ error: 'Malware detected. Upload rejected.' }).code(400);
+        }
+
+        if (verdict === Verdict.ScanError) {
+          fs.unlinkSync(tmpPath);
+          return h.response({ error: 'Scan incomplete. Rejected as precaution.' }).code(422);
+        }
+
+        const dest = path.join('/var/app/uploads', upload.filename);
+        fs.renameSync(tmpPath, dest);
+        return { status: 'ok', file: upload.filename };
+
+      } catch (err) {
+        if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+        return h.response({ error: err.message }).code(500);
+      }
+    }
+  });
+
+  await server.start();
+  console.log('Server running on', server.info.uri);
+}
+
+init();</pre>
+    </div>
+
+    <div class="section" id="extension">
+      <h2>Request lifecycle extension</h2>
+      <p>
+        Hapi's <code>server.ext()</code> allows you to hook into the request lifecycle.
+        The <code>onPreHandler</code> extension point runs after the payload is parsed
+        and before the route handler — exactly the right place for antivirus scanning.
+      </p>
+<pre>server.ext('onPreHandler', async (request, h) =&gt; {
+  // Only intercept routes that have a file payload
+  const upload = request.payload &amp;&amp; request.payload.file;
+  if (!upload || !upload.path) return h.continue;
+
+  const tmpPath = upload.path;
+
+  let verdict;
+  try {
+    verdict = await scan(tmpPath);
+  } catch (err) {
+    fs.unlinkSync(tmpPath);
+    return h.response({ error: 'Scan failed: ' + err.message }).code(500).takeover();
+  }
+
+  if (verdict === Verdict.Malicious) {
+    fs.unlinkSync(tmpPath);
+    return h.response({ error: 'Malware detected.' }).code(400).takeover();
+  }
+
+  if (verdict === Verdict.ScanError) {
+    fs.unlinkSync(tmpPath);
+    return h.response({ error: 'Scan incomplete.' }).code(422).takeover();
+  }
+
+  return h.continue;
+});</pre>
+
+      <div class="note">
+        <code>.takeover()</code> is required when you want the response from the
+        extension to be sent directly, bypassing the route handler.
+      </div>
+    </div>
+
+    <div class="section" id="plugin">
+      <h2>Reusable Hapi plugin</h2>
+      <p>
+        Package the extension into a Hapi plugin for easy reuse across applications.
+      </p>
+<pre>// plugins/pompelmiScan.js
+'use strict';
+
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+
+const pompelmiScanPlugin = {
+  name: 'pompelmi-scan',
+  version: '1.0.0',
+  async register(server, options) {
+    const rejectScanError = options.rejectScanError !== false; // default: true
+
+    server.ext('onPreHandler', async (request, h) =&gt; {
+      const upload = request.payload &amp;&amp; request.payload.file;
+      if (!upload || !upload.path) return h.continue;
+
+      let verdict;
+      try {
+        verdict = await scan(upload.path);
+      } catch (err) {
+        fs.unlinkSync(upload.path);
+        return h.response({ error: 'Scan failed: ' + err.message }).code(500).takeover();
+      }
+
+      if (verdict === Verdict.Malicious) {
+        fs.unlinkSync(upload.path);
+        return h.response({ error: 'Malware detected.' }).code(400).takeover();
+      }
+
+      if (verdict === Verdict.ScanError &amp;&amp; rejectScanError) {
+        fs.unlinkSync(upload.path);
+        return h.response({ error: 'Scan incomplete.' }).code(422).takeover();
+      }
+
+      return h.continue;
+    });
+  }
+};
+
+module.exports = pompelmiScanPlugin;</pre>
+
+      <p>Register it when building the server:</p>
+<pre>await server.register({
+  plugin: require('./plugins/pompelmiScan'),
+  options: { rejectScanError: true }
+});</pre>
+    </div>
+
+    <div class="section" id="validation">
+      <h2>Combining with Joi payload validation</h2>
+      <p>
+        Hapi's built-in Joi integration validates the payload schema before the
+        route handler. Use it to enforce file type and size constraints before the
+        scan runs.
+      </p>
+<pre>const Joi = require('joi');
+
+server.route({
+  method:  'POST',
+  path:    '/upload',
+  options: {
+    payload: {
+      output:    'file',
+      parse:     true,
+      multipart: true,
+      maxBytes:  10 * 1024 * 1024   // 10 MB max
+    },
+    validate: {
+      payload: Joi.object({
+        file: Joi.any().required()
+      })
+    }
+  },
+  handler: async (request, h) =&gt; {
+    // Scan already ran in the onPreHandler extension
+    const upload = request.payload.file;
+    const dest   = path.join('/var/app/uploads', upload.filename);
+    fs.renameSync(upload.path, dest);
+    return { status: 'ok', file: upload.filename };
+  }
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

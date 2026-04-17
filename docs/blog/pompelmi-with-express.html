@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning file uploads with pompelmi in Express.js — pompelmi</title>
+<meta name="description" content="A step-by-step guide to integrating pompelmi antivirus scanning into an Express.js file upload endpoint using Multer, with full error handling and clean-up logic.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#basic">Basic upload route</a></li>
+      <li><a href="#cleanup">File clean-up</a></li>
+      <li><a href="#multiple">Multiple files</a></li>
+      <li><a href="#middleware">Reusable middleware</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning file uploads with pompelmi in Express.js</h2>
+      <p>
+        Express.js is the most widely deployed Node.js web framework. This guide shows how to
+        add antivirus scanning to any file upload route using
+        <a href="https://github.com/expressjs/multer">Multer</a> for multipart handling and
+        pompelmi for ClamAV-backed scanning.
+      </p>
+      <p>
+        pompelmi scans files already written to disk and returns a typed
+        <code>Verdict</code> Symbol. The integration pattern is therefore
+        straightforward: let Multer save the file, scan it, then either promote it to
+        permanent storage or delete it and reject the request.
+      </p>
+      <div class="note">
+        This guide assumes ClamAV is installed and <code>freshclam</code> has been run.
+        See the <a href="../quickstart.html">Quickstart</a> if you need those steps.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install express multer pompelmi</pre>
+      <p>pompelmi has zero runtime dependencies. Multer is the only additional package needed.</p>
+    </div>
+
+    <div class="section" id="basic">
+      <h2>Basic upload route</h2>
+      <p>
+        Configure Multer to write uploads to a temporary directory, then scan before
+        moving the file to permanent storage.
+      </p>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const path = require('path');
+const fs   = require('fs');
+
+const app = express();
+
+// Multer writes the raw upload to /tmp/uploads before the route handler runs
+const upload = multer({ dest: '/tmp/uploads/' });
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath  = req.file.path;
+  const destPath = path.join('/var/app/uploads', req.file.originalname);
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return res.status(422).json({ error: 'Scan could not complete. Upload rejected as a precaution.' });
+    }
+
+    // Verdict.Clean — move to permanent storage
+    fs.renameSync(tmpPath, destPath);
+    res.json({ status: 'ok', file: req.file.originalname });
+
+  } catch (err) {
+    // clamscan binary missing, file not found, or other OS error
+    fs.unlinkSync(tmpPath);
+    res.status(500).json({ error: 'Scan failed: ' + err.message });
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on :3000'));</pre>
+
+      <p>
+        Multer gives you <code>req.file.path</code> — the absolute path on disk where
+        the upload was buffered. Pass that path directly to <code>scan()</code>. No
+        stream wrangling required.
+      </p>
+
+      <div class="tip">
+        Use <code>multer({ dest: os.tmpdir() })</code> to write to the OS temporary
+        directory rather than a hard-coded path. This works correctly across macOS,
+        Linux, and Windows.
+      </div>
+    </div>
+
+    <div class="section" id="cleanup">
+      <h2>Reliable file clean-up</h2>
+      <p>
+        The pattern above deletes the temp file in every error branch but duplicates
+        the clean-up logic. A <code>finally</code> block avoids leaving orphaned files
+        if an unexpected code path is hit.
+      </p>
+<pre>app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath = req.file.path;
+  let promoted  = false;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Rejected as precaution.' });
+    }
+
+    const dest = path.join('/var/app/uploads', req.file.originalname);
+    fs.renameSync(tmpPath, dest);
+    promoted = true;
+    res.json({ status: 'ok', file: req.file.originalname });
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  } finally {
+    if (!promoted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="multiple">
+      <h2>Scanning multiple files</h2>
+      <p>
+        Use <code>upload.array('files', 10)</code> to accept up to 10 files per request.
+        Scan them in sequence to avoid spawning many <code>clamscan</code> processes
+        simultaneously (each process loads the full ClamAV database into memory).
+      </p>
+<pre>app.post('/upload-many', upload.array('files', 10), async (req, res) =&gt; {
+  if (!req.files || req.files.length === 0) {
+    return res.status(400).json({ error: 'No files provided.' });
+  }
+
+  const results = [];
+
+  for (const file of req.files) {
+    let verdict;
+    try {
+      verdict = await scan(file.path);
+    } catch (err) {
+      fs.unlinkSync(file.path);
+      return res.status(500).json({ error: 'Scan error on ' + file.originalname + ': ' + err.message });
+    }
+
+    if (verdict === Verdict.Malicious) {
+      // Delete the malicious file and all already-processed temp files
+      req.files.forEach(f =&gt; { try { fs.unlinkSync(f.path); } catch (_) {} });
+      return res.status(400).json({ error: 'Malware detected in ' + file.originalname });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(file.path);
+      return res.status(422).json({ error: 'Scan incomplete for ' + file.originalname });
+    }
+
+    const dest = path.join('/var/app/uploads', file.originalname);
+    fs.renameSync(file.path, dest);
+    results.push(file.originalname);
+  }
+
+  res.json({ status: 'ok', files: results });
+});</pre>
+    </div>
+
+    <div class="section" id="middleware">
+      <h2>Reusable scan middleware</h2>
+      <p>
+        When multiple routes accept uploads, extract the scan logic into a reusable
+        Express middleware. The middleware adds <code>req.scanVerdict</code> for the
+        next handler to inspect, and handles cleanup on rejection.
+      </p>
+<pre>// middleware/scanUpload.js
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+
+/**
+ * Express middleware that scans req.file (single upload) with pompelmi.
+ * Adds req.scanVerdict on success.
+ * Sends 400/422/500 and deletes the temp file on failure.
+ */
+async function scanUpload(req, res, next) {
+  if (!req.file) return next();
+
+  try {
+    const verdict = await scan(req.file.path);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(req.file.path);
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected as precaution.' });
+    }
+
+    req.scanVerdict = verdict; // Verdict.Clean
+    next();
+
+  } catch (err) {
+    if (req.file &amp;&amp; fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
+    next(err);
+  }
+}
+
+module.exports = { scanUpload };</pre>
+
+      <p>Apply it after the Multer middleware on any route:</p>
+<pre>const { scanUpload } = require('./middleware/scanUpload');
+
+app.post('/documents', upload.single('doc'), scanUpload, (req, res) =&gt; {
+  const dest = path.join('/var/app/documents', req.file.originalname);
+  fs.renameSync(req.file.path, dest);
+  res.json({ status: 'ok', file: req.file.originalname });
+});
+
+app.post('/images', upload.single('image'), scanUpload, (req, res) =&gt; {
+  const dest = path.join('/var/app/images', req.file.originalname);
+  fs.renameSync(req.file.path, dest);
+  res.json({ status: 'ok', file: req.file.originalname });
+});</pre>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+      <p>pompelmi ships type declarations. Import using ES module syntax:</p>
+<pre>import express, { Request, Response } from 'express';
+import multer from 'multer';
+import { scan, Verdict } from 'pompelmi';
+import path from 'path';
+import fs from 'fs';
+
+const app = express();
+const upload = multer({ dest: '/tmp/uploads/' });
+
+app.post('/upload', upload.single('file'), async (req: Request, res: Response): Promise&lt;void&gt; =&gt; {
+  if (!req.file) {
+    res.status(400).json({ error: 'No file provided.' });
+    return;
+  }
+
+  const tmpPath = req.file.path;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      res.status(400).json({ error: 'Malware detected.' });
+      return;
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      res.status(422).json({ error: 'Scan incomplete.' });
+      return;
+    }
+
+    const dest = path.join('/var/app/uploads', req.file.originalname);
+    fs.renameSync(tmpPath, dest);
+    res.json({ status: 'ok', file: req.file.originalname });
+
+  } catch (err: unknown) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    const message = err instanceof Error ? err.message : String(err);
+    res.status(500).json({ error: message });
+  }
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Running pompelmi with ClamAV in Docker Compose — pompelmi</title>
+<meta name="description" content="A complete guide to running pompelmi and ClamAV together in Docker Compose, with a sidecar clamd container, TCP scanning, shared volumes, and production-ready compose files.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#approaches">Two approaches</a></li>
+      <li><a href="#clamscan-mode">clamscan mode</a></li>
+      <li><a href="#tcp-mode">TCP / clamd mode</a></li>
+      <li><a href="#compose-file">docker-compose.yml</a></li>
+      <li><a href="#healthcheck">Healthcheck</a></li>
+      <li><a href="#definitions">Virus definitions</a></li>
+      <li><a href="#production">Production tips</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Running pompelmi with ClamAV in Docker Compose</h2>
+      <p>
+        Containerizing your Node.js application alongside ClamAV requires a deliberate
+        architecture choice. pompelmi supports two scanning modes: invoking the
+        <code>clamscan</code> binary directly inside the same container, or connecting
+        to a remote <code>clamd</code> daemon over TCP. This guide covers both and
+        provides production-ready Docker Compose files for each.
+      </p>
+    </div>
+
+    <div class="section" id="approaches">
+      <h2>Two approaches</h2>
+      <table>
+        <tr>
+          <th>Approach</th>
+          <th>How it works</th>
+          <th>Best for</th>
+        </tr>
+        <tr>
+          <td><strong>clamscan inside app container</strong></td>
+          <td>ClamAV is installed in the same Docker image as your Node.js app. pompelmi calls <code>clamscan</code> as a subprocess.</td>
+          <td>Simple deployments. Smaller compose file. Virus definitions are local.</td>
+        </tr>
+        <tr>
+          <td><strong>clamd sidecar over TCP</strong></td>
+          <td>A separate <code>clamav/clamav</code> sidecar container runs <code>clamd</code>. pompelmi connects to it over TCP using the <code>host</code>/<code>port</code> option.</td>
+          <td>Production and Kubernetes. Shared definitions. Faster scans (no per-process startup). Scales independently.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="clamscan-mode">
+      <h2>Option 1 — clamscan inside the app container</h2>
+      <p>
+        Install ClamAV in your Dockerfile alongside Node.js. The virus definitions
+        are baked into the image or mounted as a volume.
+      </p>
+<pre># Dockerfile
+FROM node:20-slim
+
+# Install ClamAV (no daemon needed — clamscan only)
+RUN apt-get update \
+ &amp;&amp; apt-get install -y --no-install-recommends clamav \
+ &amp;&amp; rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --omit=dev
+COPY . .
+
+# Download virus definitions at build time
+# (definitions are large; consider a volume mount instead for production)
+RUN freshclam --no-warnings || true
+
+EXPOSE 3000
+CMD ["node", "server.js"]</pre>
+
+      <div class="warn">
+        Baking <code>freshclam</code> into the image means definitions are frozen at
+        build time. In production, mount a persistent volume and refresh definitions
+        separately (see the <em>Virus definitions</em> section below).
+      </div>
+
+      <p>pompelmi usage is unchanged — no configuration needed:</p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const verdict = await scan('/tmp/upload.pdf');
+// Uses clamscan in PATH automatically</pre>
+    </div>
+
+    <div class="section" id="tcp-mode">
+      <h2>Option 2 — clamd sidecar over TCP</h2>
+      <p>
+        pompelmi's <code>scan()</code> accepts a <code>host</code> and <code>port</code>
+        option to connect to a remote <code>clamd</code> daemon instead of running
+        <code>clamscan</code> locally.
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const verdict = await scan('/tmp/upload.pdf', {
+  host: process.env.CLAMD_HOST || 'clamav',   // Docker service name
+  port: parseInt(process.env.CLAMD_PORT) || 3310
+});</pre>
+
+      <div class="note">
+        In TCP mode the file must be accessible from the clamd container. Use a shared
+        Docker volume for the upload temporary directory so both containers can read it.
+      </div>
+    </div>
+
+    <div class="section" id="compose-file">
+      <h2>docker-compose.yml</h2>
+      <p>Complete compose file for the clamd sidecar approach:</p>
+<pre>version: '3.9'
+
+services:
+
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    environment:
+      - CLAMD_HOST=clamav
+      - CLAMD_PORT=3310
+      - UPLOAD_TMP=/tmp/shared-uploads
+    volumes:
+      - upload-tmp:/tmp/shared-uploads   # Shared with clamav service
+    depends_on:
+      clamav:
+        condition: service_healthy
+
+  clamav:
+    image: clamav/clamav:stable
+    environment:
+      - CLAMD_CONF_MaxFileSize=100M
+      - CLAMD_CONF_StreamMaxLength=100M
+    volumes:
+      - clamav-db:/var/lib/clamav         # Persist virus definitions
+      - upload-tmp:/tmp/shared-uploads    # Shared with app service
+    ports:
+      - '3310:3310'   # Expose only if debugging; remove in production
+    healthcheck:
+      test: ['CMD', '/usr/local/bin/clamdcheck.sh']
+      interval: 60s
+      retries: 3
+      start_period: 120s   # Allow time for freshclam on first boot
+
+volumes:
+  clamav-db:
+  upload-tmp:</pre>
+
+      <p>
+        On first boot the <code>clamav/clamav</code> image runs <code>freshclam</code>
+        automatically before starting <code>clamd</code>. The <code>clamav-db</code>
+        volume persists definitions across container restarts.
+      </p>
+    </div>
+
+    <div class="section" id="healthcheck">
+      <h2>Waiting for clamd to be ready</h2>
+      <p>
+        <code>clamd</code> takes 30–120 seconds to load the full virus database on
+        first boot. Your Node.js app should not start accepting uploads until clamd
+        is healthy. The <code>depends_on.condition: service_healthy</code> in the
+        compose file above handles this, but you also need a runtime guard.
+      </p>
+<pre>// startup.js — wait for clamd before accepting traffic
+const net = require('net');
+
+function waitForClamd(host, port, retries = 30, delayMs = 5000) {
+  return new Promise((resolve, reject) =&gt; {
+    function attempt(n) {
+      const socket = net.createConnection({ host, port }, () =&gt; {
+        socket.destroy();
+        resolve();
+      });
+      socket.on('error', () =&gt; {
+        if (n &lt;= 0) return reject(new Error('clamd not available after retries'));
+        console.log(`Waiting for clamd at ${host}:${port} (${n} attempts left)...`);
+        setTimeout(() =&gt; attempt(n - 1), delayMs);
+      });
+    }
+    attempt(retries);
+  });
+}
+
+async function main() {
+  const host = process.env.CLAMD_HOST || 'clamav';
+  const port = parseInt(process.env.CLAMD_PORT) || 3310;
+
+  console.log('Checking clamd availability...');
+  await waitForClamd(host, port);
+  console.log('clamd is ready. Starting application...');
+
+  require('./server'); // Start the actual application
+}
+
+main().catch(err =&gt; { console.error(err.message); process.exit(1); });</pre>
+    </div>
+
+    <div class="section" id="definitions">
+      <h2>Keeping virus definitions current</h2>
+      <p>
+        Stale definitions significantly reduce detection quality. In production, run
+        <code>freshclam</code> on a schedule inside the <code>clamav</code> container.
+        The official <code>clamav/clamav</code> image runs freshclam automatically,
+        but you can also add a cron container for more control.
+      </p>
+<pre>  # Add to docker-compose.yml services section
+  freshclam:
+    image: clamav/clamav:stable
+    command: ['freshclam', '--daemon', '--checks=24', '--foreground=yes']
+    volumes:
+      - clamav-db:/var/lib/clamav
+    depends_on:
+      - clamav</pre>
+    </div>
+
+    <div class="section" id="production">
+      <h2>Production tips</h2>
+      <ul>
+        <li>
+          Remove <code>ports: - '3310:3310'</code> from the <code>clamav</code> service
+          in production. clamd should only be reachable on the internal Docker network.
+        </li>
+        <li>
+          Set <code>CLAMD_CONF_MaxFileSize</code> and <code>CLAMD_CONF_StreamMaxLength</code>
+          to match your application's upload size limits. Files larger than these values
+          will return a scan error, not a clean verdict.
+        </li>
+        <li>
+          The <code>upload-tmp</code> shared volume is transient by default. In a
+          multi-replica setup, all replicas of <code>app</code> must write to the same
+          volume, and clamd must be able to read from it. Consider a network filesystem
+          (NFS, EFS) or a streaming INSTREAM mode if you need horizontal scaling.
+        </li>
+        <li>
+          Monitor <code>clamd</code>'s memory usage. Loading the full virus database
+          consumes roughly 1 GB of RAM. Allocate accordingly in your container resource
+          limits.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

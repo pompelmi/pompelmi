@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting started with antivirus scanning in Node.js (5 minutes) — pompelmi</title>
+<meta name="description" content="Install ClamAV, install pompelmi, and scan your first file in under 5 minutes. A beginner-friendly quickstart for adding antivirus scanning to any Node.js project.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#what-is-clamav">What is ClamAV?</a></li>
+      <li><a href="#step1">Step 1 — Install ClamAV</a></li>
+      <li><a href="#step2">Step 2 — Install pompelmi</a></li>
+      <li><a href="#step3">Step 3 — Scan a file</a></li>
+      <li><a href="#step4">Step 4 — Test with EICAR</a></li>
+      <li><a href="#whats-next">What's next?</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="what-is-clamav">
+      <h2>Getting started with antivirus scanning in Node.js (5 minutes)</h2>
+      <p>
+        You've built a Node.js app that accepts file uploads. Great. Now how do you
+        make sure those files don't contain viruses?
+      </p>
+      <p>
+        The answer is <strong>ClamAV</strong> — a free, open-source antivirus engine
+        that has been around since 2001, is maintained by Cisco, and is used by
+        thousands of applications worldwide. It runs entirely on your own machine.
+        No subscription, no API key, no files leaving your server.
+      </p>
+      <p>
+        <strong>pompelmi</strong> is a tiny Node.js package that calls ClamAV for you
+        and gives back a clean result you can act on in JavaScript. Let's set it up.
+      </p>
+    </div>
+
+    <div class="section" id="step1">
+      <h2>Step 1 — Install ClamAV</h2>
+      <p>
+        ClamAV is a system-level tool. Install it with your operating system's package
+        manager, not via npm.
+      </p>
+
+      <span class="platform-label">macOS — Homebrew</span>
+<pre>brew install clamav</pre>
+
+      <span class="platform-label">Linux — Debian / Ubuntu</span>
+<pre>sudo apt-get update &amp;&amp; sudo apt-get install -y clamav</pre>
+
+      <span class="platform-label">Linux — RHEL / Fedora / CentOS</span>
+<pre>sudo dnf install -y clamav clamav-update</pre>
+
+      <span class="platform-label">Windows — Chocolatey</span>
+<pre>choco install clamav -y</pre>
+
+      <p>Verify the installation worked:</p>
+<pre>clamscan --version
+# ClamAV 1.x.x/...</pre>
+
+      <p>
+        Now download the virus database. ClamAV ships without definitions —
+        you need to fetch them before any scan can work:
+      </p>
+
+      <span class="platform-label">macOS and Windows</span>
+<pre>freshclam</pre>
+
+      <span class="platform-label">Linux</span>
+<pre>sudo freshclam</pre>
+
+      <div class="note">
+        The first <code>freshclam</code> download takes a few minutes — the database
+        is several hundred megabytes. Subsequent runs are incremental and fast.
+        For detailed platform-specific instructions see
+        <a href="clamav-install-nodejs-macos-linux-windows.html">How to install ClamAV for Node.js on macOS, Linux and Windows</a>.
+      </div>
+    </div>
+
+    <div class="section" id="step2">
+      <h2>Step 2 — Install pompelmi</h2>
+      <p>In your Node.js project directory:</p>
+<pre>npm install pompelmi</pre>
+      <p>
+        pompelmi has <strong>zero runtime dependencies</strong>. It uses Node's
+        built-in <code>child_process</code> module to call <code>clamscan</code>
+        and nothing else. No transitive packages to audit or update.
+      </p>
+    </div>
+
+    <div class="section" id="step3">
+      <h2>Step 3 — Scan your first file</h2>
+      <p>Create a file called <code>scan.js</code>:</p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+async function main() {
+  // Pass any file path you want to scan
+  const filePath = process.argv[2];
+
+  if (!filePath) {
+    console.error('Usage: node scan.js &lt;file&gt;');
+    process.exit(1);
+  }
+
+  console.log('Scanning:', filePath);
+
+  const verdict = await scan(filePath);
+
+  if (verdict === Verdict.Clean) {
+    console.log('Result: Clean — no threats found.');
+  } else if (verdict === Verdict.Malicious) {
+    console.log('Result: Malicious — malware detected!');
+    process.exit(1);
+  } else if (verdict === Verdict.ScanError) {
+    console.log('Result: ScanError — could not complete scan.');
+    process.exit(2);
+  }
+}
+
+main().catch(err =&gt; {
+  console.error('Error:', err.message);
+  process.exit(3);
+});</pre>
+
+      <p>Run it against any file:</p>
+<pre>node scan.js /etc/hosts
+# Scanning: /etc/hosts
+# Result: Clean — no threats found.</pre>
+
+      <p>
+        That's it. Three verdicts, one function, zero configuration.
+      </p>
+    </div>
+
+    <div class="section" id="step4">
+      <h2>Step 4 — Test malware detection with EICAR</h2>
+      <p>
+        How do you test that the malicious path actually works without using real malware?
+        The <strong>EICAR test file</strong> is a harmless string that every antivirus
+        engine is required to detect as "malicious" for exactly this purpose. It was
+        invented in 1991 and contains no actual malicious code.
+      </p>
+<pre># Create the EICAR test file
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' \
+  &gt; /tmp/eicar.txt
+
+# Scan it
+node scan.js /tmp/eicar.txt
+# Scanning: /tmp/eicar.txt
+# Result: Malicious — malware detected!</pre>
+
+      <div class="tip">
+        If you see "Result: Malicious" on the EICAR file, your setup is working correctly.
+        If you see "Clean", run <code>freshclam</code> again — the virus database may
+        not have downloaded properly.
+      </div>
+    </div>
+
+    <div class="section" id="whats-next">
+      <h2>What's next?</h2>
+      <p>
+        You now have a working scanner. The next step is wiring it into your web
+        framework so uploads are scanned automatically.
+      </p>
+      <ul>
+        <li>
+          <a href="scan-file-upload-nodejs.html">How to scan file uploads for viruses in Node.js</a>
+          — explains the full upload-scan-store pattern with a complete Express example.
+        </li>
+        <li>
+          <a href="pompelmi-with-express.html">Scanning file uploads with pompelmi in Express.js</a>
+          — in-depth guide with reusable middleware, multi-file scanning, and TypeScript.
+        </li>
+        <li>
+          <a href="pompelmi-with-nestjs.html">How to use pompelmi in a NestJS application</a>
+          — NestJS interceptor pattern with dependency injection and unit tests.
+        </li>
+        <li>
+          <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>
+          — containerize your scanner with a clamd sidecar for production deployments.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

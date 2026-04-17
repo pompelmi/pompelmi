@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js file upload security checklist (with virus scanning) — pompelmi</title>
+<meta name="description" content="A practical Node.js file upload security checklist covering MIME validation, path traversal prevention, size limits, antivirus scanning with pompelmi, storage isolation, and safe serving headers.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#checklist">The checklist</a></li>
+      <li><a href="#size-limits">1. Size limits</a></li>
+      <li><a href="#mime">2. MIME validation</a></li>
+      <li><a href="#filename">3. Safe filenames</a></li>
+      <li><a href="#virus-scan">4. Virus scanning</a></li>
+      <li><a href="#storage">5. Storage isolation</a></li>
+      <li><a href="#serving">6. Safe serving</a></li>
+      <li><a href="#logging">7. Logging</a></li>
+      <li><a href="#full-handler">Full handler</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="checklist">
+      <h2>Node.js file upload security checklist (with virus scanning)</h2>
+      <p>
+        File uploads are a high-risk surface. This checklist covers every control
+        you should have in place before accepting uploads from untrusted users.
+        Each item links to code you can copy directly.
+      </p>
+      <div class="note">
+        For a deeper look at the "why" behind each risk, see
+        <a href="nodejs-malware-detection-user-uploads.html">How to protect your Node.js app from malicious file uploads</a>.
+      </div>
+
+      <table>
+        <tr>
+          <th>#</th>
+          <th>Control</th>
+          <th>Prevents</th>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>Enforce file size limits before writing to disk</td>
+          <td>DoS, disk exhaustion, zip bombs</td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td>Validate content type via magic bytes</td>
+          <td>File type spoofing, disguised executables</td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td>Never use the original filename on disk</td>
+          <td>Path traversal, overwrite attacks</td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td>Scan with ClamAV via pompelmi</td>
+          <td>Viruses, trojans, ransomware, malicious macros</td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td>Store uploads in an isolated location</td>
+          <td>Code execution, accidental exposure</td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td>Serve with correct headers</td>
+          <td>XSS via SVG/HTML uploads, MIME sniffing</td>
+        </tr>
+        <tr>
+          <td>7</td>
+          <td>Log rejected uploads</td>
+          <td>Blind spots in incident response</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="size-limits">
+      <h2>1. Enforce file size limits before writing to disk</h2>
+      <p>
+        Configure your multipart parser to enforce a hard size limit. With Multer,
+        <code>fileSize</code> is enforced while streaming — the upload is rejected
+        before it's fully written.
+      </p>
+<pre>const multer = require('multer');
+const os     = require('os');
+
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: {
+    fileSize:  10 * 1024 * 1024,   // 10 MB
+    files:     5                    // max 5 files per request
+  }
+});
+
+// Catch Multer errors in an error middleware
+app.use((err, req, res, next) =&gt; {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File too large. Limit is 10 MB.' });
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    return res.status(400).json({ error: 'Too many files.' });
+  }
+  next(err);
+});</pre>
+    </div>
+
+    <div class="section" id="mime">
+      <h2>2. Validate content type via magic bytes</h2>
+      <p>
+        Check the actual bytes at the start of the file, not just the
+        <code>Content-Type</code> header or file extension — both are user-controlled.
+      </p>
+<pre>const { fileTypeFromFile } = require('file-type');  // npm install file-type
+
+const ALLOWED_MIME = new Set([
+  'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+  'application/pdf',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',  // .docx
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'         // .xlsx
+]);
+
+async function validateMimeType(filePath) {
+  const type = await fileTypeFromFile(filePath);
+  if (!type || !ALLOWED_MIME.has(type.mime)) {
+    throw Object.assign(
+      new Error('File type not permitted: ' + (type ? type.mime : 'unknown')),
+      { statusCode: 415 }
+    );
+  }
+  return type;
+}</pre>
+    </div>
+
+    <div class="section" id="filename">
+      <h2>3. Never use the original filename on disk</h2>
+      <p>
+        The original filename is user input. Treat it as untrusted and never use it
+        as a filesystem path. Generate a random name for storage; keep the original
+        in your database if you need to display it.
+      </p>
+<pre>const crypto = require('crypto');
+const path   = require('path');
+
+function generateSafeFilename(mimeType, ext) {
+  // ext comes from magic byte detection, not user input
+  return crypto.randomBytes(20).toString('hex') + (ext ? '.' + ext : '');
+}
+
+// Usage:
+const type     = await validateMimeType(tmpPath);   // from step 2
+const safeName = generateSafeFilename(type.mime, type.ext);
+// e.g. "a3f5c8d2...b7.pdf"</pre>
+    </div>
+
+    <div class="section" id="virus-scan">
+      <h2>4. Scan with ClamAV via pompelmi</h2>
+<pre>const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+
+async function antivirusScan(tmpPath) {
+  const verdict = await scan(tmpPath);
+
+  if (verdict === Verdict.Malicious) {
+    fs.unlinkSync(tmpPath);
+    throw Object.assign(new Error('Malware detected. Upload rejected.'), { statusCode: 400 });
+  }
+
+  if (verdict === Verdict.ScanError) {
+    fs.unlinkSync(tmpPath);
+    throw Object.assign(
+      new Error('Scan incomplete. File rejected as a precaution.'),
+      { statusCode: 422 }
+    );
+  }
+  // Verdict.Clean — continue
+}</pre>
+
+      <div class="warn">
+        Never silently skip a <code>ScanError</code>. An attacker may intentionally
+        cause scan errors (e.g. by submitting a deeply nested archive) to bypass scanning.
+        Treat any non-Clean verdict as untrusted.
+      </div>
+
+      <p>
+        Not set up yet? See
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>.
+      </p>
+    </div>
+
+    <div class="section" id="storage">
+      <h2>5. Store uploads in an isolated location</h2>
+      <p>
+        Don't store uploads inside your web root, your application directory, or any
+        directory your web server might serve or execute. Keep them in a dedicated
+        directory with restricted permissions.
+      </p>
+<pre>// Bad — accessible via your web server's static file serving
+const dest = path.join(__dirname, 'public', 'uploads', safeName);
+
+// Good — outside the web root, only readable by the app user
+const dest = path.join('/var/app/uploads', safeName);
+
+fs.renameSync(tmpPath, dest);</pre>
+
+      <p>
+        On Linux, ensure the upload directory is owned by the application user and
+        not writable by the web server process:
+      </p>
+<pre>sudo mkdir -p /var/app/uploads
+sudo chown appuser:appuser /var/app/uploads
+sudo chmod 750 /var/app/uploads</pre>
+    </div>
+
+    <div class="section" id="serving">
+      <h2>6. Serve uploads with correct HTTP headers</h2>
+      <p>
+        An SVG file or HTML file that passes virus scanning can still execute
+        JavaScript in the browser if served inline from your main origin. Force
+        download mode and prevent MIME sniffing.
+      </p>
+<pre>app.get('/files/:id', async (req, res) =&gt; {
+  const record = await db.files.findById(req.params.id);
+  if (!record) return res.status(404).end();
+
+  const filePath = path.join('/var/app/uploads', record.storedName);
+
+  // Force download — prevents browser from rendering HTML/SVG inline
+  res.setHeader('Content-Disposition',
+    `attachment; filename="${record.originalName}"`);
+
+  // Prevent MIME sniffing
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Set the correct type from the database (magic-byte verified at upload time)
+  res.setHeader('Content-Type', record.mimeType);
+
+  res.sendFile(filePath);
+});</pre>
+
+      <div class="tip">
+        For user-facing file previews (images, PDFs), serve from a separate subdomain
+        or from object storage (S3, GCS). This isolates any malicious content from
+        your main application's cookies and origin.
+      </div>
+    </div>
+
+    <div class="section" id="logging">
+      <h2>7. Log rejected uploads</h2>
+      <p>
+        Log every rejected upload with enough context to investigate later. At minimum:
+        IP address, timestamp, original filename, MIME type, and reason for rejection.
+      </p>
+<pre>function logRejection(req, file, reason) {
+  console.warn(JSON.stringify({
+    event:        'upload_rejected',
+    ip:           req.ip,
+    originalName: file ? file.originalname : null,
+    mimeType:     file ? file.mimetype     : null,
+    size:         file ? file.size         : null,
+    reason,
+  }));
+}</pre>
+    </div>
+
+    <div class="section" id="full-handler">
+      <h2>Putting it all together — complete upload handler</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const { fileTypeFromFile } = require('file-type');
+const crypto = require('crypto');
+const path   = require('path');
+const fs     = require('fs');
+const os     = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 }
+});
+
+const ALLOWED_MIME = new Set(['image/jpeg','image/png','application/pdf']);
+
+function logRejection(req, file, reason) {
+  console.warn(JSON.stringify({ event: 'upload_rejected', ip: req.ip,
+    name: file?.originalname, mime: file?.mimetype, reason }));
+}
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath = req.file.path;
+  let promoted  = false;
+
+  try {
+    // 1. MIME validation
+    const type = await fileTypeFromFile(tmpPath);
+    if (!type || !ALLOWED_MIME.has(type.mime)) {
+      logRejection(req, req.file, 'invalid_mime:' + (type?.mime || 'unknown'));
+      return res.status(415).json({ error: 'File type not permitted.' });
+    }
+
+    // 2. Virus scan
+    const verdict = await scan(tmpPath);
+    if (verdict !== Verdict.Clean) {
+      logRejection(req, req.file, verdict.description);
+      return res.status(verdict === Verdict.Malicious ? 400 : 422).json({
+        error: verdict === Verdict.Malicious
+          ? 'Malware detected.'
+          : 'Scan incomplete. Rejected as precaution.'
+      });
+    }
+
+    // 3. Safe filename + isolated storage
+    const safeName = crypto.randomBytes(20).toString('hex') + '.' + type.ext;
+    const dest     = path.join('/var/app/uploads', safeName);
+    fs.renameSync(tmpPath, dest);
+    promoted = true;
+
+    // 4. Persist record to DB (pseudo-code)
+    // await db.files.create({ id: safeName, originalName: req.file.originalname, mimeType: type.mime });
+
+    res.json({ status: 'ok', id: safeName });
+
+  } catch (err) {
+    logRejection(req, req.file, 'error:' + err.message);
+    res.status(err.statusCode || 500).json({ error: err.message });
+  } finally {
+    if (!promoted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});
+
+app.use((err, req, res, next) =&gt; {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File too large.' });
+  }
+  next(err);
+});</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

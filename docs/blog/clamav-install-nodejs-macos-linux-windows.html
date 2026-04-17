@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to install ClamAV for Node.js on macOS, Linux and Windows — pompelmi</title>
+<meta name="description" content="Step-by-step instructions for installing ClamAV and downloading virus definitions on macOS, Ubuntu/Debian, RHEL/Fedora, and Windows — ready to use with pompelmi and Node.js.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#macos">macOS</a></li>
+      <li><a href="#ubuntu">Ubuntu / Debian</a></li>
+      <li><a href="#rhel">RHEL / Fedora</a></li>
+      <li><a href="#windows">Windows</a></li>
+      <li><a href="#definitions">Virus definitions</a></li>
+      <li><a href="#verify">Verify</a></li>
+      <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>How to install ClamAV for Node.js on macOS, Linux and Windows</h2>
+      <p>
+        pompelmi delegates all antivirus scanning to <strong>ClamAV</strong> — a
+        free, open-source engine maintained by Cisco. pompelmi itself is installed
+        via npm, but ClamAV must be installed separately at the system level.
+      </p>
+      <p>
+        This guide covers every supported platform. Once ClamAV is installed and
+        the virus database is downloaded, you are ready to follow the
+        <a href="nodejs-antivirus-getting-started.html">5-minute getting started guide</a>
+        and run your first scan.
+      </p>
+      <div class="note">
+        pompelmi calls the <code>clamscan</code> binary. You do <em>not</em> need
+        <code>clamd</code> (the background daemon) for basic usage. The installation
+        steps below install <code>clamscan</code>.
+      </div>
+    </div>
+
+    <div class="section" id="macos">
+      <h2>macOS</h2>
+      <p>
+        The easiest way to install ClamAV on macOS is through
+        <a href="https://brew.sh/">Homebrew</a>. If you don't have Homebrew, install
+        it first from <code>brew.sh</code>.
+      </p>
+<pre>brew install clamav</pre>
+
+      <p>Homebrew installs <code>clamscan</code> and <code>freshclam</code> to:</p>
+      <ul>
+        <li><code>/opt/homebrew/bin/</code> on Apple Silicon (M1/M2/M3)</li>
+        <li><code>/usr/local/bin/</code> on Intel</li>
+      </ul>
+      <p>Both locations are on the default PATH after a standard Homebrew setup.</p>
+
+      <h3>Configure freshclam on macOS</h3>
+      <p>
+        Before running <code>freshclam</code>, you need to create its configuration
+        file. Homebrew installs a sample configuration at:
+      </p>
+<pre>/opt/homebrew/etc/clamav/freshclam.conf.sample   # Apple Silicon
+/usr/local/etc/clamav/freshclam.conf.sample        # Intel</pre>
+
+      <p>Copy it and remove the <code>Example</code> line:</p>
+<pre># Apple Silicon
+cp /opt/homebrew/etc/clamav/freshclam.conf.sample \
+   /opt/homebrew/etc/clamav/freshclam.conf
+sed -i '' '/^Example/d' /opt/homebrew/etc/clamav/freshclam.conf
+
+# Intel
+cp /usr/local/etc/clamav/freshclam.conf.sample \
+   /usr/local/etc/clamav/freshclam.conf
+sed -i '' '/^Example/d' /usr/local/etc/clamav/freshclam.conf</pre>
+
+      <p>Then download the virus database:</p>
+<pre>freshclam</pre>
+
+      <div class="tip">
+        On macOS you may see a warning about the database directory not existing.
+        Run <code>mkdir -p /opt/homebrew/var/lib/clamav</code> (Apple Silicon) or
+        <code>mkdir -p /usr/local/var/lib/clamav</code> (Intel) to create it.
+      </div>
+    </div>
+
+    <div class="section" id="ubuntu">
+      <h2>Ubuntu and Debian</h2>
+<pre>sudo apt-get update
+sudo apt-get install -y clamav clamav-freshclam</pre>
+
+      <p>
+        On Debian-based systems, the <code>clamav-freshclam</code> package installs
+        a background service that keeps the virus database updated automatically.
+        However, it locks the database files while running. Stop it before updating
+        manually:
+      </p>
+<pre>sudo systemctl stop clamav-freshclam
+sudo freshclam
+sudo systemctl start clamav-freshclam</pre>
+
+      <p>
+        If you want to run freshclam only manually (not as a service), disable the
+        service:
+      </p>
+<pre>sudo systemctl disable --now clamav-freshclam
+sudo freshclam</pre>
+
+      <div class="note">
+        On Ubuntu 20.04+ the package is <code>clamav</code>. On older releases it
+        may be split into <code>clamav-base</code> and <code>clamav-daemon</code>.
+        Verify with <code>apt-cache search clamav</code>.
+      </div>
+    </div>
+
+    <div class="section" id="rhel">
+      <h2>RHEL, Fedora, and CentOS</h2>
+
+      <span class="platform-label">Fedora</span>
+<pre>sudo dnf install -y clamav clamav-update</pre>
+
+      <span class="platform-label">RHEL 8 / CentOS Stream (requires EPEL)</span>
+<pre>sudo dnf install -y epel-release
+sudo dnf install -y clamav clamav-update</pre>
+
+      <span class="platform-label">CentOS 7 (older)</span>
+<pre>sudo yum install -y epel-release
+sudo yum install -y clamav clamav-update</pre>
+
+      <p>Update virus definitions:</p>
+<pre>sudo freshclam</pre>
+
+      <div class="note">
+        On SELinux-enabled systems, freshclam may fail with a permissions error.
+        Run <code>sudo setsebool -P antivirus_can_scan_system 1</code> to allow
+        ClamAV to access system directories.
+      </div>
+    </div>
+
+    <div class="section" id="windows">
+      <h2>Windows</h2>
+      <p>
+        The recommended method on Windows is the official ClamAV installer, which
+        includes both <code>clamscan.exe</code> and <code>freshclam.exe</code>.
+      </p>
+
+      <h3>Option A — Official installer</h3>
+      <ol>
+        <li>Download the Windows installer from <a href="https://www.clamav.net/downloads#otherversions">clamav.net/downloads</a>.</li>
+        <li>Run the setup wizard and note the installation directory (default: <code>C:\Program Files\ClamAV\</code>).</li>
+        <li>Add <code>C:\Program Files\ClamAV\</code> to your system <code>PATH</code>.</li>
+        <li>Copy <code>freshclam.conf.sample</code> to <code>freshclam.conf</code> in the same directory.</li>
+        <li>Open the file and delete (or comment out) the line that reads <code>Example</code>.</li>
+        <li>Run <code>freshclam</code> from a Command Prompt to download the database.</li>
+      </ol>
+
+      <h3>Option B — Chocolatey</h3>
+<pre>choco install clamav -y</pre>
+      <p>Chocolatey handles the PATH and configuration file setup automatically.</p>
+
+      <h3>Verify on Windows</h3>
+<pre>clamscan --version</pre>
+      <p>
+        You should see output like <code>ClamAV 1.x.x</code>. If you get
+        <em>"'clamscan' is not recognized"</em>, the ClamAV directory is not on your PATH.
+        Re-check the installation directory and add it manually via System Properties &rarr;
+        Environment Variables.
+      </p>
+    </div>
+
+    <div class="section" id="definitions">
+      <h2>Downloading and updating virus definitions</h2>
+      <p>
+        ClamAV requires virus definitions to work. Without them, every scan returns
+        an error. Definitions are downloaded using <code>freshclam</code>.
+      </p>
+<pre>freshclam          # macOS, Windows (from an elevated prompt if needed)
+sudo freshclam     # Linux</pre>
+
+      <p>
+        <code>freshclam</code> downloads three files into the ClamAV database directory:
+      </p>
+      <ul>
+        <li><code>main.cvd</code> — main virus database (~160 MB)</li>
+        <li><code>daily.cvd</code> / <code>daily.cld</code> — daily updates (~60 MB)</li>
+        <li><code>bytecode.cvd</code> — bytecode signatures</li>
+      </ul>
+      <p>
+        New malware is discovered daily. Keep definitions current by scheduling
+        <code>freshclam</code> to run once a day (cron on Linux/macOS, Task Scheduler
+        on Windows).
+      </p>
+<pre># Linux / macOS cron — run freshclam daily at 02:00
+0 2 * * * /usr/bin/freshclam --quiet</pre>
+    </div>
+
+    <div class="section" id="verify">
+      <h2>Verify the full setup</h2>
+      <p>
+        After installing ClamAV and downloading definitions, run a quick sanity check
+        with the EICAR test file — a harmless string that every AV engine detects as
+        malware for testing purposes.
+      </p>
+<pre># Create EICAR test file
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' \
+  &gt; /tmp/eicar.txt
+
+# Scan it directly with clamscan (before involving pompelmi)
+clamscan /tmp/eicar.txt</pre>
+
+      <p>Expected output:</p>
+<pre>/tmp/eicar.txt: Win.Test.EICAR_HDB-1 FOUND
+
+----------- SCAN SUMMARY -----------
+Known viruses: 8700000
+...
+Infected files: 1</pre>
+
+      <p>
+        If you see <code>FOUND</code>, ClamAV is working. Now install pompelmi and
+        follow the <a href="nodejs-antivirus-getting-started.html">getting started guide</a>.
+      </p>
+    </div>
+
+    <div class="section" id="troubleshooting">
+      <h2>Common installation problems</h2>
+      <table>
+        <tr>
+          <th>Problem</th>
+          <th>Cause</th>
+          <th>Fix</th>
+        </tr>
+        <tr>
+          <td><code>clamscan: command not found</code></td>
+          <td>ClamAV is not on PATH.</td>
+          <td>Find where it was installed (<code>which clamscan</code> or check package install output) and add that directory to PATH.</td>
+        </tr>
+        <tr>
+          <td><code>LibClamAV Error: cli_loaddbdir()</code></td>
+          <td>Virus database not found or empty.</td>
+          <td>Run <code>freshclam</code> (or <code>sudo freshclam</code> on Linux) to download definitions.</td>
+        </tr>
+        <tr>
+          <td><code>ERROR: Problem with internal logger</code></td>
+          <td>freshclam config has "Example" line uncommented.</td>
+          <td>Open <code>freshclam.conf</code> and delete the line that reads <code>Example</code>.</td>
+        </tr>
+        <tr>
+          <td>freshclam fails on Linux with "locked"</td>
+          <td>The <code>clamav-freshclam</code> service holds the database lock.</td>
+          <td>Run <code>sudo systemctl stop clamav-freshclam</code> before freshclam.</td>
+        </tr>
+        <tr>
+          <td>Scan always returns <code>ScanError</code></td>
+          <td>Definitions are corrupt or the process lacks read permissions on the database directory.</td>
+          <td>Re-run <code>freshclam</code>. Check that the user running Node.js can read the ClamAV database directory.</td>
+        </tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>
