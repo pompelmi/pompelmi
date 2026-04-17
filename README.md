@@ -24,6 +24,7 @@ A minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that scans an
 - [API](#api)
   - [pompelmi.scan()](#pompelmiscanfilepath-options)
 - [Docker / remote scanning](#docker--remote-scanning)
+- [Examples](#examples)
 - [Internal utilities](#internal-utilities)
   - [ClamAVInstaller()](#clamavinstaller)
   - [updateClamAVDatabase()](#updateclamavdatabase)
@@ -132,6 +133,33 @@ const result = await pompelmi.scan('/path/to/upload.zip', {
 ```
 
 See [docs/docker.md](./docs/docker.md) for the `docker-compose.yml` snippet and first-boot notes.
+
+---
+
+## Examples
+
+The [`examples/`](./examples/) directory contains standalone, runnable scripts for common use cases. Each file can be run directly with `node examples/<name>.js`.
+
+- [`basic-scan.js`](examples/basic-scan.js) — Scan a single file and log the Verdict
+- [`scan-on-upload-express.js`](examples/scan-on-upload-express.js) — Express route: receive upload, scan before saving
+- [`scan-on-upload-fastify.js`](examples/scan-on-upload-fastify.js) — Fastify route: same pattern
+- [`scan-with-options.js`](examples/scan-with-options.js) — Scan via a remote clamd instance with custom host, port, and timeout
+- [`handle-scan-error.js`](examples/handle-scan-error.js) — Gracefully handle every Verdict including ScanError and hard rejections
+- [`delete-on-malicious.js`](examples/delete-on-malicious.js) — Auto-delete file if Verdict.Malicious
+- [`quarantine-on-malicious.js`](examples/quarantine-on-malicious.js) — Move infected file to a `quarantine/` folder
+- [`scan-multiple-files.js`](examples/scan-multiple-files.js) — Scan an array of files concurrently with `Promise.all`
+- [`scan-directory.js`](examples/scan-directory.js) — Walk a directory recursively and scan every file
+- [`scan-buffer.js`](examples/scan-buffer.js) — Scan an in-memory Buffer via a temp-file shim
+- [`install-clamav.js`](examples/install-clamav.js) — Programmatically trigger ClamAV installation
+- [`update-virus-database.js`](examples/update-virus-database.js) — Programmatically run freshclam / DB update
+- [`scan-with-timeout.js`](examples/scan-with-timeout.js) — Timeout patterns for both local clamscan and remote clamd
+- [`scan-pdf.js`](examples/scan-pdf.js) — Scan a PDF upload with extension validation
+- [`scan-image.js`](examples/scan-image.js) — Scan an image upload with extension validation
+- [`scan-zip.js`](examples/scan-zip.js) — Scan a ZIP archive upload (ClamAV recurses automatically)
+- [`rest-api-server.js`](examples/rest-api-server.js) — Minimal HTTP server exposing `POST /scan`
+- [`s3-scan-before-upload.js`](examples/s3-scan-before-upload.js) — Scan locally, then upload to AWS S3 only if clean
+- [`cli-scan.js`](examples/cli-scan.js) — Accept file paths as CLI arguments, print verdicts, exit non-zero on threats
+- [`typescript-usage.ts`](examples/typescript-usage.ts) — TypeScript example with inline type declarations
 
 ---
 
