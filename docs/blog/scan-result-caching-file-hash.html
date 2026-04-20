@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-result-caching-file-hash.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caching ClamAV scan results by file hash in Node.js — pompelmi</title>
+<meta name="description" content="How to avoid redundant ClamAV scans by caching verdicts keyed on SHA-256 file hashes with Redis and pompelmi. Includes cache invalidation strategy and safe expiry rules.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why-cache">Why cache scan results?</a></li>
+      <li><a href="#safety">When caching is safe</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#cache-helper">Cache helper</a></li>
+      <li><a href="#upload-endpoint">Upload endpoint</a></li>
+      <li><a href="#invalidation">Cache invalidation</a></li>
+      <li><a href="#in-memory">In-memory alternative</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why-cache">
+      <h2>Caching ClamAV scan results by file hash in Node.js</h2>
+      <p>
+        In some upload workflows the same file is uploaded multiple times: a shared
+        document sent by many team members, a standard template, or a logo that every
+        new user submits during onboarding. Scanning an identical file repeatedly
+        wastes CPU and adds latency. A simple cache keyed on the file's
+        <strong>SHA-256 hash</strong> eliminates redundant scans.
+      </p>
+      <p>
+        The logic is: compute the hash of the uploaded bytes, check if a verdict for
+        that hash is already in the cache, and return it immediately without invoking
+        pompelmi. On a cache miss, scan normally and store the result.
+      </p>
+    </div>
+
+    <div class="section" id="safety">
+      <h2>When caching is safe — and when it is not</h2>
+      <p>
+        Caching scan results is safe under one condition: the cached verdict must be
+        tied to a specific database version. A file that was clean against an old
+        database may be malicious against a newer one once fresh signatures are
+        published.
+      </p>
+      <div class="warn">
+        <strong>Do not cache <code>Verdict.Clean</code> indefinitely.</strong>
+        Always set a TTL that forces a re-scan within a reasonable window (24–48
+        hours is a sensible default). When the ClamAV database updates, flush the
+        cache.
+      </div>
+      <p>
+        Caching <code>Verdict.Malicious</code> is safe to keep longer — a file that
+        was malicious will remain malicious. Caching <code>Verdict.ScanError</code>
+        is discouraged — re-scan on the next attempt in case the error was transient.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi ioredis</pre>
+    </div>
+
+    <div class="section" id="cache-helper">
+      <h2>Cache helper</h2>
+<pre>// lib/scanWithCache.js
+const { createHash, createReadStream } = require('crypto');
+const { scan, Verdict } = require('pompelmi');
+const Redis = require('ioredis');
+
+const redis = new Redis({
+  host: process.env.REDIS_HOST || '127.0.0.1',
+  port: 6379,
+});
+
+const CLEAN_TTL_SECONDS     = 60 * 60 * 24;  // 24 hours — re-scan if DB might have updated
+const MALICIOUS_TTL_SECONDS = 60 * 60 * 24 * 7; // 7 days — malicious stays malicious
+
+async function fileHash(filePath) {
+  return new Promise((resolve, reject) =&gt; {
+    const hash   = createHash('sha256');
+    const stream = createReadStream(filePath);
+    stream.on('data', (chunk) =&gt; hash.update(chunk));
+    stream.on('end',  () =&gt; resolve(hash.digest('hex')));
+    stream.on('error', reject);
+  });
+}
+
+async function scanWithCache(filePath, options = {}) {
+  const hash     = await fileHash(filePath);
+  const cacheKey = `scan:${hash}`;
+
+  // Check cache first
+  const cached = await redis.get(cacheKey);
+  if (cached) {
+    const label = cached; // 'Clean' | 'Malicious'
+    if (label === 'Clean')     return Verdict.Clean;
+    if (label === 'Malicious') return Verdict.Malicious;
+    // ScanError is never cached — fall through to rescan
+  }
+
+  // Cache miss — run the actual scan
+  const verdict = await scan(filePath, options);
+
+  // Store result (never cache ScanError)
+  if (verdict === Verdict.Clean) {
+    await redis.set(cacheKey, 'Clean', 'EX', CLEAN_TTL_SECONDS);
+  } else if (verdict === Verdict.Malicious) {
+    await redis.set(cacheKey, 'Malicious', 'EX', MALICIOUS_TTL_SECONDS);
+  }
+
+  return verdict;
+}
+
+module.exports = { scanWithCache };</pre>
+    </div>
+
+    <div class="section" id="upload-endpoint">
+      <h2>Using the cache in an upload endpoint</h2>
+      <p>
+        Drop in <code>scanWithCache</code> anywhere you currently call
+        <code>scan()</code> directly:
+      </p>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { Verdict } = require('pompelmi');
+const { scanWithCache } = require('./lib/scanWithCache');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({ dest: os.tmpdir(), limits: { fileSize: 50 * 1024 * 1024 } });
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+  try {
+    const verdict = await scanWithCache(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    return res.json({ status: 'ok', name: req.file.originalname });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="invalidation">
+      <h2>Cache invalidation after database updates</h2>
+      <p>
+        When freshclam downloads a new virus database, previously clean files may
+        now be malicious. Flush all <code>scan:</code> keys from Redis whenever
+        the database updates:
+      </p>
+<pre>// flush-scan-cache.js — run after each freshclam update
+const Redis = require('ioredis');
+const redis = new Redis();
+
+async function flushScanCache() {
+  let cursor = '0';
+  let deleted = 0;
+
+  do {
+    const [next, keys] = await redis.scan(cursor, 'MATCH', 'scan:*', 'COUNT', 100);
+    cursor = next;
+    if (keys.length) {
+      await redis.del(...keys);
+      deleted += keys.length;
+    }
+  } while (cursor !== '0');
+
+  console.log(`Flushed ${deleted} cached scan results.`);
+}
+
+flushScanCache().catch(console.error);</pre>
+
+      <p>
+        Call this script from your freshclam post-update hook or from the
+        Kubernetes CronJob that runs freshclam. See
+        <a href="clamav-freshclam-update-strategies.html">Keeping ClamAV virus definitions current in production</a>
+        for the freshclam cron/CronJob setup.
+      </p>
+    </div>
+
+    <div class="section" id="in-memory">
+      <h2>In-memory alternative (no Redis)</h2>
+      <p>
+        For small deployments or single-process Node.js apps, an in-process LRU
+        cache avoids the Redis dependency. Results are lost on restart, which is
+        acceptable — files will simply be re-scanned:
+      </p>
+<pre>// Simple in-memory cache with a fixed TTL and cap
+const cache   = new Map();
+const MAX_TTL = 24 * 60 * 60 * 1000;  // 24 h in ms
+const MAX_ENTRIES = 10_000;
+
+function getCached(hash) {
+  const entry = cache.get(hash);
+  if (!entry) return null;
+  if (Date.now() - entry.ts &gt; MAX_TTL) { cache.delete(hash); return null; }
+  return entry.verdict;
+}
+
+function setCached(hash, verdict) {
+  if (cache.size &gt;= MAX_ENTRIES) {
+    // Evict the oldest entry
+    cache.delete(cache.keys().next().value);
+  }
+  cache.set(hash, { verdict, ts: Date.now() });
+}</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Want broader performance improvements beyond caching?
+          See <a href="clamav-scan-performance-nodejs.html">Optimising ClamAV scan performance in Node.js</a>.
+        </li>
+        <li>
+          Keeping the database current so caches stay valid?
+          See <a href="clamav-freshclam-update-strategies.html">Keeping ClamAV virus definitions current in production</a>.
+        </li>
+        <li>
+          Need async scanning instead of synchronous?
+          See <a href="bullmq-background-scan-queue.html">Background virus scanning with BullMQ</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

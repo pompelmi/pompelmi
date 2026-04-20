@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/aws-lambda-serverless-virus-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Serverless virus scanning with AWS Lambda and Node.js — pompelmi</title>
+<meta name="description" content="How to run ClamAV antivirus scanning in AWS Lambda using a container image and pompelmi. Includes Dockerfile, handler code, S3 trigger pattern, and cold-start considerations.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#approach">Container image approach</a></li>
+      <li><a href="#dockerfile">Dockerfile</a></li>
+      <li><a href="#handler">Lambda handler</a></li>
+      <li><a href="#s3-trigger">S3 trigger pattern</a></li>
+      <li><a href="#cold-start">Cold start &amp; database</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Serverless virus scanning with AWS Lambda and Node.js</h2>
+      <p>
+        AWS Lambda is a compelling platform for on-demand file scanning: you pay only
+        for the milliseconds the function runs and it scales automatically. The main
+        challenge is making ClamAV available inside the Lambda execution environment.
+        The cleanest solution is to build a <strong>container image Lambda</strong>
+        that includes the ClamAV binary and virus database alongside your Node.js code.
+      </p>
+    </div>
+
+    <div class="section" id="approach">
+      <h2>Why container images?</h2>
+      <p>
+        Lambda supports two packaging formats: ZIP archives and container images (up
+        to 10 GB). ClamAV — together with its virus database — weighs several hundred
+        megabytes, making ZIP archives impractical. Container images have no effective
+        size constraint for this use case.
+      </p>
+      <p>
+        The container image approach also gives you a reproducible build: the same
+        image runs locally with <code>docker run</code> and in Lambda without any
+        environment differences.
+      </p>
+      <div class="note">
+        Lambda's writable filesystem is limited to <code>/tmp</code> (512 MB by
+        default, configurable up to 10 GB). pompelmi writes nothing — it only reads
+        the file you point it at — so the only constraint is the size of the uploaded
+        file you write there.
+      </div>
+    </div>
+
+    <div class="section" id="dockerfile">
+      <h2>Dockerfile</h2>
+      <p>
+        Build on top of the official AWS Lambda Node.js base image, install ClamAV,
+        and run <code>freshclam</code> to bake the virus database into the image:
+      </p>
+<pre>FROM public.ecr.aws/lambda/nodejs:20
+
+# Install ClamAV
+RUN dnf install -y clamav clamav-update &amp;&amp; \
+    # Download the virus database at build time
+    freshclam &amp;&amp; \
+    # Clean up to reduce layer size
+    dnf clean all
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
+COPY index.js ./
+
+CMD ["index.handler"]</pre>
+
+      <div class="tip">
+        Baking the virus database into the image means no network calls on startup —
+        cold starts are as fast as possible. The trade-off is a larger image. Use
+        a scheduled ECR image rebuild (e.g. weekly) to keep the database current.
+      </div>
+    </div>
+
+    <div class="section" id="handler">
+      <h2>Lambda handler</h2>
+      <p>
+        The handler receives an API Gateway event containing a base64-encoded file
+        body. It writes the decoded bytes to <code>/tmp</code>, scans with pompelmi,
+        and returns the result:
+      </p>
+<pre>// index.js
+const { scan, Verdict } = require('pompelmi');
+const { writeFile, unlink } = require('fs/promises');
+const { existsSync } = require('fs');
+const { join } = require('path');
+const { randomBytes } = require('crypto');
+
+exports.handler = async (event) =&gt; {
+  let tmpPath = null;
+
+  try {
+    // API Gateway v2 (HTTP API) passes the body as base64 when binary
+    if (!event.body) {
+      return response(400, { error: 'No body provided.' });
+    }
+
+    const buffer   = Buffer.from(event.body, event.isBase64Encoded ? 'base64' : 'utf8');
+    const filename = event.headers?.['x-filename'] ?? 'upload.bin';
+    const ext      = filename.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath        = join('/tmp', randomBytes(16).toString('hex') + '.' + ext);
+
+    await writeFile(tmpPath, buffer);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return response(400, { error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return response(422, { error: 'Scan could not complete. Rejected as precaution.' });
+    }
+
+    // File is clean — you can now upload it to S3
+    return response(200, {
+      status:  'ok',
+      verdict: verdict.description,
+    });
+
+  } catch (err) {
+    console.error('Scan error:', err);
+    return response(500, { error: err.message });
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+};
+
+function response(statusCode, body) {
+  return {
+    statusCode,
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  };
+}</pre>
+    </div>
+
+    <div class="section" id="s3-trigger">
+      <h2>S3 trigger pattern</h2>
+      <p>
+        A common serverless architecture triggers Lambda when a file lands in a
+        "quarantine" S3 bucket. Lambda downloads the file to <code>/tmp</code>,
+        scans it, then either moves it to a "clean" bucket or deletes it.
+      </p>
+<pre>// index.js — S3 trigger variant
+const { scan, Verdict } = require('pompelmi');
+const { S3Client, GetObjectCommand,
+        CopyObjectCommand, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+const { writeFile, unlink } = require('fs/promises');
+const { existsSync, createWriteStream } = require('fs');
+const { join } = require('path');
+const { pipeline } = require('stream/promises');
+const { randomBytes } = require('crypto');
+
+const s3 = new S3Client({});
+
+const CLEAN_BUCKET = process.env.CLEAN_BUCKET;
+
+exports.handler = async (event) =&gt; {
+  for (const record of event.Records) {
+    const bucket = record.s3.bucket.name;
+    const key    = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
+
+    const tmpPath = join('/tmp', randomBytes(16).toString('hex'));
+
+    try {
+      // Download from S3 quarantine bucket to /tmp
+      const { Body } = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+      await pipeline(Body, createWriteStream(tmpPath));
+
+      const verdict = await scan(tmpPath);
+
+      if (verdict === Verdict.Clean) {
+        // Move to clean bucket
+        await s3.send(new CopyObjectCommand({
+          Bucket:     CLEAN_BUCKET,
+          Key:        key,
+          CopySource: `${bucket}/${key}`,
+          Tagging:    'scan-status=clean&amp;scanned-by=pompelmi',
+          TaggingDirective: 'REPLACE',
+        }));
+      }
+
+      // Delete from quarantine bucket regardless of verdict
+      await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+
+      console.log(`Key=${key} Verdict=${verdict.description}`);
+
+    } finally {
+      if (existsSync(tmpPath)) await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+};</pre>
+
+      <div class="warn">
+        With the S3 trigger pattern, files briefly exist in the quarantine bucket
+        before scanning completes. Ensure the quarantine bucket has no public access
+        and that no downstream systems read from it before the Lambda moves files to
+        the clean bucket.
+      </div>
+    </div>
+
+    <div class="section" id="cold-start">
+      <h2>Cold starts and database freshness</h2>
+      <p>
+        Baking the virus database into the container image keeps cold starts fast but
+        means the database ages as time passes. Consider these strategies:
+      </p>
+      <table>
+        <tr>
+          <th>Strategy</th>
+          <th>Cold start</th>
+          <th>DB freshness</th>
+        </tr>
+        <tr>
+          <td>Database baked into image (this guide)</td>
+          <td>Fast — no network on startup</td>
+          <td>As fresh as the last image rebuild</td>
+        </tr>
+        <tr>
+          <td>Run freshclam on cold start from <code>/tmp</code></td>
+          <td>Slow — 1–3 min for DB download</td>
+          <td>Always current</td>
+        </tr>
+        <tr>
+          <td>Cache DB in S3, copy to <code>/tmp</code> on cold start</td>
+          <td>Medium — S3 copy (~10 s)</td>
+          <td>As fresh as your S3 update job</td>
+        </tr>
+      </table>
+      <p>
+        For most use cases, rebuilding the container image weekly with a scheduled
+        CI job provides a good balance between cold-start speed and database
+        currency.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Testing locally before deploying to Lambda?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>
+          — the Dockerfile above runs identically with <code>docker run</code>.
+        </li>
+        <li>
+          Need a standalone REST API instead of a trigger?
+          Read <a href="nodejs-antivirus-rest-api.html">Building a file scanning REST API with Node.js and pompelmi</a>.
+        </li>
+        <li>
+          Scan-then-upload to S3?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/pompelmi-clamav-kubernetes.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Setting up pompelmi with ClamAV on Kubernetes — pompelmi</title>
+<meta name="description" content="How to run ClamAV as a separate Kubernetes Deployment and connect pompelmi to it over TCP. Includes clamd Deployment, Service YAML, and Node.js integration examples.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#architecture">Architecture</a></li>
+      <li><a href="#clamd-deployment">clamd Deployment</a></li>
+      <li><a href="#clamd-service">clamd Service</a></li>
+      <li><a href="#node-app">Node.js app</a></li>
+      <li><a href="#tcp-scan">TCP scan call</a></li>
+      <li><a href="#database-updates">DB updates</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Setting up pompelmi with ClamAV on Kubernetes</h2>
+      <p>
+        In a Kubernetes environment you have two options for running ClamAV alongside
+        your Node.js application:
+      </p>
+      <ol>
+        <li>
+          <strong>Include ClamAV in the app container image.</strong> Simple to set up
+          but adds several hundred megabytes to your image and couples the ClamAV
+          upgrade cycle to your application deployments.
+        </li>
+        <li>
+          <strong>Run ClamAV (clamd) as a separate Deployment.</strong> Larger initial
+          setup but the recommended approach for production: ClamAV can be scaled,
+          updated, and monitored independently, and a single clamd instance can serve
+          multiple application pods.
+        </li>
+      </ol>
+      <p>
+        This guide uses option 2. pompelmi's TCP mode lets it talk to a remote clamd
+        instance by passing <code>{ host, port }</code> to <code>scan()</code>, so
+        no code changes beyond the options object are required.
+      </p>
+    </div>
+
+    <div class="section" id="architecture">
+      <h2>Architecture</h2>
+      <p>
+        The setup has three Kubernetes objects:
+      </p>
+      <ul>
+        <li>
+          <strong>clamd Deployment</strong> — runs the ClamAV daemon in a container.
+          Uses the official <code>clamav/clamav</code> Docker Hub image.
+        </li>
+        <li>
+          <strong>clamd Service</strong> — a ClusterIP service that exposes clamd on
+          port 3310 inside the cluster.
+        </li>
+        <li>
+          <strong>Node.js app Deployment</strong> — your application, configured via
+          an environment variable to reach clamd by its service name.
+        </li>
+      </ul>
+      <p>
+        pompelmi streams the file from the Node.js container to clamd over TCP
+        (ClamAV's INSTREAM protocol). The file never needs to leave the Node.js pod's
+        local <code>/tmp</code>.
+      </p>
+    </div>
+
+    <div class="section" id="clamd-deployment">
+      <h2>clamd Deployment</h2>
+<pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: clamav
+  labels:
+    app: clamav
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: clamav
+  template:
+    metadata:
+      labels:
+        app: clamav
+    spec:
+      containers:
+        - name: clamav
+          image: clamav/clamav:stable
+          ports:
+            - containerPort: 3310
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu:    "250m"
+            limits:
+              memory: "2Gi"
+              cpu:    "1000m"
+          readinessProbe:
+            tcpSocket:
+              port: 3310
+            initialDelaySeconds: 60   # freshclam needs time on first boot
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 3310
+            initialDelaySeconds: 90
+            periodSeconds: 20
+          volumeMounts:
+            - name: clamav-db
+              mountPath: /var/lib/clamav
+      volumes:
+        - name: clamav-db
+          emptyDir: {}   # replace with a PersistentVolumeClaim for faster restarts</pre>
+
+      <div class="note">
+        The official <code>clamav/clamav</code> image runs <code>freshclam</code>
+        on startup to download the virus database. This takes 1–3 minutes on first
+        run. The <code>initialDelaySeconds: 60</code> in the readiness probe prevents
+        Kubernetes from routing traffic before the database is ready.
+      </div>
+    </div>
+
+    <div class="section" id="clamd-service">
+      <h2>clamd Service</h2>
+<pre>apiVersion: v1
+kind: Service
+metadata:
+  name: clamav
+spec:
+  selector:
+    app: clamav
+  ports:
+    - port:       3310
+      targetPort: 3310
+  type: ClusterIP</pre>
+
+      <p>
+        With this Service in place, any pod in the same namespace can reach clamd at
+        <code>clamav:3310</code>. Pods in other namespaces use
+        <code>clamav.&lt;namespace&gt;.svc.cluster.local:3310</code>.
+      </p>
+    </div>
+
+    <div class="section" id="node-app">
+      <h2>Node.js app Deployment</h2>
+      <p>
+        Pass the clamd host and port to your Node.js container via environment
+        variables so you can change them without rebuilding the image:
+      </p>
+<pre>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: upload-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: upload-api
+  template:
+    metadata:
+      labels:
+        app: upload-api
+    spec:
+      containers:
+        - name: app
+          image: your-registry/upload-api:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: CLAMD_HOST
+              value: "clamav"        # matches the Service name
+            - name: CLAMD_PORT
+              value: "3310"
+            - name: CLAMD_TIMEOUT
+              value: "15000"</pre>
+    </div>
+
+    <div class="section" id="tcp-scan">
+      <h2>Calling scan() in TCP mode</h2>
+      <p>
+        Read the environment variables and pass them as options to every
+        <code>scan()</code> call:
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const CLAMD_OPTIONS = {
+  host:    process.env.CLAMD_HOST    || '127.0.0.1',
+  port:    Number(process.env.CLAMD_PORT)    || 3310,
+  timeout: Number(process.env.CLAMD_TIMEOUT) || 15_000,
+};
+
+async function scanFile(filePath) {
+  return scan(filePath, CLAMD_OPTIONS);
+}</pre>
+
+      <p>
+        Use <code>scanFile</code> wherever you previously called <code>scan</code>
+        directly. The Verdict API is identical regardless of which backend is used.
+      </p>
+<pre>app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  const tmpPath = req.file.path;
+  try {
+    const verdict = await scanFile(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(tmpPath);
+      return res.status(400).json({ error: 'Malware detected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(tmpPath);
+      return res.status(422).json({ error: 'Scan incomplete. Rejected.' });
+    }
+
+    // File is clean — proceed
+    return res.json({ status: 'ok' });
+
+  } catch (err) {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+    // ECONNREFUSED means clamd pod is not yet ready
+    return res.status(503).json({ error: 'Scanner unavailable: ' + err.message });
+  }
+});</pre>
+
+      <div class="tip">
+        During rolling deployments, clamd pods may momentarily be unavailable.
+        Return HTTP 503 for <code>ECONNREFUSED</code> errors so your load balancer or
+        API gateway can retry on another pod.
+      </div>
+    </div>
+
+    <div class="section" id="database-updates">
+      <h2>Keeping the virus database current</h2>
+      <p>
+        The <code>clamav/clamav</code> image runs <code>freshclam</code> on startup.
+        For persistent database updates without pod restarts, mount a
+        <code>PersistentVolumeClaim</code> at <code>/var/lib/clamav</code> and add a
+        <code>CronJob</code> to periodically restart the clamd pod so freshclam runs
+        again:
+      </p>
+<pre>apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: clamav-db-update
+spec:
+  schedule: "0 3 * * *"   # Daily at 03:00
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: updater
+              image: bitnami/kubectl:latest
+              command:
+                - kubectl
+                - rollout
+                - restart
+                - deployment/clamav</pre>
+
+      <div class="note">
+        A production setup would instead run <code>freshclam</code> as a sidecar
+        container that periodically updates the shared PVC, with clamd watching the
+        database directory for changes via <code>SelfCheck</code>. The CronJob
+        restart approach is simpler and suitable for most workloads.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Testing locally first?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>
+          for an equivalent single-machine setup.
+        </li>
+        <li>
+          Running on AWS?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>
+          for the scan-then-upload pattern.
+        </li>
+        <li>
+          Read the <a href="../api.html">API reference</a> for the full options object
+          documentation including the <code>timeout</code> parameter.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

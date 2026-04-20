@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/clamav-freshclam-update-strategies.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Keeping ClamAV virus definitions current in production — pompelmi</title>
+<meta name="description" content="How to keep the ClamAV virus database up to date in production: cron, systemd timer, Docker, Kubernetes CronJob, and monitoring database age with Node.js.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why-it-matters">Why it matters</a></li>
+      <li><a href="#bare-metal">Bare metal / VPS</a></li>
+      <li><a href="#docker">Docker</a></li>
+      <li><a href="#kubernetes">Kubernetes</a></li>
+      <li><a href="#monitor-db-age">Monitor DB age</a></li>
+      <li><a href="#freshclam-config">freshclam.conf tips</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why-it-matters">
+      <h2>Keeping ClamAV virus definitions current in production</h2>
+      <p>
+        ClamAV is only as effective as its virus database. The Cisco Talos team
+        publishes database updates multiple times per day. Running with a database
+        that is days or weeks old means recent malware families — including fast-
+        moving ransomware and phishing droppers — may not be detected.
+      </p>
+      <p>
+        This guide covers every common deployment scenario and gives you a Node.js
+        health-check snippet to monitor database age in your application.
+      </p>
+      <div class="note">
+        The <code>freshclam</code> tool ships with ClamAV and downloads updated
+        definitions from the ClamAV mirror network. Run it periodically and it
+        handles incremental updates, mirrors, and retries automatically.
+      </div>
+    </div>
+
+    <div class="section" id="bare-metal">
+      <h2>Bare metal / VPS</h2>
+      <h3>Using the clamav-freshclam systemd service</h3>
+      <p>
+        On Debian / Ubuntu, installing <code>clamav-freshclam</code> creates a
+        systemd service that runs freshclam as a daemon and checks for updates
+        every few hours:
+      </p>
+<pre>sudo apt-get install -y clamav-freshclam
+sudo systemctl enable --now clamav-freshclam
+sudo systemctl status clamav-freshclam</pre>
+
+      <p>
+        This is the recommended approach on Linux servers — you do not need to manage
+        a cron job yourself.
+      </p>
+
+      <h3>Manual cron job</h3>
+      <p>
+        If you prefer explicit control, disable the freshclam service and add a cron
+        entry:
+      </p>
+<pre>sudo systemctl disable --now clamav-freshclam
+
+# Add to crontab (crontab -e)
+# Run freshclam daily at 02:30, log to /var/log/freshclam.log
+30 2 * * * /usr/bin/freshclam --quiet &gt;&gt; /var/log/freshclam.log 2&gt;&amp;1</pre>
+
+      <div class="warn">
+        Do not run freshclam more than once per hour per server. The ClamAV mirror
+        network rate-limits excessive requests and may block your IP. The
+        <code>freshclam.conf</code> <code>Checks</code> parameter controls this.
+      </div>
+
+      <h3>systemd timer (alternative to cron)</h3>
+<pre># /etc/systemd/system/freshclam.service
+[Unit]
+Description=ClamAV virus database updater
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/freshclam --quiet
+User=clamav
+
+# /etc/systemd/system/freshclam.timer
+[Unit]
+Description=Run freshclam daily
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=1800   # spread load across mirrors
+Persistent=true
+
+[Install]
+WantedBy=timers.target</pre>
+<pre>sudo systemctl daemon-reload
+sudo systemctl enable --now freshclam.timer</pre>
+    </div>
+
+    <div class="section" id="docker">
+      <h2>Docker</h2>
+      <h3>Using the official clamav/clamav image</h3>
+      <p>
+        The official <code>clamav/clamav</code> image runs freshclam on container
+        startup. For long-running containers, it also starts a freshclam daemon that
+        checks for updates periodically.
+      </p>
+      <p>
+        To prevent slow cold starts on every container restart, mount a named volume
+        at <code>/var/lib/clamav</code> so the database persists across restarts:
+      </p>
+<pre>services:
+  clamav:
+    image: clamav/clamav:stable
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_db:/var/lib/clamav   # persists the virus database
+
+volumes:
+  clamav_db:</pre>
+
+      <h3>Custom image (database baked in)</h3>
+      <p>
+        For Lambda or environments where you cannot use volumes, bake the database
+        into your image and rebuild weekly:
+      </p>
+<pre>FROM ubuntu:22.04
+RUN apt-get update &amp;&amp; apt-get install -y clamav &amp;&amp; \
+    freshclam &amp;&amp; \
+    apt-get clean &amp;&amp; rm -rf /var/lib/apt/lists/*</pre>
+
+      <p>
+        Schedule a weekly CI/CD pipeline to rebuild and push this image. See
+        <a href="aws-lambda-serverless-virus-scan.html">Serverless virus scanning with AWS Lambda</a>
+        for a complete Lambda container example.
+      </p>
+    </div>
+
+    <div class="section" id="kubernetes">
+      <h2>Kubernetes</h2>
+      <h3>Persistent volume for the database</h3>
+      <p>
+        Mount a <code>PersistentVolumeClaim</code> at <code>/var/lib/clamav</code>
+        in the clamd Deployment so the database survives pod restarts:
+      </p>
+<pre>apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clamav-db
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 1Gi
+---
+# In the clamd Deployment spec:
+volumes:
+  - name: clamav-db
+    persistentVolumeClaim:
+      claimName: clamav-db</pre>
+
+      <h3>CronJob for daily updates</h3>
+      <p>
+        A Kubernetes CronJob that runs freshclam against the shared PVC:
+      </p>
+<pre>apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: freshclam-update
+spec:
+  schedule: "0 3 * * *"   # Daily at 03:00 UTC
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: freshclam
+              image: clamav/clamav:stable
+              command: ["freshclam", "--config-file=/etc/clamav/freshclam.conf"]
+              volumeMounts:
+                - name: clamav-db
+                  mountPath: /var/lib/clamav
+          volumes:
+            - name: clamav-db
+              persistentVolumeClaim:
+                claimName: clamav-db</pre>
+
+      <p>
+        After freshclam runs, clamd picks up the new database automatically if
+        <code>SelfCheck 3600</code> is set in <code>clamd.conf</code> (the official
+        image sets this by default).
+      </p>
+    </div>
+
+    <div class="section" id="monitor-db-age">
+      <h2>Monitoring database age from Node.js</h2>
+      <p>
+        Add a health-check endpoint that reports the age of the ClamAV database.
+        Alert if it is more than 48 hours old:
+      </p>
+<pre>const fs   = require('fs');
+const path = require('path');
+
+const DB_PATHS = {
+  linux:  '/var/lib/clamav/main.cvd',
+  darwin: '/usr/local/share/clamav/main.cvd',
+  win32:  'C:\\ProgramData\\ClamAV\\main.cvd',
+};
+
+function getClamavDbAgeHours() {
+  const dbPath = DB_PATHS[process.platform];
+  if (!dbPath || !fs.existsSync(dbPath)) return null;
+
+  const stat     = fs.statSync(dbPath);
+  const ageMs    = Date.now() - stat.mtimeMs;
+  return Math.round(ageMs / (1000 * 60 * 60));
+}
+
+// Health check endpoint
+app.get('/health/clamav', (req, res) =&gt; {
+  const ageHours = getClamavDbAgeHours();
+
+  if (ageHours === null) {
+    return res.status(503).json({ status: 'error', message: 'ClamAV database not found.' });
+  }
+
+  const stale = ageHours &gt; 48;
+
+  res.status(stale ? 503 : 200).json({
+    status:    stale ? 'stale' : 'ok',
+    dbAgeHours: ageHours,
+    message:   stale
+      ? `ClamAV database is ${ageHours} hours old — run freshclam.`
+      : `Database is current.`,
+  });
+});</pre>
+
+      <div class="tip">
+        Wire this endpoint into your monitoring system (Datadog, Prometheus, Uptime
+        Robot). A stale database alarm is a critical signal — it means your scanner
+        is running blind against recent threats.
+      </div>
+    </div>
+
+    <div class="section" id="freshclam-config">
+      <h2>freshclam.conf tips</h2>
+      <p>
+        Key settings in <code>/etc/clamav/freshclam.conf</code> (Linux):
+      </p>
+      <table>
+        <tr>
+          <th>Setting</th>
+          <th>Recommended value</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td><code>Checks</code></td>
+          <td><code>24</code></td>
+          <td>Check for updates 24 times per day (every hour). Max allowed by mirrors.</td>
+        </tr>
+        <tr>
+          <td><code>DatabaseMirror</code></td>
+          <td><code>database.clamav.net</code></td>
+          <td>Default mirror. Add a second mirror entry as fallback.</td>
+        </tr>
+        <tr>
+          <td><code>NotifyClamd</code></td>
+          <td><code>/etc/clamav/clamd.conf</code></td>
+          <td>Tells clamd to reload the database when freshclam downloads an update.</td>
+        </tr>
+        <tr>
+          <td><code>MaxAttempts</code></td>
+          <td><code>5</code></td>
+          <td>Retry count on mirror failure.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Setting up ClamAV in Docker Compose?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+        <li>
+          Running clamd in Kubernetes?
+          See <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>.
+        </li>
+        <li>
+          Installing ClamAV for the first time?
+          See <a href="clamav-install-nodejs-macos-linux-windows.html">How to install ClamAV on macOS, Linux and Windows</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

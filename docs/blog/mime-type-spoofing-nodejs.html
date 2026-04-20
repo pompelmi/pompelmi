@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/mime-type-spoofing-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIME type spoofing: how attackers disguise malicious files — pompelmi</title>
+<meta name="description" content="How MIME type spoofing works in Node.js file uploads, why you cannot trust Content-Type or file extensions, and how to defend against it with magic byte validation and ClamAV scanning.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#what-is-spoofing">What is MIME spoofing?</a></li>
+      <li><a href="#what-not-to-trust">What not to trust</a></li>
+      <li><a href="#magic-bytes">Magic bytes</a></li>
+      <li><a href="#common-signatures">Common signatures</a></li>
+      <li><a href="#defence-pipeline">Defence pipeline</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="what-is-spoofing">
+      <h2>MIME type spoofing: how attackers disguise malicious files</h2>
+      <p>
+        MIME type spoofing is the practice of renaming a malicious file or setting
+        a false <code>Content-Type</code> header so that an upload endpoint believes
+        the file is something harmless. An attacker renames a PHP webshell to
+        <code>profile.jpg</code>, sends it with <code>Content-Type: image/jpeg</code>,
+        and your server stores it as an image — until something executes it.
+      </p>
+      <p>
+        This is one of the most common techniques for bypassing naïve upload filters
+        and it takes only seconds to execute with a tool like Burp Suite or even
+        a simple <code>curl</code> command.
+      </p>
+    </div>
+
+    <div class="section" id="what-not-to-trust">
+      <h2>What you cannot trust</h2>
+      <table>
+        <tr>
+          <th>Source</th>
+          <th>Controlled by</th>
+          <th>Trustworthy?</th>
+        </tr>
+        <tr>
+          <td><code>Content-Type</code> HTTP header</td>
+          <td>Client (browser, curl, script)</td>
+          <td class="result-malicious">No</td>
+        </tr>
+        <tr>
+          <td>File extension (<code>.jpg</code>, <code>.pdf</code>)</td>
+          <td>Client</td>
+          <td class="result-malicious">No</td>
+        </tr>
+        <tr>
+          <td><code>req.file.mimetype</code> (Multer)</td>
+          <td>Derived from <code>Content-Type</code> header — client</td>
+          <td class="result-malicious">No</td>
+        </tr>
+        <tr>
+          <td>Magic bytes (first bytes of file content)</td>
+          <td>Difficult to fake without corrupting the file</td>
+          <td class="result-clean">Much more reliable</td>
+        </tr>
+        <tr>
+          <td>ClamAV signature match</td>
+          <td>Server-side (ClamAV database)</td>
+          <td class="result-clean">Yes, for known threats</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        <code>req.file.mimetype</code> in Multer is read directly from the
+        <code>Content-Type</code> part of the multipart request — exactly what the
+        client sent. It is <em>not</em> determined by reading the file bytes.
+        Never rely on it for security decisions.
+      </div>
+    </div>
+
+    <div class="section" id="magic-bytes">
+      <h2>Magic bytes explained</h2>
+      <p>
+        Most file formats start with a fixed byte sequence — a "magic number" — that
+        identifies the format. JPEG files always start with <code>FF D8 FF</code>.
+        PNG files start with <code>89 50 4E 47</code> (the bytes <code>\x89PNG</code>).
+        An attacker who renames a PHP file to <code>image.jpg</code> cannot change
+        the magic bytes without corrupting the file and making it unreadable as an
+        image.
+      </p>
+      <p>
+        Reading the first 12 bytes of the uploaded file and checking them against
+        a known-good list is fast (a single disk read) and cannot be spoofed by
+        changing headers or filenames.
+      </p>
+    </div>
+
+    <div class="section" id="common-signatures">
+      <h2>Common file signatures</h2>
+      <table>
+        <tr>
+          <th>Format</th>
+          <th>Magic bytes (hex)</th>
+          <th>ASCII / notes</th>
+        </tr>
+        <tr>
+          <td>JPEG</td>
+          <td><code>FF D8 FF</code></td>
+          <td>&mdash;</td>
+        </tr>
+        <tr>
+          <td>PNG</td>
+          <td><code>89 50 4E 47 0D 0A 1A 0A</code></td>
+          <td><code>\x89PNG\r\n\x1a\n</code></td>
+        </tr>
+        <tr>
+          <td>GIF</td>
+          <td><code>47 49 46 38</code></td>
+          <td><code>GIF8</code></td>
+        </tr>
+        <tr>
+          <td>WebP</td>
+          <td><code>52 49 46 46 ?? ?? ?? ?? 57 45 42 50</code></td>
+          <td><code>RIFF....WEBP</code></td>
+        </tr>
+        <tr>
+          <td>PDF</td>
+          <td><code>25 50 44 46</code></td>
+          <td><code>%PDF</code></td>
+        </tr>
+        <tr>
+          <td>ZIP / DOCX / XLSX</td>
+          <td><code>50 4B 03 04</code></td>
+          <td><code>PK\x03\x04</code></td>
+        </tr>
+        <tr>
+          <td>OLE2 (legacy .xls, .doc)</td>
+          <td><code>D0 CF 11 E0</code></td>
+          <td>&mdash;</td>
+        </tr>
+        <tr>
+          <td>ELF (Linux executable)</td>
+          <td><code>7F 45 4C 46</code></td>
+          <td><code>\x7FELF</code></td>
+        </tr>
+        <tr>
+          <td>Windows PE (.exe, .dll)</td>
+          <td><code>4D 5A</code></td>
+          <td><code>MZ</code></td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="defence-pipeline">
+      <h2>The complete defence pipeline</h2>
+      <p>
+        A robust upload endpoint validates the file at multiple layers:
+      </p>
+      <ol>
+        <li>
+          <strong>File size limit</strong> — enforce before writing to disk
+          (Multer's <code>limits.fileSize</code>).
+        </li>
+        <li>
+          <strong>Extension allowlist</strong> — reject any extension not in your
+          allowed set, even before reading the file.
+        </li>
+        <li>
+          <strong>Magic byte validation</strong> — read the first 12 bytes and confirm
+          the actual format matches your allowlist. Reject if mismatched.
+        </li>
+        <li>
+          <strong>Dangerous type blocklist</strong> — explicitly reject executables
+          (<code>MZ</code>, <code>ELF</code>), scripts, and other types your
+          application should never receive.
+        </li>
+        <li>
+          <strong>Antivirus scan</strong> — call pompelmi for known malware
+          signatures, regardless of what the magic bytes say.
+        </li>
+      </ol>
+      <p>
+        Layers 1–4 run in milliseconds and require no external process. Layer 5
+        catches known threats that passed all other checks.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete validation helper</h2>
+<pre>// lib/validateUpload.js
+const fs = require('fs');
+
+// Map of allowed types: extension → expected magic bytes
+const ALLOWED_TYPES = {
+  jpeg: { bytes: [0xFF, 0xD8, 0xFF],       offset: 0 },
+  png:  { bytes: [0x89, 0x50, 0x4E, 0x47], offset: 0 },
+  gif:  { bytes: [0x47, 0x49, 0x46, 0x38], offset: 0 },
+  webp: { bytes: [0x57, 0x45, 0x42, 0x50], offset: 8 },
+  pdf:  { bytes: [0x25, 0x50, 0x44, 0x46], offset: 0 },
+};
+
+// Types that should always be rejected regardless of claimed extension
+const BLOCKED_MAGIC = [
+  [0x4D, 0x5A],              // Windows PE (exe, dll, sys)
+  [0x7F, 0x45, 0x4C, 0x46], // ELF (Linux executables)
+  [0x50, 0x4B, 0x03, 0x04], // ZIP / OOXML (archives)
+  [0xD0, 0xCF, 0x11, 0xE0], // OLE2 (legacy Office macros)
+];
+
+function readBytes(filePath, offset, length) {
+  const fd  = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(length);
+  fs.readSync(fd, buf, 0, length, offset);
+  fs.closeSync(fd);
+  return buf;
+}
+
+function startsWith(buf, bytes) {
+  return bytes.every((b, i) =&gt; buf[i] === b);
+}
+
+/**
+ * Returns the detected type string, or throws with a human-readable error.
+ */
+function validateUpload(filePath, originalName, allowedExtensions) {
+  const ext = originalName.split('.').pop()?.toLowerCase() ?? '';
+
+  // Extension check
+  if (!allowedExtensions.includes(ext)) {
+    throw Object.assign(new Error(`File type .${ext} is not accepted.`), { status: 400 });
+  }
+
+  const header = readBytes(filePath, 0, 12);
+
+  // Block dangerous types
+  for (const magic of BLOCKED_MAGIC) {
+    if (startsWith(header, magic)) {
+      throw Object.assign(new Error('Executable or archive files are not accepted.'), { status: 400 });
+    }
+  }
+
+  // Validate actual format
+  for (const [type, sig] of Object.entries(ALLOWED_TYPES)) {
+    const chunk = readBytes(filePath, sig.offset, sig.bytes.length);
+    if (startsWith(chunk, sig.bytes)) return type;
+  }
+
+  throw Object.assign(new Error('File format not recognised.'), { status: 400 });
+}
+
+module.exports = { validateUpload };</pre>
+
+      <p>Use it in your upload handler before calling pompelmi:</p>
+<pre>const { scan, Verdict } = require('pompelmi');
+const { validateUpload } = require('./lib/validateUpload');
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  const tmpPath = req.file.path;
+  try {
+    // Step 1 — multi-layer validation (throws on failure)
+    const type = validateUpload(tmpPath, req.file.originalname, ['jpeg', 'png', 'pdf']);
+
+    // Step 2 — antivirus scan
+    const verdict = await scan(tmpPath);
+    if (verdict === Verdict.Malicious) return res.status(400).json({ error: 'Malware detected.' });
+    if (verdict === Verdict.ScanError)  return res.status(422).json({ error: 'Scan incomplete.' });
+
+    return res.json({ status: 'ok', type });
+
+  } catch (err) {
+    return res.status(err.status ?? 500).json({ error: err.message });
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Specifically securing image uploads?
+          See <a href="scan-image-uploads-nodejs.html">Scanning image uploads (JPEG, PNG, WebP, GIF) in Node.js</a>.
+        </li>
+        <li>
+          Protecting against macro-laden Office files?
+          See <a href="scan-excel-csv-macros.html">Scanning Excel and CSV files for malicious macros</a>.
+        </li>
+        <li>
+          Want the full checklist of upload risks?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

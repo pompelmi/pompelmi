@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/encrypted-file-scan-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to handle encrypted and password-protected files during scan — pompelmi</title>
+<meta name="description" content="How ClamAV and pompelmi behave with encrypted archives and password-protected Office documents, and what policies to apply to protect your Node.js upload pipeline.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#the-problem">The problem</a></li>
+      <li><a href="#how-clamav-behaves">How ClamAV behaves</a></li>
+      <li><a href="#verdict-mapping">Verdict mapping</a></li>
+      <li><a href="#detection">Detecting encryption</a></li>
+      <li><a href="#policy-options">Policy options</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="the-problem">
+      <h2>How to handle encrypted and password-protected files during scan</h2>
+      <p>
+        Encryption is a well-known antivirus evasion technique. An attacker can take
+        any malicious file, compress it into a password-protected ZIP archive, and
+        upload it to your application. Because the archive is encrypted, the antivirus
+        scanner cannot see the contents — the file may pass as clean.
+      </p>
+      <p>
+        This is not a flaw in pompelmi or ClamAV. No antivirus engine can scan inside
+        an encrypted file without the key. The question is how your application should
+        respond.
+      </p>
+    </div>
+
+    <div class="section" id="how-clamav-behaves">
+      <h2>How ClamAV behaves with encrypted files</h2>
+      <p>
+        The behaviour depends on the file type:
+      </p>
+      <table>
+        <tr>
+          <th>File type</th>
+          <th>ClamAV behaviour</th>
+          <th>pompelmi Verdict</th>
+        </tr>
+        <tr>
+          <td>Password-protected ZIP</td>
+          <td>Detects the encryption and reports it as <em>encrypted</em>. Does not scan contents.</td>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
+        </tr>
+        <tr>
+          <td>Password-protected RAR</td>
+          <td>Same as ZIP — detects encryption, cannot scan contents.</td>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
+        </tr>
+        <tr>
+          <td>Password-protected 7-Zip (.7z)</td>
+          <td>Detects encryption, reports it, cannot scan contents.</td>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
+        </tr>
+        <tr>
+          <td>Encrypted Office doc (password set via Office)</td>
+          <td>Office password protection uses OOXML encryption. ClamAV cannot read the contents — may return <strong>Clean</strong> (false negative).</td>
+          <td class="result-clean"><code>Verdict.Clean</code> (unreliable)</td>
+        </tr>
+        <tr>
+          <td>PDF with encryption (user password)</td>
+          <td>ClamAV reads the PDF structure but cannot access encrypted content streams.</td>
+          <td class="result-clean"><code>Verdict.Clean</code> (unreliable)</td>
+        </tr>
+      </table>
+
+      <div class="warn">
+        The most dangerous case is encrypted Office documents. ClamAV may return
+        <code>Verdict.Clean</code> — not because the file is safe, but because it
+        cannot see inside the encryption. Do not store or serve encrypted Office
+        files without additional controls.
+      </div>
+    </div>
+
+    <div class="section" id="verdict-mapping">
+      <h2>Understanding the Verdict.ScanError for archives</h2>
+      <p>
+        When ClamAV encounters a password-protected archive, it exits with code 2
+        (scan error). pompelmi maps this to <code>Verdict.ScanError</code>. This is
+        the correct and expected behaviour — the file is not confirmed safe, so it
+        should not be passed through.
+      </p>
+      <p>
+        If you already follow the standard pompelmi handling pattern — rejecting
+        <code>Verdict.ScanError</code> — you are already protected against
+        password-protected archives:
+      </p>
+<pre>const verdict = await scan(tmpPath);
+
+if (verdict === Verdict.Malicious) {
+  // Confirmed threat
+  return res.status(400).json({ error: 'Malware detected.' });
+}
+
+if (verdict === Verdict.ScanError) {
+  // Includes: encrypted archives, corrupted files, scan timeouts
+  return res.status(422).json({ error: 'File could not be scanned. Upload rejected.' });
+}
+
+// Verdict.Clean — proceed</pre>
+    </div>
+
+    <div class="section" id="detection">
+      <h2>Detecting encrypted Office documents</h2>
+      <p>
+        Because ClamAV may return <code>Verdict.Clean</code> for encrypted Office
+        files, you need an additional check. Encrypted Office documents (created with
+        a password in Microsoft Office) use the OOXML encryption wrapper format. This
+        format stores the encrypted document inside an OLE2 compound file — meaning
+        the file starts with the OLE2 magic bytes <code>D0 CF 11 E0</code>, even
+        though the content is an OOXML document.
+      </p>
+      <p>
+        A practical heuristic: if the uploaded file has extension <code>.xlsx</code>,
+        <code>.docx</code>, or <code>.pptx</code> but its magic bytes identify it as
+        OLE2 (not ZIP), it is likely encrypted.
+      </p>
+<pre>function isEncryptedOffice(filePath, originalName) {
+  const fd  = require('fs').openSync(filePath, 'r');
+  const buf = Buffer.alloc(4);
+  require('fs').readSync(fd, buf, 0, 4, 0);
+  require('fs').closeSync(fd);
+
+  const isOle2  = buf[0] === 0xD0 &amp;&amp; buf[1] === 0xCF;  // OLE2 magic
+  const ext     = originalName.split('.').pop()?.toLowerCase();
+  const ooxml   = ['docx', 'xlsx', 'pptx', 'docm', 'xlsm'];
+
+  // OOXML extensions with OLE2 magic = almost certainly encrypted
+  return isOle2 &amp;&amp; ooxml.includes(ext);
+}</pre>
+
+      <div class="note">
+        This heuristic also catches legitimate <code>.doc</code> / <code>.xls</code>
+        (legacy binary) files. If you want to accept those, check the extension list.
+        Generally, rejecting all OLE2 files with OOXML extensions is the safer policy.
+      </div>
+    </div>
+
+    <div class="section" id="policy-options">
+      <h2>Policy options</h2>
+      <p>
+        There is no universally correct policy. Choose based on your application's
+        needs:
+      </p>
+      <table>
+        <tr>
+          <th>Policy</th>
+          <th>Pros</th>
+          <th>Cons</th>
+        </tr>
+        <tr>
+          <td><strong>Reject all encrypted files.</strong><br>Reject on <code>ScanError</code> and detect encrypted Office docs separately.</td>
+          <td>Maximum security. No encrypted file ever enters storage.</td>
+          <td>Legitimate users with password-protected documents cannot upload them.</td>
+        </tr>
+        <tr>
+          <td><strong>Accept encrypted files with warning.</strong><br>Tag them as "unverified" and restrict access until manually reviewed.</td>
+          <td>Supports legitimate use cases (e.g. secure document sharing).</td>
+          <td>Requires a manual review workflow. Encrypted malware can enter storage temporarily.</td>
+        </tr>
+        <tr>
+          <td><strong>Accept only specific encrypted types.</strong><br>Allow password-protected PDFs but reject encrypted Office docs.</td>
+          <td>Balanced approach for specific use cases.</td>
+          <td>Requires per-format detection logic. PDFs may still carry threats.</td>
+        </tr>
+      </table>
+      <p>
+        For most web applications the recommended policy is the first: reject all
+        files that cannot be fully scanned.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete upload handler with encrypted file handling</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+function readMagic(filePath) {
+  const fd  = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(4);
+  fs.readSync(fd, buf, 0, 4, 0);
+  fs.closeSync(fd);
+  return buf;
+}
+
+function isEncryptedOfficeDocument(filePath, originalName) {
+  const magic  = readMagic(filePath);
+  const isOle2 = magic[0] === 0xD0 &amp;&amp; magic[1] === 0xCF;
+  const ext    = originalName.split('.').pop()?.toLowerCase();
+  const ooxml  = new Set(['docx', 'xlsx', 'pptx', 'docm', 'xlsm', 'pptm']);
+  return isOle2 &amp;&amp; ooxml.has(ext);
+}
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+
+  try {
+    // Pre-check: reject encrypted Office documents before scanning
+    if (isEncryptedOfficeDocument(tmpPath, req.file.originalname)) {
+      return res.status(400).json({
+        error: 'Encrypted or password-protected Office files cannot be accepted. ' +
+               'Please remove the password before uploading.',
+      });
+    }
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      // This catches password-protected archives (ZIP, RAR, 7z)
+      // as well as corrupted files and scan failures
+      return res.status(422).json({
+        error: 'File could not be fully scanned — it may be encrypted, ' +
+               'password-protected, or corrupted. Upload rejected.',
+      });
+    }
+
+    // Verdict.Clean — file was fully scannable and no threats found
+    return res.json({ status: 'ok', file: req.file.originalname });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+
+      <div class="tip">
+        Return a clear, user-friendly error message that explains <em>why</em> the
+        file was rejected and what the user can do. "Remove the password before
+        uploading" is actionable. "Scan error" is not.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Worried about ZIP bombs in archive uploads?
+          See <a href="nodejs-zip-bomb-prevention.html">Preventing ZIP Bomb attacks in Node.js</a>.
+        </li>
+        <li>
+          Need to scan Excel and CSV files specifically?
+          See <a href="scan-excel-csv-macros.html">Scanning Excel/CSV files for malicious macros</a>.
+        </li>
+        <li>
+          Want the complete upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

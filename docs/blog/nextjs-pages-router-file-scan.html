@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/nextjs-pages-router-file-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning file uploads in Next.js Pages Router (API Routes) — pompelmi</title>
+<meta name="description" content="How to add ClamAV virus scanning to Next.js Pages Router API Routes using pompelmi and Multer. Covers bodyParser: false config, Multer setup, and complete TypeScript examples.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#disable-body-parser">Disable bodyParser</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#multer-helper">Multer helper</a></li>
+      <li><a href="#api-route">API Route</a></li>
+      <li><a href="#typescript">TypeScript types</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning file uploads in Next.js Pages Router (API Routes)</h2>
+      <p>
+        Next.js Pages Router API Routes live at <code>pages/api/*.ts</code>. Unlike
+        App Router Route Handlers, they receive Node.js
+        <code>IncomingMessage</code> / <code>ServerResponse</code> objects, so you
+        can use Node.js-native tools like Multer directly — no need to convert a
+        Web API <code>File</code> to a buffer first.
+      </p>
+      <p>
+        This guide is specifically for the <strong>Pages Router</strong> (<code>pages/</code>
+        directory). If you use the App Router (<code>app/</code> directory), see
+        <a href="nextjs-app-router-file-scan.html">Scanning file uploads in Next.js (App Router)</a>
+        instead.
+      </p>
+      <div class="note">
+        Pages Router API Routes are fully supported and receive regular maintenance.
+        There is no need to migrate to the App Router solely for file upload scanning.
+      </div>
+    </div>
+
+    <div class="section" id="disable-body-parser">
+      <h2>Disable Next.js's built-in body parser</h2>
+      <p>
+        By default, Next.js parses the request body before your handler runs.
+        Multer needs the raw stream, so you must disable the built-in parser by
+        exporting a <code>config</code> object from the route file:
+      </p>
+<pre>// pages/api/upload.ts
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};</pre>
+      <p>
+        Without this, Multer will not receive any data and the request will appear
+        empty.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi multer
+npm install --save-dev @types/multer</pre>
+    </div>
+
+    <div class="section" id="multer-helper">
+      <h2>Multer helper for Next.js</h2>
+      <p>
+        Multer uses Express-style middleware callbacks. Next.js API Routes are plain
+        Node.js handlers, not Express — so you need a small wrapper that promisifies
+        the middleware:
+      </p>
+<pre>// lib/multer.ts
+import multer from 'multer';
+import type { NextApiRequest, NextApiResponse } from 'next';
+import os from 'os';
+
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+type MiddlewareFn = (
+  req: NextApiRequest,
+  res: NextApiResponse,
+  next: (err?: unknown) =&gt; void
+) =&gt; void;
+
+export function runMiddleware(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  fn: MiddlewareFn
+): Promise&lt;void&gt; {
+  return new Promise((resolve, reject) =&gt; {
+    fn(req, res, (err?: unknown) =&gt; {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+export const uploadSingle = upload.single('file') as unknown as MiddlewareFn;</pre>
+    </div>
+
+    <div class="section" id="api-route">
+      <h2>Complete API Route</h2>
+<pre>// pages/api/upload.ts
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { scan, Verdict } from 'pompelmi';
+import fs from 'fs';
+import { runMiddleware, uploadSingle } from '@/lib/multer';
+
+export const config = {
+  api: { bodyParser: false },
+};
+
+interface MulterRequest extends NextApiRequest {
+  file?: Express.Multer.File;
+}
+
+export default async function handler(
+  req: MulterRequest,
+  res: NextApiResponse
+) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed.' });
+  }
+
+  try {
+    // Run Multer — writes the file to /tmp
+    await runMiddleware(req, res, uploadSingle);
+  } catch (err) {
+    return res.status(400).json({ error: 'File upload failed.' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath = req.file.path;
+
+  try {
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({
+        error: 'Scan could not complete. Upload rejected as a precaution.',
+      });
+    }
+
+    // File is clean — move to permanent storage
+    return res.status(200).json({ status: 'ok', name: req.file.originalname });
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Scan failed';
+    return res.status(500).json({ error: message });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+}</pre>
+
+      <div class="tip">
+        Test with the EICAR test string to confirm your pipeline is working. A
+        <code>POST</code> to <code>/api/upload</code> with a file containing the
+        EICAR string should return HTTP 400 with <code>"Malware detected"</code>.
+      </div>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript types for pompelmi</h2>
+      <p>
+        pompelmi does not ship type declarations. Add this declaration file to your
+        project:
+      </p>
+      <span class="platform-label">types/pompelmi.d.ts</span>
+<pre>declare module 'pompelmi' {
+  interface ScanOptions {
+    host?:    string;
+    port?:    number;
+    timeout?: number;
+  }
+
+  const Verdict: Readonly&lt;{
+    Clean:     unique symbol;
+    Malicious: unique symbol;
+    ScanError: unique symbol;
+  }&gt;;
+
+  function scan(filePath: string, options?: ScanOptions): Promise&lt;symbol&gt;;
+  export { scan, Verdict };
+}</pre>
+      <p>
+        Add the <code>types</code> directory to your <code>tsconfig.json</code>
+        <code>typeRoots</code> or ensure it is included in the project files.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using the App Router instead?
+          See <a href="nextjs-app-router-file-scan.html">Scanning file uploads in Next.js (App Router)</a>.
+        </li>
+        <li>
+          Uploading to S3 after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+        <li>
+          Running pompelmi in Docker?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

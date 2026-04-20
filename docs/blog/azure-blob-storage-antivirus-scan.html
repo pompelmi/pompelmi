@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/azure-blob-storage-antivirus-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning files before uploading to Azure Blob Storage — pompelmi</title>
+<meta name="description" content="How to scan uploaded files for malware with pompelmi before storing them in Azure Blob Storage. Complete Node.js Express example using @azure/storage-blob with scan-then-upload flow and blob metadata tagging.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#auth">Authentication</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#blob-metadata">Blob metadata &amp; tags</a></li>
+      <li><a href="#managed-identity">Managed Identity</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning files before uploading to Azure Blob Storage</h2>
+      <p>
+        Azure Blob Storage is Microsoft's object storage service and the standard
+        choice for file storage on Azure. This guide shows how to integrate pompelmi
+        into a Node.js upload endpoint that stores files in Azure Blob Storage — scanning
+        each file locally before it is uploaded, so malware never reaches the cloud.
+      </p>
+      <div class="note">
+        New to pompelmi? Read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first, then return here for the Azure-specific pattern.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi @azure/storage-blob multer express</pre>
+    </div>
+
+    <div class="section" id="auth">
+      <h2>Authentication</h2>
+      <p>
+        The <code>@azure/storage-blob</code> SDK supports several authentication
+        strategies. The two most common for server-side Node.js are:
+      </p>
+      <ul>
+        <li>
+          <strong>Connection string</strong> — simplest for local development. Copy
+          the connection string from the Azure portal under
+          <em>Storage account &rarr; Access keys</em> and set it as
+          <code>AZURE_STORAGE_CONNECTION_STRING</code>.
+        </li>
+        <li>
+          <strong>Managed Identity</strong> — recommended for production. No secrets
+          to rotate. See the <a href="#managed-identity">Managed Identity section</a>
+          below.
+        </li>
+      </ul>
+<pre>const { BlobServiceClient } = require('@azure/storage-blob');
+
+// Connection string (dev / simple deployments)
+const blobServiceClient = BlobServiceClient.fromConnectionString(
+  process.env.AZURE_STORAGE_CONNECTION_STRING
+);</pre>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete Express example</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const { BlobServiceClient } = require('@azure/storage-blob');
+const crypto = require('crypto');
+const path   = require('path');
+const fs     = require('fs');
+const os     = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 },  // 50 MB
+});
+
+const blobServiceClient = BlobServiceClient.fromConnectionString(
+  process.env.AZURE_STORAGE_CONNECTION_STRING
+);
+const containerClient = blobServiceClient.getContainerClient(
+  process.env.AZURE_CONTAINER_NAME
+);
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath  = req.file.path;
+  let tmpDeleted = false;
+
+  try {
+    // Step 1 — scan locally before touching Azure
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    // Step 2 — file is clean, upload to Azure Blob Storage
+    const ext       = path.extname(req.file.originalname).toLowerCase();
+    const blobName  = 'uploads/' + crypto.randomBytes(16).toString('hex') + ext;
+    const blockBlob = containerClient.getBlockBlobClient(blobName);
+
+    await blockBlob.uploadFile(tmpPath, {
+      blobHTTPHeaders: { blobContentType: req.file.mimetype },
+      metadata: {
+        scanStatus:  'clean',
+        scannedBy:   'pompelmi',
+        scanEngine:  'clamav',
+        scannedAt:   new Date().toISOString(),
+        originalName: encodeURIComponent(req.file.originalname),
+      },
+    });
+
+    // Step 3 — clean up
+    fs.unlinkSync(tmpPath);
+    tmpDeleted = true;
+
+    return res.json({
+      status: 'ok',
+      blobName,
+      url: blockBlob.url,
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+
+  } finally {
+    if (!tmpDeleted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on :3000'));</pre>
+
+      <div class="tip">
+        Azure Blob Storage metadata keys must be valid C# identifiers — they cannot
+        contain hyphens. Use camelCase keys (<code>scanStatus</code>, not
+        <code>scan-status</code>).
+      </div>
+    </div>
+
+    <div class="section" id="blob-metadata">
+      <h2>Blob metadata and tags</h2>
+      <p>
+        Azure offers two ways to attach key-value data to a blob:
+      </p>
+      <ul>
+        <li>
+          <strong>Metadata</strong> — attached at upload time or via
+          <code>setMetadata()</code>. Returned in the HTTP response headers.
+          Keys are case-insensitive and must be valid identifiers.
+        </li>
+        <li>
+          <strong>Blob index tags</strong> — queryable across an entire container.
+          Useful for finding all blobs with <code>scanStatus = 'clean'</code>.
+        </li>
+      </ul>
+<pre>// Set blob index tags for queryable audit trail
+await blockBlob.setTags({
+  scanStatus: 'clean',
+  scannedBy:  'pompelmi',
+});</pre>
+
+      <p>
+        Query blobs by tag using the Blob Service's tag filtering:
+      </p>
+<pre>// Find all unscanned blobs in the account
+const tagFilter = `"scanStatus" = 'clean'`;
+for await (const blob of blobServiceClient.findBlobsByTags(tagFilter)) {
+  console.log(blob.name, blob.tags);
+}</pre>
+    </div>
+
+    <div class="section" id="managed-identity">
+      <h2>Using Managed Identity in production</h2>
+      <p>
+        Avoid storing connection strings in environment variables for production. Use
+        <strong>Managed Identity</strong> with <code>DefaultAzureCredential</code>:
+      </p>
+<pre>npm install @azure/identity</pre>
+<pre>const { BlobServiceClient } = require('@azure/storage-blob');
+const { DefaultAzureCredential } = require('@azure/identity');
+
+const blobServiceClient = new BlobServiceClient(
+  `https://${process.env.AZURE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net`,
+  new DefaultAzureCredential()
+);</pre>
+
+      <p>
+        Assign the <strong>Storage Blob Data Contributor</strong> role to your app's
+        managed identity in the Azure portal under the storage account's
+        <em>Access control (IAM)</em> blade. No credentials are stored anywhere.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using AWS S3 instead?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+        <li>
+          Running pompelmi on Kubernetes (AKS)?
+          See <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>.
+        </li>
+        <li>
+          Want the full upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

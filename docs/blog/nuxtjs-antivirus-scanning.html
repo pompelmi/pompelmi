@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/nuxtjs-antivirus-scanning.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Integrating antivirus scanning in Nuxt.js — pompelmi</title>
+<meta name="description" content="How to add ClamAV virus scanning to Nuxt 3 file upload endpoints using pompelmi. Covers server/api route handlers with h3, multipart parsing, and TypeScript.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#server-route">Server route</a></li>
+      <li><a href="#multipart">Multipart parsing</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#composable">Reusable composable</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Integrating antivirus scanning in Nuxt.js</h2>
+      <p>
+        Nuxt 3 server routes live under <code>server/api/</code> and are handled by
+        the <strong>h3</strong> framework — the same HTTP toolkit that powers
+        Nitro, the engine behind every Nuxt 3 deployment. h3 provides a
+        <code>readMultipartFormData</code> utility that makes it straightforward to
+        access uploaded files on the server side.
+      </p>
+      <p>
+        This guide integrates pompelmi into a Nuxt 3 server route so that every
+        uploaded file is scanned by ClamAV before it is stored or returned to the
+        client.
+      </p>
+      <div class="note">
+        pompelmi requires the <strong>Node.js</strong> preset — it uses
+        <code>child_process</code> and <code>net</code>. The default Nuxt 3 preset is
+        already Node.js for self-hosted deployments. Edge or Cloudflare Workers
+        presets are not compatible.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi</pre>
+      <p>Install ClamAV on your development machine or server:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="server-route">
+      <h2>Nuxt 3 server routes</h2>
+      <p>
+        Server routes in Nuxt 3 are TypeScript (or JavaScript) files placed in the
+        <code>server/api/</code> directory. The filename sets the HTTP method:
+        <code>upload.post.ts</code> handles <code>POST /api/upload</code>.
+      </p>
+      <p>
+        Each file must export a default handler created with
+        <code>defineEventHandler</code> from h3.
+      </p>
+    </div>
+
+    <div class="section" id="multipart">
+      <h2>Reading multipart form data</h2>
+      <p>
+        h3's <code>readMultipartFormData</code> parses a multipart request and returns
+        an array of <code>MultipartPart</code> objects, each with:
+      </p>
+      <ul>
+        <li><code>name</code> — the form field name</li>
+        <li><code>filename</code> — the original file name (present for file fields)</li>
+        <li><code>data</code> — a <code>Buffer</code> with the raw file bytes</li>
+        <li><code>type</code> — the MIME type declared by the client</li>
+      </ul>
+      <p>
+        pompelmi needs a file on disk. Write the <code>data</code> buffer to a temp
+        path, scan it, then clean up.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete server route</h2>
+<pre>// server/api/upload.post.ts
+import { defineEventHandler, readMultipartFormData, createError } from 'h3';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+
+export default defineEventHandler(async (event) =&gt; {
+  let tmpPath: string | null = null;
+
+  try {
+    const parts = await readMultipartFormData(event);
+
+    if (!parts || parts.length === 0) {
+      throw createError({ statusCode: 400, message: 'No file provided.' });
+    }
+
+    const filePart = parts.find((p) =&gt; p.name === 'file');
+
+    if (!filePart?.data || !filePart.filename) {
+      throw createError({ statusCode: 400, message: 'No file field found in form.' });
+    }
+
+    // Enforce upload size limit
+    const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (filePart.data.length &gt; MAX_BYTES) {
+      throw createError({ statusCode: 413, message: 'File too large.' });
+    }
+
+    // Write to temp file for scanning
+    const ext = filePart.filename.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, filePart.data);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      throw createError({
+        statusCode: 400,
+        message: 'Malware detected. Upload rejected.',
+      });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      throw createError({
+        statusCode: 422,
+        message: 'Scan could not complete. Upload rejected as a precaution.',
+      });
+    }
+
+    // File is clean — persist to permanent storage here
+    // e.g. await uploadToS3(filePart.data, filePart.filename);
+
+    return {
+      status: 'ok',
+      filename: filePart.filename,
+      size: filePart.data.length,
+    };
+
+  } finally {
+    // Always clean up the temp file
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+});</pre>
+
+      <div class="tip">
+        Test with EICAR — the harmless standard antivirus test string — to confirm
+        your pipeline is working before deploying to production:
+      </div>
+<pre># Expects HTTP 400 with "Malware detected"
+echo 'X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*' \
+  &gt; /tmp/eicar.txt
+curl -F "file=@/tmp/eicar.txt" http://localhost:3000/api/upload</pre>
+    </div>
+
+    <div class="section" id="composable">
+      <h2>Reusable scan utility</h2>
+      <p>
+        If you have multiple upload endpoints, extract the scan logic into a shared
+        server utility:
+      </p>
+<pre>// server/utils/scanFile.ts
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+import { createError } from 'h3';
+
+export async function scanBuffer(
+  data: Buffer,
+  filename: string
+): Promise&lt;void&gt; {
+  const ext = filename.split('.').pop()?.toLowerCase() ?? 'bin';
+  const tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+
+  try {
+    await writeFile(tmpPath, data);
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      throw createError({ statusCode: 400, message: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      throw createError({ statusCode: 422, message: 'Scan incomplete. Upload rejected.' });
+    }
+  } finally {
+    if (existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+}</pre>
+
+      <p>Nuxt auto-imports from <code>server/utils/</code>, so you can call it directly:</p>
+<pre>// server/api/documents.post.ts
+import { defineEventHandler, readMultipartFormData, createError } from 'h3';
+
+export default defineEventHandler(async (event) =&gt; {
+  const parts = await readMultipartFormData(event);
+  const file  = parts?.find((p) =&gt; p.name === 'file');
+  if (!file?.data || !file.filename) {
+    throw createError({ statusCode: 400, message: 'No file.' });
+  }
+
+  await scanBuffer(file.data, file.filename); // throws on malware / error
+
+  // Proceed with clean file …
+  return { status: 'ok' };
+});</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using Nuxt with Docker Compose?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+        <li>
+          Deploying to Kubernetes?
+          See <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>
+          for the TCP-mode approach.
+        </li>
+        <li>
+          Want a broader view of upload security?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

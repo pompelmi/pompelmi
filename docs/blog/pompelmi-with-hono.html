@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/pompelmi-with-hono.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virus scanning in Hono.js with pompelmi — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Hono.js file upload endpoints using pompelmi. Covers Node.js and Bun runtimes, FormData parsing, middleware, and temp-file cleanup.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#runtime">Runtime note</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#upload-route">Upload route</a></li>
+      <li><a href="#middleware">Scan middleware</a></li>
+      <li><a href="#bun">Running on Bun</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Virus scanning in Hono.js with pompelmi</h2>
+      <p>
+        Hono is a lightweight, ultra-fast web framework designed to run on multiple
+        runtimes: Node.js, Bun, Deno, Cloudflare Workers, and more. Its API is
+        built around the Web standard <code>Request</code> / <code>Response</code>
+        objects and <code>FormData</code>, making file upload handling consistent
+        across runtimes.
+      </p>
+      <p>
+        This guide integrates pompelmi into Hono upload routes. The same code works
+        on both Node.js and Bun — the only difference is the server adapter you
+        import.
+      </p>
+      <div class="note">
+        New to pompelmi? Start with
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        to install ClamAV, then return here for the Hono integration.
+      </div>
+    </div>
+
+    <div class="section" id="runtime">
+      <h2>Runtime note</h2>
+      <p>
+        pompelmi uses <code>child_process.spawn</code> (CLI mode) or Node's
+        <code>net</code> module (TCP mode). Both are available on Node.js and Bun.
+        They are <strong>not</strong> available on Cloudflare Workers or Deno Deploy.
+        If you deploy Hono to those edge runtimes, run pompelmi in a separate
+        Node.js / Bun microservice and call it over HTTP.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+      <span class="platform-label">Node.js</span>
+<pre>npm install hono @hono/node-server pompelmi</pre>
+      <span class="platform-label">Bun</span>
+<pre>bun add hono pompelmi</pre>
+      <p>Install ClamAV on the host:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="upload-route">
+      <h2>Upload route</h2>
+      <p>
+        Hono exposes the uploaded file as a Web API <code>File</code> object via
+        <code>c.req.formData()</code>. Write the bytes to a temp path, scan, then
+        clean up in a <code>finally</code> block:
+      </p>
+<pre>// src/index.ts
+import { Hono } from 'hono';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomBytes } from 'node:crypto';
+
+const app = new Hono();
+
+app.post('/upload', async (c) =&gt; {
+  let tmpPath: string | null = null;
+
+  try {
+    const body = await c.req.formData();
+    const file = body.get('file') as File | null;
+
+    if (!file || file.size === 0) {
+      return c.json({ error: 'No file provided.' }, 400);
+    }
+
+    const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (file.size &gt; MAX_BYTES) {
+      return c.json({ error: 'File too large.' }, 413);
+    }
+
+    // Web API File → Buffer → temp file
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext    = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath      = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, buffer);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return c.json({ error: 'Malware detected. Upload rejected.' }, 400);
+    }
+    if (verdict === Verdict.ScanError) {
+      return c.json({ error: 'Scan could not complete. Upload rejected.' }, 422);
+    }
+
+    // File is clean — persist to storage here
+    return c.json({ status: 'ok', name: file.name });
+
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    return c.json({ error: msg }, 500);
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+});
+
+export default app;</pre>
+    </div>
+
+    <div class="section" id="middleware">
+      <h2>Reusable scan middleware</h2>
+      <p>
+        If you have multiple upload routes, extract the scan logic into a Hono
+        middleware. The middleware writes the file to disk, scans it, attaches the
+        cleaned path to the context, and calls <code>next()</code>:
+      </p>
+<pre>// src/middleware/antivirus.ts
+import { createMiddleware } from 'hono/factory';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomBytes } from 'node:crypto';
+
+declare module 'hono' {
+  interface ContextVariableMap {
+    scannedFile: { path: string; name: string; size: number };
+  }
+}
+
+export const antivirusMiddleware = createMiddleware(async (c, next) =&gt; {
+  let tmpPath: string | null = null;
+
+  try {
+    const body = await c.req.formData();
+    const file = body.get('file') as File | null;
+
+    if (!file || file.size === 0) {
+      return c.json({ error: 'No file provided.' }, 400);
+    }
+
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext    = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath      = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, buffer);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return c.json({ error: 'Malware detected.' }, 400);
+    }
+    if (verdict === Verdict.ScanError) {
+      return c.json({ error: 'Scan incomplete. Rejected.' }, 422);
+    }
+
+    c.set('scannedFile', { path: tmpPath, name: file.name, size: file.size });
+    tmpPath = null; // ownership transferred — route handler cleans up
+
+    await next();
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+});</pre>
+
+      <p>Use it on any route that needs scanning:</p>
+<pre>import { antivirusMiddleware } from './middleware/antivirus';
+
+app.post('/documents', antivirusMiddleware, async (c) =&gt; {
+  const { path, name } = c.get('scannedFile');
+  // Upload `path` to storage, then unlink it
+  return c.json({ status: 'ok', name });
+});</pre>
+    </div>
+
+    <div class="section" id="bun">
+      <h2>Running on Bun</h2>
+      <p>
+        On Bun, export the Hono app directly — Bun's built-in HTTP server handles it:
+      </p>
+<pre>// src/index.ts (Bun)
+import { Hono } from 'hono';
+// ... routes defined above ...
+
+export default {
+  port: 3000,
+  fetch: app.fetch,
+};</pre>
+      <span class="platform-label">Start the server</span>
+<pre>bun run src/index.ts</pre>
+
+      <p>
+        On Node.js, use <code>@hono/node-server</code>:
+      </p>
+<pre>// src/index.ts (Node.js)
+import { serve } from '@hono/node-server';
+serve({ fetch: app.fetch, port: 3000 },
+  () =&gt; console.log('Listening on http://localhost:3000'));
+</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Running ClamAV in Docker alongside Hono?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+        <li>
+          Uploading to object storage after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>
+          or <a href="cloudflare-r2-antivirus-scan.html">Cloudflare R2</a>.
+        </li>
+        <li>
+          Want the complete upload security picture?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

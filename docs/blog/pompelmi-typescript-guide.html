@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/pompelmi-typescript-guide.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Complete TypeScript integration guide for pompelmi — pompelmi</title>
+<meta name="description" content="How to use pompelmi with full TypeScript type safety: custom declaration files, typed verdict helpers, strict narrowing, and integration patterns for NestJS, Next.js, and Express.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#declaration-file">Declaration file</a></li>
+      <li><a href="#tsconfig">tsconfig setup</a></li>
+      <li><a href="#type-narrowing">Type narrowing</a></li>
+      <li><a href="#verdict-helpers">Verdict helpers</a></li>
+      <li><a href="#esm">ESM usage</a></li>
+      <li><a href="#nestjs">NestJS pattern</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Complete TypeScript integration guide for pompelmi</h2>
+      <p>
+        pompelmi is written in JavaScript and does not ship with TypeScript
+        declaration files. This guide shows you how to add full type coverage with a
+        local <code>.d.ts</code> file, how to write typed verdict helpers that narrow
+        correctly, and how the integration looks in common TypeScript frameworks.
+      </p>
+    </div>
+
+    <div class="section" id="declaration-file">
+      <h2>Declaration file</h2>
+      <p>
+        Create a file that TypeScript will pick up automatically when you
+        <code>import</code> or <code>require</code> pompelmi:
+      </p>
+      <span class="platform-label">src/types/pompelmi.d.ts</span>
+<pre>declare module 'pompelmi' {
+
+  /** Options for the TCP scan path (clamd over the network). */
+  interface ScanOptions {
+    /** Hostname or IP of the clamd daemon. Default: '127.0.0.1' */
+    host?:    string;
+    /** TCP port clamd listens on. Default: 3310 */
+    port?:    number;
+    /** Socket idle timeout in ms (TCP path only). Default: 15000 */
+    timeout?: number;
+  }
+
+  /**
+   * Frozen object of Symbol constants representing scan outcomes.
+   * Always compare with === against these constants — never against strings.
+   */
+  const Verdict: Readonly&lt;{
+    /** No threats detected. Safe to proceed. */
+    Clean:     unique symbol;
+    /** A malware signature was matched. Reject the file. */
+    Malicious: unique symbol;
+    /** Scan ran but could not complete. Treat as untrusted. */
+    ScanError: unique symbol;
+  }&gt;;
+
+  /** Union type of all possible scan verdicts. */
+  type ScanVerdict = typeof Verdict[keyof typeof Verdict];
+
+  /**
+   * Scan a file for malware.
+   * @param filePath Absolute path to the file on disk.
+   * @param options  Optional TCP options. Omit to use local clamscan CLI.
+   * @returns A Promise that resolves to a ScanVerdict Symbol.
+   */
+  function scan(filePath: string, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+
+  export { scan, Verdict, ScanVerdict, ScanOptions };
+}</pre>
+    </div>
+
+    <div class="section" id="tsconfig">
+      <h2>tsconfig.json setup</h2>
+      <p>
+        Ensure TypeScript picks up the declaration file. There are two ways:
+      </p>
+      <h3>Option A — include path</h3>
+<pre>// tsconfig.json
+{
+  "compilerOptions": { ... },
+  "include": ["src/**/*"]   // already picks up src/types/pompelmi.d.ts
+}</pre>
+
+      <h3>Option B — typeRoots</h3>
+<pre>{
+  "compilerOptions": {
+    "typeRoots": ["./src/types", "./node_modules/@types"]
+  }
+}</pre>
+
+      <p>Verify resolution is working:</p>
+<pre>import { scan, Verdict } from 'pompelmi';
+//              ^^ should auto-complete in your IDE</pre>
+    </div>
+
+    <div class="section" id="type-narrowing">
+      <h2>Type narrowing with switch</h2>
+      <p>
+        Because <code>Verdict</code> members are <code>unique symbol</code> types,
+        TypeScript's control-flow analysis narrows correctly in a <code>switch</code>
+        statement:
+      </p>
+<pre>import { scan, Verdict, ScanVerdict } from 'pompelmi';
+
+async function handleVerdict(filePath: string): Promise&lt;void&gt; {
+  const result: ScanVerdict = await scan(filePath);
+
+  switch (result) {
+    case Verdict.Clean:
+      // TypeScript knows: result is typeof Verdict.Clean here
+      console.log('Safe to proceed.');
+      break;
+
+    case Verdict.Malicious:
+      console.log('Malware detected.');
+      break;
+
+    case Verdict.ScanError:
+      console.log('Scan failed — treating as unsafe.');
+      break;
+
+    default: {
+      // Exhaustiveness check: this line should never be reached.
+      // If a new Verdict is added without updating this switch,
+      // TypeScript will flag _never as 'never' type.
+      const _never: never = result;
+      throw new Error(`Unhandled verdict: ${String(_never)}`);
+    }
+  }
+}</pre>
+
+      <div class="tip">
+        The <code>default: const _never: never = result</code> pattern is an
+        exhaustiveness check. If you ever add a new Verdict to the declaration file
+        without handling it in the switch, TypeScript will fail to compile with a
+        type error — a useful safety net.
+      </div>
+    </div>
+
+    <div class="section" id="verdict-helpers">
+      <h2>Typed verdict helpers</h2>
+      <p>
+        Helper functions let you convert verdicts to strings for logging, HTTP status
+        codes, or database storage:
+      </p>
+<pre>// src/lib/verdict.ts
+import { Verdict, ScanVerdict } from 'pompelmi';
+
+export function verdictLabel(v: ScanVerdict): string {
+  switch (v) {
+    case Verdict.Clean:     return 'clean';
+    case Verdict.Malicious: return 'malicious';
+    case Verdict.ScanError: return 'scan_error';
+  }
+}
+
+export function verdictHttpStatus(v: ScanVerdict): number {
+  switch (v) {
+    case Verdict.Clean:     return 200;
+    case Verdict.Malicious: return 400;
+    case Verdict.ScanError: return 422;
+  }
+}
+
+export function isRejected(v: ScanVerdict): boolean {
+  return v === Verdict.Malicious || v === Verdict.ScanError;
+}</pre>
+    </div>
+
+    <div class="section" id="esm">
+      <h2>ESM (ES Modules) usage</h2>
+      <p>
+        pompelmi uses CommonJS. If your project uses ESM
+        (<code>"type": "module"</code> in <code>package.json</code>) you can still
+        import it. Node.js supports importing CommonJS modules from ESM:
+      </p>
+<pre>// ✓ Works in ESM projects
+import { scan, Verdict } from 'pompelmi';</pre>
+
+      <p>
+        If you use a bundler (esbuild, Rollup, Webpack) or a meta-framework that
+        handles the CJS/ESM boundary, the import works as written above. For bare
+        Node.js ESM with <code>--input-type=module</code>, the same syntax works
+        because Node.js wraps CJS exports in a default export with named re-exports.
+      </p>
+    </div>
+
+    <div class="section" id="nestjs">
+      <h2>NestJS typed service</h2>
+      <p>
+        With the declaration file in place, the NestJS scan service has full type
+        coverage without any casts:
+      </p>
+<pre>// scan/scan.service.ts
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { scan, Verdict, ScanVerdict } from 'pompelmi';
+
+@Injectable()
+export class ScanService {
+  async scanFile(filePath: string): Promise&lt;ScanVerdict&gt; {
+    try {
+      return await scan(filePath);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err);
+      throw new InternalServerErrorException('ClamAV unavailable: ' + message);
+    }
+  }
+
+  isClean(verdict: ScanVerdict): boolean {
+    return verdict === Verdict.Clean;
+  }
+
+  isMalicious(verdict: ScanVerdict): boolean {
+    return verdict === Verdict.Malicious;
+  }
+}</pre>
+
+      <p>
+        The full NestJS interceptor and module setup is covered in the dedicated
+        guide: <a href="pompelmi-with-nestjs.html">How to use pompelmi in a NestJS application</a>.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Full API reference for <code>scan()</code> and <code>Verdict</code>?
+          See the <a href="../api.html">API Reference</a>.
+        </li>
+        <li>
+          NestJS integration?
+          See <a href="pompelmi-with-nestjs.html">How to use pompelmi in a NestJS application</a>.
+        </li>
+        <li>
+          Next.js App Router integration?
+          See <a href="nextjs-app-router-file-scan.html">Scanning file uploads in Next.js (App Router)</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

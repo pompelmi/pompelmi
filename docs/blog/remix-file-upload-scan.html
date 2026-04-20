@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/remix-file-upload-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning file uploads in Remix / React Router v7 — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Remix and React Router v7 file upload Actions using pompelmi. Covers unstable_parseMultipartFormData, temp-file handling, and progressive enhancement.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#upload-handler">Upload handler</a></li>
+      <li><a href="#action">Route Action</a></li>
+      <li><a href="#component">Route component</a></li>
+      <li><a href="#resource-route">Resource Route variant</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning file uploads in Remix / React Router v7</h2>
+      <p>
+        Remix (now unified with React Router v7) uses server-side <strong>Actions</strong>
+        to handle form submissions, including file uploads. The framework provides
+        <code>unstable_parseMultipartFormData</code> and custom upload handlers that
+        let you control exactly where uploaded bytes go before your action logic runs.
+      </p>
+      <p>
+        The pattern for virus scanning: write the uploaded file to a temp path via a
+        custom upload handler, scan it with pompelmi, and either proceed or return
+        a validation error to the form.
+      </p>
+      <div class="note">
+        New to pompelmi? Read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first to install ClamAV, then return here.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi</pre>
+      <p>Install ClamAV on your server:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+    </div>
+
+    <div class="section" id="upload-handler">
+      <h2>Custom upload handler</h2>
+      <p>
+        Remix's <code>unstable_parseMultipartFormData</code> accepts an
+        <em>upload handler</em> — an async function that receives each part of the
+        multipart request and returns a value stored in the resulting
+        <code>FormData</code>. Write the file bytes to a temp path and return the
+        path:
+      </p>
+<pre>// app/utils/uploadHandler.server.ts
+import { unstable_createFileUploadHandler } from '@remix-run/node';
+import { join } from 'path';
+import { tmpdir } from 'os';
+
+export const tempFileUploadHandler = unstable_createFileUploadHandler({
+  directory: tmpdir(),
+  maxPartSize: 50 * 1024 * 1024, // 50 MB
+  // avoidFileConflicts generates a unique filename
+  avoidFileConflicts: true,
+});</pre>
+
+      <div class="note">
+        <code>unstable_createFileUploadHandler</code> writes each part to the
+        directory you specify. The resulting form value is a <code>NodeOnDiskFile</code>
+        object with a <code>.filepath</code> property — the absolute path on disk.
+      </div>
+    </div>
+
+    <div class="section" id="action">
+      <h2>Route Action with virus scanning</h2>
+<pre>// app/routes/upload.tsx  (server-side Action)
+import {
+  unstable_parseMultipartFormData,
+  NodeOnDiskFile,
+  ActionFunctionArgs,
+  json,
+} from '@remix-run/node';
+import { tempFileUploadHandler } from '~/utils/uploadHandler.server';
+import { scan, Verdict } from 'pompelmi';
+import { unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+
+export async function action({ request }: ActionFunctionArgs) {
+  let tmpPath: string | null = null;
+
+  try {
+    const formData = await unstable_parseMultipartFormData(
+      request,
+      tempFileUploadHandler
+    );
+
+    const file = formData.get('file') as NodeOnDiskFile | null;
+
+    if (!file) {
+      return json({ error: 'No file provided.' }, { status: 400 });
+    }
+
+    tmpPath = file.filepath;
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return json({ error: 'Malware detected. Upload rejected.' }, { status: 400 });
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return json(
+        { error: 'Scan could not complete. Upload rejected as a precaution.' },
+        { status: 422 }
+      );
+    }
+
+    // File is clean — move to permanent storage here
+    // e.g. await uploadToS3(tmpPath, file.name);
+
+    return json({ status: 'ok', name: file.name });
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Upload failed';
+    return json({ error: message }, { status: 500 });
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="component">
+      <h2>Route component</h2>
+      <p>
+        The component uses <code>useActionData</code> to display the scan result.
+        The form works without JavaScript (progressive enhancement) and with it via
+        Remix's <code>&lt;Form&gt;</code>:
+      </p>
+<pre>// app/routes/upload.tsx  (client component, same file)
+import { Form, useActionData, useNavigation } from '@remix-run/react';
+
+export default function UploadPage() {
+  const data       = useActionData&lt;typeof action&gt;();
+  const navigation = useNavigation();
+  const uploading  = navigation.state === 'submitting';
+
+  return (
+    &lt;Form method="post" encType="multipart/form-data"&gt;
+      &lt;input type="file" name="file" required /&gt;
+      &lt;button type="submit" disabled={uploading}&gt;
+        {uploading ? 'Scanning…' : 'Upload'}
+      &lt;/button&gt;
+
+      {data?.error  &amp;&amp; &lt;p style={{ color: 'red' }}&gt;{data.error}&lt;/p&gt;}
+      {data?.status === 'ok' &amp;&amp; &lt;p&gt;Uploaded: {data.name}&lt;/p&gt;}
+    &lt;/Form&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="section" id="resource-route">
+      <h2>Resource Route variant (JSON API)</h2>
+      <p>
+        If you prefer a JSON API endpoint without a UI component — for example, to
+        back a JavaScript fetch call — use a resource route (a route file with no
+        default export):
+      </p>
+<pre>// app/routes/api.upload.ts
+import {
+  unstable_parseMultipartFormData,
+  NodeOnDiskFile,
+  ActionFunctionArgs,
+  json,
+} from '@remix-run/node';
+import { tempFileUploadHandler } from '~/utils/uploadHandler.server';
+import { scan, Verdict } from 'pompelmi';
+import { unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+
+export async function action({ request }: ActionFunctionArgs) {
+  if (request.method !== 'POST') {
+    return json({ error: 'Method not allowed.' }, { status: 405 });
+  }
+
+  let tmpPath: string | null = null;
+  try {
+    const formData = await unstable_parseMultipartFormData(request, tempFileUploadHandler);
+    const file     = formData.get('file') as NodeOnDiskFile | null;
+    if (!file) return json({ error: 'No file.' }, { status: 400 });
+
+    tmpPath = file.filepath;
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) return json({ error: 'Malware detected.' }, { status: 400 });
+    if (verdict === Verdict.ScanError)  return json({ error: 'Scan incomplete.'  }, { status: 422 });
+
+    return json({ status: 'ok', name: file.name });
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) await unlink(tmpPath).catch(() =&gt; {});
+  }
+}
+
+// No default export = resource route (no UI)</pre>
+
+      <div class="tip">
+        Resource routes are accessed at the URL that matches their filename. A file
+        at <code>app/routes/api.upload.ts</code> is available at
+        <code>POST /api/upload</code>.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Storing files in S3 after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+        <li>
+          Want the full upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+        <li>
+          Running in Docker?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

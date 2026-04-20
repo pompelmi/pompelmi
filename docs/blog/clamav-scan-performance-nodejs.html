@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/clamav-scan-performance-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Optimising ClamAV scan performance in Node.js — pompelmi</title>
+<meta name="description" content="How to improve ClamAV scanning throughput in Node.js with pompelmi: CLI vs TCP mode benchmarks, clamd daemon setup, concurrency tuning, and timeout configuration.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#bottlenecks">Where time is spent</a></li>
+      <li><a href="#cli-vs-tcp">CLI vs TCP mode</a></li>
+      <li><a href="#clamd-setup">clamd setup</a></li>
+      <li><a href="#concurrency">Concurrency</a></li>
+      <li><a href="#timeout">Timeout tuning</a></li>
+      <li><a href="#file-size">File size limits</a></li>
+      <li><a href="#benchmark">Quick benchmark</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="bottlenecks">
+      <h2>Optimising ClamAV scan performance in Node.js</h2>
+      <p>
+        A fresh ClamAV scan on a modern machine takes 100–500 ms for a typical
+        document. For high-upload-volume applications, that latency adds up quickly.
+        Understanding <em>where</em> the time goes points to the right optimisation.
+      </p>
+      <table>
+        <tr>
+          <th>Phase</th>
+          <th>CLI mode (<code>clamscan</code>)</th>
+          <th>TCP mode (clamd)</th>
+        </tr>
+        <tr>
+          <td>Process / connection startup</td>
+          <td>~150–300 ms — loads the full database into memory on every call</td>
+          <td>~1–5 ms — clamd is already running with DB in memory</td>
+        </tr>
+        <tr>
+          <td>File I/O</td>
+          <td>Reads file from disk</td>
+          <td>File streamed over TCP — adds minimal overhead for local clamd</td>
+        </tr>
+        <tr>
+          <td>Signature matching</td>
+          <td>Same engine, same speed</td>
+          <td>Same engine, same speed</td>
+        </tr>
+      </table>
+      <p>
+        The single biggest win for production workloads is switching from CLI mode
+        to TCP mode (clamd).
+      </p>
+    </div>
+
+    <div class="section" id="cli-vs-tcp">
+      <h2>CLI mode vs TCP mode</h2>
+      <p>
+        pompelmi defaults to CLI mode: it spawns a new <code>clamscan</code> process
+        for every <code>scan()</code> call. Each new process loads the ClamAV virus
+        database (~300 MB) from disk into memory — this alone takes 150–300 ms on
+        most hardware.
+      </p>
+      <p>
+        In <strong>TCP mode</strong>, a <code>clamd</code> daemon runs persistently
+        with the database already loaded. Each <code>scan()</code> call opens a
+        socket, streams the file, and reads the result. Connection overhead is a few
+        milliseconds — database load time is zero.
+      </p>
+      <p>
+        To use TCP mode, pass <code>host</code> and <code>port</code> to
+        <code>scan()</code>:
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+// TCP mode — clamd must be running and listening on this host:port
+const verdict = await scan('/tmp/upload.pdf', {
+  host:    process.env.CLAMD_HOST || '127.0.0.1',
+  port:    Number(process.env.CLAMD_PORT) || 3310,
+  timeout: 15_000,
+});</pre>
+
+      <p>
+        For production, always use TCP mode. CLI mode is convenient for development
+        and scripting but not suitable for upload-heavy services.
+      </p>
+    </div>
+
+    <div class="section" id="clamd-setup">
+      <h2>Running clamd locally</h2>
+      <p>
+        The quickest way to run clamd locally is with Docker:
+      </p>
+<pre>docker run -d \
+  --name clamav \
+  -p 3310:3310 \
+  clamav/clamav:stable</pre>
+
+      <p>
+        Wait for clamd to be ready (it runs freshclam on first boot — takes 1–3
+        minutes), then verify it is accepting connections:
+      </p>
+<pre>nc -zv 127.0.0.1 3310
+# Connection to 127.0.0.1 3310 port [tcp/*] succeeded!</pre>
+
+      <p>
+        On Linux without Docker, install the <code>clamav-daemon</code> package:
+      </p>
+<pre>sudo apt-get install -y clamav-daemon
+sudo systemctl enable --now clamav-daemon</pre>
+    </div>
+
+    <div class="section" id="concurrency">
+      <h2>Concurrency</h2>
+      <p>
+        Each <code>scan()</code> call is independent and can run concurrently.
+        Clamd handles multiple simultaneous connections — the default
+        <code>MaxThreads</code> in <code>clamd.conf</code> is 10.
+      </p>
+      <p>
+        For bulk uploads or batch processing, scan concurrently with
+        <code>Promise.all</code>. For very high volumes, use <code>p-limit</code>
+        to cap concurrency at your clamd thread count:
+      </p>
+<pre>npm install p-limit</pre>
+<pre>const pLimit = require('p-limit');
+const { scan, Verdict } = require('pompelmi');
+
+const CONCURRENCY = 8; // stay under MaxThreads in clamd.conf
+const limit = pLimit(CONCURRENCY);
+
+async function scanBatch(filePaths) {
+  return Promise.all(
+    filePaths.map((p) =&gt;
+      limit(() =&gt; scan(p, { host: '127.0.0.1', port: 3310 }))
+    )
+  );
+}</pre>
+
+      <div class="tip">
+        Check clamd's <code>MaxThreads</code> setting in <code>/etc/clamav/clamd.conf</code>
+        (default: 10) and set your concurrency limit to 80–90% of that value. This
+        leaves headroom for clamd's internal housekeeping threads.
+      </div>
+    </div>
+
+    <div class="section" id="timeout">
+      <h2>Timeout tuning</h2>
+      <p>
+        pompelmi's TCP mode accepts a <code>timeout</code> option (milliseconds of
+        socket inactivity before the call rejects). The default is 15,000 ms.
+      </p>
+      <p>
+        Set the timeout based on your largest expected file size. A rough rule:
+      </p>
+      <table>
+        <tr>
+          <th>Max file size</th>
+          <th>Recommended timeout</th>
+        </tr>
+        <tr>
+          <td>5 MB</td>
+          <td>5,000 ms</td>
+        </tr>
+        <tr>
+          <td>20 MB</td>
+          <td>10,000 ms</td>
+        </tr>
+        <tr>
+          <td>50 MB</td>
+          <td>20,000 ms</td>
+        </tr>
+        <tr>
+          <td>100 MB+</td>
+          <td>30,000 ms or more</td>
+        </tr>
+      </table>
+      <p>
+        A tight timeout also acts as a circuit breaker: if clamd becomes unresponsive
+        due to overload or a hanging scan, requests will fail quickly rather than
+        blocking indefinitely.
+      </p>
+<pre>const verdict = await scan(filePath, {
+  host:    '127.0.0.1',
+  port:    3310,
+  timeout: 10_000, // 10 s — appropriate for files up to ~20 MB
+});</pre>
+    </div>
+
+    <div class="section" id="file-size">
+      <h2>Enforce file size limits before scanning</h2>
+      <p>
+        Every megabyte you scan costs time. Rejecting oversized files before calling
+        pompelmi keeps latency predictable and protects against decompression
+        attempts on large archives. Use Multer's <code>limits.fileSize</code> to
+        enforce the limit before the file even reaches your handler:
+      </p>
+<pre>const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 20 * 1024 * 1024 },  // reject above 20 MB immediately
+});</pre>
+
+      <p>
+        When Multer rejects an oversized file, it throws a
+        <code>MulterError</code> with <code>code: 'LIMIT_FILE_SIZE'</code>. Handle
+        it in your error middleware:
+      </p>
+<pre>app.use((err, req, res, next) =&gt; {
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    return res.status(413).json({ error: 'File too large.' });
+  }
+  next(err);
+});</pre>
+    </div>
+
+    <div class="section" id="benchmark">
+      <h2>Quick benchmark</h2>
+      <p>
+        Run this script to compare CLI vs TCP scan times on your own hardware:
+      </p>
+<pre>// bench.js
+const { scan } = require('pompelmi');
+const { writeFileSync } = require('fs');
+const { tmpdir } = require('os');
+const { join } = require('path');
+
+const FILE  = join(tmpdir(), 'bench-1mb.bin');
+// Create a 1 MB test file of zeroes
+writeFileSync(FILE, Buffer.alloc(1024 * 1024));
+
+async function bench(label, options, runs = 10) {
+  const times = [];
+  for (let i = 0; i &lt; runs; i++) {
+    const t0 = Date.now();
+    await scan(FILE, options);
+    times.push(Date.now() - t0);
+  }
+  const avg = Math.round(times.reduce((a, b) =&gt; a + b, 0) / runs);
+  console.log(`${label}: avg ${avg} ms over ${runs} runs`);
+}
+
+(async () =&gt; {
+  console.log('Warming up clamd…');
+  await scan(FILE, { host: '127.0.0.1', port: 3310 });
+
+  await bench('CLI  mode', {});
+  await bench('TCP  mode', { host: '127.0.0.1', port: 3310 });
+})();</pre>
+
+      <p>Expected results on a typical development machine:</p>
+      <table>
+        <tr><th>Mode</th><th>Average (1 MB file)</th></tr>
+        <tr><td>CLI (clamscan)</td><td>250–400 ms</td></tr>
+        <tr><td>TCP (clamd)</td><td>20–60 ms</td></tr>
+      </table>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Setting up clamd in Docker Compose or Kubernetes?
+          See <a href="pompelmi-docker-compose.html">Docker Compose</a> or
+          <a href="pompelmi-clamav-kubernetes.html">Kubernetes</a>.
+        </li>
+        <li>
+          Scanning multiple files concurrently?
+          See <a href="nodejs-multifile-bulk-upload-scan.html">Scanning multiple file uploads in a single request</a>.
+        </li>
+        <li>
+          Need async scanning to avoid blocking HTTP responses?
+          See <a href="bullmq-background-scan-queue.html">Background virus scanning with BullMQ</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

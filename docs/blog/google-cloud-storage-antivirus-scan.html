@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/google-cloud-storage-antivirus-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning files before uploading to Google Cloud Storage — pompelmi</title>
+<meta name="description" content="How to scan uploaded files for malware with pompelmi before storing them in Google Cloud Storage (GCS). Complete Express example with @google-cloud/storage, scan-then-upload flow, and object metadata.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#auth">Authentication</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#metadata">Object metadata</a></li>
+      <li><a href="#iam">IAM-based access control</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning files before uploading to Google Cloud Storage</h2>
+      <p>
+        Google Cloud Storage (GCS) is the object storage service for Google Cloud
+        Platform. Like AWS S3, the recommended approach for virus scanning is to scan
+        the file <strong>locally</strong> while it is still on your server's disk,
+        and only call the GCS upload API if the scan returns
+        <code>Verdict.Clean</code>. This prevents malware from ever reaching GCS.
+      </p>
+      <div class="note">
+        New to pompelmi? Read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first, then return here for the GCS-specific pattern.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi @google-cloud/storage multer express</pre>
+    </div>
+
+    <div class="section" id="auth">
+      <h2>Authentication</h2>
+      <p>
+        The <code>@google-cloud/storage</code> SDK authenticates using
+        <strong>Application Default Credentials (ADC)</strong>. In practice this means:
+      </p>
+      <ul>
+        <li>
+          <strong>Local development:</strong> run <code>gcloud auth application-default login</code>
+          and credentials are picked up automatically.
+        </li>
+        <li>
+          <strong>GCE / Cloud Run / GKE:</strong> attach a service account to the
+          instance or workload. The SDK finds credentials automatically — no key file
+          needed.
+        </li>
+        <li>
+          <strong>Outside GCP:</strong> set the environment variable
+          <code>GOOGLE_APPLICATION_CREDENTIALS</code> to the path of a service account
+          JSON key file.
+        </li>
+      </ul>
+      <p>
+        The service account needs the <strong>Storage Object Creator</strong> role
+        (<code>roles/storage.objectCreator</code>) on your bucket.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete Express example</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const { Storage } = require('@google-cloud/storage');
+const crypto = require('crypto');
+const path   = require('path');
+const fs     = require('fs');
+const os     = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 },  // 50 MB
+});
+
+// Uses Application Default Credentials automatically
+const storage = new Storage();
+const bucket  = storage.bucket(process.env.GCS_BUCKET_NAME);
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath   = req.file.path;
+  let tmpDeleted  = false;
+
+  try {
+    // Step 1 — scan locally before touching GCS
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    // Step 2 — file is clean, upload to GCS
+    const ext        = path.extname(req.file.originalname).toLowerCase();
+    const gcsKey     = 'uploads/' + crypto.randomBytes(16).toString('hex') + ext;
+    const gcsFile    = bucket.file(gcsKey);
+
+    await gcsFile.save(fs.readFileSync(tmpPath), {
+      contentType: req.file.mimetype,
+      metadata: {
+        // Custom metadata visible in GCS console and API responses
+        'scan-status': 'clean',
+        'scanned-by':  'pompelmi',
+        'scan-engine': 'clamav',
+        'scanned-at':  new Date().toISOString(),
+      },
+    });
+
+    // Step 3 — clean up temp file
+    fs.unlinkSync(tmpPath);
+    tmpDeleted = true;
+
+    return res.json({
+      status: 'ok',
+      key:    gcsKey,
+      url:    `https://storage.googleapis.com/${process.env.GCS_BUCKET_NAME}/${gcsKey}`,
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+
+  } finally {
+    if (!tmpDeleted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on :3000'));</pre>
+
+      <div class="tip">
+        For large files, prefer the streaming upload API to avoid loading the entire
+        file into memory. Replace <code>gcsFile.save(buffer, ...)</code> with
+        <code>fs.createReadStream(tmpPath).pipe(gcsFile.createWriteStream({ ... }))</code>.
+      </div>
+    </div>
+
+    <div class="section" id="metadata">
+      <h2>Reading scan metadata</h2>
+      <p>
+        The custom metadata you attach during upload is retrievable on every
+        subsequent <code>getMetadata()</code> call:
+      </p>
+<pre>const [metadata] = await bucket.file(gcsKey).getMetadata();
+console.log(metadata.metadata['scan-status']);  // 'clean'
+console.log(metadata.metadata['scanned-at']);   // ISO timestamp</pre>
+      <p>
+        This provides a lightweight audit trail without a separate database record.
+      </p>
+    </div>
+
+    <div class="section" id="iam">
+      <h2>IAM-based defence in depth</h2>
+      <p>
+        For an extra layer of defence, restrict who can upload to your bucket by
+        granting only your application's service account the
+        <code>Storage Object Creator</code> role, while your CDN or download service
+        uses a separate identity with only <code>Storage Object Viewer</code>.
+      </p>
+      <p>
+        You can also use a <strong>Uniform bucket-level access</strong> policy to
+        enforce that all objects are private by default, and only expose them via
+        signed URLs that your application generates after verifying scan status.
+      </p>
+<pre># Grant only the app's service account write access
+gcloud storage buckets add-iam-policy-binding gs://your-bucket \
+  --member="serviceAccount:upload-api@your-project.iam.gserviceaccount.com" \
+  --role="roles/storage.objectCreator"</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using AWS S3 instead?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+        <li>
+          Using Cloudflare R2?
+          See <a href="cloudflare-r2-antivirus-scan.html">Scanning files before uploading to Cloudflare R2</a>.
+        </li>
+        <li>
+          Running on Kubernetes in GKE?
+          See <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

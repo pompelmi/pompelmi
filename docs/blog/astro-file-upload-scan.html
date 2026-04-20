@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/astro-file-upload-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning file uploads in Astro.js — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Astro.js server endpoints using pompelmi. Covers SSR mode setup, API route file handling, and TypeScript examples.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#ssr-mode">Enable SSR mode</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#api-endpoint">API endpoint</a></li>
+      <li><a href="#astro-page-action">Astro Page + Action</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning file uploads in Astro.js</h2>
+      <p>
+        Astro is a content-first meta-framework that ships zero JavaScript by default
+        and supports server-side rendering (SSR) through adapters for Node.js, Vercel,
+        Cloudflare Workers, and others. When running in SSR mode on Node.js, Astro
+        server endpoints receive Web API <code>Request</code> objects — the same
+        pattern as Next.js App Router and Hono.
+      </p>
+      <p>
+        This guide shows how to add pompelmi ClamAV scanning to an Astro API
+        endpoint that accepts file uploads.
+      </p>
+      <div class="note">
+        pompelmi requires Node.js APIs. Use the
+        <code>@astrojs/node</code> adapter. Cloudflare Workers and Deno adapters
+        are not compatible with pompelmi.
+      </div>
+    </div>
+
+    <div class="section" id="ssr-mode">
+      <h2>Enable SSR mode</h2>
+      <p>
+        File upload handling requires a server — Astro's default static mode has no
+        server runtime. Add the Node.js adapter and set <code>output: 'server'</code>:
+      </p>
+<pre>npx astro add node</pre>
+      <span class="platform-label">astro.config.mjs</span>
+<pre>import { defineConfig } from 'astro/config';
+import node from '@astrojs/node';
+
+export default defineConfig({
+  output:  'server',
+  adapter: node({ mode: 'standalone' }),
+});</pre>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi</pre>
+      <p>Install ClamAV on your server or development machine:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="api-endpoint">
+      <h2>API endpoint</h2>
+      <p>
+        Astro API routes are TypeScript files under <code>src/pages/</code> that
+        export named functions matching HTTP methods. A file at
+        <code>src/pages/api/upload.ts</code> handles requests to
+        <code>POST /api/upload</code>:
+      </p>
+<pre>// src/pages/api/upload.ts
+import type { APIRoute } from 'astro';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomBytes } from 'node:crypto';
+
+export const POST: APIRoute = async ({ request }) =&gt; {
+  let tmpPath: string | null = null;
+
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file || file.size === 0) {
+      return new Response(
+        JSON.stringify({ error: 'No file provided.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (file.size &gt; MAX_BYTES) {
+      return new Response(
+        JSON.stringify({ error: 'File too large.' }),
+        { status: 413, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Web API File → Buffer → temp file on disk
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const ext    = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath      = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, buffer);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return new Response(
+        JSON.stringify({ error: 'Malware detected. Upload rejected.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return new Response(
+        JSON.stringify({ error: 'Scan could not complete. Upload rejected.' }),
+        { status: 422, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // File is clean — persist to storage here
+    return new Response(
+      JSON.stringify({ status: 'ok', name: file.name }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return new Response(
+      JSON.stringify({ error: message }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    );
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+};</pre>
+
+      <div class="tip">
+        Astro API routes return plain <code>Response</code> objects — the standard
+        Web API type. There is no framework-specific wrapper. This means the same
+        scan logic works identically in Hono, SvelteKit +server.ts, and Astro.
+      </div>
+    </div>
+
+    <div class="section" id="astro-page-action">
+      <h2>Astro Page with client-side fetch</h2>
+      <p>
+        A minimal Astro page that posts to the endpoint and shows the result:
+      </p>
+<pre>---
+// src/pages/upload.astro
+---
+&lt;html lang="en"&gt;
+&lt;head&gt;&lt;title&gt;Upload&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;form id="upload-form"&gt;
+    &lt;input type="file" name="file" id="file-input" required /&gt;
+    &lt;button type="submit"&gt;Upload &amp; scan&lt;/button&gt;
+  &lt;/form&gt;
+  &lt;p id="result"&gt;&lt;/p&gt;
+
+  &lt;script&gt;
+    document.getElementById('upload-form').addEventListener('submit', async (e) =&gt; {
+      e.preventDefault();
+      const form   = new FormData(e.target);
+      const result = document.getElementById('result');
+      result.textContent = 'Scanning…';
+
+      const res  = await fetch('/api/upload', { method: 'POST', body: form });
+      const data = await res.json();
+      result.textContent = res.ok
+        ? `Uploaded: ${data.name}`
+        : `Error: ${data.error}`;
+    });
+  &lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Uploading to cloud storage after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>
+          or <a href="cloudflare-r2-antivirus-scan.html">Cloudflare R2</a>.
+        </li>
+        <li>
+          Using a different meta-framework?
+          See <a href="nextjs-app-router-file-scan.html">Next.js App Router</a>,
+          <a href="nuxtjs-antivirus-scanning.html">Nuxt.js</a>, or
+          <a href="sveltekit-file-upload-security.html">SvelteKit</a>.
+        </li>
+        <li>
+          Full upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

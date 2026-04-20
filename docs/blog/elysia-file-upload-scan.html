@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/elysia-file-upload-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Virus scanning in Elysia.js with pompelmi — pompelmi</title>
+<meta name="description" content="How to add ClamAV antivirus scanning to Elysia.js file upload endpoints using pompelmi. Elysia runs on Bun — covers t.File() schema, temp-file handling, and reusable scan plugin.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#upload-route">Upload route</a></li>
+      <li><a href="#scan-plugin">Reusable scan plugin</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Virus scanning in Elysia.js with pompelmi</h2>
+      <p>
+        Elysia is a TypeScript-first web framework built specifically for
+        <strong>Bun</strong>. It is known for its end-to-end type safety, ergonomic
+        plugin system, and performance. File uploads in Elysia use Bun's Web API
+        <code>File</code> type, validated at the route level with
+        <code>t.File()</code> from Elysia's schema builder.
+      </p>
+      <p>
+        pompelmi calls <code>clamscan</code> or connects to clamd — both of which
+        are available in Bun via its Node.js compatibility layer. No extra
+        configuration is required.
+      </p>
+      <div class="note">
+        Install Bun first if you haven't: <code>curl -fsSL https://bun.sh/install | bash</code>
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>bun add elysia pompelmi</pre>
+      <p>Install ClamAV on the host system:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="upload-route">
+      <h2>Upload route</h2>
+      <p>
+        Declare the file field with <code>t.File()</code> in the body schema.
+        Elysia validates the request body and provides the file as a Web API
+        <code>File</code> object. Write it to a temp path, scan, then clean up:
+      </p>
+<pre>// src/index.ts
+import { Elysia, t } from 'elysia';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomBytes } from 'node:crypto';
+
+const app = new Elysia()
+  .post(
+    '/upload',
+    async ({ body, set }) =&gt; {
+      const file = body.file;
+      let tmpPath: string | null = null;
+
+      try {
+        const MAX_BYTES = 50 * 1024 * 1024;
+        if (file.size &gt; MAX_BYTES) {
+          set.status = 413;
+          return { error: 'File too large.' };
+        }
+
+        const buffer = Buffer.from(await file.arrayBuffer());
+        const ext    = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+        tmpPath      = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+        await writeFile(tmpPath, buffer);
+
+        const verdict = await scan(tmpPath);
+
+        if (verdict === Verdict.Malicious) {
+          set.status = 400;
+          return { error: 'Malware detected. Upload rejected.' };
+        }
+        if (verdict === Verdict.ScanError) {
+          set.status = 422;
+          return { error: 'Scan could not complete. Upload rejected.' };
+        }
+
+        // File is clean — persist to storage here
+        return { status: 'ok', name: file.name };
+
+      } catch (err) {
+        set.status = 500;
+        return { error: err instanceof Error ? err.message : 'Unknown error' };
+
+      } finally {
+        if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+          await unlink(tmpPath).catch(() =&gt; {});
+        }
+      }
+    },
+    {
+      body: t.Object({
+        file: t.File(),
+      }),
+    }
+  )
+  .listen(3000);
+
+console.log(`Listening on http://localhost:${app.server?.port}`);</pre>
+
+      <div class="tip">
+        Elysia validates the <code>t.File()</code> constraint before your handler
+        runs. If the request contains no file field, Elysia returns a 422 error
+        automatically — you do not need to check for a missing file yourself.
+      </div>
+    </div>
+
+    <div class="section" id="scan-plugin">
+      <h2>Reusable scan plugin</h2>
+      <p>
+        Elysia's plugin system lets you encapsulate the scan logic and share it
+        across multiple routes. The plugin adds a <code>scanFile</code> helper to
+        the app's context:
+      </p>
+<pre>// src/plugins/antivirus.ts
+import { Elysia } from 'elysia';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+import { randomBytes } from 'node:crypto';
+
+export const antivirusPlugin = new Elysia({ name: 'antivirus' })
+  .derive(() =&gt; ({
+    async scanFile(file: File): Promise&lt;'clean' | 'malicious' | 'error'&gt; {
+      const buffer  = Buffer.from(await file.arrayBuffer());
+      const ext     = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+      const tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+
+      try {
+        await writeFile(tmpPath, buffer);
+        const verdict = await scan(tmpPath);
+        if (verdict === Verdict.Clean)     return 'clean';
+        if (verdict === Verdict.Malicious) return 'malicious';
+        return 'error';
+      } finally {
+        if (existsSync(tmpPath)) await unlink(tmpPath).catch(() =&gt; {});
+      }
+    },
+  }));</pre>
+
+      <p>Use the plugin in any route:</p>
+<pre>// src/index.ts
+import { Elysia, t } from 'elysia';
+import { antivirusPlugin } from './plugins/antivirus';
+
+const app = new Elysia()
+  .use(antivirusPlugin)
+  .post(
+    '/upload',
+    async ({ body, scanFile, set }) =&gt; {
+      const result = await scanFile(body.file);
+      if (result === 'malicious') { set.status = 400; return { error: 'Malware detected.' }; }
+      if (result === 'error')     { set.status = 422; return { error: 'Scan incomplete.'  }; }
+      return { status: 'ok', name: body.file.name };
+    },
+    { body: t.Object({ file: t.File() }) }
+  )
+  .listen(3000);</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using Hono instead of Elysia?
+          See <a href="pompelmi-with-hono.html">Virus scanning in Hono.js with pompelmi</a>.
+        </li>
+        <li>
+          Uploading to object storage after scanning?
+          See <a href="cloudflare-r2-antivirus-scan.html">Scanning files before uploading to Cloudflare R2</a>
+          — a natural pairing for Bun-based services.
+        </li>
+        <li>
+          Full upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

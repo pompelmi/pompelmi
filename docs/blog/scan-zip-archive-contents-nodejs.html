@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-zip-archive-contents-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning files inside a ZIP archive in Node.js — pompelmi</title>
+<meta name="description" content="How to extract and individually scan every file inside an uploaded ZIP archive with pompelmi and ClamAV in Node.js. Covers entry-by-entry scanning, size limits, and clean-up patterns.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#approach">Approach</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#scan-zip">Scan a ZIP entry by entry</a></li>
+      <li><a href="#upload-endpoint">Upload endpoint</a></li>
+      <li><a href="#limits">Size and count limits</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning files inside a ZIP archive in Node.js</h2>
+      <p>
+        When a user uploads a ZIP archive, scanning only the outer ZIP file is
+        often insufficient: ClamAV will detect malware it has signatures for inside
+        the archive, but it is limited by its internal recursion and scan-size limits.
+        For applications that need to process the <em>contents</em> of a ZIP — or
+        that store individual files from the archive — the right approach is to
+        extract each entry, scan it individually with pompelmi, and reject the whole
+        batch if any entry is malicious.
+      </p>
+      <div class="note">
+        This is different from <a href="nodejs-zip-bomb-prevention.html">ZIP bomb prevention</a>,
+        which protects your scanner from resource exhaustion. This guide is about
+        scanning the legitimate contents of an archive before extracting and storing
+        individual files.
+      </div>
+    </div>
+
+    <div class="section" id="approach">
+      <h2>Approach</h2>
+      <ol>
+        <li>Accept the ZIP upload via Multer, writing to a temp path.</li>
+        <li>Open the ZIP with <code>yauzl</code> (a streaming ZIP reader).</li>
+        <li>For each entry: enforce an uncompressed size limit, extract to a unique
+            temp path, scan with pompelmi.</li>
+        <li>If any entry returns <code>Verdict.Malicious</code> or
+            <code>Verdict.ScanError</code>, abort and delete all extracted temp files.</li>
+        <li>If all entries pass, proceed with storage.</li>
+        <li>Always delete both the original ZIP and all extracted temp files in a
+            <code>finally</code> block.</li>
+      </ol>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi yauzl multer express</pre>
+    </div>
+
+    <div class="section" id="scan-zip">
+      <h2>Scan a ZIP entry by entry</h2>
+      <p>
+        <code>yauzl</code> is the standard streaming ZIP parser for Node.js — it
+        reads entries without decompressing the entire archive into memory at once.
+        Wrap its callback API in a Promise for clean async/await usage:
+      </p>
+<pre>// lib/scanZip.js
+const yauzl   = require('yauzl');
+const { scan, Verdict } = require('pompelmi');
+const { createWriteStream, unlinkSync, existsSync } = require('fs');
+const { pipeline } = require('stream/promises');
+const { join } = require('path');
+const { tmpdir } = require('os');
+const { randomBytes } = require('crypto');
+
+const MAX_UNCOMPRESSED_BYTES = 200 * 1024 * 1024; // 200 MB per entry
+const MAX_ENTRIES = 100;
+
+/**
+ * Scan every file entry in a ZIP archive.
+ * Returns an array of { name, verdict } objects.
+ * Throws on I/O errors. Rejects immediately if any entry is malicious.
+ */
+async function scanZipContents(zipPath) {
+  return new Promise((resolve, reject) =&gt; {
+    const results   = [];
+    const tempFiles = [];
+
+    yauzl.open(zipPath, { lazyEntries: true, autoClose: true }, (err, zipfile) =&gt; {
+      if (err) return reject(err);
+
+      if (zipfile.entryCount &gt; MAX_ENTRIES) {
+        zipfile.close();
+        return reject(new Error(`Archive contains too many entries (max ${MAX_ENTRIES}).`));
+      }
+
+      zipfile.readEntry();
+
+      zipfile.on('entry', async (entry) =&gt; {
+        // Skip directories
+        if (/\/$/.test(entry.fileName)) {
+          zipfile.readEntry();
+          return;
+        }
+
+        // Enforce uncompressed size
+        if (entry.uncompressedSize &gt; MAX_UNCOMPRESSED_BYTES) {
+          zipfile.close();
+          return reject(new Error(
+            `Entry "${entry.fileName}" exceeds the maximum allowed uncompressed size.`
+          ));
+        }
+
+        const ext     = entry.fileName.split('.').pop()?.toLowerCase() ?? 'bin';
+        const tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+        tempFiles.push(tmpPath);
+
+        try {
+          // Extract entry to temp file
+          await new Promise((res, rej) =&gt; {
+            zipfile.openReadStream(entry, (streamErr, readStream) =&gt; {
+              if (streamErr) return rej(streamErr);
+              const writeStream = createWriteStream(tmpPath);
+              pipeline(readStream, writeStream).then(res).catch(rej);
+            });
+          });
+
+          const verdict = await scan(tmpPath);
+          results.push({ name: entry.fileName, verdict });
+
+          if (verdict === Verdict.Malicious || verdict === Verdict.ScanError) {
+            // Clean up all extracted files and reject
+            tempFiles.forEach((p) =&gt; { if (existsSync(p)) unlinkSync(p); });
+            zipfile.close();
+            return reject(Object.assign(
+              new Error(`Entry "${entry.fileName}" failed scan: ${verdict.description}`),
+              { verdict, entry: entry.fileName }
+            ));
+          }
+
+          zipfile.readEntry();
+
+        } catch (entryErr) {
+          tempFiles.forEach((p) =&gt; { if (existsSync(p)) unlinkSync(p); });
+          zipfile.close();
+          reject(entryErr);
+        }
+      });
+
+      zipfile.on('end', () =&gt; {
+        tempFiles.forEach((p) =&gt; { if (existsSync(p)) unlinkSync(p); });
+        resolve(results);
+      });
+
+      zipfile.on('error', (zipErr) =&gt; {
+        tempFiles.forEach((p) =&gt; { if (existsSync(p)) unlinkSync(p); });
+        reject(zipErr);
+      });
+    });
+  });
+}
+
+module.exports = { scanZipContents };</pre>
+    </div>
+
+    <div class="section" id="upload-endpoint">
+      <h2>Upload endpoint</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scanZipContents } = require('./lib/scanZip');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 },  // 50 MB compressed
+});
+
+app.post('/upload/zip', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+  const ext     = req.file.originalname.split('.').pop()?.toLowerCase();
+
+  try {
+    if (ext !== 'zip') {
+      return res.status(400).json({ error: 'Only ZIP files are accepted.' });
+    }
+
+    const results = await scanZipContents(tmpPath);
+
+    return res.json({
+      status:  'ok',
+      entries: results.map((r) =&gt; ({
+        name:    r.name,
+        verdict: r.verdict.description,
+      })),
+    });
+
+  } catch (err) {
+    const status = err.verdict ? 400 : 500;
+    return res.status(status).json({ error: err.message });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="limits">
+      <h2>Size and entry count limits</h2>
+      <p>
+        Without limits, a malicious ZIP can exhaust your server's disk space or
+        memory during extraction. The library above enforces two:
+      </p>
+      <table>
+        <tr>
+          <th>Limit</th>
+          <th>Default</th>
+          <th>What it prevents</th>
+        </tr>
+        <tr>
+          <td><code>MAX_ENTRIES</code></td>
+          <td>100 entries</td>
+          <td>Archives with thousands of small files that flood temp storage</td>
+        </tr>
+        <tr>
+          <td><code>MAX_UNCOMPRESSED_BYTES</code></td>
+          <td>200 MB per entry</td>
+          <td>Single large entries that exhaust disk space during extraction</td>
+        </tr>
+        <tr>
+          <td>Multer <code>fileSize</code></td>
+          <td>50 MB (compressed)</td>
+          <td>Oversized ZIP files before they are written to disk</td>
+        </tr>
+      </table>
+      <div class="tip">
+        Tune these limits for your use case. A document archive might cap entries at
+        10 and size at 20 MB. A developer tool accepting build artefacts might allow
+        500 MB. There is no universal correct value.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Worried about ZIP bomb attacks specifically?
+          See <a href="nodejs-zip-bomb-prevention.html">Preventing ZIP Bomb attacks in Node.js</a>.
+        </li>
+        <li>
+          Handling encrypted archives?
+          See <a href="encrypted-file-scan-nodejs.html">How to handle encrypted/password-protected files during scan</a>.
+        </li>
+        <li>
+          Scanning multiple uploads in one request?
+          See <a href="nodejs-multifile-bulk-upload-scan.html">Scanning multiple file uploads in a single request</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

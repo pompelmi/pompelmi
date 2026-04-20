@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/nextjs-app-router-file-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>How to scan file uploads in Next.js (App Router) — pompelmi</title>
+<meta name="description" content="Step-by-step guide to adding ClamAV virus scanning to Next.js App Router Route Handlers using pompelmi. Complete TypeScript examples, temp-file handling, and clean-up patterns.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#why-nodejs-runtime">Node.js runtime</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#route-handler">Route Handler</a></li>
+      <li><a href="#temp-files">Temp file handling</a></li>
+      <li><a href="#typescript-types">TypeScript types</a></li>
+      <li><a href="#client-component">Client component</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>How to scan file uploads in Next.js (App Router)</h2>
+      <p>
+        Next.js App Router introduces Route Handlers — TypeScript files placed at
+        <code>app/api/&lt;route&gt;/route.ts</code> that handle HTTP requests on the
+        server. Adding virus scanning to a Route Handler that accepts file uploads
+        requires a small amount of bridging work: the Web API <code>File</code> object
+        the browser sends has no disk path, so you must write it to a temporary file
+        before pompelmi can scan it.
+      </p>
+      <p>
+        This guide shows the complete pattern: receive the upload via <code>FormData</code>,
+        write to <code>/tmp</code>, scan with pompelmi, and clean up — regardless of
+        whether the scan passes or fails.
+      </p>
+      <div class="note">
+        New to pompelmi? Read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first to install ClamAV, then come back for the Next.js integration.
+      </div>
+    </div>
+
+    <div class="section" id="why-nodejs-runtime">
+      <h2>Why this requires the Node.js runtime</h2>
+      <p>
+        pompelmi spawns a <code>clamscan</code> subprocess (or connects to a clamd TCP
+        socket). Both of these require Node.js APIs — <code>child_process</code> and
+        <code>net</code> — that are not available in Next.js's Edge Runtime.
+      </p>
+      <p>
+        The default runtime for Route Handlers is already <strong>Node.js</strong>, so
+        no extra configuration is required in most projects. If your Next.js config
+        sets <code>runtime: 'edge'</code> globally, override it at the route level:
+      </p>
+<pre>// app/api/upload/route.ts
+export const runtime = 'nodejs'; // required for pompelmi</pre>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi</pre>
+      <p>
+        Also install ClamAV on your server if you haven't already:
+      </p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="route-handler">
+      <h2>Complete Route Handler</h2>
+      <p>
+        Create the file at <code>app/api/upload/route.ts</code>. The handler:
+      </p>
+      <ol>
+        <li>Reads the <code>FormData</code> from the request.</li>
+        <li>Converts the Web API <code>File</code> to a <code>Buffer</code>.</li>
+        <li>Writes the buffer to a unique path in <code>/tmp</code>.</li>
+        <li>Calls <code>scan()</code> and inspects the verdict.</li>
+        <li>Deletes the temp file in a <code>finally</code> block.</li>
+      </ol>
+<pre>// app/api/upload/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+
+export const runtime = 'nodejs';
+
+export async function POST(request: NextRequest) {
+  let tmpPath: string | null = null;
+
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file || file.size === 0) {
+      return NextResponse.json({ error: 'No file provided.' }, { status: 400 });
+    }
+
+    // Enforce a reasonable size limit before writing to disk
+    const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (file.size &gt; MAX_BYTES) {
+      return NextResponse.json({ error: 'File too large.' }, { status: 413 });
+    }
+
+    // Web API File → Buffer → temp file on disk
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, buffer);
+
+    // Scan the temp file
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return NextResponse.json(
+        { error: 'Malware detected. Upload rejected.' },
+        { status: 400 }
+      );
+    }
+
+    if (verdict === Verdict.ScanError) {
+      return NextResponse.json(
+        { error: 'Scan could not complete. Upload rejected as a precaution.' },
+        { status: 422 }
+      );
+    }
+
+    // Verdict.Clean — move to permanent storage here
+    // e.g. await uploadToS3(buffer, file.name);
+
+    return NextResponse.json({ status: 'ok', name: file.name });
+
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 });
+
+  } finally {
+    // Always remove the temp file
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="temp-files">
+      <h2>Temp file handling</h2>
+      <p>
+        The <code>finally</code> block ensures the temp file is deleted whether the
+        scan succeeds, fails, or throws. There are two additional precautions worth
+        taking in production:
+      </p>
+      <ul>
+        <li>
+          <strong>Unique filenames.</strong> Using <code>randomBytes(16).toString('hex')</code>
+          as the base name prevents two concurrent requests from colliding on the same
+          path.
+        </li>
+        <li>
+          <strong>Size check before writing.</strong> The <code>file.size</code>
+          check happens before any disk I/O, so oversized uploads are rejected without
+          filling <code>/tmp</code>.
+        </li>
+      </ul>
+      <div class="warn">
+        Lambda and some container environments have small <code>/tmp</code> quotas.
+        For Next.js deployed on Vercel, serverless functions have a read-only
+        filesystem except for <code>/tmp</code> — and file system access is restricted.
+        Self-hosted Next.js on EC2 or a VPS does not have this limitation.
+      </div>
+    </div>
+
+    <div class="section" id="typescript-types">
+      <h2>TypeScript types for pompelmi</h2>
+      <p>
+        pompelmi does not ship type declarations. Add this file to your project so
+        TypeScript understands the API:
+      </p>
+      <span class="platform-label">src/types/pompelmi.d.ts</span>
+<pre>declare module 'pompelmi' {
+  interface ScanOptions {
+    host?:    string;
+    port?:    number;
+    timeout?: number;
+  }
+
+  const Verdict: Readonly&lt;{
+    Clean:     unique symbol;
+    Malicious: unique symbol;
+    ScanError: unique symbol;
+  }&gt;;
+
+  type ScanVerdict = typeof Verdict[keyof typeof Verdict];
+
+  function scan(filePath: string, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+
+  export { scan, Verdict };
+}</pre>
+      <p>
+        Ensure your <code>tsconfig.json</code> includes the <code>src/types</code>
+        directory in <code>typeRoots</code> or <code>include</code>.
+      </p>
+    </div>
+
+    <div class="section" id="client-component">
+      <h2>Minimal client component</h2>
+      <p>
+        A simple React component that posts to the Route Handler and displays the
+        result:
+      </p>
+<pre>'use client';
+
+import { useState, useRef } from 'react';
+
+export default function UploadForm() {
+  const [status, setStatus] = useState&lt;string | null&gt;(null);
+  const inputRef = useRef&lt;HTMLInputElement&gt;(null);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const file = inputRef.current?.files?.[0];
+    if (!file) return;
+
+    const form = new FormData();
+    form.append('file', file);
+
+    setStatus('Scanning…');
+    const res = await fetch('/api/upload', { method: 'POST', body: form });
+    const data = await res.json();
+
+    setStatus(res.ok ? `Uploaded: ${data.name}` : `Error: ${data.error}`);
+  }
+
+  return (
+    &lt;form onSubmit={handleSubmit}&gt;
+      &lt;input ref={inputRef} type="file" name="file" required /&gt;
+      &lt;button type="submit"&gt;Upload &amp; scan&lt;/button&gt;
+      {status &amp;&amp; &lt;p&gt;{status}&lt;/p&gt;}
+    &lt;/form&gt;
+  );
+}</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Storing files in the cloud after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>
+          or <a href="cloudflare-r2-antivirus-scan.html">Scanning files before uploading to Cloudflare R2</a>.
+        </li>
+        <li>
+          Running in Docker or Kubernetes?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>
+          or <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>
+          for the TCP-mode setup.
+        </li>
+        <li>
+          Want a complete upload security checklist beyond virus scanning?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

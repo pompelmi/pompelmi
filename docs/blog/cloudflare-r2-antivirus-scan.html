@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/cloudflare-r2-antivirus-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning files before uploading to Cloudflare R2 — pompelmi</title>
+<meta name="description" content="How to scan uploaded files for malware with pompelmi before storing them in Cloudflare R2. Includes complete Express example using the S3-compatible AWS SDK.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#r2-compatibility">R2 and the S3 API</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#r2-client">Configure the R2 client</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#custom-metadata">Custom metadata</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning files before uploading to Cloudflare R2</h2>
+      <p>
+        Cloudflare R2 is an S3-compatible object storage service with no egress fees.
+        Because R2 exposes the same API as AWS S3, you can use the AWS SDK v3
+        (<code>@aws-sdk/client-s3</code>) to talk to R2 — you just need to point it
+        at Cloudflare's custom endpoint.
+      </p>
+      <p>
+        The scan-then-upload pattern is identical to the S3 guide: scan locally with
+        pompelmi while the file is still on disk, and only call
+        <code>PutObjectCommand</code> if the verdict is <code>Verdict.Clean</code>.
+        Malware never touches R2.
+      </p>
+      <div class="note">
+        New to pompelmi? Read
+        <a href="nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js</a>
+        first, then come back for the R2-specific setup.
+      </div>
+    </div>
+
+    <div class="section" id="r2-compatibility">
+      <h2>R2 and the S3 API</h2>
+      <p>
+        Cloudflare R2 implements the S3 API with a few differences:
+      </p>
+      <ul>
+        <li>The endpoint URL is <code>https://&lt;account-id&gt;.r2.cloudflarestorage.com</code>.</li>
+        <li>The region must be set to <code>'auto'</code>.</li>
+        <li>Credentials are R2 API tokens, not AWS IAM keys.</li>
+        <li>S3 object tagging is supported and works identically.</li>
+      </ul>
+      <p>
+        Everything else — <code>PutObjectCommand</code>, streaming, multipart upload —
+        works without modification.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi @aws-sdk/client-s3 multer express</pre>
+    </div>
+
+    <div class="section" id="r2-client">
+      <h2>Configure the R2 client</h2>
+      <p>
+        The only difference from an S3 client is the <code>endpoint</code> and
+        <code>region</code>:
+      </p>
+<pre>const { S3Client } = require('@aws-sdk/client-s3');
+
+const r2 = new S3Client({
+  region:   'auto',
+  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});</pre>
+
+      <p>
+        Create an R2 API token in the Cloudflare dashboard under
+        <strong>R2 &rarr; Manage R2 API tokens</strong>. Grant it
+        <em>Object Write</em> permission on your bucket.
+      </p>
+
+      <div class="warn">
+        Never commit credentials to source control. Use environment variables or a
+        secrets manager. For production deployments on Cloudflare Workers or a VPS,
+        use the platform's secret injection mechanism.
+      </div>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete Express example</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const crypto = require('crypto');
+const path   = require('path');
+const fs     = require('fs');
+const os     = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 MB
+});
+
+const r2 = new S3Client({
+  region:   'auto',
+  endpoint: `https://${process.env.CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId:     process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+  },
+});
+
+const BUCKET = process.env.R2_BUCKET_NAME;
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const tmpPath   = req.file.path;
+  let tmpDeleted  = false;
+
+  try {
+    // Step 1 — scan locally before touching R2
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    // Step 2 — file is clean, upload to R2
+    const ext    = path.extname(req.file.originalname).toLowerCase();
+    const r2Key  = 'uploads/' + crypto.randomBytes(16).toString('hex') + ext;
+
+    await r2.send(new PutObjectCommand({
+      Bucket:      BUCKET,
+      Key:         r2Key,
+      Body:        fs.createReadStream(tmpPath),
+      ContentType: req.file.mimetype,
+      // Custom metadata tagging the object as scanned
+      Metadata: {
+        'scan-status': 'clean',
+        'scanned-by':  'pompelmi',
+      },
+    }));
+
+    // Step 3 — clean up temp file
+    fs.unlinkSync(tmpPath);
+    tmpDeleted = true;
+
+    return res.json({ status: 'ok', key: r2Key });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+
+  } finally {
+    if (!tmpDeleted &amp;&amp; fs.existsSync(tmpPath)) {
+      fs.unlinkSync(tmpPath);
+    }
+  }
+});
+
+app.listen(3000, () =&gt; console.log('Listening on :3000'));</pre>
+
+      <div class="tip">
+        R2 does not charge for egress to the internet, which makes it cost-effective
+        for serving user-uploaded files publicly. Combine this with Cloudflare's CDN
+        to serve clean uploads from the edge.
+      </div>
+    </div>
+
+    <div class="section" id="custom-metadata">
+      <h2>Custom metadata for audit trails</h2>
+      <p>
+        R2 supports the same S3-style <code>Metadata</code> (key-value pairs stored
+        alongside the object) and <code>Tagging</code> (query-string encoded tags).
+        Adding scan metadata gives you a queryable audit trail:
+      </p>
+<pre>await r2.send(new PutObjectCommand({
+  Bucket:   BUCKET,
+  Key:      r2Key,
+  Body:     fs.createReadStream(tmpPath),
+  Metadata: {
+    'scan-status':  'clean',
+    'scanned-by':   'pompelmi',
+    'scan-engine':  'clamav',
+    'scanned-at':   new Date().toISOString(),
+  },
+}));</pre>
+
+      <p>
+        You can read this metadata back on any <code>GetObject</code> or
+        <code>HeadObject</code> call and verify that a file was scanned before it was
+        stored.
+      </p>
+
+      <div class="note">
+        R2 does not currently support S3-style bucket policies based on object tags.
+        Use Cloudflare Workers with a <code>fetch</code> interceptor to enforce
+        scan-status checks at the access layer if you need policy-based enforcement.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Using AWS S3 instead of R2? The pattern is identical — see
+          <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+        <li>
+          Running ClamAV in Docker or Kubernetes?
+          See <a href="pompelmi-docker-compose.html">Docker Compose</a> or
+          <a href="pompelmi-clamav-kubernetes.html">Kubernetes</a> guides for
+          the TCP-mode setup.
+        </li>
+        <li>
+          Want to understand what else you should validate beyond malware?
+          Read the <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/bullmq-background-scan-queue.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Background virus scanning with BullMQ and Node.js — pompelmi</title>
+<meta name="description" content="How to offload ClamAV antivirus scanning to a BullMQ background job queue using pompelmi. Covers upload endpoint, worker design, job status polling, and webhook notification patterns.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why-async">Why async scanning?</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#upload-endpoint">Upload endpoint</a></li>
+      <li><a href="#worker">Scan worker</a></li>
+      <li><a href="#status-endpoint">Status endpoint</a></li>
+      <li><a href="#webhook">Webhook variant</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why-async">
+      <h2>Background virus scanning with BullMQ and Node.js</h2>
+      <p>
+        Synchronous scanning works well for small files on fast hardware, but for
+        larger files or high upload volumes the scan can add seconds to every HTTP
+        request. Background scanning decouples the upload from the scan:
+      </p>
+      <ol>
+        <li>The upload endpoint writes the file to disk and returns HTTP 202 immediately.</li>
+        <li>A BullMQ job is enqueued with the file's path and upload metadata.</li>
+        <li>A worker processes the job: scans with pompelmi, then moves the file to
+            permanent storage or deletes it.</li>
+        <li>The client polls a status endpoint — or receives a webhook — to learn
+            the final verdict.</li>
+      </ol>
+      <p>
+        BullMQ is the standard Redis-backed job queue for Node.js. It provides
+        retries, priorities, rate limiting, and a dashboard (Bull Board).
+      </p>
+      <div class="note">
+        This pattern requires Redis. For local development,
+        <code>docker run -d -p 6379:6379 redis:alpine</code> is the quickest
+        way to get it running.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi bullmq ioredis express multer</pre>
+    </div>
+
+    <div class="section" id="upload-endpoint">
+      <h2>Upload endpoint</h2>
+      <p>
+        The endpoint accepts the file, writes it to a staging directory (not
+        <code>/tmp</code> — it must survive until the worker processes the job),
+        enqueues a scan job, and returns the job ID to the client:
+      </p>
+<pre>// src/routes/upload.js
+const express = require('express');
+const multer  = require('multer');
+const { Queue } = require('bullmq');
+const crypto  = require('crypto');
+const path    = require('path');
+
+const router  = express.Router();
+
+// Use a persistent staging directory, not /tmp
+const STAGING_DIR = process.env.STAGING_DIR || '/var/app/staging';
+
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: STAGING_DIR,
+    filename: (_req, file, cb) =&gt; {
+      const id  = crypto.randomBytes(16).toString('hex');
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, id + ext);
+    },
+  }),
+  limits: { fileSize: 100 * 1024 * 1024 },  // 100 MB
+});
+
+const scanQueue = new Queue('scan', {
+  connection: { host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 },
+});
+
+router.post('/', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file provided.' });
+  }
+
+  const job = await scanQueue.add('scanFile', {
+    filePath:     req.file.path,
+    originalName: req.file.originalname,
+    mimeType:     req.file.mimetype,
+    uploadedAt:   new Date().toISOString(),
+  });
+
+  // Return 202 Accepted — scan has not happened yet
+  return res.status(202).json({
+    jobId:    job.id,
+    statusUrl: `/scan-status/${job.id}`,
+  });
+});
+
+module.exports = router;</pre>
+    </div>
+
+    <div class="section" id="worker">
+      <h2>Scan worker</h2>
+      <p>
+        Run the worker as a separate process (or separate container). It dequeues
+        jobs, calls pompelmi, and moves the file to permanent storage or deletes it:
+      </p>
+<pre>// src/workers/scan.worker.js
+const { Worker } = require('bullmq');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const path = require('path');
+
+const CLEAN_DIR = process.env.CLEAN_DIR || '/var/app/uploads';
+
+const worker = new Worker('scan', async (job) =&gt; {
+  const { filePath, originalName, mimeType } = job.data;
+
+  try {
+    const verdict = await scan(filePath);
+
+    if (verdict === Verdict.Malicious) {
+      fs.unlinkSync(filePath);
+      return { status: 'rejected', reason: 'malware' };
+    }
+
+    if (verdict === Verdict.ScanError) {
+      fs.unlinkSync(filePath);
+      return { status: 'rejected', reason: 'scan_error' };
+    }
+
+    // Clean — move to permanent storage
+    const dest = path.join(CLEAN_DIR, path.basename(filePath));
+    fs.renameSync(filePath, dest);
+
+    return {
+      status:       'clean',
+      storedPath:   dest,
+      originalName,
+    };
+
+  } catch (err) {
+    // Worker throws → BullMQ marks the job as failed and retries
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    throw err;
+  }
+}, {
+  connection: { host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 },
+  concurrency: 4,  // process up to 4 scans in parallel
+});
+
+worker.on('completed', (job, result) =&gt; {
+  console.log(`Job ${job.id} completed: ${result.status}`);
+});
+
+worker.on('failed', (job, err) =&gt; {
+  console.error(`Job ${job?.id} failed: ${err.message}`);
+});</pre>
+
+      <div class="tip">
+        Set <code>concurrency</code> based on your hardware. ClamAV is CPU-bound —
+        a good starting point is one worker per CPU core. Monitor system load and
+        tune accordingly.
+      </div>
+    </div>
+
+    <div class="section" id="status-endpoint">
+      <h2>Status polling endpoint</h2>
+      <p>
+        The client uses the <code>jobId</code> returned at upload time to poll for
+        the scan result:
+      </p>
+<pre>// src/routes/scanStatus.js
+const express = require('express');
+const { Queue } = require('bullmq');
+
+const router    = express.Router();
+const scanQueue = new Queue('scan', {
+  connection: { host: process.env.REDIS_HOST || '127.0.0.1', port: 6379 },
+});
+
+router.get('/:jobId', async (req, res) =&gt; {
+  const job = await scanQueue.getJob(req.params.jobId);
+
+  if (!job) {
+    return res.status(404).json({ error: 'Job not found.' });
+  }
+
+  const state = await job.getState();  // 'waiting' | 'active' | 'completed' | 'failed'
+
+  if (state === 'completed') {
+    return res.json({ state, result: job.returnvalue });
+  }
+
+  if (state === 'failed') {
+    return res.json({ state, reason: job.failedReason });
+  }
+
+  return res.json({ state });
+});
+
+module.exports = router;</pre>
+
+      <p>Client-side polling loop (plain JavaScript):</p>
+<pre>async function pollScan(jobId, intervalMs = 2000) {
+  while (true) {
+    const res  = await fetch(`/scan-status/${jobId}`);
+    const data = await res.json();
+
+    if (data.state === 'completed') return data.result;
+    if (data.state === 'failed')    throw new Error(data.reason);
+
+    await new Promise((r) =&gt; setTimeout(r, intervalMs));
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="webhook">
+      <h2>Webhook notification variant</h2>
+      <p>
+        Instead of (or in addition to) polling, emit a webhook when the job
+        completes. Listen to the worker's <code>completed</code> event:
+      </p>
+<pre>const axios = require('axios');
+
+worker.on('completed', async (job, result) =&gt; {
+  const webhookUrl = job.data.webhookUrl;
+  if (!webhookUrl) return;
+
+  await axios.post(webhookUrl, {
+    jobId:  job.id,
+    result,
+  }).catch((err) =&gt; {
+    console.error('Webhook delivery failed:', err.message);
+  });
+});</pre>
+
+      <p>
+        Pass <code>webhookUrl</code> as a field in the upload request body, and
+        include it when enqueuing the job. This is especially useful for mobile apps
+        or third-party integrations that cannot maintain a polling loop.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          After scanning, upload to object storage?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>
+          — adapt the "move to permanent storage" step to call S3 instead.
+        </li>
+        <li>
+          Running the worker in Kubernetes?
+          See <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>
+          for the TCP-mode setup — use <code>scan(path, { host: 'clamav', port: 3310 })</code>
+          in the worker.
+        </li>
+        <li>
+          Building a standalone scan API?
+          Read <a href="nodejs-antivirus-rest-api.html">Building a file scanning REST API with Node.js and pompelmi</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

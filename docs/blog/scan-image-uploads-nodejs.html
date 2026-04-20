@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-image-uploads-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning image uploads (JPEG, PNG, WebP, GIF) in Node.js — pompelmi</title>
+<meta name="description" content="How to secure image upload endpoints in Node.js: ClamAV scanning with pompelmi, magic byte validation, SVG XSS prevention, and polyglot file detection for JPEG, PNG, WebP, and GIF.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#threats">Threats in image uploads</a></li>
+      <li><a href="#magic-bytes">Magic byte validation</a></li>
+      <li><a href="#svg-xss">SVG and XSS</a></li>
+      <li><a href="#polyglot">Polyglot files</a></li>
+      <li><a href="#clamav-scan">ClamAV scan</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="threats">
+      <h2>Scanning image uploads (JPEG, PNG, WebP, GIF) in Node.js</h2>
+      <p>
+        Profile pictures, product photos, and document scans make up the bulk of
+        user-generated file uploads. Images look safe — they are just pixels. But
+        image upload endpoints are a target for several real attack vectors:
+      </p>
+      <ul>
+        <li>
+          <strong>Malware embedded in image metadata.</strong> EXIF and IPTC metadata
+          fields inside JPEG and PNG files are sometimes used to carry shellcode or
+          malicious scripts that exploit vulnerable image-processing libraries
+          (ImageMagick, libvips, Pillow).
+        </li>
+        <li>
+          <strong>Polyglot files.</strong> A file can simultaneously be a valid JPEG
+          and a valid PHP script, ZIP archive, or HTML document. A server that
+          executes or serves the file incorrectly may trigger the second identity.
+        </li>
+        <li>
+          <strong>SVG XSS.</strong> SVG is XML that supports embedded
+          <code>&lt;script&gt;</code> tags. Serving an uploaded SVG with
+          <code>Content-Type: image/svg+xml</code> executes JavaScript in the
+          browser of anyone who views it.
+        </li>
+        <li>
+          <strong>Oversized or malformed images.</strong> Malformed image headers can
+          cause decompression bombs or crashes in image libraries.
+        </li>
+      </ul>
+    </div>
+
+    <div class="section" id="magic-bytes">
+      <h2>Magic byte validation</h2>
+      <p>
+        Never trust the file extension or the <code>Content-Type</code> header — both
+        are set by the client. Read the first few bytes of the file and compare them
+        against the known signatures for your allowed types:
+      </p>
+<pre>const fs = require('fs');
+
+const IMAGE_MAGIC = {
+  jpeg: { bytes: [0xFF, 0xD8, 0xFF],             offset: 0, length: 3 },
+  png:  { bytes: [0x89, 0x50, 0x4E, 0x47],       offset: 0, length: 4 },
+  gif:  { bytes: [0x47, 0x49, 0x46, 0x38],       offset: 0, length: 4 },
+  webp: { bytes: [0x57, 0x45, 0x42, 0x50],       offset: 8, length: 4 },
+  // RIFF header at 0 + "WEBP" at offset 8
+};
+
+function readBytes(filePath, offset, length) {
+  const fd  = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(length);
+  fs.readSync(fd, buf, 0, length, offset);
+  fs.closeSync(fd);
+  return buf;
+}
+
+function detectImageType(filePath) {
+  for (const [type, sig] of Object.entries(IMAGE_MAGIC)) {
+    const buf = readBytes(filePath, sig.offset, sig.length);
+    if (buf.equals(Buffer.from(sig.bytes))) return type;
+  }
+  return null;
+}
+
+// Usage
+const type = detectImageType(tmpPath);
+if (!type) {
+  return res.status(400).json({ error: 'File is not a recognised image type.' });
+}</pre>
+    </div>
+
+    <div class="section" id="svg-xss">
+      <h2>SVG and XSS</h2>
+      <p>
+        SVG files are XML and can contain <code>&lt;script&gt;</code> tags, event
+        handlers, and <code>javascript:</code> URIs. If you serve an SVG with
+        the <code>image/svg+xml</code> content type, any embedded script runs in
+        the user's browser.
+      </p>
+      <p>
+        The safest policy is to <strong>reject SVG uploads entirely</strong> unless
+        you have a specific need for them. If you must accept SVGs, sanitise them
+        with a library such as <code>DOMPurify</code> (run server-side via jsdom)
+        before storing:
+      </p>
+<pre>// Reject SVGs outright
+const ext = req.file.originalname.split('.').pop()?.toLowerCase();
+if (ext === 'svg') {
+  return res.status(400).json({
+    error: 'SVG uploads are not accepted. Please upload a JPEG, PNG, or WebP.',
+  });
+}</pre>
+
+      <div class="warn">
+        Even if you sanitise SVGs, serve them with
+        <code>Content-Disposition: attachment</code> or from a separate sandboxed
+        domain (e.g. <code>static.example.com</code>) so they cannot access cookies
+        on your main domain.
+      </div>
+    </div>
+
+    <div class="section" id="polyglot">
+      <h2>Polyglot file detection</h2>
+      <p>
+        A polyglot file is valid in two formats simultaneously. For example, a file
+        can start with JPEG magic bytes but end with valid PHP or HTML. If your
+        server passes the file to an interpreter based on extension rather than
+        content, the attack triggers.
+      </p>
+      <p>
+        Practical mitigations:
+      </p>
+      <ul>
+        <li>
+          <strong>Re-encode images server-side.</strong> Processing the image through
+          Sharp or Jimp and saving the output destroys any appended data.
+          <code>sharp(tmpPath).jpeg().toFile(destPath)</code> produces a clean JPEG.
+        </li>
+        <li>
+          <strong>Serve uploads from a separate origin.</strong> Files served from
+          <code>cdn.example.com</code> cannot access cookies for
+          <code>app.example.com</code>.
+        </li>
+        <li>
+          <strong>Set <code>Content-Type</code> explicitly.</strong> Always set the
+          response <code>Content-Type</code> from your trusted list, not from what
+          was uploaded.
+        </li>
+      </ul>
+    </div>
+
+    <div class="section" id="clamav-scan">
+      <h2>What ClamAV catches in images</h2>
+      <p>
+        ClamAV scans the full file content, including metadata regions. It detects:
+      </p>
+      <ul>
+        <li>Known malware payloads embedded in EXIF/IPTC fields</li>
+        <li>PHP/JSP/HTML webshells appended after the image data</li>
+        <li>Exploit code targeting specific image library CVEs</li>
+        <li>Malicious scripts disguised with image extensions</li>
+      </ul>
+      <p>
+        ClamAV does <em>not</em> detect novel polyglot constructions that have no
+        existing signature. The re-encoding step above is the definitive defense
+        against polyglots.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete image upload endpoint</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 10 * 1024 * 1024 },  // 10 MB
+});
+
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+
+function detectImageType(filePath) {
+  const fd  = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(12);
+  fs.readSync(fd, buf, 0, 12, 0);
+  fs.closeSync(fd);
+
+  if (buf[0] === 0xFF &amp;&amp; buf[1] === 0xD8 &amp;&amp; buf[2] === 0xFF) return 'jpeg';
+  if (buf[0] === 0x89 &amp;&amp; buf[1] === 0x50 &amp;&amp; buf[2] === 0x4E &amp;&amp; buf[3] === 0x47) return 'png';
+  if (buf[0] === 0x47 &amp;&amp; buf[1] === 0x49 &amp;&amp; buf[2] === 0x46) return 'gif';
+  if (buf.slice(8, 12).toString('ascii') === 'WEBP') return 'webp';
+  return null;
+}
+
+app.post('/upload/image', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+
+  try {
+    // Layer 1 — reject SVG regardless of how it was named
+    const ext = req.file.originalname.split('.').pop()?.toLowerCase();
+    if (ext === 'svg') {
+      return res.status(400).json({ error: 'SVG uploads are not accepted.' });
+    }
+
+    // Layer 2 — validate by magic bytes (ignore client Content-Type)
+    const imageType = detectImageType(tmpPath);
+    if (!imageType) {
+      return res.status(400).json({ error: 'File is not a recognised image type.' });
+    }
+
+    // Layer 3 — ClamAV scan
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    // File is clean — persist to storage
+    return res.json({ status: 'ok', type: imageType });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Scanning PDF uploads?
+          See <a href="scan-pdf-uploads-nodejs.html">How to scan PDF uploads for malware in Node.js</a>.
+        </li>
+        <li>
+          Concerned about MIME type spoofing across all file types?
+          Read <a href="mime-type-spoofing-nodejs.html">MIME type spoofing: how attackers disguise malicious files</a>.
+        </li>
+        <li>
+          Want the full upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

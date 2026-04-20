@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/sveltekit-file-upload-security.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SvelteKit file upload security with pompelmi — pompelmi</title>
+<meta name="description" content="How to scan uploaded files for viruses in SvelteKit server endpoints using pompelmi and ClamAV. Includes TypeScript examples for +server.ts and SvelteKit Actions.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#runtime-note">Runtime note</a></li>
+      <li><a href="#install">Install</a></li>
+      <li><a href="#server-endpoint">+server.ts endpoint</a></li>
+      <li><a href="#form-action">Form Action approach</a></li>
+      <li><a href="#shared-helper">Shared helper</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>SvelteKit file upload security with pompelmi</h2>
+      <p>
+        SvelteKit offers two server-side patterns for handling form submissions and
+        file uploads: <strong>+server.ts</strong> endpoints (JSON/REST style) and
+        <strong>Form Actions</strong> in <code>+page.server.ts</code> (progressive
+        enhancement style). Both run in Node.js when you use the
+        <code>@sveltejs/adapter-node</code> adapter, which means pompelmi works in
+        both.
+      </p>
+      <p>
+        This guide shows how to integrate ClamAV virus scanning into each pattern.
+        The underlying technique is the same: read the uploaded file bytes, write them
+        to a temp path, scan, and clean up.
+      </p>
+      <div class="note">
+        pompelmi requires the Node.js runtime. The
+        <code>@sveltejs/adapter-node</code> adapter is fully compatible.
+        Cloudflare Workers, Vercel Edge, and other edge-only adapters are not.
+      </div>
+    </div>
+
+    <div class="section" id="runtime-note">
+      <h2>Runtime note</h2>
+      <p>
+        SvelteKit runs server-side code on Node.js when using
+        <code>@sveltejs/adapter-node</code>. Confirm this is in your
+        <code>svelte.config.js</code>:
+      </p>
+<pre>// svelte.config.js
+import adapter from '@sveltejs/adapter-node';
+
+export default {
+  kit: {
+    adapter: adapter(),
+  },
+};</pre>
+      <p>
+        If you need to deploy to a platform that only supports edge runtimes (Cloudflare
+        Workers, Deno Deploy), you would need to proxy the scan through a separate
+        Node.js microservice.
+      </p>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Install</h2>
+<pre>npm install pompelmi</pre>
+      <p>Install ClamAV on your development machine or server:</p>
+      <span class="platform-label">Linux (Debian / Ubuntu)</span>
+<pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
+      <span class="platform-label">macOS</span>
+<pre>brew install clamav &amp;&amp; freshclam</pre>
+    </div>
+
+    <div class="section" id="server-endpoint">
+      <h2>+server.ts endpoint</h2>
+      <p>
+        A <code>+server.ts</code> file exports named functions matching HTTP methods.
+        The <code>POST</code> export handles file uploads sent as
+        <code>multipart/form-data</code>:
+      </p>
+<pre>// src/routes/api/upload/+server.ts
+import { json, error } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+
+export const POST: RequestHandler = async ({ request }) =&gt; {
+  let tmpPath: string | null = null;
+
+  try {
+    const formData = await request.formData();
+    const file = formData.get('file') as File | null;
+
+    if (!file || file.size === 0) {
+      throw error(400, 'No file provided.');
+    }
+
+    const MAX_BYTES = 50 * 1024 * 1024; // 50 MB
+    if (file.size &gt; MAX_BYTES) {
+      throw error(413, 'File too large.');
+    }
+
+    // Convert Web API File → Buffer → disk
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+    const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+    tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+    await writeFile(tmpPath, buffer);
+
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      throw error(400, 'Malware detected. Upload rejected.');
+    }
+    if (verdict === Verdict.ScanError) {
+      throw error(422, 'Scan could not complete. Upload rejected as a precaution.');
+    }
+
+    // File is clean — persist here
+    return json({ status: 'ok', name: file.name });
+
+  } catch (err) {
+    // Re-throw SvelteKit errors; wrap everything else
+    if (err instanceof Response) throw err;
+    const message = err instanceof Error ? err.message : 'Scan failed';
+    throw error(500, message);
+
+  } finally {
+    if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+};</pre>
+    </div>
+
+    <div class="section" id="form-action">
+      <h2>Form Action approach</h2>
+      <p>
+        Form Actions live in <code>+page.server.ts</code>. They are ideal for
+        progressively enhanced forms that work without JavaScript. The scan logic is
+        identical — only the way you return errors differs:
+      </p>
+<pre>// src/routes/upload/+page.server.ts
+import { fail, redirect } from '@sveltejs/kit';
+import type { Actions } from './$types';
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+
+export const actions: Actions = {
+  default: async ({ request }) =&gt; {
+    let tmpPath: string | null = null;
+
+    try {
+      const formData = await request.formData();
+      const file = formData.get('file') as File | null;
+
+      if (!file || file.size === 0) {
+        return fail(400, { error: 'No file provided.' });
+      }
+
+      const bytes = await file.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin';
+      tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+      await writeFile(tmpPath, buffer);
+
+      const verdict = await scan(tmpPath);
+
+      if (verdict === Verdict.Malicious) {
+        return fail(400, { error: 'Malware detected. Upload rejected.' });
+      }
+      if (verdict === Verdict.ScanError) {
+        return fail(422, { error: 'Scan incomplete. Upload rejected as a precaution.' });
+      }
+
+      // Clean — proceed with storage …
+
+    } finally {
+      if (tmpPath &amp;&amp; existsSync(tmpPath)) {
+        await unlink(tmpPath).catch(() =&gt; {});
+      }
+    }
+
+    throw redirect(303, '/upload/success');
+  },
+};</pre>
+
+      <p>The accompanying Svelte page to display errors:</p>
+<pre>&lt;!-- src/routes/upload/+page.svelte --&gt;
+&lt;script lang="ts"&gt;
+  import type { ActionData } from './$types';
+  export let form: ActionData;
+&lt;/script&gt;
+
+{#if form?.error}
+  &lt;p style="color: red"&gt;{form.error}&lt;/p&gt;
+{/if}
+
+&lt;form method="POST" enctype="multipart/form-data"&gt;
+  &lt;input type="file" name="file" required /&gt;
+  &lt;button type="submit"&gt;Upload &amp; scan&lt;/button&gt;
+&lt;/form&gt;</pre>
+    </div>
+
+    <div class="section" id="shared-helper">
+      <h2>Shared scan helper</h2>
+      <p>
+        Both patterns share the same temp-file-and-scan logic. Extract it into
+        <code>src/lib/server/scanBuffer.ts</code>:
+      </p>
+<pre>// src/lib/server/scanBuffer.ts
+import { scan, Verdict } from 'pompelmi';
+import { writeFile, unlink } from 'fs/promises';
+import { existsSync } from 'fs';
+import { join } from 'path';
+import { tmpdir } from 'os';
+import { randomBytes } from 'crypto';
+
+export type ScanResult = 'clean' | 'malicious' | 'error';
+
+export async function scanBuffer(data: ArrayBuffer, filename: string): Promise&lt;ScanResult&gt; {
+  const buffer  = Buffer.from(data);
+  const ext     = filename.split('.').pop()?.toLowerCase() ?? 'bin';
+  const tmpPath = join(tmpdir(), randomBytes(16).toString('hex') + '.' + ext);
+
+  try {
+    await writeFile(tmpPath, buffer);
+    const verdict = await scan(tmpPath);
+    if (verdict === Verdict.Clean)     return 'clean';
+    if (verdict === Verdict.Malicious) return 'malicious';
+    return 'error';
+  } finally {
+    if (existsSync(tmpPath)) {
+      await unlink(tmpPath).catch(() =&gt; {});
+    }
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Running ClamAV in Docker alongside SvelteKit?
+          See <a href="pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a>.
+        </li>
+        <li>
+          Want the full upload security picture?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+        <li>
+          Uploading clean files to S3 after scanning?
+          See <a href="nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

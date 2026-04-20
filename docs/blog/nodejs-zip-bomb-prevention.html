@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/nodejs-zip-bomb-prevention.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preventing ZIP Bomb attacks in Node.js — pompelmi</title>
+<meta name="description" content="How to defend against ZIP bomb attacks in Node.js file upload endpoints. Covers ClamAV's built-in detection, pre-scan size limits, ScanError handling, and OS-level resource guards.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#what-is-a-zip-bomb">What is a ZIP bomb?</a></li>
+      <li><a href="#clamav-detection">ClamAV detection</a></li>
+      <li><a href="#scanerror-as-defense">ScanError as defense</a></li>
+      <li><a href="#pre-scan-validation">Pre-scan validation</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#resource-limits">OS resource limits</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="what-is-a-zip-bomb">
+      <h2>What is a ZIP bomb?</h2>
+      <p>
+        A ZIP bomb (also called a decompression bomb) is a maliciously crafted archive
+        that appears small on disk but expands to an enormous size when extracted. The
+        classic example is <em>42.zip</em>: 42 kilobytes compressed, 4.5 petabytes
+        decompressed.
+      </p>
+      <p>
+        If your application or antivirus scanner tries to extract the archive before
+        scanning it, the process can exhaust disk space, RAM, or CPU — taking down
+        your server or the scanner itself. There are two common variants:
+      </p>
+      <ul>
+        <li>
+          <strong>Recursive (nested) ZIP bombs.</strong> A chain of ZIP files, each
+          containing another ZIP. Depth is limited so each level is small, but total
+          expansion is enormous.
+        </li>
+        <li>
+          <strong>Flat (non-recursive) ZIP bombs.</strong> A single ZIP whose entries
+          overlap on the same compressed stream, achieving extreme compression ratios
+          (up to 28 million to one). These evade many scanners that only check recursion
+          depth.
+        </li>
+      </ul>
+    </div>
+
+    <div class="section" id="clamav-detection">
+      <h2>ClamAV's built-in ZIP bomb detection</h2>
+      <p>
+        ClamAV has specific heuristics and signatures for ZIP bombs. When it detects
+        one, it returns exit code <strong>1</strong> (malware found) with a signature
+        name such as:
+      </p>
+      <ul>
+        <li><code>Heuristics.Zip.DoubleCompression</code></li>
+        <li><code>Heuristics.Zip.OverlappingFiles</code></li>
+        <li><code>Heuristics.Zip.ExceedsMax</code></li>
+      </ul>
+      <p>
+        pompelmi maps exit code 1 to <code>Verdict.Malicious</code>, so a confirmed
+        ZIP bomb is returned as a malicious file. Your existing
+        <code>Verdict.Malicious</code> rejection logic handles it with no code changes.
+      </p>
+      <p>
+        ClamAV also enforces internal limits on maximum recursion depth, scan size,
+        and file count within archives. When an archive exceeds these limits, ClamAV
+        returns exit code <strong>2</strong>, which pompelmi maps to
+        <code>Verdict.ScanError</code>.
+      </p>
+    </div>
+
+    <div class="section" id="scanerror-as-defense">
+      <h2>Why ScanError is your second line of defense</h2>
+      <p>
+        A zip bomb sophisticated enough to evade ClamAV's heuristics may still cause
+        the scan to hit resource limits and terminate abnormally. pompelmi returns
+        <code>Verdict.ScanError</code> in that case.
+      </p>
+      <div class="warn">
+        Never silently pass a <code>Verdict.ScanError</code> to storage. An attacker
+        can sometimes force a scan error intentionally — with an oversized or corrupted
+        archive — as a bypass technique. Treat <code>ScanError</code> as untrusted
+        and reject the file.
+      </div>
+      <p>
+        This is already the correct behaviour if you follow the standard pompelmi
+        verdict-handling pattern:
+      </p>
+<pre>const verdict = await scan(tmpPath);
+
+switch (verdict) {
+  case Verdict.Clean:
+    // Proceed — file is safe
+    break;
+
+  case Verdict.Malicious:
+    // Confirmed threat (includes detected ZIP bombs)
+    fs.unlinkSync(tmpPath);
+    return res.status(400).json({ error: 'Malicious file rejected.' });
+
+  case Verdict.ScanError:
+    // Scan hit a limit or failed — treat as untrusted
+    fs.unlinkSync(tmpPath);
+    return res.status(422).json({ error: 'Scan incomplete. File rejected.' });
+}</pre>
+    </div>
+
+    <div class="section" id="pre-scan-validation">
+      <h2>Pre-scan validation layer</h2>
+      <p>
+        The best defence against ZIP bombs is to validate the upload <em>before</em>
+        the file reaches ClamAV, minimising the work the scanner has to do:
+      </p>
+      <ol>
+        <li>
+          <strong>Enforce a strict file size limit.</strong> Multer's
+          <code>limits.fileSize</code> option rejects oversized uploads before they
+          are written to disk. A 10 MB limit is reasonable for most applications.
+        </li>
+        <li>
+          <strong>Check the MIME type.</strong> If your application only needs PDFs
+          and images, reject ZIP files entirely. Most applications do not need to
+          accept arbitrary archive uploads.
+        </li>
+        <li>
+          <strong>Validate magic bytes.</strong> A ZIP file always starts with the
+          bytes <code>50 4B 03 04</code>. Read the first four bytes and compare
+          against your allowlist of permitted file types.
+        </li>
+      </ol>
+<pre>const MAGIC_BYTES = {
+  // Permitted types
+  pdf:  [0x25, 0x50, 0x44, 0x46],   // %PDF
+  png:  [0x89, 0x50, 0x4E, 0x47],   // PNG
+  jpeg: [0xFF, 0xD8, 0xFF],          // JPEG
+  gif:  [0x47, 0x49, 0x46, 0x38],   // GIF8
+  // Dangerous types — reject before scanning
+  zip:  [0x50, 0x4B, 0x03, 0x04],   // PK\x03\x04
+  rar:  [0x52, 0x61, 0x72, 0x21],   // Rar!
+};
+
+function getFileMagic(filePath) {
+  const fd  = require('fs').openSync(filePath, 'r');
+  const buf = Buffer.alloc(4);
+  require('fs').readSync(fd, buf, 0, 4, 0);
+  require('fs').closeSync(fd);
+  return buf;
+}
+
+function isArchive(filePath) {
+  const magic = getFileMagic(filePath);
+  return (
+    magic.slice(0, 4).equals(Buffer.from(MAGIC_BYTES.zip)) ||
+    magic.slice(0, 4).equals(Buffer.from(MAGIC_BYTES.rar))
+  );
+}</pre>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete defended upload endpoint</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest: os.tmpdir(),
+  limits: {
+    fileSize:  10 * 1024 * 1024,  // 10 MB — hard limit before disk write
+    files:     1,
+  },
+});
+
+// Reject archives by magic bytes before scanning
+function isArchiveFile(filePath) {
+  const buf = Buffer.alloc(4);
+  const fd  = fs.openSync(filePath, 'r');
+  fs.readSync(fd, buf, 0, 4, 0);
+  fs.closeSync(fd);
+  // ZIP: PK\x03\x04  RAR: Rar!  7z: 7z\xBC\xAF
+  return buf[0] === 0x50 &amp;&amp; buf[1] === 0x4B ||
+         buf[0] === 0x52 &amp;&amp; buf[1] === 0x61 ||
+         buf[0] === 0x37 &amp;&amp; buf[1] === 0x7A;
+}
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) return res.status(400).json({ error: 'No file provided.' });
+
+  const tmpPath = req.file.path;
+
+  try {
+    // Layer 1 — reject archives before ClamAV sees them
+    if (isArchiveFile(tmpPath)) {
+      return res.status(400).json({ error: 'Archive files are not accepted.' });
+    }
+
+    // Layer 2 — ClamAV scan
+    const verdict = await scan(tmpPath);
+
+    if (verdict === Verdict.Malicious) {
+      return res.status(400).json({ error: 'Malicious file rejected.' });
+    }
+    if (verdict === Verdict.ScanError) {
+      return res.status(422).json({ error: 'Scan incomplete. File rejected.' });
+    }
+
+    return res.json({ status: 'ok' });
+
+  } finally {
+    if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="resource-limits">
+      <h2>OS-level resource limits</h2>
+      <p>
+        As a final layer of defence, constrain the resources available to the
+        <code>clamscan</code> process and to your Node.js process itself.
+      </p>
+      <p>
+        In a containerised environment (Docker, Kubernetes) set memory and CPU
+        limits on the container. If <code>clamscan</code> attempts to decompress a
+        ZIP bomb and exhausts memory, the container's OOM killer will terminate the
+        process, and pompelmi will throw rather than hanging indefinitely. Handle
+        the thrown error in your catch block:
+      </p>
+<pre>try {
+  const verdict = await scan(tmpPath);
+  // ...
+} catch (err) {
+  // Catches ENOENT (ClamAV not installed), OOM kill (SIGKILL), etc.
+  if (fs.existsSync(tmpPath)) fs.unlinkSync(tmpPath);
+  return res.status(500).json({ error: 'Scan failed: ' + err.message });
+}</pre>
+
+      <p>
+        In a Kubernetes Deployment, the resource limits you set in the pod spec
+        provide this guarantee automatically. See
+        <a href="pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a>
+        for a full example with memory and CPU limits.
+      </p>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Want the complete file upload security picture beyond ZIP bombs?
+          Read the <a href="nodejs-file-upload-security-checklist.html">Node.js file upload security checklist</a>.
+        </li>
+        <li>
+          Worried about macro-laden Office files?
+          See <a href="scan-excel-csv-macros.html">Scanning Excel/CSV files for malicious macros</a>.
+        </li>
+        <li>
+          Handling encrypted archives?
+          See <a href="encrypted-file-scan-nodejs.html">How to handle encrypted/password-protected files during scan</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

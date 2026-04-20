@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/nodejs-multifile-bulk-upload-scan.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning multiple file uploads in a single request — pompelmi</title>
+<meta name="description" content="How to scan multiple uploaded files in a single multipart request using pompelmi and Multer in Node.js. Covers concurrent scanning with Promise.all, partial rejection, and clean-up.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#multer-array">Multer array upload</a></li>
+      <li><a href="#concurrent-scan">Concurrent scanning</a></li>
+      <li><a href="#fail-fast">Fail-fast vs report-all</a></li>
+      <li><a href="#complete-example">Complete example</a></li>
+      <li><a href="#mixed-fields">Mixed field uploads</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scanning multiple file uploads in a single request</h2>
+      <p>
+        Many upload interfaces let users select several files at once — a photo
+        gallery, a batch of documents, or an email with multiple attachments. Multer
+        supports this with <code>upload.array()</code> and
+        <code>upload.fields()</code>. Scanning each file individually with pompelmi
+        and running the scans concurrently keeps total latency close to the time it
+        takes to scan the single largest file.
+      </p>
+    </div>
+
+    <div class="section" id="multer-array">
+      <h2>Multer array upload</h2>
+      <p>
+        <code>upload.array('files', maxCount)</code> writes each uploaded file to a
+        temp path and populates <code>req.files</code> as an array of
+        <code>Express.Multer.File</code> objects:
+      </p>
+<pre>const multer = require('multer');
+const os     = require('os');
+
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: {
+    fileSize: 20 * 1024 * 1024,  // 20 MB per file
+    files:    10,                  // max 10 files per request
+  },
+});</pre>
+
+      <p>
+        Each entry in <code>req.files</code> has a <code>.path</code> property — the
+        temp path that pompelmi will scan.
+      </p>
+    </div>
+
+    <div class="section" id="concurrent-scan">
+      <h2>Concurrent scanning with Promise.all</h2>
+      <p>
+        Scan all files in parallel using <code>Promise.all</code>. Each call to
+        <code>scan()</code> spawns an independent <code>clamscan</code> process (or
+        opens an independent TCP connection in clamd mode), so they run concurrently:
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+async function scanAll(files) {
+  return Promise.all(
+    files.map(async (file) =&gt; {
+      const verdict = await scan(file.path);
+      return { file, verdict };
+    })
+  );
+}</pre>
+
+      <p>
+        For 5 files each taking 300 ms to scan, concurrent scanning takes ~300 ms
+        total instead of ~1500 ms sequential.
+      </p>
+
+      <div class="note">
+        <code>Promise.all</code> spawns all scans simultaneously. On a machine with
+        limited cores, ClamAV processes will compete for CPU. If you have dozens of
+        files, consider a concurrency limiter (e.g.
+        <code>p-limit</code>) to scan at most N files at a time.
+      </div>
+    </div>
+
+    <div class="section" id="fail-fast">
+      <h2>Fail-fast vs report-all</h2>
+      <p>
+        Two strategies for handling a malicious file in a batch:
+      </p>
+      <ul>
+        <li>
+          <strong>Fail-fast:</strong> reject the entire request as soon as any file
+          is malicious. Simpler to implement and the safer default.
+        </li>
+        <li>
+          <strong>Report-all:</strong> scan all files, return a per-file verdict, and
+          let the client decide what to do. Useful for developer tools or admin
+          dashboards where the operator wants to see exactly which files were
+          malicious.
+        </li>
+      </ul>
+      <p>
+        The complete example below uses the fail-fast strategy. To switch to
+        report-all, remove the early return and return the full <code>results</code>
+        array including verdicts.
+      </p>
+    </div>
+
+    <div class="section" id="complete-example">
+      <h2>Complete Express example</h2>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scan, Verdict } = require('pompelmi');
+const fs = require('fs');
+const os = require('os');
+
+const app    = express();
+const upload = multer({
+  dest:   os.tmpdir(),
+  limits: { fileSize: 20 * 1024 * 1024, files: 10 },
+});
+
+app.post('/upload/batch', upload.array('files', 10), async (req, res) =&gt; {
+  const files = req.files;
+
+  if (!files || files.length === 0) {
+    return res.status(400).json({ error: 'No files provided.' });
+  }
+
+  const tmpPaths = files.map((f) =&gt; f.path);
+
+  try {
+    // Scan all files concurrently
+    const results = await Promise.all(
+      files.map(async (file) =&gt; {
+        const verdict = await scan(file.path);
+        return {
+          originalName: file.originalname,
+          verdict,
+          rejected: verdict !== Verdict.Clean,
+        };
+      })
+    );
+
+    // Fail-fast: reject everything if any file is not clean
+    const rejected = results.filter((r) =&gt; r.rejected);
+    if (rejected.length &gt; 0) {
+      return res.status(400).json({
+        error:    'One or more files failed scanning. All uploads rejected.',
+        rejected: rejected.map((r) =&gt; ({
+          name:   r.originalName,
+          reason: r.verdict.description,
+        })),
+      });
+    }
+
+    // All clean — persist files to storage
+    return res.json({
+      status:   'ok',
+      uploaded: results.map((r) =&gt; r.originalName),
+    });
+
+  } catch (err) {
+    return res.status(500).json({ error: err.message });
+
+  } finally {
+    // Always clean up temp files
+    tmpPaths.forEach((p) =&gt; {
+      if (fs.existsSync(p)) fs.unlinkSync(p);
+    });
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="mixed-fields">
+      <h2>Mixed field uploads</h2>
+      <p>
+        If your form has multiple file fields with different names (e.g. a
+        <code>thumbnail</code> and multiple <code>attachments</code>), use
+        <code>upload.fields()</code>:
+      </p>
+<pre>const uploadFields = multer({ dest: os.tmpdir() }).fields([
+  { name: 'thumbnail',   maxCount: 1  },
+  { name: 'attachments', maxCount: 5  },
+]);
+
+app.post('/upload/post', uploadFields, async (req, res) =&gt; {
+  const thumbnail   = req.files['thumbnail']   ?? [];
+  const attachments = req.files['attachments'] ?? [];
+  const allFiles    = [...thumbnail, ...attachments];
+  const tmpPaths    = allFiles.map((f) =&gt; f.path);
+
+  try {
+    const results = await Promise.all(
+      allFiles.map(async (file) =&gt; ({
+        name:    file.fieldname + '/' + file.originalname,
+        verdict: await scan(file.path),
+      }))
+    );
+
+    const malicious = results.filter((r) =&gt; r.verdict !== Verdict.Clean);
+    if (malicious.length &gt; 0) {
+      return res.status(400).json({
+        error:    'Malware detected.',
+        rejected: malicious.map((r) =&gt; r.name),
+      });
+    }
+
+    return res.json({ status: 'ok' });
+
+  } finally {
+    tmpPaths.forEach((p) =&gt; { if (fs.existsSync(p)) fs.unlinkSync(p); });
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          Scanning files inside a ZIP archive?
+          See <a href="scan-zip-archive-contents-nodejs.html">Scanning files inside a ZIP archive in Node.js</a>.
+        </li>
+        <li>
+          Need async scanning for large batches?
+          See <a href="bullmq-background-scan-queue.html">Background virus scanning with BullMQ</a>.
+        </li>
+        <li>
+          Optimising scan speed for many concurrent requests?
+          See <a href="clamav-scan-performance-nodejs.html">Optimising ClamAV scan performance in Node.js</a>.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

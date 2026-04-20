@@ -5,10 +5,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Blog — pompelmi</title>
-<meta name="description" content="Tutorials and guides for using pompelmi — Node.js antivirus scanning with ClamAV — in Express, Fastify, NestJS, Hapi, Koa, Docker, and more.">
+<meta name="description" content="Tutorials and guides for using pompelmi — Node.js antivirus scanning with ClamAV — in Express, Fastify, NestJS, Next.js, Nuxt, SvelteKit, Hono, Remix, Astro, Elysia, AWS Lambda, Kubernetes, and more.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
+<style>
+#blog-search {
+  margin-bottom: 24px;
+}
+#blog-search input[type="search"] {
+  width: 100%;
+  max-width: 420px;
+  padding: 8px 12px;
+  font-family: Georgia, "Times New Roman", Times, serif;
+  font-size: 14px;
+  color: #222;
+  background: #f9f3f0;
+  border: 1px solid #d4a898;
+  outline: none;
+  box-sizing: border-box;
+}
+#blog-search input[type="search"]:focus {
+  border-color: #e8846a;
+  background: #fffaf8;
+}
+#blog-search input[type="search"]::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+.no-results {
+  font-size: 13px;
+  color: #888;
+  font-style: italic;
+  display: none;
+  margin-top: 8px;
+}
+</style>
 </head>
 <body>
 
@@ -43,13 +75,21 @@
       <span class="sidebar-label">Blog</span>
       <li><a href="#getting-started">Getting Started</a></li>
       <li><a href="#frameworks">Frameworks</a></li>
+      <li><a href="#meta-frameworks">Meta-frameworks</a></li>
       <li><a href="#security">Security</a></li>
       <li><a href="#infrastructure">Infrastructure</a></li>
+      <li><a href="#advanced">Advanced Patterns</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
       <li><a href="#comparisons">Comparisons</a></li>
     </ul>
   </div>
 
   <div id="content">
+
+    <div id="blog-search">
+      <input type="search" id="search-input" placeholder="Search articles&hellip;" autocomplete="off" spellcheck="false">
+      <p class="no-results" id="no-results">No articles match your search.</p>
+    </div>
 
     <div class="section" id="getting-started">
       <h2>Getting Started</h2>
@@ -57,6 +97,7 @@
         <li><a href="blog/nodejs-antivirus-getting-started.html">Getting started with antivirus scanning in Node.js (5 minutes)</a></li>
         <li><a href="blog/scan-file-upload-nodejs.html">How to scan file uploads for viruses in Node.js</a></li>
         <li><a href="blog/clamav-install-nodejs-macos-linux-windows.html">How to install ClamAV for Node.js on macOS, Linux and Windows</a></li>
+        <li><a href="blog/clamav-freshclam-update-strategies.html">Keeping ClamAV virus definitions current in production</a></li>
       </ul>
     </div>
 
@@ -69,6 +110,20 @@
         <li><a href="blog/pompelmi-with-hapi.html">File upload antivirus scanning with pompelmi and Hapi.js</a></li>
         <li><a href="blog/pompelmi-with-koa.html">Using pompelmi in a Koa.js middleware pipeline</a></li>
         <li><a href="blog/pompelmi-multipart-multer.html">Scanning multipart uploads with pompelmi and Multer</a></li>
+        <li><a href="blog/pompelmi-with-hono.html">Virus scanning in Hono.js with pompelmi</a></li>
+        <li><a href="blog/elysia-file-upload-scan.html">Virus scanning in Elysia.js with pompelmi (Bun)</a></li>
+      </ul>
+    </div>
+
+    <div class="section" id="meta-frameworks">
+      <h2>Meta-frameworks</h2>
+      <ul>
+        <li><a href="blog/nextjs-app-router-file-scan.html">How to scan file uploads in Next.js (App Router)</a></li>
+        <li><a href="blog/nextjs-pages-router-file-scan.html">Scanning file uploads in Next.js Pages Router (API Routes)</a></li>
+        <li><a href="blog/nuxtjs-antivirus-scanning.html">Integrating antivirus scanning in Nuxt.js</a></li>
+        <li><a href="blog/sveltekit-file-upload-security.html">SvelteKit file upload security with pompelmi</a></li>
+        <li><a href="blog/remix-file-upload-scan.html">Scanning file uploads in Remix / React Router v7</a></li>
+        <li><a href="blog/astro-file-upload-scan.html">Scanning file uploads in Astro (SSR mode)</a></li>
       </ul>
     </div>
 
@@ -77,16 +132,45 @@
       <ul>
         <li><a href="blog/nodejs-malware-detection-user-uploads.html">How to protect your Node.js app from malicious file uploads</a></li>
         <li><a href="blog/nodejs-file-upload-security-checklist.html">Node.js file upload security checklist (with virus scanning)</a></li>
+        <li><a href="blog/mime-type-spoofing-nodejs.html">MIME type spoofing: how attackers disguise malicious files</a></li>
         <li><a href="blog/scan-pdf-uploads-nodejs.html">How to scan PDF uploads for malware in Node.js</a></li>
-        <li><a href="blog/nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3 in Node.js</a></li>
+        <li><a href="blog/scan-image-uploads-nodejs.html">Scanning image uploads (JPEG, PNG, WebP, GIF) in Node.js</a></li>
+        <li><a href="blog/scan-excel-csv-macros.html">Scanning Excel and CSV files for malicious macros</a></li>
+        <li><a href="blog/nodejs-zip-bomb-prevention.html">Preventing ZIP Bomb attacks in Node.js</a></li>
+        <li><a href="blog/encrypted-file-scan-nodejs.html">How to handle encrypted and password-protected files during scan</a></li>
         <li><a href="blog/nodejs-antivirus-rest-api.html">Building a file scanning REST API with Node.js and pompelmi</a></li>
+        <li><a href="blog/scan-zip-archive-contents-nodejs.html">Scanning files inside a ZIP archive in Node.js</a></li>
       </ul>
     </div>
 
     <div class="section" id="infrastructure">
-      <h2>Infrastructure</h2>
+      <h2>Infrastructure &amp; Cloud Storage</h2>
       <ul>
         <li><a href="blog/pompelmi-docker-compose.html">Running pompelmi with ClamAV in Docker Compose</a></li>
+        <li><a href="blog/pompelmi-clamav-kubernetes.html">Setting up pompelmi with ClamAV on Kubernetes</a></li>
+        <li><a href="blog/aws-lambda-serverless-virus-scan.html">Serverless virus scanning with AWS Lambda and Node.js</a></li>
+        <li><a href="blog/bullmq-background-scan-queue.html">Background virus scanning with BullMQ and Node.js</a></li>
+        <li><a href="blog/nodejs-s3-antivirus-scan.html">Scanning files before uploading to AWS S3 in Node.js</a></li>
+        <li><a href="blog/google-cloud-storage-antivirus-scan.html">Scanning files before uploading to Google Cloud Storage</a></li>
+        <li><a href="blog/azure-blob-storage-antivirus-scan.html">Scanning files before uploading to Azure Blob Storage</a></li>
+        <li><a href="blog/cloudflare-r2-antivirus-scan.html">Scanning files before uploading to Cloudflare R2</a></li>
+        <li><a href="blog/minio-antivirus-scan-nodejs.html">Scanning files before uploading to MinIO (self-hosted S3)</a></li>
+      </ul>
+    </div>
+
+    <div class="section" id="advanced">
+      <h2>Advanced Patterns</h2>
+      <ul>
+        <li><a href="blog/nodejs-multifile-bulk-upload-scan.html">Scanning multiple file uploads in a single request</a></li>
+        <li><a href="blog/clamav-scan-performance-nodejs.html">Optimising ClamAV scan performance in Node.js</a></li>
+        <li><a href="blog/scan-result-caching-file-hash.html">Caching ClamAV scan results by file hash (Redis + in-memory)</a></li>
+      </ul>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+      <ul>
+        <li><a href="blog/pompelmi-typescript-guide.html">Complete TypeScript integration guide for pompelmi</a></li>
       </ul>
     </div>
 
@@ -107,6 +191,35 @@
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>
+
+<script>
+(function () {
+  var input     = document.getElementById('search-input');
+  var noResults = document.getElementById('no-results');
+  var sections  = document.querySelectorAll('#content .section');
+
+  input.addEventListener('input', function () {
+    var q          = this.value.toLowerCase().trim();
+    var anyVisible = false;
+
+    sections.forEach(function (section) {
+      var items          = section.querySelectorAll('li');
+      var sectionVisible = false;
+
+      items.forEach(function (li) {
+        var match = !q || li.textContent.toLowerCase().indexOf(q) !== -1;
+        li.style.display = match ? '' : 'none';
+        if (match) sectionVisible = true;
+      });
+
+      section.style.display = sectionVisible ? '' : 'none';
+      if (sectionVisible) anyVisible = true;
+    });
+
+    noResults.style.display = (!anyVisible && q) ? 'block' : 'none';
+  });
+}());
+</script>
 
 </body>
 </html>
