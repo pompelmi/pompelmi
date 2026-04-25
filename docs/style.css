@@ -13,7 +13,7 @@ body {
 }
 
 a {
-  color: #b84f2e;
+  color: #a03c1c;
   text-decoration: none;
 }
 a:hover {
@@ -77,12 +77,12 @@ a:hover {
 }
 #navbar a:hover {
   background: #e8d4cc;
-  color: #b84f2e;
+  color: #a03c1c;
   text-decoration: none;
 }
 #navbar a.active {
   background: #fffaf8;
-  color: #b84f2e;
+  color: #a03c1c;
   font-weight: bold;
   border-bottom: 2px solid #fffaf8;
   margin-bottom: -1px;
@@ -111,7 +111,7 @@ a:hover {
   display: block;
   font-size: 11px;
   font-family: "Courier New", Courier, monospace;
-  color: #888;
+  color: #5a5a5a;
   text-transform: uppercase;
   letter-spacing: 1px;
   padding: 8px 10px 4px 10px;
@@ -133,7 +133,7 @@ a:hover {
 }
 #sidebar ul li a:hover {
   background: #ede0d9;
-  color: #b84f2e;
+  color: #a03c1c;
 }
 
 /* ── Main content ── */
@@ -143,7 +143,7 @@ a:hover {
 #content h2 {
   font-size: 18px;
   font-weight: bold;
-  color: #b84f2e;
+  color: #a03c1c;
   border-bottom: 1px solid #e8846a;
   padding-bottom: 4px;
   margin-top: 28px;
@@ -218,7 +218,7 @@ table tr:nth-child(even) td {
   background: #f9f3f0;
 }
 td.result-clean      { color: #3a6e1a; font-weight: bold; }
-td.result-malicious  { color: #b84f2e; font-weight: bold; }
+td.result-malicious  { color: #a03c1c; font-weight: bold; }
 td.result-suspicious { color: #7a6000; font-weight: bold; }
 td.result-scanerror  { color: #7a6000; font-weight: bold; }
 td.code-cell {
@@ -258,7 +258,7 @@ td.code-cell {
   display: block;
   font-family: "Courier New", Courier, monospace;
   font-size: 12px;
-  color: #777;
+  color: #666;
   margin-bottom: 2px;
   margin-top: 12px;
 }
@@ -278,7 +278,7 @@ hr.section-rule {
   margin-top: 40px;
   padding: 12px 20px;
   font-size: 12px;
-  color: #777;
+  color: #666;
   background: #f0e8e3;
 }
-#footer a { color: #b84f2e; }
+#footer a { color: #a03c1c; }
