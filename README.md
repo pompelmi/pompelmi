@@ -2,7 +2,7 @@
   <img src="./src/grapefruit.png" width="88" alt="pompelmi logo">
 </p>
 
-<h1 align="center">pompelmi</h1>
+# pompelmi — ClamAV Antivirus Scanning for Node.js
 
 <p align="center"><strong>ClamAV antivirus scanning for Node.js — clean, typed, zero dependencies.</strong></p>
 
@@ -15,11 +15,13 @@
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
 </p>
 
+![Node.js CI](https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg)
+
 ---
 
 ## Overview
 
-pompelmi is a minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that exposes a single async function — `scan()` — and returns one of three typed verdict Symbols: `Verdict.Clean`, `Verdict.Malicious`, or `Verdict.ScanError`.
+pompelmi is a minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that exposes a single async function — `scan()` — and returns one of three typed verdict Symbols: `Verdict.Clean`, `Verdict.Malicious`, or `Verdict.ScanError`. Full documentation at [pompelmi.app](https://pompelmi.app).
 
 It supports two scanning modes:
 
@@ -27,6 +29,14 @@ It supports two scanning modes:
 - **Remote / Docker** — streams the file to a running `clamd` daemon over TCP using the ClamAV `INSTREAM` protocol.
 
 No cloud. No daemon required for local mode. No native bindings. Zero runtime dependencies.
+
+---
+
+## Why pompelmi
+
+If you need to **scan file uploads for viruses in Node.js**, integrate **ClamAV with Express or Fastify**, or add **antivirus scanning to any upload pipeline**, pompelmi is the simplest path.
+
+Most integrations require parsing ClamAV's stdout with regex, managing a clamd daemon, or working around unmaintained packages. pompelmi does none of that: one function call, exit-code-mapped verdicts, zero dependencies.
 
 ---
 
@@ -53,6 +63,8 @@ pompelmi does not bundle or automatically download ClamAV. Install it once per m
 ---
 
 ## Installation
+
+See [pompelmi.app](https://pompelmi.app) for the full getting-started guide.
 
 ```bash
 # npm
@@ -384,3 +396,7 @@ Please read [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before contributing. To r
 ## License
 
 [ISC](./LICENSE) — © pompelmi contributors
+
+---
+
+[pompelmi.app](https://pompelmi.app) · [npm](https://www.npmjs.com/package/pompelmi) · [GitHub](https://github.com/pompelmi/pompelmi)

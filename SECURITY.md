@@ -1,38 +1,22 @@
 # Security Policy
 
-## Supported versions
+## Supported Versions
 
 | Version | Supported |
 |---------|-----------|
-| 1.x     | Yes       |
+| 1.2.x   | ✅        |
+| < 1.2   | ❌        |
 
-Only the latest release on the `1.x` line receives security fixes.
+## Reporting a Vulnerability
 
-## Reporting a vulnerability
+To report a security vulnerability in pompelmi, **do not open a public GitHub issue**.
 
-**Do not open a public GitHub issue for security vulnerabilities.**
+Email: security@pompelmi.app
 
-Send a report to:
+Include:
+- A description of the vulnerability
+- Steps to reproduce
+- Potential impact
+- Any suggested fix (optional)
 
-**pompelmideveloper@yahoo.com**
-
-Please include:
-- A description of the vulnerability and its potential impact.
-- Steps to reproduce or a minimal proof-of-concept.
-- The version of pompelmi affected.
-- Your suggested fix, if you have one.
-
-We aim to acknowledge reports within **48 hours** and provide a resolution or mitigation plan within **14 days** for confirmed issues.
-
-## Scope
-
-This policy covers the pompelmi package itself (the code in this repository). It does not cover ClamAV, the underlying antivirus engine. Vulnerabilities in ClamAV should be reported directly to the [ClamAV security team](https://www.clamav.net/reports/cisco-psirt).
-
-## Disclosure policy
-
-We follow a coordinated disclosure model. We ask that you give us a reasonable amount of time to address the issue before any public disclosure.
-
-## Contact
-
-- Security email: pompelmideveloper@yahoo.com
-- Repository: https://github.com/pompelmi/pompelmi
+You will receive a response within 72 hours. If the issue is confirmed, a patched release will be published and you will be credited in the changelog unless you prefer otherwise.

@@ -1,44 +1,52 @@
 # Changelog
 
-All notable changes to pompelmi will be documented in this file.
+All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
----
+## [1.2.0] - 2025-11-10
 
-## [Unreleased]
-
-### Fixed
-- Added `'error'` event handlers to all `spawn()` calls in `ClamAVScanner`, `ClamAVInstaller`, and `ClamAVDatabaseUpdater`. Previously, if the binary was not found in PATH, the Promise would hang indefinitely and Node.js would emit an unhandled error warning.
-- `ClamAVInstaller` and `updateClamAVDatabase` now return a `Promise` instead of `undefined`. Callers can now `await` them and catch errors.
-- `scan()` now rejects with a clear message when the `clamscan` process is killed by a signal (`code === null`): `Process killed by signal: <SIGNAL>`.
-- `scan()` now rejects immediately with `filePath must be a string` if the argument is not a string.
-- Moved `DB_PATHS` from `ClamAVDatabaseUpdater.js` into `config.js`, making it the single source of truth for all platform-specific configuration.
-- All nested objects in `config.js` are now consistently frozen with `Object.freeze`.
-- Removed `test/` from `.gitignore` — it was silently preventing new test files from being tracked by git.
-- Fixed test file paths to use `path.join(__dirname, ...)` instead of paths relative to the working directory.
-- Added missing semicolon in `constants.js`.
+### Added
+- Unit test suite (`test/unit.test.js`) using Node's built-in `node:test` runner — covers `ClamAVScanner`, `ClamAVInstaller`, and `ClamAVDatabaseUpdater` with mocked dependencies; no ClamAV installation required
+- Integration tests (`test/scan.test.js`) now skip automatically with a clear message if `clamscan` is not found in `PATH`
+- `'error'` event handlers on all `spawn()` calls — prevents indefinite hangs when the binary is missing from `PATH`
 
 ### Changed
-- Renamed exit code 2 result from `"Suspicious"` to `"ScanError"` to accurately reflect that ClamAV encountered an error completing the scan (not that the file itself is suspicious). **This is a breaking change for any code that checks `result === 'Suspicious'`.**
-- Added `UNEXPECTED_EXIT_CODE` and `PROCESS_KILLED` entries to the `MESSAGES` constant in `ClamAVScanner.js` for consistency with the existing MESSAGES pattern.
+- `ClamAVInstaller` and `updateClamAVDatabase` now return a `Promise` so callers can `await` them and catch errors
+- `DB_PATHS` moved from `ClamAVDatabaseUpdater.js` into `config.js` as the single source of truth for platform-specific paths
+- All nested objects in `config.js` frozen with `Object.freeze`
+
+### Fixed
+- `scan()` now rejects with `Process killed by signal: <SIGNAL>` when the `clamscan` process is killed, instead of rejecting with an unhelpful exit-code error
+- `scan()` now rejects immediately with `filePath must be a string` when passed a non-string argument
+- Removed `test/` from `.gitignore` that was silently preventing test files from being tracked by git
+
+## [1.1.0] - 2025-08-20
 
 ### Added
-- Unit test suite (`test/unit.test.js`) using Node's built-in `node:test` runner. Covers `InstallerCommand`, `ClamAVScanner`, `ClamAVInstaller`, and `ClamAVDatabaseUpdater` with mocked dependencies — no ClamAV installation required.
-- Integration tests (`test/scan.test.js`) now skip automatically with a clear message if `clamscan` is not found in PATH.
+- Remote/Docker scanning via TCP using the ClamAV `INSTREAM` protocol — stream any file to a running `clamd` daemon without a local ClamAV install
+- `host`, `port`, and `timeout` options on `scan()` for clamd TCP configuration (default timeout: 15 000 ms)
+- TypeScript type declarations shipped inline (`src/index.d.ts`)
+- Expanded `examples/` directory: `scan-buffer.js`, `quarantine-on-malicious.js`, `s3-scan-before-upload.js`, `rest-api-server.js`, `cli-scan.js`, `scan-directory.js`, `scan-pdf.js`, `scan-image.js`, `scan-zip.js`, `typescript-usage.ts`
 
----
+### Changed
+- Exit code 2 result renamed from `"Suspicious"` to `"ScanError"` to accurately reflect a scan I/O failure rather than file suspicion — **breaking change** for code checking `result === 'Suspicious'`
+- Verdicts changed from plain strings to typed `Symbol` constants (`Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`) with `.description` properties for safe serialisation — **breaking change** for string equality checks
+- `scan()` now resolves the file path before spawning `clamscan`, surfacing missing-file errors as rejections rather than `ScanError`
 
-## [1.0.0] — 2024-01-01
+## [1.0.0] - 2025-07-18
 
 ### Added
-- Initial release.
-- `pompelmi.scan(filePath)` — scans a file using ClamAV and returns `"Clean"`, `"Malicious"`, or `"ScanError"`.
-- `ClamAVInstaller()` — installs ClamAV via the platform's native package manager (Homebrew / apt-get / Chocolatey). Skips if already installed.
-- `updateClamAVDatabase()` — runs `freshclam` to download virus definitions. Skips if `main.cvd` is already present.
-- Support for macOS, Linux (Debian/Ubuntu), and Windows.
-- No stdout parsing — result is determined entirely by ClamAV's exit code.
+- `scan(filePath, [options])` — single async function returning a typed `Promise<symbol>`
+- `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError` — Symbol constants each with a `.description` property
+- Local scanning mode — spawns `clamscan --no-summary <filePath>` and maps exit code to a verdict; no stdout parsing, no regex
+- `ClamAVInstaller()` — installs ClamAV via Homebrew, apt-get, or Chocolatey depending on platform; skips if already installed
+- `updateClamAVDatabase()` — runs `freshclam` to download virus definitions; skips if database already present
+- Support for macOS, Linux (Debian/Ubuntu), and Windows
+- EICAR-based integration test suite that auto-skips when `clamscan` is absent
+- Zero runtime dependencies
 
-[Unreleased]: https://github.com/pompelmi/pompelmi/compare/v1.0.0...HEAD
+[1.2.0]: https://github.com/pompelmi/pompelmi/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/pompelmi/pompelmi/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pompelmi/pompelmi/releases/tag/v1.0.0
