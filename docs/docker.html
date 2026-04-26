@@ -6,6 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Docker — pompelmi</title>
 <meta name="description" content="Run pompelmi with ClamAV inside Docker. Covers official images, Dockerfile setup, clamd TCP socket configuration, and production container patterns.">
+<meta property="og:title" content="Docker — pompelmi">
+<meta property="og:description" content="Run pompelmi with ClamAV inside Docker. Covers official images, Dockerfile setup, clamd TCP socket configuration, and production container patterns.">
+<meta property="og:url" content="https://pompelmi.app/docker.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Docker — pompelmi">
+<meta name="twitter:description" content="Run pompelmi with ClamAV inside Docker. Covers official images, Dockerfile setup, clamd TCP socket configuration, and production container patterns.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -140,7 +148,7 @@ const result = await pompelmi.scan('/path/to/upload.zip', {
   port: 3310,
 });
 
-// "Clean" | "Malicious" | "ScanError" — exactly the same as the CLI path</pre>
+// Verdict.Clean | Verdict.Malicious | Verdict.ScanError — exactly the same as the CLI path</pre>
 
       <p>
         See <a href="api.html#scan-options">API &rarr; options object</a> for the full
@@ -223,7 +231,7 @@ volumes:
 </div>
 
 <div id="footer">
-  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

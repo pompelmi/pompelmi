@@ -1,11 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<link rel="canonical" href="https://pompelmi.app" />
+<link rel="canonical" href="https://pompelmi.app/" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>pompelmi — Node.js antivirus scanning</title>
-<meta name="description" content="pompelmi is a zero-dependency Node.js wrapper around ClamAV. Scan uploads for malware in-process — no cloud API, no daemon, no data egress.">
+<title>pompelmi — Node.js Antivirus Scanning with ClamAV</title>
+<meta name="description" content="pompelmi is a zero-dependency Node.js wrapper for ClamAV antivirus scanning. Scan file uploads for viruses with a single function call — returns Clean, Malicious, or ScanError.">
+<meta property="og:title" content="pompelmi — Node.js Antivirus Scanning with ClamAV">
+<meta property="og:description" content="pompelmi is a zero-dependency Node.js wrapper for ClamAV antivirus scanning. Scan file uploads for viruses with a single function call — returns Clean, Malicious, or ScanError.">
+<meta property="og:url" content="https://pompelmi.app/">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="pompelmi — Node.js Antivirus Scanning with ClamAV">
+<meta name="twitter:description" content="pompelmi is a zero-dependency Node.js wrapper for ClamAV antivirus scanning. Scan file uploads for viruses with a single function call — returns Clean, Malicious, or ScanError.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -113,7 +121,10 @@
   <div id="content">
 
     <div class="hero">
-      <h2>pompelmi v1.2.0</h2>
+      <h2>Node.js Antivirus Scanning with ClamAV</h2>
+      <p>
+        Scan file uploads for malware in Node.js with a single function call. Zero dependencies. Works with Express, Fastify, NestJS, and any other framework.
+      </p>
       <p>
         A minimal Node.js wrapper around <a href="https://www.clamav.net/">ClamAV</a>
         that scans any file and returns a typed <strong>Verdict</strong> Symbol:

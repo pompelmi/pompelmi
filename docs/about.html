@@ -6,6 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>About — pompelmi</title>
 <meta name="description" content="Learn what pompelmi is, why it was built, and how it differs from other Node.js ClamAV wrappers. Zero dependencies, in-process scanning, typed Verdict API.">
+<meta property="og:title" content="About — pompelmi">
+<meta property="og:description" content="Learn what pompelmi is, why it was built, and how it differs from other Node.js ClamAV wrappers. Zero dependencies, in-process scanning, typed Verdict API.">
+<meta property="og:url" content="https://pompelmi.app/about.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="About — pompelmi">
+<meta name="twitter:description" content="Learn what pompelmi is, why it was built, and how it differs from other Node.js ClamAV wrappers. Zero dependencies, in-process scanning, typed Verdict API.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -60,8 +68,8 @@
         <strong>pompelmi</strong> is a Node.js library that provides antivirus file scanning
         by delegating to <a href="https://www.clamav.net/">ClamAV</a>, the open-source
         antivirus engine. It exposes a single async function, <code>scan(filePath)</code>,
-        which returns a Promise resolving to one of three strings:
-        <code>"Clean"</code>, <code>"Malicious"</code>, or <code>"ScanError"</code>.
+        which returns a Promise resolving to one of three Symbol constants:
+        <code>Verdict.Clean</code>, <code>Verdict.Malicious</code>, or <code>Verdict.ScanError</code>.
       </p>
       <p>
         The name <em>pompelmi</em> is the Italian plural of <em>pompelmo</em> (grapefruit).
@@ -80,7 +88,7 @@
       <ul>
         <li>Spawn <code>clamscan</code> as a child process.</li>
         <li>Read the exit code when it finishes.</li>
-        <li>Map that code to a string constant and resolve the Promise.</li>
+        <li>Map that code to a Symbol constant and resolve the Promise.</li>
       </ul>
       <p>
         No daemon. No stdout parsing. No native bindings. The result is a library that is
@@ -95,10 +103,10 @@
       </p>
       <ol>
         <li>The file path is checked with <code>fs.existsSync</code>. If missing, the Promise rejects immediately.</li>
-        <li><code>cross-spawn</code> launches <code>clamscan --no-summary &lt;filePath&gt;</code> as a child process.</li>
+        <li>Node's built-in <code>child_process.spawn</code> launches <code>clamscan --no-summary &lt;filePath&gt;</code> as a child process.</li>
         <li>pompelmi listens for the <code>close</code> event on the child process.</li>
-        <li>The exit code is looked up in the <code>SCAN_RESULTS</code> map: <code>0 → "Clean"</code>, <code>1 → "Malicious"</code>, <code>2 → "ScanError"</code>.</li>
-        <li>The Promise resolves with the matching string, or rejects if the code is unrecognised.</li>
+        <li>The exit code is looked up in the <code>SCAN_RESULTS</code> map: <code>0 → Verdict.Clean</code>, <code>1 → Verdict.Malicious</code>, <code>2 → Verdict.ScanError</code>.</li>
+        <li>The Promise resolves with the matching Symbol constant, or rejects if the code is unrecognised.</li>
       </ol>
       <p>
         The <code>--no-summary</code> flag suppresses ClamAV's final statistics output,
@@ -115,7 +123,7 @@
     v
 ClamAVScanner.js
     |
-    | cross-spawn('clamscan', ['--no-summary', filePath])
+    | child_process.spawn('clamscan', ['--no-summary', filePath])
     v
 clamscan (system binary)
     |
@@ -123,7 +131,7 @@ clamscan (system binary)
     v
 SCAN_RESULTS map  (config.js)
     |
-    | "Clean" / "Malicious" / "ScanError"
+    | Verdict.Clean / Verdict.Malicious / Verdict.ScanError
     v
 Promise resolved → your code</pre>
 
@@ -170,7 +178,7 @@ Promise resolved → your code</pre>
         <tr>
           <td><code>config.js</code></td>
           <td><code>INSTALLER_COMMANDS</code>, <code>UPDATER_COMMANDS</code>, <code>DB_PATHS</code>, <code>SCAN_RESULTS</code></td>
-          <td>Frozen config object. Single source of truth for all commands and result strings.</td>
+          <td>Frozen config object. Single source of truth for all commands and Verdict Symbol mappings.</td>
         </tr>
         <tr>
           <td><code>constants.js</code></td>
@@ -182,23 +190,12 @@ Promise resolved → your code</pre>
 
     <div class="section" id="deps">
       <h2>Dependencies</h2>
-      <table>
-        <tr>
-          <th>Package</th>
-          <th>Version</th>
-          <th>Why</th>
-        </tr>
-        <tr>
-          <td><a href="https://www.npmjs.com/package/cross-spawn">cross-spawn</a></td>
-          <td>^7.0.6</td>
-          <td>
-            Node's built-in <code>child_process.spawn</code> has edge cases on Windows
-            (PATHEXT, quoting). cross-spawn handles these transparently without changing
-            the API.
-          </td>
-        </tr>
-      </table>
-      <p>There are no other runtime dependencies.</p>
+      <p>
+        pompelmi has <strong>zero runtime dependencies</strong>. It uses Node's built-in
+        <code>child_process</code> module to spawn <code>clamscan</code> — no third-party
+        packages are required at runtime. There is nothing to audit, nothing to patch,
+        and no supply-chain surface beyond pompelmi itself.
+      </p>
 
       <h3>Dev dependencies</h3>
       <table>
@@ -226,13 +223,15 @@ Promise resolved → your code</pre>
         is outside pompelmi's scope.
       </p>
 
-      <h3>Why return a string instead of a boolean or number?</h3>
+      <h3>Why return a Symbol instead of a string or boolean?</h3>
       <p>
         A boolean (<code>true/false</code>) would collapse the three-state result into two,
-        losing the <code>"ScanError"</code> case which represents a distinct and actionable
-        condition: the scan failed and the file's safety is unknown. A number would require
-        callers to remember what <code>2</code> means.
-        A string is self-documenting and safe to log, serialize, and switch on.
+        losing the <code>Verdict.ScanError</code> case which represents a distinct and actionable
+        condition: the scan failed and the file's safety is unknown. A plain string is
+        error-prone — a typo such as <code>'Cleaan'</code> compiles silently but always
+        evaluates to <code>false</code>. A Symbol constant makes any unknown value
+        <code>undefined</code> immediately, preventing silent mis-comparisons. Each Symbol
+        carries a <code>.description</code> string for logging and serialisation.
       </p>
 
       <h3>Why freeze the config object?</h3>
@@ -242,11 +241,13 @@ Promise resolved → your code</pre>
         scan, a mutation bug could silently change behaviour across all scans in a process.
       </p>
 
-      <h3>Why cross-spawn instead of execa or shelljs?</h3>
+      <h3>Why no third-party spawn wrapper?</h3>
       <p>
-        cross-spawn has a minimal surface area, is widely used, and does exactly one thing.
-        Heavier alternatives like <code>execa</code> add promise wrappers and output parsing
-        on top of what pompelmi needs, which is just an exit code.
+        Node's built-in <code>child_process.spawn</code> does everything pompelmi needs:
+        launch a process, listen for the <code>close</code> event, read the exit code.
+        Third-party wrappers like <code>cross-spawn</code> or <code>execa</code> add
+        dependency surface for problems pompelmi does not have. Keeping it to
+        built-ins means zero runtime deps and nothing to audit or patch.
       </p>
     </div>
 
@@ -285,7 +286,7 @@ Promise resolved → your code</pre>
 </div>
 
 <div id="footer">
-  pompelmi v1.0.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

@@ -1,14 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- Homepage -->
   <url>
-    <loc>https://pompelmi.app</loc>
-    <changefreq>monthly</changefreq>
+    <loc>https://pompelmi.app/</loc>
+    <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
-
-  <!-- Main doc pages -->
   <url>
     <loc>https://pompelmi.app/about.html</loc>
     <changefreq>monthly</changefreq>
@@ -39,238 +35,219 @@
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
-
-  <!-- Blog index -->
   <url>
     <loc>https://pompelmi.app/blog.html</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.6</priority>
+    <priority>0.8</priority>
   </url>
-
-  <!-- Blog articles — Getting Started -->
   <url>
     <loc>https://pompelmi.app/blog/nodejs-antivirus-getting-started.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/scan-file-upload-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/clamav-install-nodejs-macos-linux-windows.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/clamav-freshclam-update-strategies.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — Framework Integrations -->
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-express.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-fastify.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-nestjs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-hapi.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-koa.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-multipart-multer.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-with-hono.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/elysia-file-upload-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — Meta-frameworks -->
   <url>
     <loc>https://pompelmi.app/blog/nextjs-app-router-file-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nextjs-pages-router-file-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nuxtjs-antivirus-scanning.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/sveltekit-file-upload-security.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/remix-file-upload-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/astro-file-upload-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — Security -->
   <url>
     <loc>https://pompelmi.app/blog/nodejs-malware-detection-user-uploads.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nodejs-file-upload-security-checklist.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/mime-type-spoofing-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/scan-pdf-uploads-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/scan-image-uploads-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/scan-excel-csv-macros.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nodejs-zip-bomb-prevention.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/encrypted-file-scan-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nodejs-antivirus-rest-api.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — Infrastructure & Cloud Storage -->
+  <url>
+    <loc>https://pompelmi.app/blog/scan-zip-archive-contents-nodejs.html</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-docker-compose.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-clamav-kubernetes.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/aws-lambda-serverless-virus-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/bullmq-background-scan-queue.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nodejs-s3-antivirus-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/google-cloud-storage-antivirus-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/azure-blob-storage-antivirus-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/cloudflare-r2-antivirus-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/minio-antivirus-scan-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-
-  <!-- Blog articles — Advanced Patterns -->
-  <url>
-    <loc>https://pompelmi.app/blog/scan-zip-archive-contents-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/nodejs-multifile-bulk-upload-scan.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/clamav-scan-performance-nodejs.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
   <url>
     <loc>https://pompelmi.app/blog/scan-result-caching-file-hash.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — TypeScript -->
   <url>
     <loc>https://pompelmi.app/blog/pompelmi-typescript-guide.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
-  <!-- Blog articles — Comparisons -->
   <url>
     <loc>https://pompelmi.app/blog/clamav-nodejs-alternatives.html</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
   </url>
-
 </urlset>
