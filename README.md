@@ -2,7 +2,7 @@
   <img src="./src/grapefruit.png" width="88" alt="pompelmi logo">
 </p>
 
-# pompelmi — ClamAV Antivirus Scanning for Node.js
+<h1 align="center">pompelmi — ClamAV Antivirus Scanning for Node.js</h1>
 
 <p align="center"><strong>ClamAV antivirus scanning for Node.js — clean, typed, zero dependencies.</strong></p>
 
@@ -13,9 +13,8 @@
   <img src="https://img.shields.io/badge/docker-available-blue?logo=docker" alt="Docker available">
   <img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="license">
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
+  <img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="Node.js CI">
 </p>
-
-![Node.js CI](https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg)
 
 ---
 
@@ -43,6 +42,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 ## Features
 
 - Single `scan(filePath, [options])` function — works locally or against a remote clamd instance
+- `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full TCP/clamd support via the INSTREAM protocol with configurable host, port, and timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
@@ -214,6 +214,18 @@ const files    = ['/uploads/a.pdf', '/uploads/b.zip', '/uploads/c.png'];
 const results = await Promise.all(files.map((f) => scan(f)));
 ```
 
+### Scan a Buffer
+
+```js
+const { scanBuffer, Verdict } = require('pompelmi');
+
+// Useful with multer memoryStorage or any in-memory upload
+const result = await scanBuffer(req.file.buffer);
+
+if (result === Verdict.Malicious) throw new Error('Malware detected.');
+if (result === Verdict.ScanError) console.warn('Scan incomplete.');
+```
+
 ---
 
 ## Docker / Remote Scanning
@@ -283,6 +295,33 @@ Verdict.Clean.description     // 'Clean'
 Verdict.Malicious.description // 'Malicious'
 Verdict.ScanError.description // 'ScanError'
 ```
+
+---
+
+### `scanBuffer(buffer, [options])`
+
+```ts
+scanBuffer(
+  buffer: Buffer,
+  options?: { host?: string; port?: number; timeout?: number }
+): Promise<symbol>
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `buffer` | `Buffer` | The in-memory buffer to scan |
+| `options` | `object` | Same options as `scan()` — host, port, timeout |
+
+**Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
+
+**Rejects** with the same error types as `scan()` where applicable, plus:
+
+| Condition | Error message |
+|---|---|
+| `buffer` is not a Buffer | `buffer must be a Buffer` |
+| `buffer` is empty | `buffer is empty` |
+
+In TCP mode (`host` or `port` provided), the buffer is streamed directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, a temp file is written to `os.tmpdir()` and deleted automatically in a `finally` block regardless of outcome.
 
 ---
 

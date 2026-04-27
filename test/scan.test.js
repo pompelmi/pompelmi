@@ -1,4 +1,5 @@
 const path = require('path');
+const fs   = require('fs');
 const { execSync } = require('child_process');
 const pompelmi = require('../src/index.js');
 const { Verdict } = require('../src/verdicts.js');
@@ -52,6 +53,34 @@ async function runTests() {
     await test("Malicious file",     path.join(__dirname, 'eicar.txt'), Verdict.Malicious);
     await test("Malicious zip",      path.join(__dirname, 'eicar.zip'), Verdict.Malicious);
     await test("File non esistente", ghostPath, `File not found: ${ghostPath}`);
+
+    console.log("\n--- scanBuffer integration tests ---\n");
+
+    async function testBuffer(label, buffer, expected) {
+        try {
+            const result = await pompelmi.scanBuffer(buffer);
+            if (result === expected) {
+                console.log(`✅ ${label}: ${String(result)}`);
+                passed++;
+            } else {
+                console.error(`❌ ${label}: Expected ${String(expected)}, got ${String(result)}`);
+                failed++;
+            }
+        } catch (err) {
+            console.error(`❌ ${label}: Threw ${err.message}`);
+            failed++;
+        }
+    }
+
+    const cleanBuffer = fs.readFileSync(path.join(__dirname, 'clean.txt'));
+
+    // Build the EICAR test string in memory to avoid OS-level read blocks on eicar.txt
+    const eicarBuffer = Buffer.from(
+        'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+    );
+
+    await testBuffer('Buffer: Clean file',      cleanBuffer,  Verdict.Clean);
+    await testBuffer('Buffer: EICAR signature', eicarBuffer,  Verdict.Malicious);
 
     console.log(`\n--- Results: ${passed} passed, ${failed} failed ---\n`);
 }

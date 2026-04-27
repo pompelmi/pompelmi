@@ -1,36 +1,44 @@
 // scan-buffer.js
-// Scan an in-memory Buffer by writing it to a temp file, scanning, then cleaning up.
-// NOTE: pompelmi's scan() API accepts file paths only — this is a thin wrapper
-//       to handle the Buffer → temp file → scan → cleanup lifecycle.
+// Express route: scan an in-memory Buffer using multer memoryStorage + scanBuffer().
+// memoryStorage never writes to disk — scanBuffer() handles the scan directly.
+// In TCP mode (host/port options), no temp file is created at all.
 // Run: node examples/scan-buffer.js
+// Requires: express, multer  (npm install express multer)
 
 'use strict';
 
-const os   = require('os');
-const path = require('path');
-const fs   = require('fs');
-const { scan, Verdict } = require('pompelmi');
+const express = require('express');
+const multer  = require('multer');
+const { scanBuffer, Verdict } = require('pompelmi');
 
-async function scanBuffer(buffer) {
-  const tmpPath = path.join(os.tmpdir(), `pompelmi-${Date.now()}-${Math.random().toString(36).slice(2)}`);
-  fs.writeFileSync(tmpPath, buffer);
+// memoryStorage keeps the upload in memory as req.file.buffer — no disk I/O.
+const upload = multer({ storage: multer.memoryStorage() });
 
-  try {
-    return await scan(tmpPath);
-  } finally {
-    fs.unlink(tmpPath, () => {});
+const app = express();
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
   }
-}
 
-(async () => {
-  // In real usage, `buffer` would come from a multipart parser, S3 download, etc.
-  const buffer = fs.readFileSync('./uploads/document.pdf');
-  const result = await scanBuffer(buffer);
+  let result;
+  try {
+    // Pass the in-memory Buffer directly — no file path needed.
+    result = await scanBuffer(req.file.buffer);
+  } catch (err) {
+    return res.status(500).json({ error: `Scan failed: ${err.message}` });
+  }
 
   if (result === Verdict.Malicious) {
-    console.error('Buffer contained malware.');
-    process.exit(1);
+    return res.status(422).json({ error: 'Malicious file rejected.' });
   }
 
-  console.log('Buffer is clean. Verdict:', result.description);
-})();
+  if (result === Verdict.ScanError) {
+    return res.status(422).json({ error: 'Scan incomplete — file rejected as precaution.' });
+  }
+
+  // File is clean — proceed with your upload logic here.
+  return res.json({ ok: true, file: req.file.originalname, size: req.file.size });
+});
+
+app.listen(3000, () => console.log('Listening on http://localhost:3000'));

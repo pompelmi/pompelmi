@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-04-27
+
+### Added
+- `scanBuffer(buffer, [options])` — scan an in-memory Buffer directly. In TCP mode, the buffer is streamed to clamd without writing to disk. In local mode, a temp file is used and deleted automatically.
+- Exported `scanBuffer` from the main module alongside `scan` and `Verdict`.
+
 ## [1.2.0] - 2025-11-10
 
 ### Added

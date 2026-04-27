@@ -1,4 +1,4 @@
-const { scan }    = require('./ClamAVScanner.js');
-const { Verdict } = require('./verdicts.js');
+const { scan, scanBuffer } = require('./ClamAVScanner.js');
+const { Verdict }          = require('./verdicts.js');
 
-module.exports = { scan, Verdict };
+module.exports = { scan, scanBuffer, Verdict };

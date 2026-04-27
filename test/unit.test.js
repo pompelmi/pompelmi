@@ -528,6 +528,92 @@ describe('ClamAVScanner (TCP routing)', () => {
     });
 });
 
+// ─── scanBuffer ──────────────────────────────────────────────────────────────
+
+describe('scanBuffer', () => {
+    const fs = require('fs');
+
+    // Load a fresh ClamAVScanner with optional dep overrides.
+    function bufferScanner({ spawnMock = spawnClose(0), bufferScannerMock } = {}) {
+        const mocks = { '../src/spawn.js': { nativeSpawn: spawnMock } };
+        if (bufferScannerMock) mocks['../src/BufferScanner.js'] = bufferScannerMock;
+        return load('../src/ClamAVScanner.js', mocks);
+    }
+
+    // ── Input validation ──────────────────────────────────────────────────────
+
+    it('rejects with Error if buffer is not a Buffer', async () => {
+        const { scanBuffer } = bufferScanner();
+        await assert.rejects(() => scanBuffer('not a buffer'), /buffer must be a Buffer/);
+    });
+
+    it('rejects with Error if buffer is not a Buffer (number)', async () => {
+        const { scanBuffer } = bufferScanner();
+        await assert.rejects(() => scanBuffer(42), /buffer must be a Buffer/);
+    });
+
+    it('rejects with Error if buffer is empty', async () => {
+        const { scanBuffer } = bufferScanner();
+        await assert.rejects(() => scanBuffer(Buffer.alloc(0)), /buffer is empty/);
+    });
+
+    // ── Local mode (no host/port) — mock fs built-in + spawn ─────────────────
+
+    it('returns Verdict.Clean for a clean buffer (local mode)', async (t) => {
+        t.mock.method(fs, 'writeFileSync', () => {});
+        t.mock.method(fs, 'existsSync',    () => true);
+        t.mock.method(fs, 'unlink',        (_p, cb) => cb(null));
+        const { scanBuffer } = bufferScanner({ spawnMock: spawnClose(0) });
+        assert.equal(await scanBuffer(Buffer.from('clean content')), Verdict.Clean);
+    });
+
+    it('returns Verdict.Malicious for a malicious buffer (local mode)', async (t) => {
+        t.mock.method(fs, 'writeFileSync', () => {});
+        t.mock.method(fs, 'existsSync',    () => true);
+        t.mock.method(fs, 'unlink',        (_p, cb) => cb(null));
+        const { scanBuffer } = bufferScanner({ spawnMock: spawnClose(1) });
+        assert.equal(await scanBuffer(Buffer.from('EICAR')), Verdict.Malicious);
+    });
+
+    it('returns Verdict.ScanError on scan error (local mode)', async (t) => {
+        t.mock.method(fs, 'writeFileSync', () => {});
+        t.mock.method(fs, 'existsSync',    () => true);
+        t.mock.method(fs, 'unlink',        (_p, cb) => cb(null));
+        const { scanBuffer } = bufferScanner({ spawnMock: spawnClose(2) });
+        assert.equal(await scanBuffer(Buffer.from('garbled')), Verdict.ScanError);
+    });
+
+    // ── TCP mode (host/port provided) — mock BufferScanner module ─────────────
+
+    it('routes to scanBufferViaClamd when { host } is given', async () => {
+        const { scanBuffer } = bufferScanner({
+            bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        assert.equal(await scanBuffer(Buffer.from('data'), { host: '127.0.0.1' }), Verdict.Clean);
+    });
+
+    it('routes to scanBufferViaClamd when { port } is given', async () => {
+        const { scanBuffer } = bufferScanner({
+            bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        assert.equal(await scanBuffer(Buffer.from('data'), { port: 3310 }), Verdict.Clean);
+    });
+
+    it('returns Verdict.Malicious for a malicious buffer (TCP mode)', async () => {
+        const { scanBuffer } = bufferScanner({
+            bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.Malicious) },
+        });
+        assert.equal(await scanBuffer(Buffer.from('EICAR'), { host: '127.0.0.1' }), Verdict.Malicious);
+    });
+
+    it('returns Verdict.ScanError on scan error (TCP mode)', async () => {
+        const { scanBuffer } = bufferScanner({
+            bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.ScanError) },
+        });
+        assert.equal(await scanBuffer(Buffer.from('data'), { host: '127.0.0.1' }), Verdict.ScanError);
+    });
+});
+
 // ─── ClamAVDatabaseUpdater ────────────────────────────────────────────────────
 
 describe('ClamAVDatabaseUpdater', () => {

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-buffer-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning in-memory Buffers with pompelmi and multer memoryStorage — pompelmi</title>
+<meta name="description" content="Learn how to scan Node.js in-memory Buffers with pompelmi's scanBuffer() API. Works with multer memoryStorage, S3 downloads, and any pipeline that never writes to disk.">
+<meta property="og:title" content="Scanning in-memory Buffers with pompelmi and multer memoryStorage — pompelmi">
+<meta property="og:description" content="Learn how to scan Node.js in-memory Buffers with pompelmi's scanBuffer() API. Works with multer memoryStorage, S3 downloads, and any pipeline that never writes to disk.">
+<meta property="og:url" content="https://pompelmi.app/blog/scan-buffer-nodejs.html">
+<meta property="og:type" content="article">
+<meta property="article:section" content="Technology">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Scanning in-memory Buffers with pompelmi and multer memoryStorage — pompelmi">
+<meta name="twitter:description" content="Learn how to scan Node.js in-memory Buffers with pompelmi's scanBuffer() API. Works with multer memoryStorage, S3 downloads, and any pipeline that never writes to disk.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#problem">The problem</a></li>
+      <li><a href="#solution">The solution</a></li>
+      <li><a href="#express">Express example</a></li>
+      <li><a href="#tcp-vs-local">TCP vs local mode</a></li>
+      <li><a href="#error-handling">Error handling</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="problem">
+      <h2>Scanning in-memory Buffers with pompelmi and multer memoryStorage</h2>
+      <p>
+        When you configure multer with <code>memoryStorage()</code>, uploaded files never
+        touch the filesystem — they land in <code>req.file.buffer</code> as a Node.js
+        <code>Buffer</code>. This is exactly what you want for serverless deployments,
+        read-only containers, or any pipeline that should avoid disk I/O.
+      </p>
+      <p>
+        The catch: pompelmi's original <code>scan()</code> API accepts a file path.
+        If the file doesn't exist on disk, <code>scan()</code> rejects with
+        <code>File not found</code>. You'd have to write the buffer to a temp file
+        yourself, scan it, then clean up — error-prone boilerplate that belongs in
+        the library, not your application code.
+      </p>
+      <p>
+        pompelmi v1.3.0 ships <code>scanBuffer()</code> to solve this exactly.
+      </p>
+    </div>
+
+    <div class="section" id="solution">
+      <h2>The solution: <code>scanBuffer(buffer, [options])</code></h2>
+      <p>
+        <code>scanBuffer()</code> accepts a <code>Buffer</code> and returns the same
+        three typed verdict Symbols as <code>scan()</code>:
+      </p>
+<pre>const { scanBuffer, Verdict } = require('pompelmi');
+
+const result = await scanBuffer(req.file.buffer);
+
+if (result === Verdict.Malicious) throw new Error('Malware detected.');
+if (result === Verdict.ScanError) console.warn('Scan could not complete.');
+// result === Verdict.Clean — safe to process</pre>
+
+      <p>
+        Two validation errors surface immediately as rejected Promises:
+      </p>
+      <ul>
+        <li><code>buffer must be a Buffer</code> — when the argument is not a <code>Buffer</code></li>
+        <li><code>buffer is empty</code> — when <code>buffer.length === 0</code></li>
+      </ul>
+    </div>
+
+    <div class="section" id="express">
+      <h2>Express + multer memoryStorage example</h2>
+      <p>
+        Replace <code>multer.diskStorage()</code> with <code>multer.memoryStorage()</code>
+        and swap <code>scan(req.file.path)</code> for <code>scanBuffer(req.file.buffer)</code>.
+        No other changes needed.
+      </p>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { scanBuffer, Verdict } = require('pompelmi');
+
+// memoryStorage — upload lands in req.file.buffer, never written to disk
+const upload = multer({ storage: multer.memoryStorage() });
+
+const app = express();
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded.' });
+  }
+
+  let result;
+  try {
+    result = await scanBuffer(req.file.buffer);
+  } catch (err) {
+    return res.status(500).json({ error: `Scan failed: ${err.message}` });
+  }
+
+  if (result === Verdict.Malicious) {
+    return res.status(422).json({ error: 'Malicious file rejected.' });
+  }
+
+  if (result === Verdict.ScanError) {
+    return res.status(422).json({ error: 'Scan incomplete — rejected as precaution.' });
+  }
+
+  // Clean — store or process req.file.buffer however you need
+  return res.json({ ok: true, file: req.file.originalname });
+});
+
+app.listen(3000);</pre>
+
+      <div class="note">
+        <code>multer.memoryStorage()</code> keeps the entire upload in RAM. Set a
+        <code>limits.fileSize</code> to prevent memory exhaustion from oversized uploads:
+        <code>multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } })</code>.
+      </div>
+    </div>
+
+    <div class="section" id="tcp-vs-local">
+      <h2>TCP mode vs local mode</h2>
+      <p>
+        <code>scanBuffer()</code> behaves differently depending on whether you provide
+        a <code>host</code> or <code>port</code> option.
+      </p>
+
+      <h3>TCP mode — no disk I/O</h3>
+      <p>
+        When <code>host</code> or <code>port</code> is set, the buffer is streamed
+        directly to a running <code>clamd</code> daemon using the ClamAV
+        <code>INSTREAM</code> protocol. The buffer is chunked into 64 KB pieces, each
+        prefixed with a 4-byte big-endian length header, and terminated with four zero
+        bytes. No data is written to disk at any point.
+      </p>
+<pre>// Points at a clamd sidecar (e.g. Docker Compose service or Kubernetes pod)
+const result = await scanBuffer(req.file.buffer, {
+  host:    '127.0.0.1',
+  port:    3310,
+  timeout: 30_000,
+});</pre>
+
+      <h3>Local mode — temp file, auto-cleaned</h3>
+      <p>
+        Without <code>host</code> or <code>port</code>, pompelmi writes the buffer to
+        a randomly-named temp file under <code>os.tmpdir()</code>, calls
+        <code>clamscan</code> on it, and deletes the file in a <code>finally</code>
+        block — so the cleanup happens regardless of whether the scan succeeds,
+        returns an error verdict, or throws.
+      </p>
+<pre>// Uses local clamscan binary — temp file created and deleted automatically
+const result = await scanBuffer(req.file.buffer);</pre>
+
+      <p>
+        If your deployment already runs <code>clamscan</code> locally, local mode
+        requires no configuration changes. For containers without a local ClamAV
+        install, TCP mode is the right choice.
+      </p>
+    </div>
+
+    <div class="section" id="error-handling">
+      <h2>Full error handling</h2>
+<pre>const { scanBuffer, Verdict } = require('pompelmi');
+
+async function safeScanBuffer(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    throw new Error('Invalid buffer');
+  }
+
+  try {
+    const result = await scanBuffer(buffer);
+
+    if (result === Verdict.ScanError) {
+      // ClamAV could not complete the scan — treat as untrusted
+      console.warn('Scan incomplete — rejecting as precaution.');
+      return null;
+    }
+
+    return result; // Verdict.Clean or Verdict.Malicious
+  } catch (err) {
+    // Buffer validation failed, clamd unreachable, clamscan not in PATH, etc.
+    console.error('Scan threw:', err.message);
+    return null;
+  }
+}</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.3.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

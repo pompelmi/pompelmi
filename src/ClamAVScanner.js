@@ -1,7 +1,10 @@
 const { nativeSpawn: spawn } = require('./spawn.js');
-const fs = require("fs");
-const { SCAN_RESULTS } = require('./config.js');
-const { scanViaClamd } = require('./ClamdScanner.js');
+const fs   = require('fs');
+const os   = require('os');
+const path = require('path');
+const { SCAN_RESULTS }       = require('./config.js');
+const { scanViaClamd }       = require('./ClamdScanner.js');
+const { scanBufferViaClamd } = require('./BufferScanner.js');
 
 const MESSAGES = {
     FILE_NOT_FOUND:        (filePath) => `File not found: ${filePath}`,
@@ -34,4 +37,29 @@ function scan(filePath, options = {}) {
     });
 }
 
-module.exports = { scan };
+async function scanBuffer(buffer, options = {}) {
+    if (!Buffer.isBuffer(buffer)) {
+        throw new Error('buffer must be a Buffer');
+    }
+    if (buffer.length === 0) {
+        throw new Error('buffer is empty');
+    }
+
+    if (options.host !== undefined || options.port !== undefined) {
+        return scanBufferViaClamd(buffer, options);
+    }
+
+    const tmpPath = path.join(
+        os.tmpdir(),
+        `pompelmi-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    );
+
+    fs.writeFileSync(tmpPath, buffer);
+    try {
+        return await scan(tmpPath);
+    } finally {
+        fs.unlink(tmpPath, () => {});
+    }
+}
+
+module.exports = { scan, scanBuffer };
