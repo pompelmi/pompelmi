@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="license">
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
   <img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="Node.js CI">
+  <img src="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml/badge.svg" alt="npm publish">
 </p>
 
 ---
@@ -43,6 +44,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 
 - Single `scan(filePath, [options])` function — works locally or against a remote clamd instance
 - `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
+- `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full TCP/clamd support via the INSTREAM protocol with configurable host, port, and timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
@@ -226,6 +228,20 @@ if (result === Verdict.Malicious) throw new Error('Malware detected.');
 if (result === Verdict.ScanError) console.warn('Scan incomplete.');
 ```
 
+### Scan a Stream
+
+```js
+const { scanStream, Verdict } = require('pompelmi');
+const { Readable } = require('stream');
+
+// Useful for S3 getObject, HTTP downloads, or any piped source
+const stream = s3.getObject({ Bucket, Key }).createReadStream();
+const result = await scanStream(stream);
+
+if (result === Verdict.Malicious) throw new Error('Malware detected.');
+if (result === Verdict.ScanError) console.warn('Scan incomplete.');
+```
+
 ---
 
 ## Docker / Remote Scanning
@@ -325,6 +341,33 @@ In TCP mode (`host` or `port` provided), the buffer is streamed directly to clam
 
 ---
 
+### `scanStream(stream, [options])`
+
+```ts
+scanStream(
+  stream: Readable,
+  options?: { host?: string; port?: number; timeout?: number }
+): Promise<symbol>
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `stream` | `Readable` | Node.js Readable stream to scan |
+| `options` | `object` | Same options as `scan()` — host, port, timeout |
+
+**Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
+
+**Rejects** with the same error types as `scan()` where applicable, plus:
+
+| Condition | Error message |
+|---|---|
+| `stream` is not a Readable | `stream must be a Readable` |
+| Stream emits error | propagated as-is |
+
+In TCP mode (`host` or `port` provided), the stream is piped directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, the stream is piped to a temp file in `os.tmpdir()` that is deleted automatically in a `finally` block.
+
+---
+
 ### `ClamAVInstaller()` _(internal)_
 
 Installs ClamAV using the platform's native package manager. Resolves immediately if ClamAV is already installed.
@@ -388,6 +431,7 @@ The [`examples/`](./examples/) directory contains standalone runnable scripts. E
 | [`scan-multiple-files.js`](examples/scan-multiple-files.js) | Concurrent scans with `Promise.all` |
 | [`scan-directory.js`](examples/scan-directory.js) | Recursively scan every file in a directory |
 | [`scan-buffer.js`](examples/scan-buffer.js) | Scan an in-memory Buffer via a temp-file shim |
+| [`scan-stream.js`](examples/scan-stream.js) | Scan an S3 getObject Readable stream with scanStream() |
 | [`rest-api-server.js`](examples/rest-api-server.js) | Minimal HTTP server exposing `POST /scan` |
 | [`s3-scan-before-upload.js`](examples/s3-scan-before-upload.js) | Scan locally, then upload to S3 only if clean |
 | [`cli-scan.js`](examples/cli-scan.js) | CLI tool: scan file paths, exit non-zero on threats |

@@ -614,6 +614,112 @@ describe('scanBuffer', () => {
     });
 });
 
+// ─── scanStream ──────────────────────────────────────────────────────────────
+
+describe('scanStream', () => {
+    const fs = require('fs');
+    const { Readable } = require('stream');
+
+    function streamScanner({ spawnMock = spawnClose(0), streamScannerMock } = {}) {
+        const mocks = { '../src/spawn.js': { nativeSpawn: spawnMock } };
+        if (streamScannerMock) mocks['../src/StreamScanner.js'] = streamScannerMock;
+        return load('../src/ClamAVScanner.js', mocks);
+    }
+
+    function makeMockWritable() {
+        const w = new EventEmitter();
+        w.write   = () => true;
+        w.end     = () => process.nextTick(() => w.emit('finish'));
+        w.destroy = () => {};
+        return w;
+    }
+
+    // ── Input validation ──────────────────────────────────────────────────────
+
+    it('rejects if stream is not a Readable (number)', async () => {
+        const { scanStream } = streamScanner();
+        await assert.rejects(() => scanStream(42), /stream must be a Readable/);
+    });
+
+    it('rejects if stream is not a Readable (plain object)', async () => {
+        const { scanStream } = streamScanner();
+        await assert.rejects(() => scanStream({}), /stream must be a Readable/);
+    });
+
+    // ── Local mode (no host/port) — mock fs built-in + spawn ─────────────────
+
+    it('returns Verdict.Clean for a clean stream (mock internals)', async (t) => {
+        t.mock.method(fs, 'createWriteStream', () => makeMockWritable());
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'unlink', (_p, cb) => cb(null));
+        const { scanStream } = streamScanner({ spawnMock: spawnClose(0) });
+        const stream = new Readable({ read() { this.push(Buffer.from('clean')); this.push(null); } });
+        assert.equal(await scanStream(stream), Verdict.Clean);
+    });
+
+    it('returns Verdict.Malicious for a stream with EICAR content', async (t) => {
+        t.mock.method(fs, 'createWriteStream', () => makeMockWritable());
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'unlink', (_p, cb) => cb(null));
+        const { scanStream } = streamScanner({ spawnMock: spawnClose(1) });
+        const stream = new Readable({ read() { this.push(Buffer.from('EICAR')); this.push(null); } });
+        assert.equal(await scanStream(stream), Verdict.Malicious);
+    });
+
+    it('returns Verdict.ScanError on scan error', async (t) => {
+        t.mock.method(fs, 'createWriteStream', () => makeMockWritable());
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'unlink', (_p, cb) => cb(null));
+        const { scanStream } = streamScanner({ spawnMock: spawnClose(2) });
+        const stream = new Readable({ read() { this.push(Buffer.from('garbled')); this.push(null); } });
+        assert.equal(await scanStream(stream), Verdict.ScanError);
+    });
+
+    it('rejects if stream emits an error event', async (t) => {
+        t.mock.method(fs, 'createWriteStream', () => makeMockWritable());
+        t.mock.method(fs, 'unlink', (_p, cb) => cb(null));
+        const { scanStream } = streamScanner({ spawnMock: spawnClose(0) });
+        const stream = new Readable({
+            read() { this.emit('error', new Error('stream read error')); },
+        });
+        await assert.rejects(() => scanStream(stream), /stream read error/);
+    });
+
+    // ── TCP mode (host/port provided) — mock StreamScanner module ────────────
+
+    it('routes to scanStreamViaClamd when { host } is given', async () => {
+        const { scanStream } = streamScanner({
+            streamScannerMock: { scanStreamViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        assert.equal(await scanStream(stream, { host: '127.0.0.1' }), Verdict.Clean);
+    });
+
+    it('routes to scanStreamViaClamd when { port } is given', async () => {
+        const { scanStream } = streamScanner({
+            streamScannerMock: { scanStreamViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        assert.equal(await scanStream(stream, { port: 3310 }), Verdict.Clean);
+    });
+
+    it('returns Verdict.Malicious via TCP mode', async () => {
+        const { scanStream } = streamScanner({
+            streamScannerMock: { scanStreamViaClamd: () => Promise.resolve(Verdict.Malicious) },
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        assert.equal(await scanStream(stream, { host: '127.0.0.1' }), Verdict.Malicious);
+    });
+
+    it('returns Verdict.ScanError via TCP mode', async () => {
+        const { scanStream } = streamScanner({
+            streamScannerMock: { scanStreamViaClamd: () => Promise.resolve(Verdict.ScanError) },
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        assert.equal(await scanStream(stream, { host: '127.0.0.1' }), Verdict.ScanError);
+    });
+});
+
 // ─── ClamAVDatabaseUpdater ────────────────────────────────────────────────────
 
 describe('ClamAVDatabaseUpdater', () => {

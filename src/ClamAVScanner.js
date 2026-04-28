@@ -1,10 +1,12 @@
-const { nativeSpawn: spawn } = require('./spawn.js');
+const { nativeSpawn: spawn }   = require('./spawn.js');
 const fs   = require('fs');
 const os   = require('os');
 const path = require('path');
-const { SCAN_RESULTS }       = require('./config.js');
-const { scanViaClamd }       = require('./ClamdScanner.js');
-const { scanBufferViaClamd } = require('./BufferScanner.js');
+const { Readable }               = require('stream');
+const { SCAN_RESULTS }           = require('./config.js');
+const { scanViaClamd }           = require('./ClamdScanner.js');
+const { scanBufferViaClamd }     = require('./BufferScanner.js');
+const { scanStreamViaClamd }     = require('./StreamScanner.js');
 
 const MESSAGES = {
     FILE_NOT_FOUND:        (filePath) => `File not found: ${filePath}`,
@@ -62,4 +64,40 @@ async function scanBuffer(buffer, options = {}) {
     }
 }
 
-module.exports = { scan, scanBuffer };
+async function scanStream(stream, options = {}) {
+    if (!(stream instanceof Readable)) {
+        throw new Error('stream must be a Readable');
+    }
+
+    if (options.host !== undefined || options.port !== undefined) {
+        return scanStreamViaClamd(stream, options);
+    }
+
+    const tmpPath = path.join(
+        os.tmpdir(),
+        `pompelmi-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    );
+
+    await new Promise((resolve, reject) => {
+        let settled = false;
+        function settle(err) {
+            if (settled) return;
+            settled = true;
+            if (err) reject(err);
+            else resolve();
+        }
+        const writable = fs.createWriteStream(tmpPath);
+        stream.on('error', settle);
+        writable.on('error', settle);
+        writable.on('finish', () => settle(null));
+        stream.pipe(writable);
+    });
+
+    try {
+        return await scan(tmpPath);
+    } finally {
+        fs.unlink(tmpPath, () => {});
+    }
+}
+
+module.exports = { scan, scanBuffer, scanStream };

@@ -82,6 +82,41 @@ async function runTests() {
     await testBuffer('Buffer: Clean file',      cleanBuffer,  Verdict.Clean);
     await testBuffer('Buffer: EICAR signature', eicarBuffer,  Verdict.Malicious);
 
+    console.log("\n--- scanStream integration tests ---\n");
+
+    async function testStream(label, stream, expected) {
+        try {
+            const result = await pompelmi.scanStream(stream);
+            if (result === expected) {
+                console.log(`✅ ${label}: ${String(result)}`);
+                passed++;
+            } else {
+                console.error(`❌ ${label}: Expected ${String(expected)}, got ${String(result)}`);
+                failed++;
+            }
+        } catch (err) {
+            console.error(`❌ ${label}: Threw ${err.message}`);
+            failed++;
+        }
+    }
+
+    const { Readable } = require('stream');
+
+    await testStream(
+        'Stream: Clean text',
+        Readable.from([fs.readFileSync(path.join(__dirname, 'clean.txt'))]),
+        Verdict.Clean
+    );
+
+    // Build EICAR in memory to avoid OS-level blocks on eicar.txt
+    await testStream(
+        'Stream: EICAR signature',
+        Readable.from([Buffer.from(
+            'X5O!P%@AP[4\\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'
+        )]),
+        Verdict.Malicious
+    );
+
     console.log(`\n--- Results: ${passed} passed, ${failed} failed ---\n`);
 }
 

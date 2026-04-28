@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-stream-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scanning Node.js Readable Streams with pompelmi — pompelmi</title>
+<meta name="description" content="Learn how to scan Node.js Readable streams with pompelmi's scanStream() API. Works with S3 getObject, HTTP downloads, and any piped source — no temp file in TCP mode.">
+<meta property="og:title" content="Scanning Node.js Readable Streams with pompelmi — pompelmi">
+<meta property="og:description" content="Learn how to scan Node.js Readable streams with pompelmi's scanStream() API. Works with S3 getObject, HTTP downloads, and any piped source — no temp file in TCP mode.">
+<meta property="og:url" content="https://pompelmi.app/blog/scan-stream-nodejs.html">
+<meta property="og:type" content="article">
+<meta property="article:section" content="Technology">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Scanning Node.js Readable Streams with pompelmi — pompelmi">
+<meta name="twitter:description" content="Learn how to scan Node.js Readable streams with pompelmi's scanStream() API. Works with S3 getObject, HTTP downloads, and any piped source — no temp file in TCP mode.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#why-streams">Why streams matter</a></li>
+      <li><a href="#solution">The solution</a></li>
+      <li><a href="#tcp-vs-local">TCP vs local mode</a></li>
+      <li><a href="#s3-example">S3 example</a></li>
+      <li><a href="#http-example">HTTP download example</a></li>
+      <li><a href="#error-handling">Error handling</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="why-streams">
+      <h2>Scanning Node.js Readable Streams with pompelmi</h2>
+      <p>
+        Most file scanning happens after a file is already on disk. But many Node.js
+        pipelines never write to disk at all: S3 <code>getObject</code> returns a
+        Readable stream, HTTP responses are streams, and custom transform pipelines
+        can pipe data from one service to another without a single <code>writeFileSync</code>.
+      </p>
+      <p>
+        Scanning these in-flight bytes with pompelmi v1.3 required either buffering the
+        whole stream into a <code>Buffer</code> (memory overhead) or writing a temp file
+        yourself and cleaning it up (error-prone boilerplate). pompelmi v1.4.0 ships
+        <code>scanStream()</code> to handle both cases cleanly.
+      </p>
+    </div>
+
+    <div class="section" id="solution">
+      <h2>The solution: <code>scanStream(stream, [options])</code></h2>
+      <p>
+        <code>scanStream()</code> accepts any Node.js <code>Readable</code> and returns
+        the same three typed verdict Symbols as <code>scan()</code> and <code>scanBuffer()</code>:
+      </p>
+<pre>const { scanStream, Verdict } = require('pompelmi');
+const { Readable } = require('stream');
+
+// Useful for S3 getObject, HTTP downloads, or any piped source
+const stream = s3.getObject({ Bucket, Key }).createReadStream();
+const result = await scanStream(stream);
+
+if (result === Verdict.Malicious) throw new Error('Malware detected.');
+if (result === Verdict.ScanError) console.warn('Scan incomplete.');</pre>
+
+      <p>
+        One validation error surfaces immediately as a rejected Promise:
+      </p>
+      <ul>
+        <li><code>stream must be a Readable</code> — when the argument is not a Node.js <code>Readable</code> instance</li>
+      </ul>
+      <p>
+        If the stream itself emits an <code>'error'</code> event during scanning,
+        that error is propagated as-is.
+      </p>
+    </div>
+
+    <div class="section" id="tcp-vs-local">
+      <h2>TCP mode vs local mode</h2>
+      <p>
+        <code>scanStream()</code> behaves differently depending on whether you provide
+        a <code>host</code> or <code>port</code> option.
+      </p>
+
+      <h3>TCP mode — no disk I/O</h3>
+      <p>
+        When <code>host</code> or <code>port</code> is set, the stream is piped
+        directly to a running <code>clamd</code> daemon using the ClamAV
+        <code>INSTREAM</code> protocol. Each <code>'data'</code> chunk is sent to
+        clamd prefixed with a 4-byte big-endian length header, terminated with four
+        zero bytes. No data is written to disk at any point — the bytes travel from
+        your Readable straight to clamd over TCP.
+      </p>
+<pre>// clamd sidecar in Docker Compose or Kubernetes
+const result = await scanStream(stream, {
+  host:    '127.0.0.1',
+  port:    3310,
+  timeout: 30_000,
+});</pre>
+
+      <p>
+        This is ideal for serverless functions, read-only containers, and pipelines
+        that process S3 objects or HTTP downloads without touching the filesystem.
+      </p>
+
+      <h3>Local mode — temp file, auto-cleaned</h3>
+      <p>
+        Without <code>host</code> or <code>port</code>, pompelmi pipes the stream to
+        a randomly-named temp file under <code>os.tmpdir()</code>, calls
+        <code>clamscan</code> on it, and deletes the file in a <code>finally</code>
+        block — cleanup happens whether the scan succeeds, returns an error verdict,
+        or throws.
+      </p>
+<pre>// Local clamscan — temp file created and deleted automatically
+const result = await scanStream(stream);</pre>
+    </div>
+
+    <div class="section" id="s3-example">
+      <h2>Scanning an S3 object stream</h2>
+      <p>
+        The AWS SDK v3 returns a <code>Readable</code> from <code>GetObjectCommand</code>.
+        Pass it directly to <code>scanStream()</code> — no buffering, no temp file.
+      </p>
+<pre>const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+const { scanStream, Verdict } = require('pompelmi');
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+async function scanS3Object(bucket, key) {
+  const { Body } = await s3.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+
+  const result = await scanStream(Body, {
+    host: '127.0.0.1',
+    port: 3310,
+  });
+
+  if (result === Verdict.Malicious) {
+    throw new Error(`Malware detected in s3://${bucket}/${key}`);
+  }
+
+  return result; // Verdict.Clean or Verdict.ScanError
+}</pre>
+    </div>
+
+    <div class="section" id="http-example">
+      <h2>Scanning an HTTP download stream</h2>
+      <p>
+        Node's <code>https.get</code> provides a Readable directly in the callback.
+        Scan it before writing to disk or forwarding downstream.
+      </p>
+<pre>const https = require('https');
+const { scanStream, Verdict } = require('pompelmi');
+
+function scanHttpUrl(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, async (response) => {
+      try {
+        const result = await scanStream(response, {
+          host: '127.0.0.1',
+          port: 3310,
+        });
+        resolve(result);
+      } catch (err) {
+        reject(err);
+      }
+    }).on('error', reject);
+  });
+}
+
+const result = await scanHttpUrl('https://example.com/upload.pdf');
+if (result === Verdict.Malicious) throw new Error('Malware detected in download.');</pre>
+    </div>
+
+    <div class="section" id="error-handling">
+      <h2>Full error handling</h2>
+<pre>const { scanStream, Verdict } = require('pompelmi');
+
+async function safeScanStream(stream) {
+  try {
+    const result = await scanStream(stream, {
+      host: process.env.CLAMD_HOST,
+      port: Number(process.env.CLAMD_PORT) || 3310,
+    });
+
+    if (result === Verdict.ScanError) {
+      console.warn('Scan incomplete — rejecting as precaution.');
+      return null;
+    }
+
+    return result; // Verdict.Clean or Verdict.Malicious
+  } catch (err) {
+    // Not a Readable, stream errored, clamd unreachable, etc.
+    console.error('Scan threw:', err.message);
+    return null;
+  }
+}</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.4.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>
