@@ -60,8 +60,9 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ github.ref_name }}
           name: ${{ github.ref_name }}
-          generate_release_notes: true
-          make_latest: true
+          generate_release_notes: false
+          body_path: .github/release-template.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
