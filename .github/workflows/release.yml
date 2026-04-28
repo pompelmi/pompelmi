@@ -39,7 +39,15 @@ jobs:
 
       - run: npm ci
 
-      - run: npm publish
+      - name: Publish to npm
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          EXISTS=$(npm view pompelmi@$VERSION version 2>/dev/null || echo "")
+          if [ -n "$EXISTS" ]; then
+            echo "Version $VERSION already published on npm — skipping."
+            exit 0
+          fi
+          npm publish
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
