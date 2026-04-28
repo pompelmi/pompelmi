@@ -2,7 +2,7 @@
 test/
 *.test.js
 __tests__/
-
+.claude/
 # Dev config
 .gitignore
 .eslintrc*
