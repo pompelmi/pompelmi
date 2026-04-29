@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
   <img src="https://img.shields.io/badge/license-ISC-blue" alt="license">
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml/badge.svg" alt="npm publish"></a>
 </p>
 
 ---
@@ -461,31 +462,31 @@ choco install clamav -y
 
 ## Examples
 
-The [`examples/`](./examples/) directory contains standalone runnable scripts. Each can be run directly with `node examples/<name>.js`.
+The [`examples/`](./examples/) directory contains standalone runnable scripts. Each can be run with `node examples/<name>.js`.
 
 | File | Description |
 |------|-------------|
-| [`basic-scan.js`](examples/basic-scan.js) | Scan a single file and log the verdict |
-| [`scan-on-upload-express.js`](examples/scan-on-upload-express.js) | Express route: scan before saving |
-| [`scan-on-upload-fastify.js`](examples/scan-on-upload-fastify.js) | Fastify route: same pattern |
-| [`scan-with-options.js`](examples/scan-with-options.js) | Remote clamd with custom host, port, timeout |
-| [`handle-scan-error.js`](examples/handle-scan-error.js) | Handle every verdict including hard rejections |
-| [`delete-on-malicious.js`](examples/delete-on-malicious.js) | Auto-delete file if malicious |
-| [`quarantine-on-malicious.js`](examples/quarantine-on-malicious.js) | Move infected file to a quarantine folder |
-| [`scan-multiple-files.js`](examples/scan-multiple-files.js) | Concurrent scans with `Promise.all` |
-| [`scan-directory.js`](examples/scan-directory.js) | Recursively scan every file in a directory |
-| [`scan-buffer.js`](examples/scan-buffer.js) | Scan an in-memory Buffer via a temp-file shim |
-| [`scan-stream.js`](examples/scan-stream.js) | Scan an S3 getObject Readable stream with scanStream() |
-| [`rest-api-server.js`](examples/rest-api-server.js) | Minimal HTTP server exposing `POST /scan` |
-| [`s3-scan-before-upload.js`](examples/s3-scan-before-upload.js) | Scan locally, then upload to S3 only if clean |
-| [`cli-scan.js`](examples/cli-scan.js) | CLI tool: scan file paths, exit non-zero on threats |
-| [`scan-with-timeout.js`](examples/scan-with-timeout.js) | Timeout patterns for local and remote scanning |
-| [`scan-pdf.js`](examples/scan-pdf.js) | PDF upload with extension validation |
-| [`scan-image.js`](examples/scan-image.js) | Image upload with extension validation |
-| [`scan-zip.js`](examples/scan-zip.js) | ZIP archive scan (ClamAV recurses automatically) |
-| [`install-clamav.js`](examples/install-clamav.js) | Programmatic ClamAV installation |
-| [`update-virus-database.js`](examples/update-virus-database.js) | Programmatic virus DB update |
-| [`typescript-usage.ts`](examples/typescript-usage.ts) | TypeScript example with inline type declarations |
+| `basic-scan.js` | Scan a single file and log the verdict |
+| `scan-on-upload-express.js` | Express route: scan before saving |
+| `scan-on-upload-fastify.js` | Fastify route: same pattern |
+| `scan-with-options.js` | Remote clamd with custom host, port, timeout |
+| `handle-scan-error.js` | Handle every verdict including hard rejections |
+| `delete-on-malicious.js` | Auto-delete file if malicious |
+| `quarantine-on-malicious.js` | Move infected file to a quarantine folder |
+| `scan-multiple-files.js` | Concurrent scans with Promise.all |
+| `scan-directory.js` | Recursively scan every file in a directory |
+| `scan-buffer.js` | Scan an in-memory Buffer (multer memoryStorage) |
+| `scan-stream.js` | Scan a Readable stream (S3, HTTP, pipes) |
+| `rest-api-server.js` | Minimal HTTP server exposing POST /scan |
+| `s3-scan-before-upload.js` | Scan locally, then upload to S3 only if clean |
+| `cli-scan.js` | CLI tool: scan file paths, exit non-zero on threats |
+| `scan-with-timeout.js` | Timeout patterns for local and remote scanning |
+| `scan-pdf.js` | PDF upload with extension validation |
+| `scan-image.js` | Image upload with extension validation |
+| `scan-zip.js` | ZIP archive scan (ClamAV recurses automatically) |
+| `install-clamav.js` | Programmatic ClamAV installation |
+| `update-virus-database.js` | Programmatic virus DB update |
+| `typescript-usage.ts` | TypeScript example with inline type declarations |
 
 ---
 
