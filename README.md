@@ -492,6 +492,8 @@ The [`examples/`](./examples/) directory contains standalone runnable scripts. E
 
 ## Contributing
 
+Full documentation and guides are available in the [Wiki](https://github.com/pompelmi/pompelmi/wiki).
+
 ```bash
 # 1. Clone and install dev dependencies
 git clone https://github.com/pompelmi/pompelmi.git
