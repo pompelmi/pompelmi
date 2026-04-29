@@ -51,6 +51,33 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+  publish-gpr:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@pompelmi'
+      - run: npm ci
+      - name: Publish to GitHub Packages
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          EXISTS=$(npm view @pompelmi/pompelmi@$VERSION version \
+            --registry https://npm.pkg.github.com 2>/dev/null || echo "")
+          if [ -n "$EXISTS" ]; then
+            echo "Version $VERSION already published on GitHub Packages — skipping."
+            exit 0
+          fi
+          npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   release:
     needs: test
     runs-on: ubuntu-latest
