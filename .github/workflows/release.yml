@@ -74,7 +74,7 @@ jobs:
             echo "Version $VERSION already published on GitHub Packages — skipping."
             exit 0
           fi
-          npm publish --@pompelmi:registry=https://npm.pkg.github.com
+          npm publish --registry https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
