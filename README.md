@@ -9,32 +9,11 @@
 <br>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi.svg?style=flat-square&label=npm&color=CB3837&labelColor=1a1a1a" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/dw/pompelmi?style=flat-square&label=downloads&color=CB3837&labelColor=1a1a1a" alt="downloads"></a>
-  <img src="https://img.shields.io/badge/dependencies-0-brightgreen?style=flat-square&labelColor=1a1a1a" alt="zero dependencies">
-  <img src="https://img.shields.io/badge/license-ISC-blue?style=flat-square&labelColor=1a1a1a" alt="license">
-  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg?style=flat-square" alt="CI"></a>
-</p>
-
-<p align="center">
-  <img src="https://img.shields.io/badge/Express-available-black?style=flat-square&logo=express&logoColor=white" alt="Express">
-  <img src="https://img.shields.io/badge/Fastify-available-black?style=flat-square&logo=fastify&logoColor=white" alt="Fastify">
-  <img src="https://img.shields.io/badge/NestJS-available-E0234E?style=flat-square&logo=nestjs&logoColor=white" alt="NestJS">
-  <img src="https://img.shields.io/badge/Koa-available-black?style=flat-square&logo=node.js&logoColor=white" alt="Koa">
-  <img src="https://img.shields.io/badge/Hono-available-E36002?style=flat-square" alt="Hono">
-  <img src="https://img.shields.io/badge/Next.js-available-black?style=flat-square&logo=next.js&logoColor=white" alt="Next.js">
-  <img src="https://img.shields.io/badge/SvelteKit-available-FF3E00?style=flat-square&logo=svelte&logoColor=white" alt="SvelteKit">
-  <img src="https://img.shields.io/badge/Remix-available-black?style=flat-square&logo=remix&logoColor=white" alt="Remix">
-  <img src="https://img.shields.io/badge/Docker-available-2496ED?style=flat-square&logo=docker&logoColor=white" alt="Docker">
-</p>
-
-<p align="center">
-  <a href="https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/"><img src="https://img.shields.io/badge/Stack_Overflow_Blog-featured-F58025?style=flat-square&logo=stackoverflow&logoColor=white" alt="Stack Overflow Blog"></a>
-  <a href="https://stackoverflow.blog/newsletter/"><img src="https://img.shields.io/badge/Stack_Overflow_Newsletter-featured-F58025?style=flat-square&logo=stackoverflow&logoColor=white" alt="Stack Overflow Newsletter"></a>
-  <a href="https://nodeweekly.com"><img src="https://img.shields.io/badge/Node_Weekly-featured-3d9970?style=flat-square&labelColor=1a1a1a" alt="Node Weekly"></a>
-  <a href="https://bytes.dev/archives/429"><img src="https://img.shields.io/badge/Bytes.dev-featured-8B5CF6?style=flat-square&labelColor=1a1a1a" alt="Bytes.dev"></a>
-  <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img src="https://img.shields.io/badge/Help_Net_Security-featured-0057A8?style=flat-square&labelColor=1a1a1a" alt="Help Net Security"></a>
-  <a href="https://dev.to/sonotommy/i-tried-every-nodejs-antivirus-library-heres-what-i-found-122j"><img src="https://img.shields.io/badge/DEV.to-featured-0a0a0a?style=flat-square&logo=dev.to&logoColor=white" alt="DEV.to"></a>
+  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi.svg" alt="npm version"></a>
+  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/dw/pompelmi" alt="weekly downloads"></a>
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
+  <img src="https://img.shields.io/badge/license-ISC-blue" alt="license">
+  <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
 ---
