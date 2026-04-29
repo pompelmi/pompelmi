@@ -32,6 +32,8 @@
   <a href="https://stackoverflow.blog/2026/02/23/defense-against-uploads-oss-file-scanner-pompelmi/"><img src="https://img.shields.io/badge/Stack_Overflow_Blog-featured-F58025?style=flat-square&logo=stackoverflow&logoColor=white" alt="Stack Overflow Blog"></a>
   <a href="https://stackoverflow.blog/newsletter/"><img src="https://img.shields.io/badge/Stack_Overflow_Newsletter-featured-F58025?style=flat-square&logo=stackoverflow&logoColor=white" alt="Stack Overflow Newsletter"></a>
   <a href="https://nodeweekly.com"><img src="https://img.shields.io/badge/Node_Weekly-featured-3d9970?style=flat-square&labelColor=1a1a1a" alt="Node Weekly"></a>
+  <a href="https://bytes.dev/archives/429"><img src="https://img.shields.io/badge/Bytes.dev-featured-8B5CF6?style=flat-square&labelColor=1a1a1a" alt="Bytes.dev"></a>
+  <a href="https://www.helpnetsecurity.com/2026/02/02/pompelmi-open-source-secure-file-upload-scanning-node-js/"><img src="https://img.shields.io/badge/Help_Net_Security-featured-0057A8?style=flat-square&labelColor=1a1a1a" alt="Help Net Security"></a>
   <a href="https://dev.to/sonotommy/i-tried-every-nodejs-antivirus-library-heres-what-i-found-122j"><img src="https://img.shields.io/badge/DEV.to-featured-0a0a0a?style=flat-square&logo=dev.to&logoColor=white" alt="DEV.to"></a>
 </p>
 
