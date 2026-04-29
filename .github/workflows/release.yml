@@ -68,13 +68,13 @@ jobs:
       - name: Publish to GitHub Packages
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          EXISTS=$(npm view @pompelmi/pompelmi@$VERSION version \
+          EXISTS=$(npm view pompelmi@$VERSION version \
             --registry https://npm.pkg.github.com 2>/dev/null || echo "")
           if [ -n "$EXISTS" ]; then
             echo "Version $VERSION already published on GitHub Packages — skipping."
             exit 0
           fi
-          npm publish
+          npm publish --@pompelmi:registry=https://npm.pkg.github.com
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

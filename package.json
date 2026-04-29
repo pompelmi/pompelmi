@@ -36,6 +36,9 @@
     "test": "node --test test/unit.test.js && node test/scan.test.js",
     "lint": "eslint src/"
   },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
   "dependencies": {},
   "devDependencies": {
     "@eslint/js": "^10.0.1",
