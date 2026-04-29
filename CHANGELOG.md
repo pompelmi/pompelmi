@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.5.0] - 2026-04-29
+
+### Added
+- `scanDirectory(dirPath, [options])` — recursively scan every file in a directory. Returns `{ clean, malicious, errors }` arrays. Per-file errors are caught and collected without aborting the full scan.
+- Exported `scanDirectory` from the main module.
+
+### Changed
+- README badge section redesigned: framework support badges (Express, Fastify, NestJS, Koa, Hono, Next.js, SvelteKit, Remix, Docker) and CI badges now displayed in organized rows.
+
 ## [1.4.0] - 2026-04-28
 
 ### Added

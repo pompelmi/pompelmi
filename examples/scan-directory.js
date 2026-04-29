@@ -1,56 +1,41 @@
 // scan-directory.js
-// Walk a directory recursively and scan every file.
-// Prints a summary table with each file's verdict.
+// Recursively scan every file in a directory with scanDirectory().
+// Clean/malicious/error paths are returned in separate arrays.
 // Run: node examples/scan-directory.js [directory]
+//
+// WARNING: this example calls fs.unlinkSync on malicious files.
+// Point it at a safe test directory before running.
 
 'use strict';
 
-const path = require('path');
 const fs   = require('fs');
-const { scan, Verdict } = require('pompelmi');
+const path = require('path');
+const { scanDirectory } = require('pompelmi');
 
-function walkDir(dir) {
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  const files   = [];
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      files.push(...walkDir(full));
-    } else if (entry.isFile()) {
-      files.push(full);
-    }
-  }
-  return files;
-}
+const TARGET_DIR = process.argv[2] || './uploads';
 
-async function scanDirectory(dir) {
-  const files   = walkDir(path.resolve(dir));
-  let   clean   = 0;
-  let   threats = 0;
-  let   errors  = 0;
+(async () => {
+  const resolved = path.resolve(TARGET_DIR);
+  console.log(`Scanning directory: ${resolved}\n`);
 
-  for (const filePath of files) {
-    try {
-      const result = await scan(filePath);
-      if (result === Verdict.Malicious) {
-        console.error(`MALICIOUS  ${filePath}`);
-        threats++;
-      } else if (result === Verdict.ScanError) {
-        console.warn(`SCAN-ERROR ${filePath}`);
-        errors++;
-      } else {
-        console.log(`clean      ${filePath}`);
-        clean++;
-      }
-    } catch (err) {
-      console.error(`ERROR      ${filePath}: ${err.message}`);
-      errors++;
-    }
+  const { clean, malicious, errors } = await scanDirectory(resolved);
+
+  console.log(`Clean    (${clean.length}):`);
+  clean.forEach((f) => console.log(`  ✔  ${f}`));
+
+  console.log(`\nMalicious (${malicious.length}):`);
+  malicious.forEach((f) => console.log(`  ✘  ${f}`));
+
+  console.log(`\nErrors   (${errors.length}):`);
+  errors.forEach((f) => console.log(`  ?  ${f}`));
+
+  if (malicious.length > 0) {
+    console.log('\nDeleting malicious files…');
+    malicious.forEach((f) => {
+      fs.unlinkSync(f);
+      console.log(`  deleted: ${f}`);
+    });
   }
 
-  console.log(`\nDone. Clean: ${clean}  Malicious: ${threats}  Errors: ${errors}`);
-  return threats === 0 && errors === 0;
-}
-
-const target = process.argv[2] || './uploads';
-scanDirectory(target).then((ok) => process.exit(ok ? 0 : 1));
+  process.exit(malicious.length > 0 ? 1 : 0);
+})();

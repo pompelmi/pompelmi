@@ -117,6 +117,25 @@ async function runTests() {
         Verdict.Malicious
     );
 
+    console.log("\n--- scanDirectory integration tests ---\n");
+
+    const fixturesDir = __dirname;
+    let dirResult;
+    try {
+        dirResult = await pompelmi.scanDirectory(fixturesDir);
+        const total = dirResult.clean.length + dirResult.malicious.length + dirResult.errors.length;
+        if (total > 0) {
+            console.log(`✅ scanDirectory: ${dirResult.clean.length} clean, ${dirResult.malicious.length} malicious, ${dirResult.errors.length} errors`);
+            passed++;
+        } else {
+            console.error('❌ scanDirectory: expected at least one result, got zero');
+            failed++;
+        }
+    } catch (err) {
+        console.error(`❌ scanDirectory threw: ${err.message}`);
+        failed++;
+    }
+
     console.log(`\n--- Results: ${passed} passed, ${failed} failed ---\n`);
 }
 

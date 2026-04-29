@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/blog/scan-directory-nodejs.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursively Scanning a Directory for Malware with pompelmi — pompelmi</title>
+<meta name="description" content="Learn how to use pompelmi's scanDirectory() API to recursively scan every file in a directory for malware. Covers batch processing, scheduled scans, and quarantine workflows.">
+<meta property="og:title" content="Recursively Scanning a Directory for Malware with pompelmi — pompelmi">
+<meta property="og:description" content="Learn how to use pompelmi's scanDirectory() API to recursively scan every file in a directory for malware. Covers batch processing, scheduled scans, and quarantine workflows.">
+<meta property="og:url" content="https://pompelmi.app/blog/scan-directory-nodejs.html">
+<meta property="og:type" content="article">
+<meta property="article:section" content="Technology">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Recursively Scanning a Directory for Malware with pompelmi — pompelmi">
+<meta name="twitter:description" content="Learn how to use pompelmi's scanDirectory() API to recursively scan every file in a directory for malware. Covers batch processing, scheduled scans, and quarantine workflows.">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="icon" type="image/png" href="../favicon.png">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="../index.html">
+    <img src="../grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="../index.html"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="../index.html">Home</a>
+  <a href="../about.html">About</a>
+  <a href="../quickstart.html">Quickstart</a>
+  <a href="../api.html">API</a>
+  <a href="../docker.html">Docker</a>
+  <a href="../contacts.html">Contacts</a>
+  <a href="../featured-in.html">Featured In</a>
+  <a href="../blog.html" class="active">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#use-cases">Use cases</a></li>
+      <li><a href="#api">The API</a></li>
+      <li><a href="#basic-usage">Basic usage</a></li>
+      <li><a href="#quarantine">Quarantine workflow</a></li>
+      <li><a href="#scheduled">Scheduled scans</a></li>
+      <li><a href="#error-handling">Error handling</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="use-cases">
+      <h2>Recursively Scanning a Directory for Malware with pompelmi</h2>
+      <p>
+        Most antivirus integrations in Node.js are request-scoped: a file arrives,
+        you scan it, you accept or reject it. But several real-world scenarios need
+        something different &mdash; you want to scan an entire directory tree, not a
+        single file:
+      </p>
+      <ul>
+        <li>
+          <strong>Batch processing</strong> &mdash; a worker queue processes uploaded archives
+          that were already unpacked to disk. You need to scan all extracted files before
+          moving them to permanent storage.
+        </li>
+        <li>
+          <strong>Scheduled background scans</strong> &mdash; you run a nightly cron job
+          that rescans an <code>/uploads</code> directory to catch threats that slipped through
+          signature updates.
+        </li>
+        <li>
+          <strong>Quarantine workflows</strong> &mdash; after scanning, you want to move infected
+          files to a separate directory rather than deleting them, so they can be reviewed later.
+        </li>
+      </ul>
+      <p>
+        pompelmi v1.5.0 ships <code>scanDirectory()</code> to cover all of these patterns
+        with a single call.
+      </p>
+    </div>
+
+    <div class="section" id="api">
+      <h2>The API</h2>
+      <p>
+        <code>scanDirectory(dirPath, [options])</code> recursively walks <code>dirPath</code>
+        using Node's built-in <code>fs.readdirSync({ recursive: true })</code> (Node 18+),
+        scans every file concurrently with <code>Promise.all</code>, and returns an object
+        with three arrays:
+      </p>
+      <ul>
+        <li><code>clean</code> &mdash; absolute paths of files with no threats found</li>
+        <li><code>malicious</code> &mdash; absolute paths of files with a matched signature</li>
+        <li><code>errors</code> &mdash; absolute paths of files that could not be scanned</li>
+      </ul>
+      <p>
+        Per-file scan failures are collected into <code>errors</code> rather than aborting
+        the whole scan. The function only throws for top-level validation errors (wrong argument
+        type, directory not found).
+      </p>
+<pre>scanDirectory(
+  dirPath: string,
+  options?: { host?: string; port?: number; timeout?: number }
+): Promise&lt;{ clean: string[], malicious: string[], errors: string[] }&gt;</pre>
+    </div>
+
+    <div class="section" id="basic-usage">
+      <h2>Basic usage</h2>
+<pre>const { scanDirectory } = require('pompelmi');
+
+const results = await scanDirectory('/uploads');
+
+console.log('Clean:', results.clean);
+console.log('Malicious:', results.malicious);
+console.log('Errors:', results.errors);</pre>
+
+      <p>
+        The same <code>host</code> / <code>port</code> / <code>timeout</code> options
+        accepted by <code>scan()</code> are forwarded to every per-file scan. To use a
+        remote <code>clamd</code> sidecar instead of the local <code>clamscan</code>
+        binary:
+      </p>
+<pre>const results = await scanDirectory('/uploads', {
+  host:    '127.0.0.1',
+  port:    3310,
+  timeout: 30_000,
+});</pre>
+    </div>
+
+    <div class="section" id="quarantine">
+      <h2>Quarantine workflow</h2>
+      <p>
+        Instead of immediately deleting malicious files, move them to a quarantine
+        directory so they can be reviewed or submitted to a threat-intelligence
+        feed before final disposal.
+      </p>
+<pre>const fs   = require('fs');
+const path = require('path');
+const { scanDirectory } = require('pompelmi');
+
+const UPLOADS_DIR    = '/var/app/uploads';
+const QUARANTINE_DIR = '/var/app/quarantine';
+
+fs.mkdirSync(QUARANTINE_DIR, { recursive: true });
+
+async function scanAndQuarantine() {
+  const { malicious, errors } = await scanDirectory(UPLOADS_DIR);
+
+  for (const filePath of malicious) {
+    const dest = path.join(QUARANTINE_DIR, path.basename(filePath));
+    fs.renameSync(filePath, dest);
+    console.log(`Quarantined: ${filePath} → ${dest}`);
+  }
+
+  if (errors.length > 0) {
+    console.warn('Could not scan:', errors);
+  }
+}
+
+scanAndQuarantine().catch(console.error);</pre>
+
+      <div class="note">
+        <code>fs.renameSync</code> only works within the same filesystem. If
+        <code>QUARANTINE_DIR</code> is on a different mount point, use
+        <code>fs.copyFileSync</code> followed by <code>fs.unlinkSync</code> instead.
+      </div>
+    </div>
+
+    <div class="section" id="scheduled">
+      <h2>Scheduled background scans</h2>
+      <p>
+        Combine <code>scanDirectory()</code> with a scheduler like
+        <code>node-cron</code> to run a nightly rescan of your upload directory.
+        This catches threats that slipped through when signatures were out of date.
+      </p>
+<pre>const cron = require('node-cron');
+const { scanDirectory } = require('pompelmi');
+
+// Run every night at 02:00
+cron.schedule('0 2 * * *', async () => {
+  console.log('Starting nightly scan…');
+  const { clean, malicious, errors } = await scanDirectory('/var/app/uploads');
+
+  console.log(`Scan complete: ${clean.length} clean, ${malicious.length} malicious, ${errors.length} errors`);
+
+  if (malicious.length > 0) {
+    // alert your team, move to quarantine, emit a metric, etc.
+    console.error('Malicious files detected:', malicious);
+  }
+});</pre>
+    </div>
+
+    <div class="section" id="error-handling">
+      <h2>Error handling</h2>
+      <p>
+        <code>scanDirectory()</code> throws synchronously for two top-level
+        validation errors and collects everything else into <code>errors</code>:
+      </p>
+<pre>const { scanDirectory } = require('pompelmi');
+
+// Top-level errors — these throw (reject the Promise)
+await scanDirectory(42);            // Error: dirPath must be a string
+await scanDirectory('/nonexistent'); // Error: Directory not found: /nonexistent
+
+// Per-file errors — collected into results.errors, never thrown
+const { errors } = await scanDirectory('/uploads');
+// errors contains paths of files clamscan could not open, encrypted archives, etc.</pre>
+
+      <p>
+        A non-empty <code>errors</code> array does not mean the scan failed &mdash;
+        it means some files produced <code>Verdict.ScanError</code> (ClamAV exit code 2)
+        or threw while being scanned. Treat those files as untrusted and inspect or
+        quarantine them separately.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.5.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

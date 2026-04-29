@@ -720,6 +720,65 @@ describe('scanStream', () => {
     });
 });
 
+// ─── scanDirectory ───────────────────────────────────────────────────────────
+
+describe('scanDirectory', () => {
+    const fs   = require('fs');
+
+    function dirScanner(spawnMock) {
+        return load('../src/ClamAVScanner.js', { '../src/spawn.js': { nativeSpawn: spawnMock } });
+    }
+
+    it('rejects if dirPath is not a string', async () => {
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        await assert.rejects(() => scanDirectory(42), /dirPath must be a string/);
+    });
+
+    it('rejects if directory does not exist', async (t) => {
+        t.mock.method(fs, 'existsSync', () => false);
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        await assert.rejects(() => scanDirectory('/nonexistent'), /Directory not found: \/nonexistent/);
+    });
+
+    it('returns correct clean/malicious/errors arrays (mock scan)', async (t) => {
+        let callCount = 0;
+        const codes = [0, 1, 2]; // Clean, Malicious, ScanError
+        const spawnSequence = () => {
+            const code = codes[callCount++ % codes.length];
+            const child = new EventEmitter();
+            process.nextTick(() => child.emit('close', code, null));
+            return child;
+        };
+
+        t.mock.method(fs, 'existsSync',  () => true);
+        t.mock.method(fs, 'readdirSync', () => ['a.txt', 'b.txt', 'c.txt']);
+        t.mock.method(fs, 'statSync',    () => ({ isFile: () => true }));
+
+        const { scanDirectory } = dirScanner(spawnSequence);
+        const result = await scanDirectory('/fake-dir');
+
+        assert.equal(result.clean.length,     1);
+        assert.equal(result.malicious.length, 1);
+        assert.equal(result.errors.length,    1);
+        assert.ok(result.clean[0].includes('a.txt'));
+        assert.ok(result.malicious[0].includes('b.txt'));
+        assert.ok(result.errors[0].includes('c.txt'));
+    });
+
+    it('handles per-file scan errors without throwing', async (t) => {
+        t.mock.method(fs, 'existsSync',  () => true);
+        t.mock.method(fs, 'readdirSync', () => ['x.bin', 'y.bin']);
+        t.mock.method(fs, 'statSync',    () => ({ isFile: () => true }));
+
+        const { scanDirectory } = dirScanner(spawnError('EACCES'));
+        const result = await scanDirectory('/fake-dir');
+
+        assert.equal(result.clean.length,     0);
+        assert.equal(result.malicious.length, 0);
+        assert.equal(result.errors.length,    2);
+    });
+});
+
 // ─── ClamAVDatabaseUpdater ────────────────────────────────────────────────────
 
 describe('ClamAVDatabaseUpdater', () => {

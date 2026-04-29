@@ -7,14 +7,31 @@
 <p align="center"><strong>ClamAV antivirus scanning for Node.js — clean, typed, zero dependencies.</strong></p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi.svg" alt="npm version"></a>
-  <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/dw/pompelmi" alt="npm weekly downloads"></a>
-  <a href="https://github.com/pompelmi/pompelmi"><img src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social" alt="GitHub stars"></a>
-  <img src="https://img.shields.io/badge/docker-available-blue?logo=docker" alt="Docker available">
+  <img src="https://img.shields.io/npm/v/pompelmi.svg" alt="npm version">
+  <img src="https://img.shields.io/npm/dw/pompelmi" alt="npm downloads">
   <img src="https://img.shields.io/badge/license-ISC-blue.svg" alt="license">
-  <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
+  <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="dependencies">
+</p>
+
+<p align="center">
   <img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="Node.js CI">
   <img src="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml/badge.svg" alt="npm publish">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/express-available-black?logo=express" alt="Express">
+  <img src="https://img.shields.io/badge/fastify-available-black?logo=fastify" alt="Fastify">
+  <img src="https://img.shields.io/badge/nestjs-available-red?logo=nestjs" alt="NestJS">
+  <img src="https://img.shields.io/badge/koa-available-lightgrey?logo=node.js" alt="Koa">
+  <img src="https://img.shields.io/badge/hono-available-orange" alt="Hono">
+  <img src="https://img.shields.io/badge/next.js-available-black?logo=next.js" alt="Next.js">
+  <img src="https://img.shields.io/badge/sveltekit-available-red?logo=svelte" alt="SvelteKit">
+  <img src="https://img.shields.io/badge/remix-available-black?logo=remix" alt="Remix">
+  <img src="https://img.shields.io/badge/docker-available-blue?logo=docker" alt="Docker">
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/github/stars/pompelmi/pompelmi?style=social" alt="GitHub stars">
 </p>
 
 ---
@@ -45,6 +62,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Single `scan(filePath, [options])` function — works locally or against a remote clamd instance
 - `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
 - `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.
+- `scanDirectory(dirPath, [options])` — recursively scan every file in a directory, returns clean/malicious/errors arrays
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full TCP/clamd support via the INSTREAM protocol with configurable host, port, and timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
@@ -216,6 +234,22 @@ const files    = ['/uploads/a.pdf', '/uploads/b.zip', '/uploads/c.png'];
 const results = await Promise.all(files.map((f) => scan(f)));
 ```
 
+### Scan a Directory
+
+```js
+const fs = require('fs');
+const { scanDirectory } = require('pompelmi');
+
+const results = await scanDirectory('/uploads');
+
+console.log('Clean:', results.clean);
+console.log('Malicious:', results.malicious);
+console.log('Errors:', results.errors);
+
+// Delete all malicious files
+results.malicious.forEach(f => fs.unlinkSync(f));
+```
+
 ### Scan a Buffer
 
 ```js
@@ -365,6 +399,34 @@ scanStream(
 | Stream emits error | propagated as-is |
 
 In TCP mode (`host` or `port` provided), the stream is piped directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, the stream is piped to a temp file in `os.tmpdir()` that is deleted automatically in a `finally` block.
+
+---
+
+### `scanDirectory(dirPath, [options])`
+
+```ts
+scanDirectory(
+  dirPath: string,
+  options?: { host?: string; port?: number; timeout?: number }
+): Promise<{ clean: string[], malicious: string[], errors: string[] }>
+```
+
+Recursively scans every file in `dirPath` and returns three arrays of absolute paths.
+
+| Field | Type | Description |
+|---|---|---|
+| `clean` | `string[]` | Paths of files with no threats found |
+| `malicious` | `string[]` | Paths of files with a matched signature |
+| `errors` | `string[]` | Paths of files that could not be scanned |
+
+Per-file scan failures are caught and collected into `errors` — the function never throws because of an individual file.
+
+**Rejects** with an `Error` in these cases:
+
+| Condition | Error message |
+|---|---|
+| `dirPath` is not a string | `dirPath must be a string` |
+| Directory does not exist | `Directory not found: <path>` |
 
 ---
 

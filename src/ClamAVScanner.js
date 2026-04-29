@@ -4,6 +4,7 @@ const os   = require('os');
 const path = require('path');
 const { Readable }               = require('stream');
 const { SCAN_RESULTS }           = require('./config.js');
+const { Verdict }                = require('./verdicts.js');
 const { scanViaClamd }           = require('./ClamdScanner.js');
 const { scanBufferViaClamd }     = require('./BufferScanner.js');
 const { scanStreamViaClamd }     = require('./StreamScanner.js');
@@ -100,4 +101,40 @@ async function scanStream(stream, options = {}) {
     }
 }
 
-module.exports = { scan, scanBuffer, scanStream };
+async function scanDirectory(dirPath, options = {}) {
+    if (typeof dirPath !== 'string') {
+        throw new Error('dirPath must be a string');
+    }
+    if (!fs.existsSync(dirPath)) {
+        throw new Error(`Directory not found: ${dirPath}`);
+    }
+
+    const entries = fs.readdirSync(dirPath, { recursive: true });
+    const files = entries
+        .map(entry => path.join(dirPath, entry))
+        .filter(fullPath => fs.statSync(fullPath).isFile());
+
+    const results = await Promise.all(
+        files.map(async (filePath) => {
+            try {
+                return { filePath, verdict: await scan(filePath, options) };
+            } catch {
+                return { filePath, verdict: null };
+            }
+        })
+    );
+
+    const clean = [];
+    const malicious = [];
+    const errors = [];
+
+    for (const { filePath, verdict } of results) {
+        if (verdict === Verdict.Clean)     clean.push(filePath);
+        else if (verdict === Verdict.Malicious) malicious.push(filePath);
+        else                               errors.push(filePath);
+    }
+
+    return { clean, malicious, errors };
+}
+
+module.exports = { scan, scanBuffer, scanStream, scanDirectory };
