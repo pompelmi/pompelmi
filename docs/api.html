@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API Reference — pompelmi</title>
-<meta name="description" content="Complete pompelmi API reference — scanBytes, scanFile, composeScanners, Verdict symbols, ScanOptions, and built-in heuristic scanners explained.">
+<meta name="description" content="Full pompelmi API reference: scan(), Verdict symbols, ScanOptions, Docker/TCP mode. Node.js ClamAV antivirus library. Open source on GitHub.">
 <meta property="og:title" content="API Reference — pompelmi">
 <meta property="og:description" content="Complete pompelmi API reference — scanBytes, scanFile, composeScanners, Verdict symbols, ScanOptions, and built-in heuristic scanners explained.">
 <meta property="og:url" content="https://pompelmi.app/api.html">
@@ -17,6 +17,18 @@
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "API Reference — pompelmi",
+  "url": "https://pompelmi.app/api.html",
+  "description": "Full pompelmi API reference: scan(), Verdict symbols, ScanOptions, Docker/TCP mode. Node.js ClamAV antivirus library. Open source on GitHub.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/api.html"
+}
+</script>
 </head>
 <body>
 
@@ -40,7 +52,7 @@
   <a href="contacts.html">Contacts</a>
   <a href="featured-in.html">Featured In</a>
   <a href="blog.html">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -723,7 +735,7 @@ function verdictLabel(v: typeof Verdict[keyof typeof Verdict]): string {
 
       <div class="note">
         If you would like official <code>@types/pompelmi</code> declarations,
-        open an issue on <a href="https://github.com/pompelmi/pompelmi">GitHub</a>.
+        open an issue on <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>.
       </div>
     </div>
 
@@ -733,7 +745,7 @@ function verdictLabel(v: typeof Verdict[keyof typeof Verdict]): string {
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Caching ClamAV scan results by file hash in Node.js — pompelmi</title>
-<meta name="description" content="How to avoid redundant ClamAV scans by caching verdicts keyed on SHA-256 file hashes with Redis and pompelmi. Includes cache invalidation strategy and safe expiry rules.">
+<meta name="description" content="How to avoid redundant ClamAV scans by caching verdicts keyed on SHA-256 file hashes with Redis and pompelmi. Includes cache... Open source on GitHub.">
 <meta property="og:title" content="Caching ClamAV scan results by file hash in Node.js — pompelmi">
 <meta property="og:description" content="How to avoid redundant ClamAV scans by caching verdicts keyed on SHA-256 file hashes with Redis and pompelmi. Includes cache invalidation strategy and safe expi">
 <meta property="og:url" content="https://pompelmi.app/blog/scan-result-caching-file-hash.html">
@@ -18,6 +18,19 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="icon" type="image/png" href="../favicon.png">
 <link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Caching ClamAV scan results by file hash in Node.js — pompelmi",
+  "url": "https://pompelmi.app/blog/scan-result-caching-file-hash.html",
+  "description": "How to avoid redundant ClamAV scans by caching verdicts keyed on SHA-256 file hashes with Redis and pompelmi. Includes cache... Open source on GitHub.",
+  "keywords": "scan cache, file hash, Redis, Node.js, ClamAV",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/blog/scan-result-caching-file-hash.html"
+}
+</script>
 </head>
 <body>
 
@@ -41,7 +54,7 @@
   <a href="../contacts.html">Contacts</a>
   <a href="../featured-in.html">Featured In</a>
   <a href="../blog.html" class="active">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -286,7 +299,7 @@ function setCached(hash, verdict) {
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Running pompelmi with ClamAV in Docker Compose — pompelmi</title>
-<meta name="description" content="A complete guide to running pompelmi and ClamAV together in Docker Compose, with a sidecar clamd container, TCP scanning, shared volumes, and production-ready compose files.">
+<meta name="description" content="A complete guide to running pompelmi and ClamAV together in Docker Compose, with a sidecar clamd container, TCP scanning, shared... Open source on GitHub.">
 <meta property="og:title" content="Running pompelmi with ClamAV in Docker Compose — pompelmi">
 <meta property="og:description" content="A complete guide to running pompelmi and ClamAV together in Docker Compose, with a sidecar clamd container, TCP scanning, shared volumes, and production-ready c">
 <meta property="og:url" content="https://pompelmi.app/blog/pompelmi-docker-compose.html">
@@ -18,6 +18,19 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="icon" type="image/png" href="../favicon.png">
 <link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Running pompelmi with ClamAV in Docker Compose — pompelmi",
+  "url": "https://pompelmi.app/blog/pompelmi-docker-compose.html",
+  "description": "A complete guide to running pompelmi and ClamAV together in Docker Compose, with a sidecar clamd container, TCP scanning, shared... Open source on GitHub.",
+  "keywords": "Docker Compose, ClamAV, antivirus, Node.js, container",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/blog/pompelmi-docker-compose.html"
+}
+</script>
 </head>
 <body>
 
@@ -41,7 +54,7 @@
   <a href="../contacts.html">Contacts</a>
   <a href="../featured-in.html">Featured In</a>
   <a href="../blog.html" class="active">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -294,7 +307,7 @@ main().catch(err =&gt; { console.error(err.message); process.exit(1); });</pre>
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>

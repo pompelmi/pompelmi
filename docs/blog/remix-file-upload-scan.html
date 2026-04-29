@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Scanning file uploads in Remix / React Router v7 — pompelmi</title>
-<meta name="description" content="How to add ClamAV antivirus scanning to Remix and React Router v7 file upload Actions using pompelmi. Covers unstable_parseMultipartFormData, temp-file handling, and progressive enhancement.">
+<meta name="description" content="How to add ClamAV antivirus scanning to Remix and React Router v7 file upload Actions using pompelmi. Covers... Open source on GitHub.">
 <meta property="og:title" content="Scanning file uploads in Remix / React Router v7 — pompelmi">
 <meta property="og:description" content="How to add ClamAV antivirus scanning to Remix and React Router v7 file upload Actions using pompelmi. Covers unstable_parseMultipartFormData, temp-file handling">
 <meta property="og:url" content="https://pompelmi.app/blog/remix-file-upload-scan.html">
@@ -18,6 +18,19 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="icon" type="image/png" href="../favicon.png">
 <link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Scanning file uploads in Remix / React Router v7 — pompelmi",
+  "url": "https://pompelmi.app/blog/remix-file-upload-scan.html",
+  "description": "How to add ClamAV antivirus scanning to Remix and React Router v7 file upload Actions using pompelmi. Covers... Open source on GitHub.",
+  "keywords": "Remix, React Router, file upload, antivirus, ClamAV",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/blog/remix-file-upload-scan.html"
+}
+</script>
 </head>
 <body>
 
@@ -41,7 +54,7 @@
   <a href="../contacts.html">Contacts</a>
   <a href="../featured-in.html">Featured In</a>
   <a href="../blog.html" class="active">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -284,7 +297,7 @@ export async function action({ request }: ActionFunctionArgs) {
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>

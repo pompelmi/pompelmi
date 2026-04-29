@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SvelteKit file upload security with pompelmi — pompelmi</title>
-<meta name="description" content="How to scan uploaded files for viruses in SvelteKit server endpoints using pompelmi and ClamAV. Includes TypeScript examples for +server.ts and SvelteKit Actions.">
+<meta name="description" content="How to scan uploaded files for viruses in SvelteKit server endpoints using pompelmi and ClamAV. Includes TypeScript examples for... Open source on GitHub.">
 <meta property="og:title" content="SvelteKit file upload security with pompelmi — pompelmi">
 <meta property="og:description" content="How to scan uploaded files for viruses in SvelteKit server endpoints using pompelmi and ClamAV. Includes TypeScript examples for +server.ts and SvelteKit Action">
 <meta property="og:url" content="https://pompelmi.app/blog/sveltekit-file-upload-security.html">
@@ -18,6 +18,19 @@
 <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 <link rel="icon" type="image/png" href="../favicon.png">
 <link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "SvelteKit file upload security with pompelmi — pompelmi",
+  "url": "https://pompelmi.app/blog/sveltekit-file-upload-security.html",
+  "description": "How to scan uploaded files for viruses in SvelteKit server endpoints using pompelmi and ClamAV. Includes TypeScript examples for... Open source on GitHub.",
+  "keywords": "SvelteKit, file upload, security, antivirus, ClamAV",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/blog/sveltekit-file-upload-security.html"
+}
+</script>
 </head>
 <body>
 
@@ -41,7 +54,7 @@
   <a href="../contacts.html">Contacts</a>
   <a href="../featured-in.html">Featured In</a>
   <a href="../blog.html" class="active">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -314,7 +327,7 @@ export async function scanBuffer(data: ArrayBuffer, filename: string): Promise&l
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>

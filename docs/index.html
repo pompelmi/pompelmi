@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>pompelmi — Node.js Antivirus Scanning with ClamAV</title>
-<meta name="description" content="pompelmi is a zero-dependency Node.js wrapper for ClamAV antivirus scanning. Scan file uploads for viruses with a single function call — returns Clean, Malicious, or ScanError.">
+<meta name="description" content="pompelmi wraps ClamAV to scan file uploads in Node.js. Zero dependencies, typed verdicts, works with Express, Fastify, NestJS. Open source on GitHub.">
 <meta property="og:title" content="pompelmi — Node.js Antivirus Scanning with ClamAV">
 <meta property="og:description" content="pompelmi is a zero-dependency Node.js wrapper for ClamAV antivirus scanning. Scan file uploads for viruses with a single function call — returns Clean, Malicious, or ScanError.">
 <meta property="og:url" content="https://pompelmi.app/">
@@ -79,6 +79,22 @@
     color: #555;
   }
 </style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "pompelmi",
+  "url": "https://pompelmi.app/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "macOS, Linux, Windows",
+  "programmingLanguage": "JavaScript",
+  "runtimePlatform": "Node.js",
+  "license": "https://opensource.org/licenses/ISC",
+  "codeRepository": "https://github.com/pompelmi/pompelmi",
+  "description": "pompelmi wraps ClamAV to scan file uploads in Node.js. Zero dependencies, typed verdicts, works with Express, Fastify, NestJS. Open source on GitHub.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+}
+</script>
 </head>
 <body>
 
@@ -102,7 +118,7 @@
   <a href="contacts.html">Contacts</a>
   <a href="featured-in.html">Featured In</a>
   <a href="blog.html">Blog</a>
-  <a href="https://github.com/pompelmi/pompelmi">GitHub</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
 </div>
 
@@ -248,7 +264,7 @@ scanUpload('./uploads/document.pdf')
 <div id="footer">
   pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
-  <a href="https://github.com/pompelmi/pompelmi">github.com/pompelmi/pompelmi</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>
