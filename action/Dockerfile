@@ -12,11 +12,10 @@ RUN apt-get update && \
 
 WORKDIR /action
 
-# Bundle the pompelmi library from this repository
-COPY src/ ./src/
-COPY package.json ./
+# Install pompelmi from npm
+RUN npm install pompelmi
 
-# Action scripts
+# Action scripts (paths relative to repo root — GitHub sets build context to repo root)
 COPY action/entrypoint.sh ./entrypoint.sh
 COPY action/scanner.js    ./scanner.js
 RUN chmod +x ./entrypoint.sh

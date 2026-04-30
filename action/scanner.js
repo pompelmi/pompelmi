@@ -2,7 +2,7 @@
 
 const fs   = require('fs');
 const path = require('path');
-const { scan, scanDirectory, Verdict } = require('./src/index.js');
+const { scan, scanDirectory, Verdict } = require('pompelmi');
 
 const scanPath    = process.argv[2] || '.';
 const failOnVirus = process.argv[3] !== 'false';
