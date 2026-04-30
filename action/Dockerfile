@@ -8,12 +8,10 @@ RUN apt-get update && \
 
 WORKDIR /action
 
-# These files live in action/ — same folder as this Dockerfile
+RUN npm install pompelmi
+
 COPY entrypoint.sh ./entrypoint.sh
 COPY scanner.js ./scanner.js
-
-# Install pompelmi from npm — do NOT copy local src/
-RUN npm install pompelmi
 
 RUN chmod +x ./entrypoint.sh
 
