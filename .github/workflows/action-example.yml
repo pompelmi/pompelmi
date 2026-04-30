@@ -1,0 +1,33 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Example: scan your repository for viruses on every push and pull request.
+# Copy this file into your own .github/workflows/ directory.
+# ──────────────────────────────────────────────────────────────────────────────
+name: Virus Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ['**']
+
+jobs:
+  scan:
+    name: ClamAV Virus Scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan for viruses
+        id: scan
+        uses: pompelmi/pompelmi@v1.6.0
+        with:
+          path: '.'           # scan the whole workspace (default)
+          fail-on-virus: 'true'
+
+      # Access outputs in subsequent steps
+      - name: Show scan result
+        if: always()
+        run: |
+          echo "Status:         ${{ steps.scan.outputs.status }}"
+          echo "Infected files: ${{ steps.scan.outputs.infected-files }}"
