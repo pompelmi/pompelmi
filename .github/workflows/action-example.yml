@@ -20,7 +20,7 @@ jobs:
 
       - name: Scan for viruses
         id: scan
-        uses: pompelmi/pompelmi@v1.6.0
+        uses: pompelmi/pompelmi@v1.7.0
         with:
           path: '.'           # scan the whole workspace (default)
           fail-on-virus: 'true'
