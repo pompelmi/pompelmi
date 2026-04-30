@@ -411,6 +411,39 @@ describe('ClamdScanner', () => {
         await assert.rejects(() => scanViaClamd(EXISTING_FILE), /EACCES/);
     });
 
+    // ── UNIX socket connection ─────────────────────────────────────────────────
+
+    it('{ socket } → passes { path } to createConnection instead of { host, port }', async (t) => {
+        let capturedConnOpts;
+        t.mock.method(net, 'createConnection', (opts) => {
+            capturedConnOpts = opts;
+            return makeClamdSocket({ response: 'stream: OK' });
+        });
+        t.mock.method(fs, 'existsSync',       () => true);
+        t.mock.method(fs, 'createReadStream', () => makeMockStream());
+        await scanViaClamd(EXISTING_FILE, { socket: '/run/clamav/clamd.sock' });
+        assert.deepEqual(capturedConnOpts, { path: '/run/clamav/clamd.sock' });
+    });
+
+    it('{ socket } → resolves to Verdict.Clean when clamd says OK', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: OK' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE, { socket: '/run/clamav/clamd.sock' }), Verdict.Clean);
+    });
+
+    it('{ socket } + timeout → still uses { path } not host/port', async (t) => {
+        let capturedConnOpts;
+        t.mock.method(net, 'createConnection', (opts) => {
+            capturedConnOpts = opts;
+            return makeClamdSocket({ response: 'stream: OK' });
+        });
+        t.mock.method(fs, 'existsSync',       () => true);
+        t.mock.method(fs, 'createReadStream', () => makeMockStream());
+        await scanViaClamd(EXISTING_FILE, { socket: '/run/clamav/clamd.sock', timeout: 5000 });
+        assert.deepEqual(capturedConnOpts, { path: '/run/clamav/clamd.sock' });
+    });
+
     // ── Protocol sanity ───────────────────────────────────────────────────────
 
     it('sends zINSTREAM command, chunk header, chunk data, and terminator', async (t) => {
@@ -495,6 +528,14 @@ describe('ClamAVScanner (TCP routing)', () => {
         const result = await scan(EXISTING_FILE, { host: '192.168.1.100' });
         assert.equal(result, Verdict.Clean);
         assert.equal(getClamdCalls(), 1);
+    });
+
+    it('routes to clamd when { socket } is given', async () => {
+        const { scan, getClamdCalls, getLastOptions } = scannerWithSpy();
+        const result = await scan(EXISTING_FILE, { socket: '/run/clamav/clamd.sock' });
+        assert.equal(result, Verdict.Clean);
+        assert.equal(getClamdCalls(), 1);
+        assert.deepEqual(getLastOptions(), { socket: '/run/clamav/clamd.sock' });
     });
 
     it('routes to clamd when { host, port } are both given', async () => {
@@ -599,6 +640,13 @@ describe('scanBuffer', () => {
         assert.equal(await scanBuffer(Buffer.from('data'), { port: 3310 }), Verdict.Clean);
     });
 
+    it('routes to scanBufferViaClamd when { socket } is given', async () => {
+        const { scanBuffer } = bufferScanner({
+            bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        assert.equal(await scanBuffer(Buffer.from('data'), { socket: '/run/clamav/clamd.sock' }), Verdict.Clean);
+    });
+
     it('returns Verdict.Malicious for a malicious buffer (TCP mode)', async () => {
         const { scanBuffer } = bufferScanner({
             bufferScannerMock: { scanBufferViaClamd: () => Promise.resolve(Verdict.Malicious) },
@@ -701,6 +749,14 @@ describe('scanStream', () => {
         });
         const stream = new Readable({ read() { this.push(null); } });
         assert.equal(await scanStream(stream, { port: 3310 }), Verdict.Clean);
+    });
+
+    it('routes to scanStreamViaClamd when { socket } is given', async () => {
+        const { scanStream } = streamScanner({
+            streamScannerMock: { scanStreamViaClamd: () => Promise.resolve(Verdict.Clean) },
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        assert.equal(await scanStream(stream, { socket: '/run/clamav/clamd.sock' }), Verdict.Clean);
     });
 
     it('returns Verdict.Malicious via TCP mode', async () => {

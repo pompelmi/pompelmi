@@ -16,8 +16,8 @@ const MESSAGES = {
 };
 
 function scan(filePath, options = {}) {
-    // When a host or port is provided, delegate to the clamd TCP path.
-    if (options.host !== undefined || options.port !== undefined) {
+    // When a host, port, or socket path is provided, delegate to the clamd path.
+    if (options.host !== undefined || options.port !== undefined || options.socket !== undefined) {
         return scanViaClamd(filePath, options);
     }
 
@@ -48,7 +48,7 @@ async function scanBuffer(buffer, options = {}) {
         throw new Error('buffer is empty');
     }
 
-    if (options.host !== undefined || options.port !== undefined) {
+    if (options.host !== undefined || options.port !== undefined || options.socket !== undefined) {
         return scanBufferViaClamd(buffer, options);
     }
 
@@ -70,7 +70,7 @@ async function scanStream(stream, options = {}) {
         throw new Error('stream must be a Readable');
     }
 
-    if (options.host !== undefined || options.port !== undefined) {
+    if (options.host !== undefined || options.port !== undefined || options.socket !== undefined) {
         return scanStreamViaClamd(stream, options);
     }
 

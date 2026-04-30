@@ -20,16 +20,18 @@ function parseClamdResponse(raw) {
 }
 
 /**
- * Scan a file by streaming it to a running clamd instance over TCP.
+ * Scan a file by streaming it to a running clamd instance over TCP or a UNIX socket.
  *
  * @param {string} filePath   - Absolute or relative path to the file to scan.
  * @param {object} [options]
+ * @param {string} [options.socket]          - Path to a clamd UNIX domain socket (e.g. '/run/clamav/clamd.sock').
+ *                                             When set, takes precedence over host/port.
  * @param {string} [options.host='127.0.0.1']
  * @param {number} [options.port=3310]
  * @param {number} [options.timeout=15000]  - Socket idle timeout in ms.
  * @returns {Promise<'Clean'|'Malicious'|'ScanError'>}
  */
-function scanViaClamd(filePath, { host = '127.0.0.1', port = 3310, timeout = 15_000 } = {}) {
+function scanViaClamd(filePath, { host = '127.0.0.1', port = 3310, socket: socketPath, timeout = 15_000 } = {}) {
     return new Promise((resolve, reject) => {
         if (typeof filePath !== 'string') {
             return reject(new Error('filePath must be a string'));
@@ -38,27 +40,28 @@ function scanViaClamd(filePath, { host = '127.0.0.1', port = 3310, timeout = 15_
             return reject(new Error(`File not found: ${filePath}`));
         }
 
-        const socket     = net.createConnection({ host, port });
+        const connOpts   = socketPath ? { path: socketPath } : { host, port };
+        const conn       = net.createConnection(connOpts);
         const chunks     = [];
         let   settled    = false;
 
         function settle(fn, value) {
             if (settled) return;
             settled = true;
-            socket.destroy();
+            conn.destroy();
             fn(value);
         }
 
-        socket.setTimeout(timeout);
-        socket.on('timeout', () =>
+        conn.setTimeout(timeout);
+        conn.on('timeout', () =>
             settle(reject, new Error(`clamd connection timed out after ${timeout}ms`))
         );
-        socket.on('error', (err) => settle(reject, err));
-        socket.on('data',  (chunk) => chunks.push(chunk));
-        socket.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
+        conn.on('error', (err) => settle(reject, err));
+        conn.on('data',  (chunk) => chunks.push(chunk));
+        conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
 
-        socket.on('connect', () => {
-            socket.write(CLAMD_INSTREAM);
+        conn.on('connect', () => {
+            conn.write(CLAMD_INSTREAM);
 
             const fileStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
 
@@ -67,13 +70,13 @@ function scanViaClamd(filePath, { host = '127.0.0.1', port = 3310, timeout = 15_
             fileStream.on('data', (chunk) => {
                 const header = Buffer.allocUnsafe(4);
                 header.writeUInt32BE(chunk.length, 0);
-                socket.write(header);
-                socket.write(chunk);
+                conn.write(header);
+                conn.write(chunk);
             });
 
             fileStream.on('end', () => {
-                socket.write(Buffer.alloc(4)); // terminating zero-length chunk
-                socket.end();
+                conn.write(Buffer.alloc(4)); // terminating zero-length chunk
+                conn.end();
             });
         });
     });
