@@ -19,6 +19,17 @@
 
 ---
 
+## Documentation
+
+| Guide | Description |
+|-------|-------------|
+| [Getting Started](./docs/getting-started.md) | Installation, prerequisites, quickstart examples |
+| [API Reference](./docs/api.md) | Full function signatures, options, verdicts, error conditions |
+| [Docker / Remote Scanning](./docs/docker.md) | TCP sidecar, UNIX socket mount, docker-compose patterns |
+| [GitHub Action](./docs/github-action.md) | CI scanning, inputs/outputs, caching, example workflows |
+
+---
+
 ## Overview
 
 pompelmi is a minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) that exposes a single async function — `scan()` — and returns one of three typed verdict Symbols: `Verdict.Clean`, `Verdict.Malicious`, or `Verdict.ScanError`. Full documentation at [pompelmi.app](https://pompelmi.app).
@@ -265,23 +276,17 @@ if (result === Verdict.ScanError) console.warn('Scan incomplete.');
 
 Pass `host` and `port` (or `socket`) to switch from the local `clamscan` CLI to the clamd daemon. Everything else — the returned verdicts, error types — is identical.
 
-**TCP (Docker / remote clamd):**
+**TCP:**
 ```js
-const result = await scan('/path/to/file.zip', {
-  host:    '127.0.0.1',
-  port:    3310,
-  timeout: 30_000, // socket idle timeout, ms — default 15 000
-});
+const result = await scan('/path/to/file.zip', { host: '127.0.0.1', port: 3310 });
 ```
 
-**UNIX socket (local clamd daemon):**
+**UNIX socket:**
 ```js
-const result = await scan('/path/to/file.zip', {
-  socket: '/run/clamav/clamd.sock', // path to clamd's UNIX domain socket
-});
+const result = await scan('/path/to/file.zip', { socket: '/run/clamav/clamd.sock' });
 ```
 
-pompelmi uses the ClamAV `INSTREAM` protocol: the file is streamed in 64 KB chunks, each prefixed with a 4-byte big-endian length header, terminated by four zero bytes. The response line (`stream: OK`, `stream: <name> FOUND`, or an error) is mapped to the same verdict Symbols.
+See **[docs/docker.md](./docs/docker.md)** for Docker Compose examples, UNIX socket volume mounts, `scanBuffer` / `scanStream` in clamd mode, and connection retry patterns.
 
 ---
 
@@ -302,155 +307,24 @@ When none of `socket`, `host`, or `port` is provided, pompelmi spawns `clamscan 
 
 ## API Reference
 
-### `scan(filePath, [options])`
+See **[docs/api.md](./docs/api.md)** for the full reference: function signatures, options table, verdict Symbols, error conditions, and error handling patterns.
 
-```ts
-scan(
-  filePath: string,
-  options?: { socket?: string; host?: string; port?: number; timeout?: number }
-): Promise<symbol>
-```
+**Quick summary:**
 
-**Returns** a Promise that resolves to one of:
+| Function | Input | clamd mode disk I/O |
+|----------|-------|---------------------|
+| `scan(filePath, [options])` | File path on disk | None (streamed) |
+| `scanBuffer(buffer, [options])` | `Buffer` | None (streamed) |
+| `scanStream(stream, [options])` | Node.js `Readable` | None (streamed) |
+| `scanDirectory(dirPath, [options])` | Directory path | None (streamed) |
 
-| Verdict             | ClamAV exit code / response | Meaning                                                                 |
-|---------------------|-----------------------------|-------------------------------------------------------------------------|
-| `Verdict.Clean`     | `0` / `stream: OK`          | No threats found.                                                       |
-| `Verdict.Malicious` | `1` / `<name> FOUND`        | A known virus or malware signature was matched.                         |
-| `Verdict.ScanError` | `2` / other response        | Scan failed — I/O error, encrypted archive, permission denied. Treat file as untrusted. |
+All four functions accept the same `options` object and resolve to the same three verdict Symbols:
 
-**Rejects** with an `Error` in these cases:
-
-| Condition                             | Error message                     |
-|---------------------------------------|-----------------------------------|
-| `filePath` is not a string            | `filePath must be a string`       |
-| File does not exist                   | `File not found: <path>`          |
-| `clamscan` not in PATH                | `ENOENT` (from the OS)            |
-| ClamAV returns an unknown exit code   | `Unexpected exit code: N`         |
-| Process killed by signal              | `Process killed by signal: <SIG>` |
-| clamd connection timed out            | `clamd connection timed out after Nms` |
-
-Each `Verdict` Symbol exposes a `.description` property for safe serialisation:
-
-```js
-Verdict.Clean.description     // 'Clean'
-Verdict.Malicious.description // 'Malicious'
-Verdict.ScanError.description // 'ScanError'
-```
-
----
-
-### `scanBuffer(buffer, [options])`
-
-```ts
-scanBuffer(
-  buffer: Buffer,
-  options?: { socket?: string; host?: string; port?: number; timeout?: number }
-): Promise<symbol>
-```
-
-| Parameter | Type | Description |
-|---|---|---|
-| `buffer` | `Buffer` | The in-memory buffer to scan |
-| `options` | `object` | Same options as `scan()` — socket, host, port, timeout |
-
-**Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
-
-**Rejects** with the same error types as `scan()` where applicable, plus:
-
-| Condition | Error message |
-|---|---|
-| `buffer` is not a Buffer | `buffer must be a Buffer` |
-| `buffer` is empty | `buffer is empty` |
-
-In clamd mode (`socket`, `host`, or `port` provided), the buffer is streamed directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, a temp file is written to `os.tmpdir()` and deleted automatically in a `finally` block regardless of outcome.
-
----
-
-### `scanStream(stream, [options])`
-
-```ts
-scanStream(
-  stream: Readable,
-  options?: { socket?: string; host?: string; port?: number; timeout?: number }
-): Promise<symbol>
-```
-
-| Parameter | Type | Description |
-|---|---|---|
-| `stream` | `Readable` | Node.js Readable stream to scan |
-| `options` | `object` | Same options as `scan()` — socket, host, port, timeout |
-
-**Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
-
-**Rejects** with the same error types as `scan()` where applicable, plus:
-
-| Condition | Error message |
-|---|---|
-| `stream` is not a Readable | `stream must be a Readable` |
-| Stream emits error | propagated as-is |
-
-In clamd mode (`socket`, `host`, or `port` provided), the stream is piped directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, the stream is piped to a temp file in `os.tmpdir()` that is deleted automatically in a `finally` block.
-
----
-
-### `scanDirectory(dirPath, [options])`
-
-```ts
-scanDirectory(
-  dirPath: string,
-  options?: { socket?: string; host?: string; port?: number; timeout?: number }
-): Promise<{ clean: string[], malicious: string[], errors: string[] }>
-```
-
-Recursively scans every file in `dirPath` and returns three arrays of absolute paths.
-
-| Field | Type | Description |
-|---|---|---|
-| `clean` | `string[]` | Paths of files with no threats found |
-| `malicious` | `string[]` | Paths of files with a matched signature |
-| `errors` | `string[]` | Paths of files that could not be scanned |
-
-Per-file scan failures are caught and collected into `errors` — the function never throws because of an individual file.
-
-**Rejects** with an `Error` in these cases:
-
-| Condition | Error message |
-|---|---|
-| `dirPath` is not a string | `dirPath must be a string` |
-| Directory does not exist | `Directory not found: <path>` |
-
----
-
-### `ClamAVInstaller()` _(internal)_
-
-Installs ClamAV using the platform's native package manager. Resolves immediately if ClamAV is already installed.
-
-```ts
-ClamAVInstaller(): Promise<string>
-```
-
-| Platform | Package manager | Command                                   |
-|----------|-----------------|-------------------------------------------|
-| macOS    | Homebrew        | `brew install clamav`                     |
-| Linux    | apt-get         | `sudo apt-get install -y clamav clamav-daemon` |
-| Windows  | Chocolatey      | `choco install clamav -y`                 |
-
----
-
-### `updateClamAVDatabase()` _(internal)_
-
-Runs `freshclam` to download or refresh the virus definition database. Skips if the database file is already present.
-
-```ts
-updateClamAVDatabase(): Promise<string>
-```
-
-| Platform | Database path                         |
-|----------|---------------------------------------|
-| macOS    | `/usr/local/share/clamav/main.cvd`    |
-| Linux    | `/var/lib/clamav/main.cvd`            |
-| Windows  | `C:\ProgramData\ClamAV\main.cvd`      |
+| Symbol | Meaning |
+|--------|---------|
+| `Verdict.Clean` | No threats found |
+| `Verdict.Malicious` | Known signature matched |
+| `Verdict.ScanError` | Scan could not complete — treat as untrusted |
 
 ---
 
@@ -496,6 +370,56 @@ The [`examples/`](./examples/) directory contains standalone runnable scripts. E
 | `install-clamav.js` | Programmatic ClamAV installation |
 | `update-virus-database.js` | Programmatic virus DB update |
 | `typescript-usage.ts` | TypeScript example with inline type declarations |
+
+---
+
+## GitHub Action
+
+[![GitHub Marketplace](https://img.shields.io/badge/Marketplace-Pompelmi%20ClamAV%20Scanner-blue?logo=github)](https://github.com/marketplace/actions/pompelmi-clamav-scanner)
+
+Scan any repository for viruses on every push or pull request — ClamAV is bundled inside a Docker container, virus definitions are auto-updated at runtime, and no external services are required.
+
+### Minimal usage
+
+```yaml
+- uses: actions/checkout@v4
+
+- name: Virus scan
+  uses: pompelmi/pompelmi@v1.7.0
+```
+
+### Full example
+
+```yaml
+- uses: actions/checkout@v4
+
+- name: Virus scan
+  id: scan
+  uses: pompelmi/pompelmi@v1.7.0
+  with:
+    path: 'uploads/'        # scan a subdirectory instead of the whole workspace
+    fail-on-virus: 'true'   # fail the workflow step on detection (default)
+
+- name: Print infected files
+  if: always()
+  run: echo "${{ steps.scan.outputs.infected-files }}"
+```
+
+### Inputs
+
+| Input | Description | Default |
+|-------|-------------|---------|
+| `path` | Directory or file to scan | `.` (full workspace) |
+| `fail-on-virus` | Fail the workflow step when infected files are found | `true` |
+
+### Outputs
+
+| Output | Description |
+|--------|-------------|
+| `infected-files` | Newline-separated list of infected file paths (empty when clean) |
+| `status` | `"clean"` or `"infected"` |
+
+A ready-to-copy workflow is available at [`.github/workflows/action-example.yml`](./.github/workflows/action-example.yml). Full reference — inputs, outputs, layer caching, and more examples — in **[docs/github-action.md](./docs/github-action.md)**.
 
 ---
 

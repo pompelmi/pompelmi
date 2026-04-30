@@ -1,0 +1,29 @@
+name: 'Pompelmi ClamAV Scanner'
+description: 'Scan for viruses with ClamAV (bundled) — no daemon, no cloud, zero external dependencies'
+author: 'pompelmi'
+branding:
+  icon: 'shield'
+  color: 'orange'
+
+inputs:
+  path:
+    description: 'Directory or file to scan (default: full workspace)'
+    required: false
+    default: '.'
+  fail-on-virus:
+    description: 'Fail the workflow step when infected files are found'
+    required: false
+    default: 'true'
+
+outputs:
+  infected-files:
+    description: 'Newline-separated list of infected file paths (empty when clean)'
+  status:
+    description: '"clean" or "infected"'
+
+runs:
+  using: 'docker'
+  image: './action/Dockerfile'
+  args:
+    - ${{ inputs.path }}
+    - ${{ inputs.fail-on-virus }}
