@@ -26,7 +26,7 @@ pompelmi is a minimal Node.js wrapper around [ClamAV](https://www.clamav.net/) t
 It supports two scanning modes:
 
 - **Local** — spawns `clamscan` as a child process and maps its exit code to a verdict. No stdout parsing, no regex.
-- **Remote / Docker** — streams the file to a running `clamd` daemon over TCP using the ClamAV `INSTREAM` protocol.
+- **Remote / Docker / UNIX socket** — streams the file to a running `clamd` daemon over TCP or a UNIX domain socket using the ClamAV `INSTREAM` protocol.
 
 No cloud. No daemon required for local mode. No native bindings. Zero runtime dependencies.
 
@@ -47,7 +47,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.
 - `scanDirectory(dirPath, [options])` — recursively scan every file in a directory, returns clean/malicious/errors arrays
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
-- Full TCP/clamd support via the INSTREAM protocol with configurable host, port, and timeout
+- Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
 - Works with Express, Fastify, and any other Node.js HTTP framework
 - Zero runtime dependencies — ships nothing but source code
@@ -263,13 +263,21 @@ if (result === Verdict.ScanError) console.warn('Scan incomplete.');
 
 ## Docker / Remote Scanning
 
-Pass `host` and `port` to switch from the local `clamscan` CLI to the clamd TCP daemon. Everything else — the returned verdicts, error types — is identical.
+Pass `host` and `port` (or `socket`) to switch from the local `clamscan` CLI to the clamd daemon. Everything else — the returned verdicts, error types — is identical.
 
+**TCP (Docker / remote clamd):**
 ```js
 const result = await scan('/path/to/file.zip', {
   host:    '127.0.0.1',
   port:    3310,
   timeout: 30_000, // socket idle timeout, ms — default 15 000
+});
+```
+
+**UNIX socket (local clamd daemon):**
+```js
+const result = await scan('/path/to/file.zip', {
+  socket: '/run/clamav/clamd.sock', // path to clamd's UNIX domain socket
 });
 ```
 
@@ -283,11 +291,12 @@ pompelmi has no configuration file or environment variables. All options are pas
 
 | Option    | Type     | Default         | Description                            |
 |-----------|----------|-----------------|----------------------------------------|
+| `socket`  | `string` | —               | Path to a clamd UNIX domain socket (e.g. `/run/clamav/clamd.sock`). Takes precedence over `host`/`port` when set. |
 | `host`    | `string` | —               | clamd hostname. Enables TCP mode when set. |
 | `port`    | `number` | `3310`          | clamd port.                            |
-| `timeout` | `number` | `15000`         | Socket idle timeout in milliseconds (TCP mode only). |
+| `timeout` | `number` | `15000`         | Socket idle timeout in milliseconds (clamd mode only). |
 
-When neither `host` nor `port` is provided, pompelmi spawns `clamscan --no-summary <filePath>` locally.
+When none of `socket`, `host`, or `port` is provided, pompelmi spawns `clamscan --no-summary <filePath>` locally.
 
 ---
 
@@ -298,7 +307,7 @@ When neither `host` nor `port` is provided, pompelmi spawns `clamscan --no-summa
 ```ts
 scan(
   filePath: string,
-  options?: { host?: string; port?: number; timeout?: number }
+  options?: { socket?: string; host?: string; port?: number; timeout?: number }
 ): Promise<symbol>
 ```
 
@@ -336,14 +345,14 @@ Verdict.ScanError.description // 'ScanError'
 ```ts
 scanBuffer(
   buffer: Buffer,
-  options?: { host?: string; port?: number; timeout?: number }
+  options?: { socket?: string; host?: string; port?: number; timeout?: number }
 ): Promise<symbol>
 ```
 
 | Parameter | Type | Description |
 |---|---|---|
 | `buffer` | `Buffer` | The in-memory buffer to scan |
-| `options` | `object` | Same options as `scan()` — host, port, timeout |
+| `options` | `object` | Same options as `scan()` — socket, host, port, timeout |
 
 **Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
 
@@ -354,7 +363,7 @@ scanBuffer(
 | `buffer` is not a Buffer | `buffer must be a Buffer` |
 | `buffer` is empty | `buffer is empty` |
 
-In TCP mode (`host` or `port` provided), the buffer is streamed directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, a temp file is written to `os.tmpdir()` and deleted automatically in a `finally` block regardless of outcome.
+In clamd mode (`socket`, `host`, or `port` provided), the buffer is streamed directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, a temp file is written to `os.tmpdir()` and deleted automatically in a `finally` block regardless of outcome.
 
 ---
 
@@ -363,14 +372,14 @@ In TCP mode (`host` or `port` provided), the buffer is streamed directly to clam
 ```ts
 scanStream(
   stream: Readable,
-  options?: { host?: string; port?: number; timeout?: number }
+  options?: { socket?: string; host?: string; port?: number; timeout?: number }
 ): Promise<symbol>
 ```
 
 | Parameter | Type | Description |
 |---|---|---|
 | `stream` | `Readable` | Node.js Readable stream to scan |
-| `options` | `object` | Same options as `scan()` — host, port, timeout |
+| `options` | `object` | Same options as `scan()` — socket, host, port, timeout |
 
 **Returns** the same three Symbol verdicts as `scan()`: `Verdict.Clean`, `Verdict.Malicious`, `Verdict.ScanError`.
 
@@ -381,7 +390,7 @@ scanStream(
 | `stream` is not a Readable | `stream must be a Readable` |
 | Stream emits error | propagated as-is |
 
-In TCP mode (`host` or `port` provided), the stream is piped directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, the stream is piped to a temp file in `os.tmpdir()` that is deleted automatically in a `finally` block.
+In clamd mode (`socket`, `host`, or `port` provided), the stream is piped directly to clamd via the INSTREAM protocol — no data is written to disk. In local mode, the stream is piped to a temp file in `os.tmpdir()` that is deleted automatically in a `finally` block.
 
 ---
 
@@ -390,7 +399,7 @@ In TCP mode (`host` or `port` provided), the stream is piped directly to clamd v
 ```ts
 scanDirectory(
   dirPath: string,
-  options?: { host?: string; port?: number; timeout?: number }
+  options?: { socket?: string; host?: string; port?: number; timeout?: number }
 ): Promise<{ clean: string[], malicious: string[], errors: string[] }>
 ```
 
