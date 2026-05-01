@@ -6,6 +6,7 @@ const { scan, scanDirectory, Verdict } = require('pompelmi');
 
 const scanPath    = process.argv[2] || '.';
 const failOnVirus = process.argv[3] !== 'false';
+const commentOnPr = process.argv[4] !== 'false';
 
 async function writeReport(clean, malicious, errors, outputDir) {
     const total  = clean.length + malicious.length + errors.length;
@@ -65,6 +66,60 @@ ${tableRows}
 
 function escHtml(s) {
     return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+async function postPrComment(malicious) {
+    if (!commentOnPr) return;
+
+    const token     = process.env.GITHUB_TOKEN;
+    const eventName = process.env.GITHUB_EVENT_NAME;
+    if (!token || eventName !== 'pull_request') return;
+
+    const eventPath = process.env.GITHUB_EVENT_PATH;
+    if (!eventPath || !fs.existsSync(eventPath)) return;
+
+    let event;
+    try { event = JSON.parse(fs.readFileSync(eventPath, 'utf8')); }
+    catch { return; }
+
+    const prNumber = event.pull_request && event.pull_request.number;
+    const repo     = process.env.GITHUB_REPOSITORY;
+    if (!prNumber || !repo) return;
+
+    const rows = malicious
+        .map(f => `| \`${escHtml(f)}\` | Malicious |`)
+        .join('\n');
+    const body =
+        `## ❌ Pompelmi: Virus Detected\n\n` +
+        `The following infected file(s) were found during the scan:\n\n` +
+        `| File | Verdict |\n|------|--------|\n${rows}\n\n` +
+        `> Scanned by [pompelmi](https://pompelmi.app)`;
+
+    const https   = require('https');
+    const payload = JSON.stringify({ body });
+
+    await new Promise((resolve, reject) => {
+        const req = https.request({
+            hostname: 'api.github.com',
+            path:     `/repos/${repo}/issues/${prNumber}/comments`,
+            method:   'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type':  'application/json',
+                'Content-Length': Buffer.byteLength(payload),
+                'User-Agent':    'pompelmi-action',
+                'Accept':        'application/vnd.github+json',
+                'X-GitHub-Api-Version': '2022-11-28',
+            },
+        }, (res) => {
+            res.resume();
+            if (res.statusCode >= 200 && res.statusCode < 300) resolve();
+            else reject(new Error(`GitHub API returned HTTP ${res.statusCode}`));
+        });
+        req.on('error', reject);
+        req.write(payload);
+        req.end();
+    }).catch(err => console.warn(`Could not post PR comment: ${err.message}`));
 }
 
 async function uploadArtifact(jsonPath, htmlPath) {
@@ -152,6 +207,7 @@ async function main() {
     if (malicious.length > 0) {
         console.error('\nInfected files:');
         malicious.forEach(f => console.error(`  ${f}`));
+        await postPrComment(malicious);
         if (failOnVirus) {
             console.error('\n::error::Virus(es) detected — failing workflow.');
             process.exit(1);

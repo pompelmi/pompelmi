@@ -35,6 +35,7 @@ That's it. The action scans the full workspace (`.`) and fails the step on any d
 |-------|-------------|----------|---------|
 | `path` | Directory or file to scan, relative to the workspace root | No | `.` (full workspace) |
 | `fail-on-virus` | Set to `'false'` to continue the workflow even when infected files are found | No | `'true'` |
+| `comment-on-pr` | Post a comment on the pull request listing infected files. Only fires when `GITHUB_EVENT_NAME` is `pull_request` and `GITHUB_TOKEN` is available. Set to `'false'` to disable. | No | `'true'` |
 
 ---
 

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.9.0] - 2026-05-01
+
+### Added
+- **TypeScript types built-in** — `types/index.d.ts` ships with the package. Covers `scan`, `scanBuffer`, `scanStream`, `scanDirectory`, `middleware`, `Verdict`, `ScanOptions`, `MiddlewareOptions`, and `DirectoryScanResult`. Added `"types": "./types/index.d.ts"` to `package.json`. No TypeScript conversion — pure declaration file.
+- **GitHub Action `comment-on-pr` input** — when a virus is found in a PR, the action posts a formatted table comment to the pull request via the GitHub API (requires `GITHUB_TOKEN`). Enabled by default; set `comment-on-pr: 'false'` to disable.
+- **Framework example starters** — `examples/express/` (Express + multer + pompelmi middleware), `examples/nextjs/` (Next.js API route scanning raw upload bytes), `examples/nestjs/` (NestJS `CanActivate` guard wrapping `scanBuffer`). Each includes a `README.md` with setup and `curl` examples.
+- **Coming soon** section in README — lists upcoming integrations: AWS S3, Cloudflare Workers, NestJS official module.
+
+---
+
 ## [1.8.0] - 2026-05-01
 
 ### Added

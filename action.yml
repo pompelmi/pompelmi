@@ -14,6 +14,10 @@ inputs:
     description: 'Fail the workflow step when infected files are found'
     required: false
     default: 'true'
+  comment-on-pr:
+    description: 'Post a PR comment listing infected files when a virus is found (requires GITHUB_TOKEN)'
+    required: false
+    default: 'true'
 
 outputs:
   infected-files:
@@ -27,3 +31,4 @@ runs:
   args:
     - ${{ inputs.path }}
     - ${{ inputs.fail-on-virus }}
+    - ${{ inputs.comment-on-pr }}
