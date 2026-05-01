@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2026-05-01
+
+### Added
+- `middleware(opts)` — Express/Fastify middleware that scans multer-uploaded files (`req.file` / `req.files`) and rejects requests with HTTP 403 if a virus is detected. Accepts all `scanBuffer` options (TCP/socket). Exported from the main module.
+- GitHub Action now writes `report.json` and `report.html` after each scan and uploads them as a GitHub Actions artifact named `pompelmi-scan-report`. Requires `@actions/artifact` v2 in the action runtime.
+- "Scanned by pompelmi" shields.io badge — added to `README.md`, copy-paste instructions in `BADGE.md` and `docs/github-action.md`.
+
+---
+
 ## [1.5.0] - 2026-04-29
 
 ### Added

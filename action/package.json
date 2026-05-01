@@ -1,0 +1,11 @@
+{
+  "name": "pompelmi-action",
+  "version": "1.8.0",
+  "private": true,
+  "description": "GitHub Action entrypoint for pompelmi ClamAV scanner",
+  "main": "scanner.js",
+  "scripts": {},
+  "dependencies": {
+    "@actions/artifact": "^2.1.11"
+  }
+}

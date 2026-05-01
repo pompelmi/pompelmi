@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/license-ISC-blue" alt="license">
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/release.yml/badge.svg" alt="npm publish"></a>
+  <a href="https://github.com/pompelmi/pompelmi"><img src="https://img.shields.io/badge/scanned%20by-pompelmi-orange?logo=github" alt="Scanned by pompelmi"></a>
 </p>
 
 ---

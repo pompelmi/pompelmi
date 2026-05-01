@@ -22,7 +22,7 @@ The `pompelmi/pompelmi` GitHub Action scans a repository (or a subdirectory) for
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: pompelmi/pompelmi@v1.7.0
+- uses: pompelmi/pompelmi@v1.8.0
 ```
 
 That's it. The action scans the full workspace (`.`) and fails the step on any detection.
@@ -70,7 +70,7 @@ jobs:
 
       - name: Scan for viruses
         id: scan
-        uses: pompelmi/pompelmi@v1.7.0
+        uses: pompelmi/pompelmi@v1.8.0
         with:
           path: '.'
           fail-on-virus: 'true'
@@ -93,7 +93,7 @@ A ready-to-copy copy of this workflow is at [`.github/workflows/action-example.y
 
 - name: Scan uploads directory
   id: scan
-  uses: pompelmi/pompelmi@v1.7.0
+  uses: pompelmi/pompelmi@v1.8.0
   with:
     path: 'uploads/'
     fail-on-virus: 'false'   # don't fail — handle in the next step
@@ -139,6 +139,18 @@ The action uses a Docker-based runner (`using: 'docker'`). GitHub Actions caches
 The `freshclam` step always runs at container start to fetch the latest definitions. If freshclam cannot reach the update servers, the action falls back to the definitions bundled at image build time and prints a warning.
 
 Cache is tied to the runner. Self-hosted runners retain the cache across jobs; GitHub-hosted runners warm the cache within the same workflow run but may start cold on the next trigger.
+
+---
+
+## Add this badge to your repo
+
+Show that your repository uses pompelmi for antivirus scanning:
+
+```markdown
+[![Scanned by pompelmi](https://img.shields.io/badge/scanned%20by-pompelmi-orange?logo=github)](https://github.com/pompelmi/pompelmi)
+```
+
+See [BADGE.md](../BADGE.md) for Markdown, HTML, and RST copy-paste snippets.
 
 ---
 
