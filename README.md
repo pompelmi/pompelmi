@@ -27,6 +27,7 @@
 |-------|-------------|
 | [Getting Started](./docs/getting-started.md) | Installation, prerequisites, quickstart examples |
 | [API Reference](./docs/api.md) | Full function signatures, options, verdicts, error conditions |
+| [S3 Integration](./docs/s3.md) | Scan S3 objects directly, IAM setup, Lambda pattern |
 | [Docker / Remote Scanning](./docs/docker.md) | TCP sidecar, UNIX socket mount, docker-compose patterns |
 | [GitHub Action](./docs/github-action.md) | CI scanning, inputs/outputs, caching, example workflows |
 
@@ -59,6 +60,10 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
 - `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.
 - `scanDirectory(dirPath, [options])` — recursively scan every file in a directory, returns clean/malicious/errors arrays
+- `scanS3(params, [options])` — scan S3 objects by streaming directly from AWS S3, no disk I/O
+- `createPool([options])` — persistent connection pool for high-throughput clamd scanning
+- `watch(dirPath, [options], callbacks)` — watch a directory and auto-scan new/modified files (300 ms debounce)
+- Auto-retry on connection error — `retries` and `retryDelay` options on every scan function
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
@@ -296,12 +301,14 @@ See **[docs/docker.md](./docs/docker.md)** for Docker Compose examples, UNIX soc
 
 pompelmi has no configuration file or environment variables. All options are passed directly to `scan()`.
 
-| Option    | Type     | Default         | Description                            |
-|-----------|----------|-----------------|----------------------------------------|
-| `socket`  | `string` | —               | Path to a clamd UNIX domain socket (e.g. `/run/clamav/clamd.sock`). Takes precedence over `host`/`port` when set. |
-| `host`    | `string` | —               | clamd hostname. Enables TCP mode when set. |
-| `port`    | `number` | `3310`          | clamd port.                            |
-| `timeout` | `number` | `15000`         | Socket idle timeout in milliseconds (clamd mode only). |
+| Option       | Type     | Default | Description                            |
+|--------------|----------|---------|----------------------------------------|
+| `socket`     | `string` | —       | Path to a clamd UNIX domain socket (e.g. `/run/clamav/clamd.sock`). Takes precedence over `host`/`port` when set. |
+| `host`       | `string` | —       | clamd hostname. Enables TCP mode when set. |
+| `port`       | `number` | `3310`  | clamd port.                            |
+| `timeout`    | `number` | `15000` | Socket idle timeout in milliseconds (clamd mode only). |
+| `retries`    | `number` | `0`     | Automatic retry attempts on connection error. |
+| `retryDelay` | `number` | `1000`  | Milliseconds to wait between retries. |
 
 When none of `socket`, `host`, or `port` is provided, pompelmi spawns `clamscan --no-summary <filePath>` locally.
 
@@ -313,12 +320,15 @@ See **[docs/api.md](./docs/api.md)** for the full reference: function signatures
 
 **Quick summary:**
 
-| Function | Input | clamd mode disk I/O |
-|----------|-------|---------------------|
-| `scan(filePath, [options])` | File path on disk | None (streamed) |
+| Function | Input | Disk I/O |
+|----------|-------|----------|
+| `scan(filePath, [options])` | File path on disk | None in clamd mode (streamed) |
 | `scanBuffer(buffer, [options])` | `Buffer` | None (streamed) |
 | `scanStream(stream, [options])` | Node.js `Readable` | None (streamed) |
-| `scanDirectory(dirPath, [options])` | Directory path | None (streamed) |
+| `scanDirectory(dirPath, [options])` | Directory path | None in clamd mode |
+| `scanS3(params, [options])` | S3 bucket + key | None (streamed from S3) |
+| `createPool([options])` | — | Returns a `ClamdPool` |
+| `watch(dirPath, [options], callbacks)` | Directory path | None in clamd mode |
 
 All four functions accept the same `options` object and resolve to the same three verdict Symbols:
 
@@ -473,7 +483,6 @@ Please read [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before contributing. To r
 
 ## Coming soon
 
-- [ ] AWS S3 integration — scan objects directly from S3 without downloading
 - [ ] Cloudflare Workers support — edge-native scanning via the clamd TCP protocol
 - [ ] NestJS official module — `PompelmiModule.forRoot()` with injectable `PompelmiService`
 

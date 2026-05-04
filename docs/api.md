@@ -18,6 +18,8 @@ Every scanning function accepts the same optional `options` object. Providing an
 | `host` | `string` | — | clamd hostname. Enables TCP mode when set. |
 | `port` | `number` | `3310` | clamd port. Only used when `host` is set. |
 | `timeout` | `number` | `15000` | Socket idle timeout in milliseconds. clamd mode only. |
+| `retries` | `number` | `0` | Number of automatic retry attempts on connection error. |
+| `retryDelay` | `number` | `1000` | Milliseconds to wait between retry attempts. |
 
 **Mode selection:** when `socket` is set, it wins. When only `host` (or `host` + `port`) is set, TCP is used. When none of the three are provided, `clamscan` is spawned as a local child process.
 
@@ -220,4 +222,127 @@ try {
   logger.error('Scan infrastructure error:', err.message);
   throw err; // or fail safe — reject the upload
 }
+```
+
+### Auto-retry on transient clamd failures
+
+```js
+const result = await scan(filePath, {
+  host: '127.0.0.1', port: 3310,
+  retries: 3,        // 3 retry attempts after the first failure
+  retryDelay: 500,   // 500 ms between each attempt
+});
+```
+
+---
+
+## `scanS3(params, [options])`
+
+Scan an S3 object by streaming it directly to clamd — no disk I/O.
+
+```ts
+scanS3(
+  params: { bucket: string; key: string; region?: string; credentials?: object },
+  options?: ScanOptions
+): Promise<symbol>
+```
+
+Requires `@aws-sdk/client-s3` to be installed in your project:
+
+```bash
+npm install @aws-sdk/client-s3
+```
+
+The S3 object body is streamed directly into `scanStream()` via the INSTREAM protocol. No data is written to disk.
+
+**Rejects** with `Error('Install AWS SDK: npm install @aws-sdk/client-s3')` if the SDK package is not installed.
+
+```js
+const { scanS3, Verdict } = require('pompelmi');
+
+const result = await scanS3(
+  { bucket: 'my-uploads', key: 'incoming/document.pdf', region: 'us-east-1' },
+  { host: '127.0.0.1', port: 3310 }
+);
+
+if (result === Verdict.Malicious) throw new Error('Malware detected in S3 object.');
+```
+
+See **[docs/s3.md](./s3.md)** for IAM setup, Lambda patterns, and credential configuration.
+
+---
+
+## `createPool([options])`
+
+Create a pool of persistent clamd connections for high-throughput scanning.
+
+```ts
+createPool(options?: {
+  host?: string;
+  port?: number;
+  socket?: string;
+  size?: number;    // default: 5
+  timeout?: number; // default: 15000
+}): ClamdPool
+```
+
+Returns a `ClamdPool` object with the following methods:
+
+| Method | Description |
+|--------|-------------|
+| `pool.scan(filePath)` | Scan a file by path |
+| `pool.scanBuffer(buffer)` | Scan an in-memory Buffer |
+| `pool.scanStream(stream)` | Scan a Readable stream |
+| `pool.destroy()` | Close all connections and reject queued requests |
+
+Connections are kept alive between scans. When all `size` slots are busy, new requests are queued and executed in FIFO order. Connections are automatically re-established on error.
+
+```js
+const { createPool, Verdict } = require('pompelmi');
+
+const pool = createPool({ host: '127.0.0.1', port: 3310, size: 10 });
+
+// Scan many uploads concurrently — pool caps concurrent clamd connections at 10
+const results = await Promise.all(
+  uploadBuffers.map(buf => pool.scanBuffer(buf))
+);
+
+pool.destroy(); // cleanup when done
+```
+
+---
+
+## `watch(dirPath, [options], [callbacks])`
+
+Watch a directory for new and modified files, scanning each one automatically.
+
+```ts
+watch(
+  dirPath: string,
+  options?: ScanOptions,
+  callbacks?: {
+    onClean?:     (filePath: string) => void;
+    onMalicious?: (filePath: string) => void;
+    onError?:     (err: Error, filePath?: string) => void;
+  }
+): FSWatcher
+```
+
+Uses `fs.watch` (no dependencies) with a 300 ms debounce to coalesce rapid filesystem events. Returns an `FSWatcher`; call `.close()` to stop watching.
+
+```js
+const { watch } = require('pompelmi');
+
+const watcher = watch(
+  '/var/uploads',
+  { host: '127.0.0.1', port: 3310 },
+  {
+    onClean:     (fp) => console.log('Clean:', fp),
+    onMalicious: (fp) => { console.warn('INFECTED:', fp); fs.unlinkSync(fp); },
+    onError:     (err, fp) => console.error('Scan error for', fp, err.message),
+  }
+);
+
+// Stop watching
+watcher.close();
 ```

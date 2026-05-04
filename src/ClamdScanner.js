@@ -31,55 +31,69 @@ function parseClamdResponse(raw) {
  * @param {number} [options.timeout=15000]  - Socket idle timeout in ms.
  * @returns {Promise<'Clean'|'Malicious'|'ScanError'>}
  */
-function scanViaClamd(filePath, { host = '127.0.0.1', port = 3310, socket: socketPath, timeout = 15_000 } = {}) {
-    return new Promise((resolve, reject) => {
-        if (typeof filePath !== 'string') {
-            return reject(new Error('filePath must be a string'));
-        }
-        if (!fs.existsSync(filePath)) {
-            return reject(new Error(`File not found: ${filePath}`));
-        }
+function scanViaClamd(filePath, options = {}) {
+    const { retries = 0, retryDelay = 1000, host = '127.0.0.1', port = 3310, socket: socketPath, timeout = 15_000 } = options;
 
-        const connOpts   = socketPath ? { path: socketPath } : { host, port };
-        const conn       = net.createConnection(connOpts);
-        const chunks     = [];
-        let   settled    = false;
+    function attempt() {
+        return new Promise((resolve, reject) => {
+            if (typeof filePath !== 'string') {
+                return reject(new Error('filePath must be a string'));
+            }
+            if (!fs.existsSync(filePath)) {
+                return reject(new Error(`File not found: ${filePath}`));
+            }
 
-        function settle(fn, value) {
-            if (settled) return;
-            settled = true;
-            conn.destroy();
-            fn(value);
-        }
+            const connOpts   = socketPath ? { path: socketPath } : { host, port };
+            const conn       = net.createConnection(connOpts);
+            const chunks     = [];
+            let   settled    = false;
 
-        conn.setTimeout(timeout);
-        conn.on('timeout', () =>
-            settle(reject, new Error(`clamd connection timed out after ${timeout}ms`))
-        );
-        conn.on('error', (err) => settle(reject, err));
-        conn.on('data',  (chunk) => chunks.push(chunk));
-        conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
+            function settle(fn, value) {
+                if (settled) return;
+                settled = true;
+                conn.destroy();
+                fn(value);
+            }
 
-        conn.on('connect', () => {
-            conn.write(CLAMD_INSTREAM);
+            conn.setTimeout(timeout);
+            conn.on('timeout', () =>
+                settle(reject, new Error(`clamd connection timed out after ${timeout}ms`))
+            );
+            conn.on('error', (err) => settle(reject, err));
+            conn.on('data',  (chunk) => chunks.push(chunk));
+            conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
 
-            const fileStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
+            conn.on('connect', () => {
+                conn.write(CLAMD_INSTREAM);
 
-            fileStream.on('error', (err) => settle(reject, err));
+                const fileStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
 
-            fileStream.on('data', (chunk) => {
-                const header = Buffer.allocUnsafe(4);
-                header.writeUInt32BE(chunk.length, 0);
-                conn.write(header);
-                conn.write(chunk);
-            });
+                fileStream.on('error', (err) => settle(reject, err));
 
-            fileStream.on('end', () => {
-                conn.write(Buffer.alloc(4)); // terminating zero-length chunk
-                conn.end();
+                fileStream.on('data', (chunk) => {
+                    const header = Buffer.allocUnsafe(4);
+                    header.writeUInt32BE(chunk.length, 0);
+                    conn.write(header);
+                    conn.write(chunk);
+                });
+
+                fileStream.on('end', () => {
+                    conn.write(Buffer.alloc(4)); // terminating zero-length chunk
+                    conn.end();
+                });
             });
         });
-    });
+    }
+
+    function run(left) {
+        return attempt().catch(async (err) => {
+            if (left <= 0) throw err;
+            await new Promise(r => setTimeout(r, retryDelay));
+            return run(left - 1);
+        });
+    }
+
+    return run(retries);
 }
 
 module.exports = { scanViaClamd };

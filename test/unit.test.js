@@ -893,3 +893,368 @@ describe('ClamAVDatabaseUpdater', () => {
         await assert.rejects(() => updateClamAVDatabase(), /EPERM/);
     });
 });
+
+// ─── Retry logic (ClamdScanner / BufferScanner / StreamScanner) ───────────────
+
+describe('Retry logic', () => {
+    const net = require('net');
+    const fs  = require('fs');
+
+    function makeFailSocket(message) {
+        const sock = new EventEmitter();
+        sock.destroyed = false;
+        sock.setTimeout = () => {};
+        sock.destroy    = () => { sock.destroyed = true; };
+        process.nextTick(() => sock.emit('error', new Error(message)));
+        return sock;
+    }
+
+    function makeOkClamdSocket() {
+        const sock     = new EventEmitter();
+        sock.destroyed = false;
+        sock.written   = [];
+        sock.setTimeout = () => {};
+        sock.write      = (buf) => { sock.written.push(buf); };
+        sock.destroy    = () => { sock.destroyed = true; };
+        sock.end        = () => {
+            process.nextTick(() => {
+                sock.emit('data', Buffer.from('stream: OK'));
+                sock.emit('end');
+            });
+        };
+        process.nextTick(() => sock.emit('connect'));
+        return sock;
+    }
+
+    it('scanViaClamd succeeds on 3rd attempt with retries:2 retryDelay:0', async (t) => {
+        const { scanViaClamd } = require('../src/ClamdScanner.js');
+        let callCount = 0;
+        t.mock.method(net, 'createConnection', () => {
+            callCount++;
+            if (callCount < 3) return makeFailSocket('ECONNREFUSED');
+            return makeOkClamdSocket();
+        });
+        t.mock.method(fs, 'existsSync',       () => true);
+        t.mock.method(fs, 'createReadStream', () => {
+            const s = new EventEmitter();
+            process.nextTick(() => { s.emit('data', Buffer.from('x')); s.emit('end'); });
+            return s;
+        });
+        const result = await scanViaClamd(__filename, { retries: 2, retryDelay: 0 });
+        assert.equal(result, Verdict.Clean);
+        assert.equal(callCount, 3);
+    });
+
+    it('scanViaClamd rejects after exhausting retries', async (t) => {
+        const { scanViaClamd } = require('../src/ClamdScanner.js');
+        t.mock.method(net, 'createConnection', () => makeFailSocket('ECONNREFUSED'));
+        t.mock.method(fs, 'existsSync',        () => true);
+        await assert.rejects(
+            () => scanViaClamd(__filename, { retries: 1, retryDelay: 0 }),
+            /ECONNREFUSED/
+        );
+    });
+
+    it('scanBufferViaClamd retries on connection error', async (t) => {
+        const { scanBufferViaClamd } = require('../src/BufferScanner.js');
+        let callCount = 0;
+        t.mock.method(net, 'createConnection', () => {
+            callCount++;
+            if (callCount < 2) return makeFailSocket('ETIMEDOUT');
+            return makeOkClamdSocket();
+        });
+        const result = await scanBufferViaClamd(Buffer.from('data'), { retries: 1, retryDelay: 0 });
+        assert.equal(result, Verdict.Clean);
+        assert.equal(callCount, 2);
+    });
+
+    it('scanStreamViaClamd retries on connection error', async (t) => {
+        const { scanStreamViaClamd } = require('../src/StreamScanner.js');
+        const { Readable } = require('stream');
+        let callCount = 0;
+        t.mock.method(net, 'createConnection', () => {
+            callCount++;
+            if (callCount < 2) return makeFailSocket('ECONNREFUSED');
+            return makeOkClamdSocket();
+        });
+        const stream = new Readable({ read() { this.push(null); } });
+        const result = await scanStreamViaClamd(stream, { retries: 1, retryDelay: 0 });
+        assert.equal(result, Verdict.Clean);
+        assert.equal(callCount, 2);
+    });
+});
+
+// ─── ClamdPool ────────────────────────────────────────────────────────────────
+
+describe('ClamdPool', () => {
+    const net = require('net');
+    const fs  = require('fs');
+    const { createPool } = require('../src/ClamdPool.js');
+
+    function makePersistentSocket({ response = 'stream: OK\0' } = {}) {
+        const sock     = new EventEmitter();
+        sock.destroyed = false;
+        sock.written   = [];
+        sock.readyState = 'open';
+        sock.setTimeout = () => {};
+        sock.write = (buf) => {
+            sock.written.push(buf);
+            if (buf.length === 4 && buf.readUInt32BE(0) === 0) {
+                process.nextTick(() => sock.emit('data', Buffer.from(response)));
+            }
+            return true;
+        };
+        sock.destroy = () => { sock.destroyed = true; sock.readyState = 'closed'; };
+        sock.end     = () => {};
+        process.nextTick(() => sock.emit('connect'));
+        return sock;
+    }
+
+    it('createPool returns an object with scan/scanBuffer/scanStream/destroy', () => {
+        const pool = createPool();
+        assert.equal(typeof pool.scan,        'function');
+        assert.equal(typeof pool.scanBuffer,  'function');
+        assert.equal(typeof pool.scanStream,  'function');
+        assert.equal(typeof pool.destroy,     'function');
+        pool.destroy();
+    });
+
+    it('pool.scan rejects for missing file', async () => {
+        const pool = createPool({ host: '127.0.0.1', port: 3310 });
+        await assert.rejects(
+            () => pool.scan('/nonexistent/__test_pool_file__'),
+            /File not found/
+        );
+        pool.destroy();
+    });
+
+    it('pool.scan rejects for non-string filePath', async () => {
+        const pool = createPool({ host: '127.0.0.1', port: 3310 });
+        await assert.rejects(() => pool.scan(42), /filePath must be a string/);
+        pool.destroy();
+    });
+
+    it('pool.scanBuffer resolves to Verdict.Clean on "stream: OK\\0"', async (t) => {
+        t.mock.method(net, 'createConnection', () => makePersistentSocket({ response: 'stream: OK\0' }));
+        const pool   = createPool({ host: '127.0.0.1', port: 3310 });
+        const result = await pool.scanBuffer(Buffer.from('clean data'));
+        assert.equal(result, Verdict.Clean);
+        pool.destroy();
+    });
+
+    it('pool.scanBuffer resolves to Verdict.Malicious on "FOUND\\0"', async (t) => {
+        t.mock.method(net, 'createConnection', () =>
+            makePersistentSocket({ response: 'stream: Eicar-Test-Signature FOUND\0' })
+        );
+        const pool   = createPool({ host: '127.0.0.1', port: 3310 });
+        const result = await pool.scanBuffer(Buffer.from('malware'));
+        assert.equal(result, Verdict.Malicious);
+        pool.destroy();
+    });
+
+    it('pool.scanStream resolves to Verdict.Clean', async (t) => {
+        const { Readable } = require('stream');
+        t.mock.method(net, 'createConnection', () => makePersistentSocket({ response: 'stream: OK\0' }));
+        const pool   = createPool({ host: '127.0.0.1', port: 3310 });
+        const stream = new Readable({ read() { this.push(Buffer.from('data')); this.push(null); } });
+        const result = await pool.scanStream(stream);
+        assert.equal(result, Verdict.Clean);
+        pool.destroy();
+    });
+
+    it('pool.scan resolves to Verdict.Clean', async (t) => {
+        t.mock.method(net, 'createConnection', () => makePersistentSocket({ response: 'stream: OK\0' }));
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'createReadStream', () => {
+            const s = new EventEmitter();
+            process.nextTick(() => { s.emit('data', Buffer.from('hello')); s.emit('end'); });
+            return s;
+        });
+        const pool   = createPool({ host: '127.0.0.1', port: 3310 });
+        const result = await pool.scan(__filename);
+        assert.equal(result, Verdict.Clean);
+        pool.destroy();
+    });
+
+    it('pool.destroy rejects queued requests', async (t) => {
+        t.mock.method(net, 'createConnection', () => {
+            const sock = new EventEmitter();
+            sock.destroyed = false;
+            sock.readyState = 'opening';
+            sock.setTimeout = () => {};
+            sock.destroy = () => { sock.destroyed = true; };
+            sock.write = () => {};
+            sock.end = () => {};
+            // Never emit 'connect' — keeps slot busy indefinitely
+            return sock;
+        });
+        const pool = createPool({ size: 1, host: '127.0.0.1', port: 3310 });
+
+        // Kick off one scan that will never complete (occupies the only slot)
+        pool.scanBuffer(Buffer.from('x')).catch(() => {});
+
+        // Give it a tick to enter runOnSlot
+        await new Promise(r => process.nextTick(r));
+
+        // Queue a second scan — it must be queued since slot is busy
+        const queued = pool.scanBuffer(Buffer.from('y'));
+
+        pool.destroy();
+
+        await assert.rejects(() => queued, /Pool destroyed/);
+    });
+});
+
+// ─── S3Scanner ────────────────────────────────────────────────────────────────
+
+describe('S3Scanner', () => {
+    it('scanS3 is exported from index', () => {
+        const { scanS3 } = require('../src/index.js');
+        assert.equal(typeof scanS3, 'function');
+    });
+
+    it('throws "Install AWS SDK" when @aws-sdk/client-s3 is not available', async () => {
+        // Temporarily remove the SDK from cache (if installed) to simulate a missing package.
+        let cachedEntry;
+        let resolvedKey;
+        try {
+            resolvedKey  = require.resolve('@aws-sdk/client-s3');
+            cachedEntry  = require.cache[resolvedKey];
+            delete require.cache[resolvedKey];
+        } catch {
+            // SDK not installed — require.resolve throws, nothing to remove.
+        }
+
+        // Load a fresh S3Scanner without the SDK in cache.
+        const { scanS3 } = load('../src/S3Scanner.js', {});
+
+        try {
+            await assert.rejects(
+                () => scanS3({ bucket: 'b', key: 'k', region: 'us-east-1' }),
+                /Install AWS SDK/
+            );
+        } finally {
+            // Restore the SDK entry if we removed it.
+            if (resolvedKey && cachedEntry) require.cache[resolvedKey] = cachedEntry;
+        }
+    });
+});
+
+// ─── Watcher ──────────────────────────────────────────────────────────────────
+
+describe('Watcher', () => {
+    const fs = require('fs');
+
+    it('watch is exported from index', () => {
+        const { watch } = require('../src/index.js');
+        assert.equal(typeof watch, 'function');
+    });
+
+    it('fires onClean callback for clean files', async (t) => {
+        let watchCb;
+
+        t.mock.method(global, 'setTimeout',   (fn) => { process.nextTick(fn); return {}; });
+        t.mock.method(global, 'clearTimeout', () => {});
+        t.mock.method(fs, 'watch', (_dir, _opts, cb) => {
+            watchCb = cb;
+            return { close: () => {} };
+        });
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'statSync',   () => ({ isFile: () => true }));
+
+        const { watch } = load('../src/Watcher.js', {
+            '../src/ClamAVScanner.js': { scan: () => Promise.resolve(Verdict.Clean) },
+        });
+
+        let cleanFile = null;
+        watch('/fake', {}, { onClean: (fp) => { cleanFile = fp; } });
+
+        watchCb('change', 'report.pdf');
+
+        await new Promise(r => process.nextTick(r));
+
+        assert.ok(cleanFile !== null, 'onClean should have been called');
+        assert.ok(cleanFile.endsWith('report.pdf'));
+    });
+
+    it('fires onMalicious callback for infected files', async (t) => {
+        let watchCb;
+
+        t.mock.method(global, 'setTimeout',   (fn) => { process.nextTick(fn); return {}; });
+        t.mock.method(global, 'clearTimeout', () => {});
+        t.mock.method(fs, 'watch', (_dir, _opts, cb) => {
+            watchCb = cb;
+            return { close: () => {} };
+        });
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'statSync',   () => ({ isFile: () => true }));
+
+        const { watch } = load('../src/Watcher.js', {
+            '../src/ClamAVScanner.js': { scan: () => Promise.resolve(Verdict.Malicious) },
+        });
+
+        let maliciousFile = null;
+        watch('/fake', {}, { onMalicious: (fp) => { maliciousFile = fp; } });
+
+        watchCb('change', 'virus.exe');
+
+        await new Promise(r => process.nextTick(r));
+
+        assert.ok(maliciousFile !== null, 'onMalicious should have been called');
+        assert.ok(maliciousFile.endsWith('virus.exe'));
+    });
+
+    it('fires onError callback when scan throws', async (t) => {
+        let watchCb;
+
+        t.mock.method(global, 'setTimeout',   (fn) => { process.nextTick(fn); return {}; });
+        t.mock.method(global, 'clearTimeout', () => {});
+        t.mock.method(fs, 'watch', (_dir, _opts, cb) => {
+            watchCb = cb;
+            return { close: () => {} };
+        });
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'statSync',   () => ({ isFile: () => true }));
+
+        const { watch } = load('../src/Watcher.js', {
+            '../src/ClamAVScanner.js': { scan: () => Promise.reject(new Error('ECONNREFUSED')) },
+        });
+
+        let caughtErr = null;
+        watch('/fake', {}, { onError: (err) => { caughtErr = err; } });
+
+        watchCb('change', 'file.bin');
+
+        await new Promise(r => process.nextTick(r));
+
+        assert.ok(caughtErr !== null, 'onError should have been called');
+        assert.match(caughtErr.message, /ECONNREFUSED/);
+    });
+
+    it('skips deleted files (existsSync returns false)', async (t) => {
+        let watchCb;
+
+        t.mock.method(global, 'setTimeout',   (fn) => { process.nextTick(fn); return {}; });
+        t.mock.method(global, 'clearTimeout', () => {});
+        t.mock.method(fs, 'watch', (_dir, _opts, cb) => {
+            watchCb = cb;
+            return { close: () => {} };
+        });
+        t.mock.method(fs, 'existsSync', () => false);
+
+        let called = false;
+        const scanMock = { scan: () => { called = true; return Promise.resolve(Verdict.Clean); } };
+
+        const { watch } = load('../src/Watcher.js', {
+            '../src/ClamAVScanner.js': scanMock,
+        });
+
+        watch('/fake', {}, {});
+
+        watchCb('rename', 'gone.txt');
+
+        await new Promise(r => process.nextTick(r));
+
+        assert.equal(called, false, 'scan should not be called for deleted files');
+    });
+});

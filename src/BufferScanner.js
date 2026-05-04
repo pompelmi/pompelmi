@@ -26,45 +26,59 @@ function parseClamdResponse(raw) {
  * @param {number} [options.timeout=15000]
  * @returns {Promise<symbol>}
  */
-function scanBufferViaClamd(buffer, { host = '127.0.0.1', port = 3310, socket: socketPath, timeout = 15_000 } = {}) {
-    return new Promise((resolve, reject) => {
-        const connOpts = socketPath ? { path: socketPath } : { host, port };
-        const conn     = net.createConnection(connOpts);
-        const chunks   = [];
-        let   settled  = false;
+function scanBufferViaClamd(buffer, options = {}) {
+    const { retries = 0, retryDelay = 1000, host = '127.0.0.1', port = 3310, socket: socketPath, timeout = 15_000 } = options;
 
-        function settle(fn, value) {
-            if (settled) return;
-            settled = true;
-            conn.destroy();
-            fn(value);
-        }
+    function attempt() {
+        return new Promise((resolve, reject) => {
+            const connOpts = socketPath ? { path: socketPath } : { host, port };
+            const conn     = net.createConnection(connOpts);
+            const chunks   = [];
+            let   settled  = false;
 
-        conn.setTimeout(timeout);
-        conn.on('timeout', () =>
-            settle(reject, new Error(`clamd connection timed out after ${timeout}ms`))
-        );
-        conn.on('error', (err) => settle(reject, err));
-        conn.on('data',  (chunk) => chunks.push(chunk));
-        conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
-
-        conn.on('connect', () => {
-            conn.write(CLAMD_INSTREAM);
-
-            let offset = 0;
-            while (offset < buffer.length) {
-                const chunk  = buffer.slice(offset, offset + CHUNK_SIZE);
-                const header = Buffer.allocUnsafe(4);
-                header.writeUInt32BE(chunk.length, 0);
-                conn.write(header);
-                conn.write(chunk);
-                offset += chunk.length;
+            function settle(fn, value) {
+                if (settled) return;
+                settled = true;
+                conn.destroy();
+                fn(value);
             }
 
-            conn.write(Buffer.alloc(4)); // terminating zero-length chunk
-            conn.end();
+            conn.setTimeout(timeout);
+            conn.on('timeout', () =>
+                settle(reject, new Error(`clamd connection timed out after ${timeout}ms`))
+            );
+            conn.on('error', (err) => settle(reject, err));
+            conn.on('data',  (chunk) => chunks.push(chunk));
+            conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
+
+            conn.on('connect', () => {
+                conn.write(CLAMD_INSTREAM);
+
+                let offset = 0;
+                while (offset < buffer.length) {
+                    const chunk  = buffer.slice(offset, offset + CHUNK_SIZE);
+                    const header = Buffer.allocUnsafe(4);
+                    header.writeUInt32BE(chunk.length, 0);
+                    conn.write(header);
+                    conn.write(chunk);
+                    offset += chunk.length;
+                }
+
+                conn.write(Buffer.alloc(4)); // terminating zero-length chunk
+                conn.end();
+            });
         });
-    });
+    }
+
+    function run(left) {
+        return attempt().catch(async (err) => {
+            if (left <= 0) throw err;
+            await new Promise(r => setTimeout(r, retryDelay));
+            return run(left - 1);
+        });
+    }
+
+    return run(retries);
 }
 
 module.exports = { scanBufferViaClamd };
