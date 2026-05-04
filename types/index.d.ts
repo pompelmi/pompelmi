@@ -152,3 +152,66 @@ export declare function watch(
   options?: ScanOptions,
   callbacks?: WatchCallbacks
 ): FSWatcher;
+
+/** Payload sent by the webhook notifier */
+export interface WebhookPayload {
+  file: string | null;
+  verdict: string;
+  viruses: string[];
+  timestamp: string;
+  hostname: string;
+}
+
+/** Options for notify() */
+export interface NotifyOptions {
+  /** Only send a webhook when the verdict is Malicious (default: true) */
+  onlyOnMalicious?: boolean;
+  /** HMAC-SHA256 secret — adds X-Pompelmi-Signature header when set */
+  secret?: string;
+}
+
+/** scan result passed to notify() */
+export interface ScanResultInput {
+  file?: string | null;
+  verdict: symbol | string;
+  viruses?: string[];
+}
+
+/**
+ * Send a POST webhook notification for a scan result.
+ * Uses Node.js built-in https/http — no external dependencies.
+ * When secret is provided, adds an X-Pompelmi-Signature: sha256=<hmac> header.
+ */
+export declare function notify(
+  webhookUrl: string,
+  scanResult: ScanResultInput,
+  options?: NotifyOptions
+): Promise<void>;
+
+import { EventEmitter } from 'events';
+
+/** EventEmitter-based scanner returned by createScanner() */
+export interface ScanEmitter extends EventEmitter {
+  /** Scan a single file; emits 'clean', 'malicious', 'scanError', or 'error' */
+  scan(filePath: string): void;
+  /** Recursively scan every file in dirPath; emits per-file events */
+  scanDirectory(dirPath: string): void;
+
+  on(event: 'clean',     listener: (filePath: string) => void): this;
+  on(event: 'malicious', listener: (filePath: string, viruses: string[]) => void): this;
+  on(event: 'scanError', listener: (filePath: string) => void): this;
+  on(event: 'error',     listener: (err: Error) => void): this;
+  on(event: string,      listener: (...args: unknown[]) => void): this;
+}
+
+/**
+ * Create an EventEmitter-based scanner.
+ * Options are forwarded to the underlying scan() call (host, port, socket, etc.).
+ *
+ * @example
+ * const scanner = createScanner({ host: 'localhost', port: 3310 });
+ * scanner.on('malicious', (file, viruses) => console.log('VIRUS:', file));
+ * scanner.scan('file.pdf');
+ * scanner.scanDirectory('/uploads');
+ */
+export declare function createScanner(options?: ScanOptions): ScanEmitter;

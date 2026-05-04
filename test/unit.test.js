@@ -1258,3 +1258,236 @@ describe('Watcher', () => {
         assert.equal(called, false, 'scan should not be called for deleted files');
     });
 });
+
+// ─── WebhookNotifier ─────────────────────────────────────────────────────────
+
+describe('WebhookNotifier', () => {
+    // Require the live https module — same object WebhookNotifier.js holds.
+    // We patch individual methods with t.mock.method() inside each test so that
+    // the mock is active at call time (not just during module load).
+    const https = require('https');
+    const { notify } = require('../src/WebhookNotifier.js');
+    const { Verdict: V } = require('../src/verdicts.js');
+
+    /**
+     * Builds a mock https.request function.
+     * Returns { requestFn, getBody(), getHeaders() } so tests can inspect writes.
+     */
+    function makeRequestMock({ statusCode = 200, networkError = null } = {}) {
+        let capturedHeaders = {};
+        let capturedBody    = '';
+
+        function requestFn(options, callback) {
+            capturedHeaders = options.headers || {};
+            const req = new EventEmitter();
+            req.write = (chunk) => { capturedBody += chunk; };
+            req.end   = () => {
+                process.nextTick(() => {
+                    if (networkError) {
+                        req.emit('error', new Error(networkError));
+                        return;
+                    }
+                    const res = new EventEmitter();
+                    res.statusCode = statusCode;
+                    res.resume = () => {};
+                    callback(res);
+                });
+            };
+            return req;
+        }
+
+        return { requestFn, getBody: () => capturedBody, getHeaders: () => capturedHeaders };
+    }
+
+    it('rejects if webhookUrl is not a string', async () => {
+        await assert.rejects(() => notify(42, { verdict: 'Clean' }), /webhookUrl must be/);
+    });
+
+    it('rejects if scanResult is not an object', async () => {
+        await assert.rejects(() => notify('https://example.com', null), /scanResult must be/);
+    });
+
+    it('resolves without sending when onlyOnMalicious=true and verdict is Clean', async (t) => {
+        const mock = makeRequestMock();
+        t.mock.method(https, 'request', mock.requestFn);
+        await notify('https://example.com/hook', { verdict: V.Clean }, { onlyOnMalicious: true });
+        assert.equal(mock.getBody(), '');
+    });
+
+    it('sends POST when onlyOnMalicious=false and verdict is Clean', async (t) => {
+        const mock = makeRequestMock({ statusCode: 200 });
+        t.mock.method(https, 'request', mock.requestFn);
+        await notify('https://example.com/hook', { verdict: V.Clean }, { onlyOnMalicious: false });
+        const body = JSON.parse(mock.getBody());
+        assert.equal(body.verdict, 'Clean');
+    });
+
+    it('sends POST when verdict is Malicious', async (t) => {
+        const mock = makeRequestMock({ statusCode: 200 });
+        t.mock.method(https, 'request', mock.requestFn);
+        await notify('https://example.com/hook', { file: '/tmp/bad.exe', verdict: V.Malicious, viruses: ['Eicar'] });
+        const body = JSON.parse(mock.getBody());
+        assert.equal(body.verdict, 'Malicious');
+        assert.equal(body.file, '/tmp/bad.exe');
+        assert.deepEqual(body.viruses, ['Eicar']);
+        assert.ok(body.timestamp);
+        assert.ok(body.hostname);
+    });
+
+    it('adds X-Pompelmi-Signature header when secret is provided', async (t) => {
+        const mock = makeRequestMock({ statusCode: 200 });
+        t.mock.method(https, 'request', mock.requestFn);
+        await notify('https://example.com/hook', { verdict: V.Malicious }, { secret: 'mysecret' });
+        const sig = mock.getHeaders()['X-Pompelmi-Signature'];
+        assert.ok(sig, 'signature header should be present');
+        assert.match(sig, /^sha256=[0-9a-f]{64}$/);
+    });
+
+    it('omits X-Pompelmi-Signature when no secret', async (t) => {
+        const mock = makeRequestMock({ statusCode: 200 });
+        t.mock.method(https, 'request', mock.requestFn);
+        await notify('https://example.com/hook', { verdict: V.Malicious });
+        assert.equal(mock.getHeaders()['X-Pompelmi-Signature'], undefined);
+    });
+
+    it('rejects when server returns non-2xx status', async (t) => {
+        const mock = makeRequestMock({ statusCode: 500 });
+        t.mock.method(https, 'request', mock.requestFn);
+        await assert.rejects(
+            () => notify('https://example.com/hook', { verdict: V.Malicious }),
+            /HTTP 500/
+        );
+    });
+
+    it('rejects on request error', async (t) => {
+        const mock = makeRequestMock({ networkError: 'ECONNREFUSED' });
+        t.mock.method(https, 'request', mock.requestFn);
+        await assert.rejects(
+            () => notify('https://example.com/hook', { verdict: V.Malicious }),
+            /ECONNREFUSED/
+        );
+    });
+
+    it('rejects for invalid URL', async () => {
+        await assert.rejects(
+            () => notify('not-a-url', { verdict: 'Malicious' }),
+            /Invalid webhookUrl/
+        );
+    });
+
+    it('notify is exported from index.js', () => {
+        const { notify: n } = require('../src/index.js');
+        assert.equal(typeof n, 'function');
+    });
+});
+
+// ─── ScanEmitter ─────────────────────────────────────────────────────────────
+
+describe('ScanEmitter', () => {
+    const fs = require('fs');
+
+    function loadEmitter(scanMock) {
+        return load('../src/ScanEmitter.js', {
+            '../src/ClamAVScanner.js': { scan: scanMock },
+        });
+    }
+
+    it('createScanner returns an EventEmitter with scan/scanDirectory methods', () => {
+        const { createScanner } = loadEmitter(() => Promise.resolve(Verdict.Clean));
+        const scanner = createScanner();
+        assert.equal(typeof scanner.scan,          'function');
+        assert.equal(typeof scanner.scanDirectory, 'function');
+        assert.equal(typeof scanner.on,            'function');
+        assert.equal(typeof scanner.emit,          'function');
+    });
+
+    it('emits "clean" event for a clean file', async () => {
+        const { createScanner } = loadEmitter(() => Promise.resolve(Verdict.Clean));
+        const scanner = createScanner();
+
+        const result = await new Promise((resolve) => {
+            scanner.on('clean', (fp) => resolve(fp));
+            scanner.scan('/fake/file.pdf');
+        });
+
+        assert.equal(result, '/fake/file.pdf');
+    });
+
+    it('emits "malicious" event with empty viruses array', async () => {
+        const { createScanner } = loadEmitter(() => Promise.resolve(Verdict.Malicious));
+        const scanner = createScanner();
+
+        const { file, viruses } = await new Promise((resolve) => {
+            scanner.on('malicious', (fp, v) => resolve({ file: fp, viruses: v }));
+            scanner.scan('/fake/virus.exe');
+        });
+
+        assert.equal(file, '/fake/virus.exe');
+        assert.deepEqual(viruses, []);
+    });
+
+    it('emits "scanError" event for Verdict.ScanError', async () => {
+        const { createScanner } = loadEmitter(() => Promise.resolve(Verdict.ScanError));
+        const scanner = createScanner();
+
+        const result = await new Promise((resolve) => {
+            scanner.on('scanError', (fp) => resolve(fp));
+            scanner.scan('/fake/bad.bin');
+        });
+
+        assert.equal(result, '/fake/bad.bin');
+    });
+
+    it('emits "error" event when scan rejects', async () => {
+        const { createScanner } = loadEmitter(() => Promise.reject(new Error('ENOENT')));
+        const scanner = createScanner();
+
+        const err = await new Promise((resolve) => {
+            scanner.on('error', (e) => resolve(e));
+            scanner.scan('/fake/file.pdf');
+        });
+
+        assert.match(err.message, /ENOENT/);
+    });
+
+    it('scanDirectory emits "error" for non-existent directory', async (t) => {
+        t.mock.method(fs, 'existsSync', () => false);
+
+        const { createScanner } = loadEmitter(() => Promise.resolve(Verdict.Clean));
+        const scanner = createScanner();
+
+        const err = await new Promise((resolve) => {
+            scanner.on('error', (e) => resolve(e));
+            scanner.scanDirectory('/nonexistent');
+        });
+
+        assert.match(err.message, /Directory not found/);
+    });
+
+    it('scanDirectory scans all files and emits events', async (t) => {
+        t.mock.method(fs, 'existsSync', () => true);
+        t.mock.method(fs, 'readdirSync', () => ['a.txt', 'b.exe']);
+        t.mock.method(fs, 'statSync', () => ({ isDirectory: () => false }));
+
+        let callCount = 0;
+        const verdicts = [Verdict.Clean, Verdict.Malicious];
+        const { createScanner } = loadEmitter(() => Promise.resolve(verdicts[callCount++]));
+        const scanner = createScanner();
+
+        const events = [];
+        await new Promise((resolve) => {
+            scanner.on('clean',     (fp) => { events.push({ type: 'clean',     fp }); if (events.length === 2) resolve(); });
+            scanner.on('malicious', (fp) => { events.push({ type: 'malicious', fp }); if (events.length === 2) resolve(); });
+            scanner.scanDirectory('/fake-dir');
+        });
+
+        assert.equal(events.length, 2);
+        const types = events.map(e => e.type).sort();
+        assert.deepEqual(types, ['clean', 'malicious']);
+    });
+
+    it('is exported from index.js', () => {
+        const { createScanner } = require('../src/index.js');
+        assert.equal(typeof createScanner, 'function');
+    });
+});

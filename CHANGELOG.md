@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.11.0] - 2026-05-04
+
+### Added
+- **Webhook notifications** — `notify(webhookUrl, scanResult, options)` sends a POST request when a virus is detected. Payload includes `file`, `verdict`, `viruses`, `timestamp`, and `hostname`. Supports HMAC-SHA256 request signing via `X-Pompelmi-Signature` header when a `secret` is provided. Ships with `onlyOnMalicious: true` default so noise-free by default. Uses Node.js built-in `https`/`http` — zero extra dependencies.
+- **EventEmitter scanner** — `createScanner(options)` returns an `EventEmitter`-based scanner with `scan(filePath)` and `scanDirectory(dirPath)` methods. Emits `'clean'`, `'malicious'`, `'scanError'`, and `'error'` events per file — ideal for streaming pipelines and upload processing loops.
+- **Automated GitHub Release notes** — release workflow now extracts the matching changelog section from `CHANGELOG.md` and uses it as the release body, with a one-line summary in the release title (`vX.Y.Z — <summary>`). No more static template.
+- **`.mailmap`** — maps any historical `claude`/`Claude` authorship entries to the project author so they are excluded from GitHub's contributor list.
+
+### Changed
+- `src/index.js` — exports `notify` and `createScanner` alongside existing API.
+- `types/index.d.ts` — full TypeScript declarations for `notify`, `NotifyOptions`, `WebhookPayload`, `ScanResultInput`, `createScanner`, and `ScanEmitter` (including typed event overloads).
+
+---
+
 ## [1.9.0] - 2026-05-01
 
 ### Added

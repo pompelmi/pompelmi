@@ -4,5 +4,7 @@ const { middleware }                                  = require('./middleware.js
 const { scanS3 }                                      = require('./S3Scanner.js');
 const { createPool }                                  = require('./ClamdPool.js');
 const { watch }                                       = require('./Watcher.js');
+const { notify }                                      = require('./WebhookNotifier.js');
+const { createScanner }                               = require('./ScanEmitter.js');
 
-module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch };
+module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch, notify, createScanner };

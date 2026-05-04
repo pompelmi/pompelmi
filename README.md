@@ -63,6 +63,8 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - `scanS3(params, [options])` — scan S3 objects by streaming directly from AWS S3, no disk I/O
 - `createPool([options])` — persistent connection pool for high-throughput clamd scanning
 - `watch(dirPath, [options], callbacks)` — watch a directory and auto-scan new/modified files (300 ms debounce)
+- `notify(webhookUrl, scanResult, [options])` — send a POST webhook notification when a virus is detected; optional HMAC-SHA256 signing via `X-Pompelmi-Signature`; zero extra dependencies
+- `createScanner([options])` — EventEmitter-based scanner; call `.scan(filePath)` or `.scanDirectory(dirPath)` and listen to `'clean'`, `'malicious'`, `'scanError'`, and `'error'` events
 - Auto-retry on connection error — `retries` and `retryDelay` options on every scan function
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout

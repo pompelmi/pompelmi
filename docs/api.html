@@ -5,15 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API Reference — pompelmi</title>
-<meta name="description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
+<meta name="description" content="Full pompelmi v1.11.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch, notify, createScanner. ScanOptions, Verdict symbols, TypeScript types.">
 <meta property="og:title" content="API Reference — pompelmi">
-<meta property="og:description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
+<meta property="og:description" content="Full pompelmi v1.11.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch, notify, createScanner. ScanOptions, Verdict symbols, TypeScript types.">
 <meta property="og:url" content="https://pompelmi.app/api.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pompelmi.app/grapefruit.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="API Reference — pompelmi">
-<meta name="twitter:description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
+<meta name="twitter:description" content="Full pompelmi v1.11.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch, notify, createScanner. ScanOptions, Verdict symbols, TypeScript types.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -60,7 +60,7 @@
 
   <div id="sidebar">
     <ul>
-      <span class="sidebar-label">API v1.10.0</span>
+      <span class="sidebar-label">API v1.11.0</span>
       <li><a href="#options">Options</a></li>
       <li><a href="#verdicts">Verdicts</a></li>
       <li><a href="#scan">scan()</a></li>
@@ -71,6 +71,8 @@
       <li><a href="#scan-s3">scanS3()</a></li>
       <li><a href="#create-pool">createPool()</a></li>
       <li><a href="#watch">watch()</a></li>
+      <li><a href="#notify">notify()</a></li>
+      <li><a href="#create-scanner">createScanner()</a></li>
       <li><a href="#errors">Error types</a></li>
       <li><a href="#typescript">TypeScript</a></li>
     </ul>
@@ -716,6 +718,149 @@ const watcher = watch(
 setTimeout(() =&gt; watcher.close(), 3_600_000);</pre>
     </div>
 
+    <!-- ── notify() ── -->
+    <div class="section" id="notify">
+      <h2>notify(webhookUrl, scanResult, [options])</h2>
+      <p>
+        Sends a POST request to <code>webhookUrl</code> when a scan result is available.
+        By default only fires when the verdict is <code>Malicious</code>.
+        Supports HMAC-SHA256 request signing via the <code>X-Pompelmi-Signature</code>
+        header. Uses Node.js built-in <code>https</code>/<code>http</code> &mdash; zero extra
+        dependencies.
+      </p>
+
+      <h3>Signature</h3>
+<pre>notify(
+  webhookUrl: string,
+  scanResult: { file?: string | null; verdict: symbol | string; viruses?: string[] },
+  options?: NotifyOptions
+): Promise&lt;void&gt;</pre>
+
+      <h3>NotifyOptions</h3>
+      <table>
+        <tr>
+          <th>Property</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>onlyOnMalicious</code></td>
+          <td><code>boolean</code></td>
+          <td><code>true</code></td>
+          <td>Skip the request when the verdict is not <code>Malicious</code>.</td>
+        </tr>
+        <tr>
+          <td><code>secret</code></td>
+          <td><code>string</code></td>
+          <td>&mdash;</td>
+          <td>HMAC-SHA256 key. When provided, adds <code>X-Pompelmi-Signature: sha256=&lt;hex&gt;</code> to the request.</td>
+        </tr>
+      </table>
+
+      <h3>Webhook payload</h3>
+<pre>{
+  "file":      "/uploads/invoice.pdf",
+  "verdict":   "Malicious",
+  "viruses":   ["Eicar-Test-Signature"],
+  "timestamp": "2026-05-04T12:00:00.000Z",
+  "hostname":  "api-server-01"
+}</pre>
+
+      <h3>Example</h3>
+<pre>const { scan, notify, Verdict } = require('pompelmi');
+
+const verdict = await scan('/uploads/invoice.pdf', { host: '127.0.0.1', port: 3310 });
+
+await notify('https://hooks.example.com/security', {
+  file:    '/uploads/invoice.pdf',
+  verdict,
+  viruses: [],
+}, {
+  onlyOnMalicious: true,
+  secret: process.env.WEBHOOK_SECRET,
+});</pre>
+    </div>
+
+    <!-- ── createScanner() ── -->
+    <div class="section" id="create-scanner">
+      <h2>createScanner([options])</h2>
+      <p>
+        Returns an <code>EventEmitter</code>-based scanner with <code>scan(filePath)</code>
+        and <code>scanDirectory(dirPath)</code> methods. Emits <code>'clean'</code>,
+        <code>'malicious'</code>, <code>'scanError'</code>, and <code>'error'</code>
+        events per file. Ideal for streaming pipelines and upload processing loops.
+        Options are forwarded to the underlying <code>scan()</code> call.
+      </p>
+
+      <h3>Signature</h3>
+<pre>createScanner(options?: ScanOptions): ScanEmitter</pre>
+
+      <h3>Events</h3>
+      <table>
+        <tr>
+          <th>Event</th>
+          <th>Arguments</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>'clean'</code></td>
+          <td><code>(filePath: string)</code></td>
+          <td>File scanned clean.</td>
+        </tr>
+        <tr>
+          <td><code>'malicious'</code></td>
+          <td><code>(filePath: string, viruses: string[])</code></td>
+          <td>Virus or malware detected.</td>
+        </tr>
+        <tr>
+          <td><code>'scanError'</code></td>
+          <td><code>(filePath: string)</code></td>
+          <td>Scan returned <code>Verdict.ScanError</code> &mdash; treat the file as untrusted.</td>
+        </tr>
+        <tr>
+          <td><code>'error'</code></td>
+          <td><code>(err: Error)</code></td>
+          <td>Unexpected infrastructure error (connection refused, file not found, etc.).</td>
+        </tr>
+      </table>
+
+      <h3>Methods</h3>
+      <table>
+        <tr>
+          <th>Method</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>scanner.scan(filePath)</code></td>
+          <td>Scan a single file; emits one of the four events above.</td>
+        </tr>
+        <tr>
+          <td><code>scanner.scanDirectory(dirPath)</code></td>
+          <td>Recursively scan every file under <code>dirPath</code>; emits events per file.</td>
+        </tr>
+      </table>
+
+      <h3>Example</h3>
+<pre>const { createScanner } = require('pompelmi');
+
+const scanner = createScanner({ host: 'localhost', port: 3310 });
+
+scanner.on('malicious', (file, viruses) => {
+  console.error('VIRUS DETECTED:', file, viruses);
+  fs.unlink(file, () => {});
+});
+scanner.on('clean',     (file) => console.log('OK:', file));
+scanner.on('scanError', (file) => console.warn('Scan error — treat as untrusted:', file));
+scanner.on('error',     (err)  => console.error('Infrastructure error:', err.message));
+
+// Scan a single file
+scanner.scan('/uploads/report.pdf');
+
+// Scan an entire directory
+scanner.scanDirectory('/var/incoming');</pre>
+    </div>
+
     <!-- ── Error types ── -->
     <div class="section" id="errors">
       <h2>Error types</h2>
@@ -792,14 +937,15 @@ setTimeout(() =&gt; watcher.close(), 3_600_000);</pre>
     <div class="section" id="typescript">
       <h2>TypeScript</h2>
       <p>
-        TypeScript declarations are bundled with pompelmi v1.10.0. No <code>@types/pompelmi</code>
+        TypeScript declarations are bundled with pompelmi v1.11.0. No <code>@types/pompelmi</code>
         package is required. Import as normal:
       </p>
 
 <pre>import { scan, scanBuffer, scanStream, scanDirectory,
          middleware, scanS3, createPool, watch,
+         notify, createScanner,
          Verdict } from 'pompelmi';
-import type { ScanOptions } from 'pompelmi';</pre>
+import type { ScanOptions, NotifyOptions, ScanEmitter } from 'pompelmi';</pre>
 
       <h3>Full types/index.d.ts structure</h3>
 <pre>export declare const Verdict: Readonly&lt;{
@@ -872,7 +1018,7 @@ export function watch(
 </div>
 
 <div id="footer">
-  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.11.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

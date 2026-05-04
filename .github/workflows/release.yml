@@ -57,12 +57,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Extract changelog section
+        id: changelog
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+
+          # Extract the section for this version from CHANGELOG.md
+          # Matches from "## [VERSION]" to the next "## [" heading (exclusive)
+          BODY=$(awk "
+            /^## \[${VERSION}\]/ { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          " CHANGELOG.md | sed '/^[[:space:]]*$/{ N; /^\n$/d }' | sed '1{/^$/d}')
+
+          if [ -z "$BODY" ]; then
+            BODY="See [CHANGELOG.md](https://github.com/pompelmi/pompelmi/blob/main/CHANGELOG.md) for full details."
+          fi
+
+          # Extract a one-line summary: first non-empty content line after the date header
+          SUMMARY=$(echo "$BODY" | grep -m1 '^\*\*\|^-\|^###\|^[A-Z]' | sed 's/^### //;s/^\*\*//;s/\*\*$//' | head -c 80)
+          if [ -z "$SUMMARY" ]; then
+            SUMMARY="Release $GITHUB_REF_NAME"
+          fi
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
+
+          # Write body to a file to avoid quoting issues
+          printf '%s' "$BODY" > /tmp/release_body.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
-          name: ${{ github.ref_name }}
+          name: "${{ github.ref_name }} — ${{ steps.changelog.outputs.summary }}"
           generate_release_notes: false
-          body_path: .github/release-template.md
+          body_path: /tmp/release_body.md
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
