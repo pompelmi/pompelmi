@@ -5,15 +5,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>API Reference — pompelmi</title>
-<meta name="description" content="Full pompelmi API reference: scan(), Verdict symbols, ScanOptions, Docker/TCP mode. Node.js ClamAV antivirus library. Open source on GitHub.">
+<meta name="description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
 <meta property="og:title" content="API Reference — pompelmi">
-<meta property="og:description" content="Complete pompelmi API reference — scanBytes, scanFile, composeScanners, Verdict symbols, ScanOptions, and built-in heuristic scanners explained.">
+<meta property="og:description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
 <meta property="og:url" content="https://pompelmi.app/api.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pompelmi.app/grapefruit.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="API Reference — pompelmi">
-<meta name="twitter:description" content="Complete pompelmi API reference — scanBytes, scanFile, composeScanners, Verdict symbols, ScanOptions, and built-in heuristic scanners explained.">
+<meta name="twitter:description" content="Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -23,7 +23,7 @@
   "@type": "TechArticle",
   "headline": "API Reference — pompelmi",
   "url": "https://pompelmi.app/api.html",
-  "description": "Full pompelmi API reference: scan(), Verdict symbols, ScanOptions, Docker/TCP mode. Node.js ClamAV antivirus library. Open source on GitHub.",
+  "description": "Full pompelmi v1.10.0 API reference: scan, scanBuffer, scanStream, scanDirectory, scanS3, createPool, watch. ScanOptions, Verdict symbols, TypeScript types.",
   "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
   "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
   "mainEntityOfPage": "https://pompelmi.app/api.html"
@@ -60,16 +60,17 @@
 
   <div id="sidebar">
     <ul>
-      <span class="sidebar-label">API</span>
-      <li><a href="#overview">Overview</a></li>
-      <li><a href="#verdict">Verdict</a></li>
+      <span class="sidebar-label">API v1.10.0</span>
+      <li><a href="#options">Options</a></li>
+      <li><a href="#verdicts">Verdicts</a></li>
       <li><a href="#scan">scan()</a></li>
-      <li><a href="#scan-options">options object</a></li>
-      <li><a href="#scan-docker">Docker / TCP</a></li>
-      <li><a href="#installer">ClamAVInstaller()</a></li>
-      <li><a href="#updater">updateClamAVDatabase()</a></li>
-      <li><a href="#config">config</a></li>
-      <li><a href="#constants">constants</a></li>
+      <li><a href="#scan-buffer">scanBuffer()</a></li>
+      <li><a href="#scan-stream">scanStream()</a></li>
+      <li><a href="#scan-directory">scanDirectory()</a></li>
+      <li><a href="#middleware">middleware()</a></li>
+      <li><a href="#scan-s3">scanS3()</a></li>
+      <li><a href="#create-pool">createPool()</a></li>
+      <li><a href="#watch">watch()</a></li>
       <li><a href="#errors">Error types</a></li>
       <li><a href="#typescript">TypeScript</a></li>
     </ul>
@@ -77,133 +78,142 @@
 
   <div id="content">
 
-    <div class="section" id="overview">
-      <h2>Overview</h2>
+    <!-- ── Options ── -->
+    <div class="section" id="options">
+      <h2>Options</h2>
       <p>
-        The public API surface of pompelmi is intentionally small.
-        The main entry point exports two things: the <code>scan</code> function and the
-        <code>Verdict</code> constants object.
-      </p>
-<pre>const { scan, Verdict } = require('pompelmi');
-// scan    — the scan function
-// Verdict — frozen object of Symbol constants for comparing results</pre>
-
-      <p>
-        The installer and updater are internal utilities exposed as named exports from
-        their own modules. They are not re-exported from <code>index.js</code>.
+        All scan functions accept an optional <code>ScanOptions</code> object as their last
+        argument. Every property is optional.
       </p>
 
       <table>
         <tr>
-          <th>Export</th>
-          <th>Module</th>
+          <th>Property</th>
           <th>Type</th>
-          <th>Public?</th>
+          <th>Default</th>
+          <th>Description</th>
         </tr>
         <tr>
-          <td><code>scan</code></td>
-          <td><code>index.js</code></td>
-          <td>Function → Promise&lt;symbol&gt;</td>
-          <td>Yes</td>
+          <td><code>socket</code></td>
+          <td><code>string</code></td>
+          <td>&mdash;</td>
+          <td>UNIX domain socket path (e.g. <code>/run/clamav/clamd.sock</code>). Takes precedence over <code>host</code> and <code>port</code>.</td>
         </tr>
         <tr>
-          <td><code>Verdict</code></td>
-          <td><code>index.js</code> → <code>verdicts.js</code></td>
-          <td>Frozen object of Symbols</td>
-          <td>Yes</td>
+          <td><code>host</code></td>
+          <td><code>string</code></td>
+          <td>&mdash;</td>
+          <td>clamd hostname or IP address. Setting this enables TCP mode.</td>
         </tr>
         <tr>
-          <td><code>ClamAVInstaller</code></td>
-          <td><code>ClamAVInstaller.js</code></td>
-          <td>Function → Promise</td>
-          <td>Internal</td>
+          <td><code>port</code></td>
+          <td><code>number</code></td>
+          <td><code>3310</code></td>
+          <td>clamd TCP port.</td>
         </tr>
         <tr>
-          <td><code>updateClamAVDatabase</code></td>
-          <td><code>ClamAVDatabaseUpdater.js</code></td>
-          <td>Function → Promise</td>
-          <td>Internal</td>
+          <td><code>timeout</code></td>
+          <td><code>number</code></td>
+          <td><code>15000</code></td>
+          <td>Socket idle timeout in milliseconds. Applies to clamd mode only (TCP and UNIX socket). Has no effect in local clamscan mode.</td>
         </tr>
         <tr>
-          <td><code>SCAN_RESULTS</code></td>
-          <td><code>config.js</code></td>
-          <td>Frozen object</td>
-          <td>Internal</td>
+          <td><code>retries</code></td>
+          <td><code>number</code></td>
+          <td><code>0</code></td>
+          <td>Number of automatic retry attempts on connection error. Default 0 means no retries.</td>
+        </tr>
+        <tr>
+          <td><code>retryDelay</code></td>
+          <td><code>number</code></td>
+          <td><code>1000</code></td>
+          <td>Milliseconds to wait between retry attempts.</td>
         </tr>
       </table>
+
+      <h3>Mode selection</h3>
+      <p>
+        The connection mode is selected automatically from the options you provide:
+      </p>
+      <ol>
+        <li>If <code>socket</code> is set, pompelmi connects via UNIX domain socket.</li>
+        <li>Otherwise, if <code>host</code> is set (or <code>port</code> alone), pompelmi connects via TCP.</li>
+        <li>If neither is set, pompelmi spawns a local <code>clamscan</code> process.</li>
+      </ol>
     </div>
 
-    <!-- ── Verdict ── -->
-    <div class="section" id="verdict">
-      <h2>Verdict</h2>
+    <!-- ── Verdicts ── -->
+    <div class="section" id="verdicts">
+      <h2>Verdicts</h2>
       <p>
-        A frozen object of Symbol constants exported from <code>src/verdicts.js</code>
-        and re-exported from <code>index.js</code>. Always compare scan results against
-        these constants with <code>===</code> — never against raw strings.
+        All scan functions resolve to one of three Symbol constants exported from pompelmi.
+        Always compare with <code>===</code> &mdash; never against raw strings.
       </p>
 
-      <h3>Constants</h3>
       <table>
         <tr>
           <th>Constant</th>
           <th><code>.description</code></th>
+          <th>Local exit code</th>
+          <th>clamd response</th>
           <th>Meaning</th>
         </tr>
         <tr>
-          <td><code>Verdict.Clean</code></td>
+          <td class="result-clean"><code>Verdict.Clean</code></td>
           <td><code>'Clean'</code></td>
+          <td class="code-cell">0</td>
+          <td><code>stream: OK</code></td>
           <td>No threats detected.</td>
         </tr>
         <tr>
-          <td><code>Verdict.Malicious</code></td>
+          <td class="result-malicious"><code>Verdict.Malicious</code></td>
           <td><code>'Malicious'</code></td>
+          <td class="code-cell">1</td>
+          <td><code>stream: &lt;name&gt; FOUND</code></td>
           <td>A virus or malware signature was matched.</td>
         </tr>
         <tr>
-          <td><code>Verdict.ScanError</code></td>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
           <td><code>'ScanError'</code></td>
-          <td>The scan failed; treat the file as untrusted.</td>
+          <td class="code-cell">2</td>
+          <td>anything else</td>
+          <td>The scan failed. Treat the file as untrusted.</td>
         </tr>
       </table>
 
       <h3>Why Symbols?</h3>
       <p>
-        String-based verdicts are fragile: a typo such as <code>'Cleaan'</code>
-        compiles and runs silently but always evaluates to <code>false</code>.
-        With Symbols, any unknown property on <code>Verdict</code> is
-        <code>undefined</code>, making the mistake visible immediately.
-        Symbols also prevent accidental equality with third-party string values.
+        String-based verdicts are fragile: a typo such as <code>'Cleaan'</code> compiles
+        silently but always evaluates to <code>false</code>. With Symbols, any unknown
+        property on <code>Verdict</code> is <code>undefined</code>, making the mistake
+        visible immediately. Symbols also prevent accidental equality with third-party
+        string values.
       </p>
 
-      <h3>Logging / serialisation</h3>
-      <p>
-        Each Symbol carries a <code>.description</code> string for human-readable output:
-      </p>
-<pre>const { Verdict } = require('pompelmi');
-console.log(Verdict.Clean.description);      // 'Clean'
-console.log(String(Verdict.Malicious));      // 'Symbol(Malicious)'
-JSON.stringify({ verdict: result.description }); // {"verdict":"Clean"}</pre>
+      <h3>Using .description for logging</h3>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const result = await scan('/uploads/report.pdf', { host: '127.0.0.1', port: 3310 });
+
+// Compare with ===
+if (result === Verdict.Malicious) { /* reject */ }
+
+// Use .description for logging / JSON
+console.log(result.description);                   // 'Clean'
+logger.info({ verdict: result.description });      // { verdict: 'Clean' }</pre>
     </div>
 
     <!-- ── scan() ── -->
     <div class="section" id="scan">
-      <h2>pompelmi.scan(filePath, [options])</h2>
+      <h2>scan(filePath, [options])</h2>
       <p>
-        Scans a file for malware and returns a Promise that resolves to a <code>Verdict</code>
-        Symbol. By default it spawns a local <code>clamscan</code> process via Node's native
-        <code>child_process.spawn</code>. Pass <code>host</code> or <code>port</code> in
-        <code>options</code> to scan via a clamd TCP socket instead (e.g. a Docker container).
+        Scans a file on the local filesystem. In clamd mode (TCP or UNIX socket), the file
+        is read and streamed to clamd using the INSTREAM protocol. In local mode, a
+        <code>clamscan</code> child process is spawned.
       </p>
 
       <h3>Signature</h3>
-<pre>scan(
-  filePath: string,
-  options?: {
-    host?:    string;   // default: '127.0.0.1'
-    port?:    number;   // default: 3310
-    timeout?: number;   // default: 15000 ms (TCP path only)
-  }
-): Promise&lt;symbol&gt;  // resolves to Verdict.Clean | Verdict.Malicious | Verdict.ScanError</pre>
+<pre>scan(filePath: string, options?: ScanOptions): Promise&lt;symbol&gt;</pre>
 
       <h3>Parameters</h3>
       <table>
@@ -217,64 +227,20 @@ JSON.stringify({ verdict: result.description }); // {"verdict":"Clean"}</pre>
           <td><code>filePath</code></td>
           <td><code>string</code></td>
           <td>Yes</td>
-          <td>
-            Absolute or relative path to the file to scan.
-            The file must exist on the local filesystem before the call is made.
-          </td>
+          <td>Absolute or relative path to the file to scan. Must exist before the call.</td>
         </tr>
         <tr>
           <td><code>options</code></td>
-          <td><code>object</code></td>
+          <td><code>ScanOptions</code></td>
           <td>No</td>
-          <td>
-            Optional configuration. Omit entirely to use the local <code>clamscan</code> CLI.
-            See <a href="#scan-options">options object</a> below.
-          </td>
+          <td>Connection and timeout options. Omit to use local <code>clamscan</code>.</td>
         </tr>
       </table>
 
       <h3>Return value</h3>
-      <p>
-        A Promise that resolves to one of the following <code>Verdict</code> Symbols,
-        regardless of which backend is used. Compare using <code>===</code> against the
-        exported constants — never against raw strings.
-      </p>
-      <table>
-        <tr>
-          <th>Value</th>
-          <th>CLI exit code</th>
-          <th>clamd response</th>
-          <th>Meaning</th>
-        </tr>
-        <tr>
-          <td class="result-clean"><code>Verdict.Clean</code></td>
-          <td class="code-cell">0</td>
-          <td><code>stream: OK</code></td>
-          <td>No known threats found in the file.</td>
-        </tr>
-        <tr>
-          <td class="result-malicious"><code>Verdict.Malicious</code></td>
-          <td class="code-cell">1</td>
-          <td><code>stream: &lt;name&gt; FOUND</code></td>
-          <td>A virus or malware signature was matched.</td>
-        </tr>
-        <tr>
-          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
-          <td class="code-cell">2</td>
-          <td>anything else</td>
-          <td>
-            The scan itself failed. The file's safety is <strong>unknown</strong> —
-            treat as untrusted.
-          </td>
-        </tr>
-      </table>
-      <p>
-        To get the human-readable name for logging or serialisation use
-        <code>result.description</code> — e.g. <code>Verdict.Clean.description === 'Clean'</code>.
-      </p>
+      <p>A Promise that resolves to <code>Verdict.Clean</code>, <code>Verdict.Malicious</code>, or <code>Verdict.ScanError</code>.</p>
 
       <h3>Rejection reasons</h3>
-      <p>The Promise rejects (throws in async/await) in these cases:</p>
       <table>
         <tr>
           <th>Message pattern</th>
@@ -284,85 +250,247 @@ JSON.stringify({ verdict: result.description }); // {"verdict":"Clean"}</pre>
         <tr>
           <td><code>filePath must be a string</code></td>
           <td>both</td>
-          <td>The argument passed to <code>scan()</code> is not a string.</td>
+          <td>Argument is not a string.</td>
         </tr>
         <tr>
           <td><code>File not found: &lt;path&gt;</code></td>
           <td>both</td>
-          <td><code>fs.existsSync(filePath)</code> returned false before anything was spawned or connected.</td>
+          <td><code>fs.existsSync(filePath)</code> returned false.</td>
         </tr>
         <tr>
           <td><code>ENOENT</code></td>
-          <td>CLI</td>
-          <td><code>clamscan</code> binary not found in <code>PATH</code>.</td>
+          <td>local</td>
+          <td><code>clamscan</code> binary not found in PATH.</td>
         </tr>
         <tr>
           <td><code>Unexpected exit code: &lt;n&gt;</code></td>
-          <td>CLI</td>
-          <td>ClamAV exited with a code not in the <code>SCAN_RESULTS</code> map.</td>
-        </tr>
-        <tr>
-          <td><code>Process killed by signal: &lt;SIGNAL&gt;</code></td>
-          <td>CLI</td>
-          <td>The <code>clamscan</code> process was terminated by a signal (e.g. <code>SIGKILL</code>).</td>
+          <td>local</td>
+          <td>ClamAV exited with an unrecognised exit code.</td>
         </tr>
         <tr>
           <td><code>ECONNREFUSED</code></td>
-          <td>TCP</td>
-          <td>Nothing is listening on <code>host:port</code>. Check that clamd is running.</td>
+          <td>clamd</td>
+          <td>Nothing is listening on the specified host/port.</td>
         </tr>
         <tr>
           <td><code>clamd connection timed out after Nms</code></td>
-          <td>TCP</td>
-          <td>The socket was idle for longer than <code>options.timeout</code>.</td>
-        </tr>
-        <tr>
-          <td>OS I/O error (e.g. <code>EACCES</code>)</td>
-          <td>TCP</td>
-          <td>The local file could not be read while streaming it to clamd.</td>
+          <td>clamd</td>
+          <td>Socket idle for longer than <code>options.timeout</code>.</td>
         </tr>
       </table>
 
       <h3>Example</h3>
 <pre>const { scan, Verdict } = require('pompelmi');
 
-// Local clamscan — no options needed
-const result = await scan('/var/uploads/report.pdf');
+const result = await scan('/var/uploads/report.pdf', {
+  host: '127.0.0.1',
+  port: 3310,
+});
 
 switch (result) {
   case Verdict.Clean:     /* proceed */                    break;
   case Verdict.Malicious: /* reject file */                break;
-  case Verdict.ScanError: /* treat as untrusted, reject */ break;
+  case Verdict.ScanError: /* treat as untrusted */         break;
 }
 
-// Human-readable label for logging:
 console.log(result.description); // 'Clean' | 'Malicious' | 'ScanError'</pre>
-
-      <h3>Notes</h3>
-      <ul>
-        <li>
-          The CLI path spawns a new <code>clamscan</code> process for every call.
-          There is no process pooling or caching.
-        </li>
-        <li>
-          The TCP path opens a new socket per call and streams the file using ClamAV's
-          <code>INSTREAM</code> protocol. The socket is destroyed immediately after
-          the result is received.
-        </li>
-        <li>
-          The file is never modified or copied. Both backends read it in-place.
-        </li>
-      </ul>
     </div>
 
-    <!-- ── options object ── -->
-    <div class="section" id="scan-options">
-      <h2>options object</h2>
+    <!-- ── scanBuffer() ── -->
+    <div class="section" id="scan-buffer">
+      <h2>scanBuffer(buffer, [options])</h2>
       <p>
-        All properties are optional. Omitting <code>options</code> entirely (or passing
-        an empty object) selects the local CLI path.
-        Setting <code>host</code> or <code>port</code> selects the TCP path.
+        Scans an in-memory <code>Buffer</code>. In clamd mode (TCP or UNIX socket),
+        the buffer is piped directly to clamd &mdash; no disk I/O at all.
+        In local mode, the buffer is written to a temporary file in <code>os.tmpdir()</code>
+        and deleted in a <code>finally</code> block after the scan completes.
       </p>
+
+      <h3>Signature</h3>
+<pre>scanBuffer(buffer: Buffer, options?: ScanOptions): Promise&lt;symbol&gt;</pre>
+
+      <h3>Parameters</h3>
+      <table>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>buffer</code></td>
+          <td><code>Buffer</code></td>
+          <td>Yes</td>
+          <td>The in-memory file data to scan.</td>
+        </tr>
+        <tr>
+          <td><code>options</code></td>
+          <td><code>ScanOptions</code></td>
+          <td>No</td>
+          <td>Connection and timeout options.</td>
+        </tr>
+      </table>
+
+      <h3>Extra validation errors</h3>
+      <table>
+        <tr>
+          <th>Message</th>
+          <th>Cause</th>
+        </tr>
+        <tr>
+          <td><code>buffer must be a Buffer</code></td>
+          <td>Argument is not a <code>Buffer</code> instance.</td>
+        </tr>
+        <tr>
+          <td><code>buffer is empty</code></td>
+          <td>Buffer has zero length.</td>
+        </tr>
+      </table>
+
+      <h3>Example — multer memoryStorage</h3>
+<pre>const express  = require('express');
+const multer   = require('multer');
+const { scanBuffer, Verdict } = require('pompelmi');
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/upload', upload.single('file'), async (req, res) =&gt; {
+  const result = await scanBuffer(req.file.buffer, {
+    host: process.env.CLAMAV_HOST,
+    port: 3310,
+  });
+
+  if (result === Verdict.Malicious) {
+    return res.status(400).json({ error: 'Malware detected' });
+  }
+
+  // buffer never touched disk during the scan
+  await fs.promises.writeFile('/data/' + req.file.originalname, req.file.buffer);
+  res.json({ ok: true });
+});</pre>
+    </div>
+
+    <!-- ── scanStream() ── -->
+    <div class="section" id="scan-stream">
+      <h2>scanStream(stream, [options])</h2>
+      <p>
+        Scans a Node.js <code>Readable</code> stream. In clamd mode, the stream is piped
+        directly to clamd via the INSTREAM protocol &mdash; no disk I/O. In local mode,
+        the stream is piped to a temporary file in <code>os.tmpdir()</code> and deleted
+        in a <code>finally</code> block.
+      </p>
+
+      <h3>Signature</h3>
+<pre>scanStream(stream: Readable, options?: ScanOptions): Promise&lt;symbol&gt;</pre>
+
+      <h3>Extra validation error</h3>
+      <table>
+        <tr>
+          <th>Message</th>
+          <th>Cause</th>
+        </tr>
+        <tr>
+          <td><code>stream must be a Readable</code></td>
+          <td>Argument is not a Node.js <code>Readable</code> instance.</td>
+        </tr>
+      </table>
+
+      <h3>Example &mdash; S3 GetObject</h3>
+<pre>const { scanStream, Verdict } = require('pompelmi');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+const { Body } = await s3.send(new GetObjectCommand({
+  Bucket: 'my-uploads',
+  Key: 'incoming/document.docx',
+}));
+
+const result = await scanStream(Body, {
+  host: '127.0.0.1',
+  port: 3310,
+  timeout: 30000,
+});
+
+if (result === Verdict.Malicious) {
+  console.error('Malware found in S3 object');
+}</pre>
+
+      <div class="note">
+        See <a href="s3.html">S3 Integration</a> for a full Lambda trigger example and
+        IAM policy setup.
+      </div>
+    </div>
+
+    <!-- ── scanDirectory() ── -->
+    <div class="section" id="scan-directory">
+      <h2>scanDirectory(dirPath, [options])</h2>
+      <p>
+        Recursively scans every file under <code>dirPath</code>. Per-file errors are
+        collected and never thrown. The function always resolves with a summary object.
+      </p>
+
+      <h3>Signature</h3>
+<pre>scanDirectory(
+  dirPath: string,
+  options?: ScanOptions
+): Promise&lt;{ clean: string[]; malicious: string[]; errors: string[] }&gt;</pre>
+
+      <h3>Return value</h3>
+      <table>
+        <tr>
+          <th>Property</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>clean</code></td>
+          <td><code>string[]</code></td>
+          <td>Absolute paths of files that returned <code>Verdict.Clean</code>.</td>
+        </tr>
+        <tr>
+          <td><code>malicious</code></td>
+          <td><code>string[]</code></td>
+          <td>Absolute paths of files that returned <code>Verdict.Malicious</code>.</td>
+        </tr>
+        <tr>
+          <td><code>errors</code></td>
+          <td><code>string[]</code></td>
+          <td>Absolute paths of files that returned <code>Verdict.ScanError</code> or threw.</td>
+        </tr>
+      </table>
+
+      <h3>Example</h3>
+<pre>const { scanDirectory } = require('pompelmi');
+
+const report = await scanDirectory('/var/uploads', {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+console.log(`Clean: ${report.clean.length}`);
+console.log(`Malicious: ${report.malicious.length}`);
+
+if (report.malicious.length &gt; 0) {
+  console.error('Infected files:', report.malicious);
+}</pre>
+    </div>
+
+    <!-- ── middleware() ── -->
+    <div class="section" id="middleware">
+      <h2>middleware([options])</h2>
+      <p>
+        Returns an Express/Fastify middleware function. Designed to run after multer
+        (or any other file parser that populates <code>req.file</code> or <code>req.files</code>).
+        If a malicious file is detected, the middleware responds immediately with HTTP 403
+        and does not call <code>next()</code>.
+      </p>
+
+      <h3>Signature</h3>
+<pre>middleware(options?: MiddlewareOptions): RequestHandler</pre>
+
+      <h3>MiddlewareOptions</h3>
+      <p><code>MiddlewareOptions</code> extends <code>ScanOptions</code> with one additional property:</p>
       <table>
         <tr>
           <th>Property</th>
@@ -371,371 +499,372 @@ console.log(result.description); // 'Clean' | 'Malicious' | 'ScanError'</pre>
           <th>Description</th>
         </tr>
         <tr>
-          <td><code>host</code></td>
+          <td><code>uploadField</code></td>
           <td><code>string</code></td>
-          <td><code>'127.0.0.1'</code></td>
-          <td>Hostname or IP address of the clamd instance.</td>
-        </tr>
-        <tr>
-          <td><code>port</code></td>
-          <td><code>number</code></td>
-          <td><code>3310</code></td>
-          <td>TCP port clamd is listening on.</td>
-        </tr>
-        <tr>
-          <td><code>timeout</code></td>
-          <td><code>number</code></td>
-          <td><code>15000</code></td>
-          <td>
-            Milliseconds of socket inactivity before the call rejects with a timeout error.
-            Applies to the TCP path only; has no effect on the CLI path.
-          </td>
+          <td><code>'file'</code></td>
+          <td>The multer field name to scan. Ignored when <code>req.files</code> is an array.</td>
         </tr>
       </table>
-    </div>
 
-    <!-- ── Docker / TCP ── -->
-    <div class="section" id="scan-docker">
-      <h2>Docker / TCP scanning</h2>
-      <p>
-        If ClamAV runs in a Docker container (or anywhere on the network), pass
-        <code>host</code> and/or <code>port</code>. Everything else — the result
-        strings, the rejection behaviour, the file path argument — stays identical.
-      </p>
+      <h3>Example</h3>
+<pre>const express    = require('express');
+const multer     = require('multer');
+const { middleware } = require('pompelmi');
 
-<pre>const { scan, Verdict } = require('pompelmi');
+const app    = express();
+const upload = multer({ storage: multer.memoryStorage() });
 
-// Docker on localhost
-const result = await scan('/path/to/upload.zip', {
-  host: '127.0.0.1',
-  port: 3310,
-});
-
-// Remote clamd with a tight timeout
-const result2 = await scan('/path/to/upload.zip', {
-  host: 'clamd-svc.internal',
-  port: 3310,
-  timeout: 5_000,
-});
-
-if (result === Verdict.Malicious) { /* reject */ }</pre>
+app.post(
+  '/upload',
+  upload.single('file'),
+  middleware({ host: '127.0.0.1', port: 3310 }),
+  (req, res) =&gt; {
+    // Only reached when the file is clean
+    res.json({ ok: true });
+  }
+);</pre>
 
       <div class="note">
-        See <a href="docker.html">Docker</a> for a ready-to-use
-        <code>docker-compose.yml</code> and first-boot notes.
+        On detection, the middleware sends <code>403 Forbidden</code> with JSON body
+        <code>{ "error": "Malware detected" }</code> and stops the chain. On scan error
+        it calls <code>next(err)</code> so your error handler can decide.
       </div>
     </div>
 
-    <!-- ── ClamAVInstaller ── -->
-    <div class="section" id="installer">
-      <h2>ClamAVInstaller()</h2>
+    <!-- ── scanS3() ── -->
+    <div class="section" id="scan-s3">
+      <h2>scanS3(params, [options])</h2>
       <p>
-        Internal utility function that installs ClamAV using the platform's package manager.
-        Not exported from the main <code>index.js</code>.
+        Streams an S3 object via <code>GetObjectCommand</code> directly to
+        <code>scanStream()</code> &mdash; no disk I/O. The AWS SDK is an optional peer
+        dependency; pompelmi does not bundle it.
       </p>
 
-      <h3>Import</h3>
-<pre>const { ClamAVInstaller } = require('pompelmi/src/ClamAVInstaller');</pre>
+      <h3>Install the AWS SDK</h3>
+<pre>npm install @aws-sdk/client-s3</pre>
+
+      <p>
+        If the SDK is not installed at runtime, <code>scanS3()</code> throws:
+        <code>Install AWS SDK: npm install @aws-sdk/client-s3</code>
+      </p>
 
       <h3>Signature</h3>
-<pre>ClamAVInstaller(): Promise&lt;string&gt;</pre>
+<pre>scanS3(
+  params: { bucket: string; key: string; region?: string; credentials?: AwsCredentialIdentity },
+  options?: ScanOptions
+): Promise&lt;symbol&gt;</pre>
 
-      <h3>Behaviour</h3>
-      <p>Reads <code>process.platform</code> and spawns the corresponding install command:</p>
+      <h3>Params</h3>
       <table>
         <tr>
-          <th>Platform (<code>process.platform</code>)</th>
-          <th>Command executed</th>
+          <th>Property</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
         </tr>
         <tr>
-          <td><code>darwin</code></td>
-          <td><code>brew install clamav</code></td>
+          <td><code>bucket</code></td>
+          <td><code>string</code></td>
+          <td>Yes</td>
+          <td>S3 bucket name.</td>
         </tr>
         <tr>
-          <td><code>linux</code></td>
-          <td><code>sudo apt-get install -y clamav clamav-daemon</code></td>
+          <td><code>key</code></td>
+          <td><code>string</code></td>
+          <td>Yes</td>
+          <td>S3 object key.</td>
         </tr>
         <tr>
-          <td><code>win32</code></td>
-          <td><code>choco install clamav -y</code></td>
+          <td><code>region</code></td>
+          <td><code>string</code></td>
+          <td>No</td>
+          <td>AWS region. Defaults to <code>AWS_REGION</code> env var or SDK default.</td>
         </tr>
         <tr>
-          <td>other</td>
-          <td>Logs <code>"Current platform is not supported."</code> and returns.</td>
+          <td><code>credentials</code></td>
+          <td><code>AwsCredentialIdentity</code></td>
+          <td>No</td>
+          <td>Explicit AWS credentials. Omit to use the default credential chain (IAM role, env vars, etc.).</td>
         </tr>
       </table>
 
-      <p>
-        Output from the package manager is piped to the terminal (<code>stdio: 'inherit'</code>).
-        The function returns a <code>Promise&lt;string&gt;</code> that resolves with a status
-        message on success or skip, and rejects with an <code>Error</code> if the install
-        process exits with a non-zero code or if spawning the package manager fails.
-      </p>
+      <h3>Example</h3>
+<pre>const { scanS3, Verdict } = require('pompelmi');
 
-      <div class="warn">
-        On Linux this spawns <code>sudo apt-get</code>, which may prompt for a password.
-        This function is intended for use in setup scripts, not in production application code.
+const result = await scanS3(
+  { bucket: 'my-uploads', key: 'incoming/report.pdf', region: 'us-east-1' },
+  { host: '127.0.0.1', port: 3310 }
+);
+
+if (result === Verdict.Malicious) {
+  console.error('Malware detected in S3 object');
+}</pre>
+
+      <div class="note">
+        See <a href="s3.html">S3 Integration</a> for IAM policy setup, Lambda trigger
+        examples, and the pre-upload scan pattern.
       </div>
     </div>
 
-    <!-- ── updateClamAVDatabase ── -->
-    <div class="section" id="updater">
-      <h2>updateClamAVDatabase()</h2>
+    <!-- ── createPool() ── -->
+    <div class="section" id="create-pool">
+      <h2>createPool([options])</h2>
       <p>
-        Internal utility that runs <code>freshclam</code> to download or update ClamAV
-        virus definitions. Not exported from the main <code>index.js</code>.
+        Creates a persistent connection pool to clamd. Connections are reused across
+        calls; when all slots are busy, new requests queue until a slot is free.
+        Auto-reconnects on connection drop.
       </p>
-
-      <h3>Import</h3>
-<pre>const { updateClamAVDatabase } = require('pompelmi/src/ClamAVDatabaseUpdater');</pre>
 
       <h3>Signature</h3>
-<pre>updateClamAVDatabase(): Promise&lt;string&gt;</pre>
+<pre>createPool(options?: PoolOptions): ClamdPool</pre>
 
-      <h3>Behaviour</h3>
+      <h3>PoolOptions</h3>
+      <p><code>PoolOptions</code> extends <code>ScanOptions</code> with:</p>
       <table>
         <tr>
-          <th>Platform</th>
-          <th>Command executed</th>
+          <th>Property</th>
+          <th>Type</th>
+          <th>Default</th>
+          <th>Description</th>
         </tr>
         <tr>
-          <td><code>darwin</code></td>
-          <td><code>freshclam</code></td>
-        </tr>
-        <tr>
-          <td><code>linux</code></td>
-          <td><code>sudo freshclam</code></td>
-        </tr>
-        <tr>
-          <td><code>win32</code></td>
-          <td><code>freshclam</code></td>
-        </tr>
-        <tr>
-          <td>other</td>
-          <td>Logs <code>"Current platform is not supported."</code> and returns.</td>
+          <td><code>size</code></td>
+          <td><code>number</code></td>
+          <td><code>5</code></td>
+          <td>Number of persistent connections to maintain.</td>
         </tr>
       </table>
 
-      <p>
-        Logs <code>"Downloading virus definitions..."</code> before starting.
-        Returns a <code>Promise&lt;string&gt;</code> that resolves with
-        <code>"Database updated successfully!"</code> on exit code 0, and rejects
-        with an <code>Error</code> on any non-zero exit code or spawn failure.
-      </p>
-    </div>
-
-    <!-- ── config ── -->
-    <div class="section" id="config">
-      <h2>config</h2>
-      <p>
-        The frozen configuration object in <code>src/config.js</code>. It is the single
-        source of truth for all subprocess commands and exit-code mappings.
-        <code>SCAN_RESULTS</code> maps ClamAV exit codes to <code>Verdict</code> Symbols
-        (defined in <code>src/verdicts.js</code>).
-      </p>
-
-      <h3>Shape</h3>
-<pre>const { Verdict } = require('./verdicts.js');
-
-module.exports = Object.freeze({
-  INSTALLER_COMMANDS: Object.freeze({
-    win32:  ['choco',  ['install', 'clamav', '-y']],
-    darwin: ['brew',   ['install', 'clamav']],
-    linux:  ['sudo',   ['apt-get', 'install', '-y', 'clamav', 'clamav-daemon']],
-  }),
-  UPDATER_COMMANDS: Object.freeze({
-    win32:  ['freshclam', []],
-    darwin: ['freshclam', []],
-    linux:  ['sudo',      ['freshclam']],
-  }),
-  DB_PATHS: Object.freeze({
-    darwin: '/usr/local/share/clamav/main.cvd',
-    linux:  '/var/lib/clamav/main.cvd',
-    win32:  'C:\\ProgramData\\ClamAV\\main.cvd',
-  }),
-  SCAN_RESULTS: Object.freeze({
-    0: Verdict.Clean,
-    1: Verdict.Malicious,
-    2: Verdict.ScanError,
-  }),
-});</pre>
-
-      <h3>DB_PATHS</h3>
-      <p>
-        Maps <code>process.platform</code> to the path where <code>main.cvd</code> is expected.
-        Used by <code>updateClamAVDatabase()</code> to skip <code>freshclam</code> if the
-        database is already present.
-      </p>
-
-      <h3>SCAN_RESULTS</h3>
-      <p>
-        Maps ClamAV exit codes to <code>Verdict</code> Symbols. The map is frozen to
-        prevent accidental mutation. If ClamAV returns an exit code that is not a key
-        in this object, <code>scan()</code> rejects with <code>"Unexpected exit code: N"</code>.
-      </p>
-
+      <h3>ClamdPool methods</h3>
       <table>
         <tr>
-          <th>Key (exit code)</th>
-          <th>Value</th>
+          <th>Method</th>
+          <th>Description</th>
         </tr>
         <tr>
-          <td class="code-cell">0</td>
-          <td><code>Verdict.Clean</code></td>
+          <td><code>pool.scan(filePath)</code></td>
+          <td>Scans a file path using a pooled connection.</td>
         </tr>
         <tr>
-          <td class="code-cell">1</td>
-          <td><code>Verdict.Malicious</code></td>
+          <td><code>pool.scanBuffer(buffer)</code></td>
+          <td>Scans an in-memory Buffer using a pooled connection.</td>
         </tr>
         <tr>
-          <td class="code-cell">2</td>
-          <td><code>Verdict.ScanError</code></td>
+          <td><code>pool.scanStream(stream)</code></td>
+          <td>Scans a Readable stream using a pooled connection.</td>
+        </tr>
+        <tr>
+          <td><code>pool.destroy()</code></td>
+          <td>Closes all connections and releases resources. Call on app shutdown.</td>
         </tr>
       </table>
+
+      <h3>Example &mdash; scanning many buffers concurrently</h3>
+<pre>const { createPool, Verdict } = require('pompelmi');
+
+const pool = createPool({ host: '127.0.0.1', port: 3310, size: 5 });
+
+// Fan-out: scan 20 files simultaneously; pool queues the overflow
+const results = await Promise.all(
+  buffers.map(buf =&gt; pool.scanBuffer(buf))
+);
+
+const infected = results.filter(r =&gt; r === Verdict.Malicious).length;
+console.log(`${infected} infected file(s) out of ${buffers.length}`);
+
+// Shut down cleanly
+await pool.destroy();</pre>
     </div>
 
-    <!-- ── constants ── -->
-    <div class="section" id="constants">
-      <h2>constants</h2>
+    <!-- ── watch() ── -->
+    <div class="section" id="watch">
+      <h2>watch(dirPath, [options], callbacks)</h2>
       <p>
-        <code>src/constants.js</code> exports <code>PLATFORM</code>, which is
-        simply <code>process.platform</code>.
-      </p>
-<pre>// src/constants.js
-module.exports = {
-  PLATFORM: process.platform,
-};</pre>
-      <p>
-        Exporting the platform constant separately makes it replaceable in tests
-        without monkey-patching <code>process</code>.
+        Watches a directory for new or changed files and scans each one automatically.
+        Built on <code>fs.watch</code> with a 300&nbsp;ms debounce. Returns an
+        <code>FSWatcher</code> handle; call <code>.close()</code> to stop watching.
       </p>
 
-      <h3>Known platform values</h3>
-      <table>
-        <tr>
-          <th><code>process.platform</code></th>
-          <th>OS</th>
-          <th>Supported</th>
-        </tr>
-        <tr>
-          <td><code>darwin</code></td>
-          <td>macOS</td>
-          <td>Yes</td>
-        </tr>
-        <tr>
-          <td><code>linux</code></td>
-          <td>Linux</td>
-          <td>Yes</td>
-        </tr>
-        <tr>
-          <td><code>win32</code></td>
-          <td>Windows (32 and 64-bit)</td>
-          <td>Yes</td>
-        </tr>
-        <tr>
-          <td><code>freebsd</code>, <code>openbsd</code>, etc.</td>
-          <td>Other Unix</td>
-          <td>No (installer/updater only; scan works if clamscan is in PATH)</td>
-        </tr>
-      </table>
+      <h3>Signature</h3>
+<pre>watch(
+  dirPath: string,
+  options: ScanOptions,
+  callbacks: {
+    onClean:     (filePath: string) =&gt; void;
+    onMalicious: (filePath: string) =&gt; void;
+    onError:     (err: Error, filePath?: string) =&gt; void;
+  }
+): FSWatcher</pre>
+
+      <h3>Example</h3>
+<pre>const { watch } = require('pompelmi');
+
+const watcher = watch(
+  '/var/incoming',
+  { host: '127.0.0.1', port: 3310 },
+  {
+    onClean:     (fp) =&gt; console.log('Clean:', fp),
+    onMalicious: (fp) =&gt; {
+      console.error('INFECTED:', fp);
+      fs.unlink(fp, () =&gt; {});   // quarantine or delete
+    },
+    onError:     (err, fp) =&gt; console.error('Scan error', fp, err.message),
+  }
+);
+
+// Stop watching after 1 hour
+setTimeout(() =&gt; watcher.close(), 3_600_000);</pre>
     </div>
 
-    <!-- ── errors ── -->
+    <!-- ── Error types ── -->
     <div class="section" id="errors">
       <h2>Error types</h2>
       <p>
-        All errors thrown by pompelmi are plain <code>Error</code> instances.
-        There are no custom error classes. You can distinguish them by
-        inspecting <code>err.message</code>.
+        All errors are plain <code>Error</code> instances. There are no custom error classes.
+        Distinguish them by <code>err.message</code>.
       </p>
+
       <table>
         <tr>
           <th>Message</th>
-          <th>Source</th>
+          <th>Source function</th>
           <th>Recovery</th>
         </tr>
         <tr>
           <td><code>filePath must be a string</code></td>
-          <td><code>ClamAVScanner.js</code> input guard</td>
-          <td>Pass a string path to <code>scan()</code>.</td>
+          <td><code>scan()</code></td>
+          <td>Pass a string path.</td>
         </tr>
         <tr>
           <td><code>File not found: &lt;path&gt;</code></td>
-          <td><code>ClamAVScanner.js</code> pre-flight check</td>
-          <td>Verify the file path before calling <code>scan()</code>.</td>
+          <td><code>scan()</code></td>
+          <td>Verify the file exists before calling.</td>
+        </tr>
+        <tr>
+          <td><code>buffer must be a Buffer</code></td>
+          <td><code>scanBuffer()</code></td>
+          <td>Pass a Node.js <code>Buffer</code>.</td>
+        </tr>
+        <tr>
+          <td><code>buffer is empty</code></td>
+          <td><code>scanBuffer()</code></td>
+          <td>Check that the buffer has length &gt; 0 before calling.</td>
+        </tr>
+        <tr>
+          <td><code>stream must be a Readable</code></td>
+          <td><code>scanStream()</code></td>
+          <td>Pass a Node.js <code>Readable</code> stream.</td>
         </tr>
         <tr>
           <td><code>ENOENT</code></td>
-          <td>OS / child_process</td>
-          <td>Install ClamAV and ensure <code>clamscan</code> is in <code>PATH</code>.</td>
+          <td><code>scan()</code> local mode</td>
+          <td>Install ClamAV and ensure <code>clamscan</code> is in PATH.</td>
         </tr>
         <tr>
           <td><code>Unexpected exit code: &lt;n&gt;</code></td>
-          <td><code>ClamAVScanner.js</code> close handler</td>
-          <td>
-            Inspect the exit code. ClamAV exit codes above 2 indicate internal
-            ClamAV errors. Check ClamAV logs (<code>/var/log/clamav/</code>).
-          </td>
+          <td><code>scan()</code> local mode</td>
+          <td>Check ClamAV logs at <code>/var/log/clamav/</code>.</td>
         </tr>
         <tr>
           <td><code>Process killed by signal: &lt;SIGNAL&gt;</code></td>
-          <td><code>ClamAVScanner.js</code> close handler</td>
-          <td>
-            The <code>clamscan</code> process was killed externally (e.g. OOM killer).
-            Retry the scan or investigate system resources.
-          </td>
+          <td><code>scan()</code> local mode</td>
+          <td>Investigate system resources; retry the scan.</td>
+        </tr>
+        <tr>
+          <td><code>ECONNREFUSED</code></td>
+          <td>all clamd-mode functions</td>
+          <td>Wait for clamd to be healthy, then retry.</td>
+        </tr>
+        <tr>
+          <td><code>clamd connection timed out after Nms</code></td>
+          <td>all clamd-mode functions</td>
+          <td>Increase <code>timeout</code>, or check container CPU/memory.</td>
+        </tr>
+        <tr>
+          <td><code>Install AWS SDK: npm install @aws-sdk/client-s3</code></td>
+          <td><code>scanS3()</code></td>
+          <td>Run <code>npm install @aws-sdk/client-s3</code>.</td>
         </tr>
       </table>
     </div>
 
-    <!-- ── typescript ── -->
+    <!-- ── TypeScript ── -->
     <div class="section" id="typescript">
       <h2>TypeScript</h2>
       <p>
-        pompelmi does not ship TypeScript type declarations.
-        If you are using TypeScript, add a local declaration file to your project:
+        TypeScript declarations are bundled with pompelmi v1.10.0. No <code>@types/pompelmi</code>
+        package is required. Import as normal:
       </p>
 
-      <span class="platform-label">pompelmi.d.ts</span>
-<pre>declare module 'pompelmi' {
-  /** Opaque Symbol returned by scan(). Compare with Verdict constants. */
-  type ScanVerdict = typeof Verdict[keyof typeof Verdict];
+<pre>import { scan, scanBuffer, scanStream, scanDirectory,
+         middleware, scanS3, createPool, watch,
+         Verdict } from 'pompelmi';
+import type { ScanOptions } from 'pompelmi';</pre>
 
-  interface ScanOptions {
-    host?:    string;
-    port?:    number;
-    timeout?: number;
+      <h3>Full types/index.d.ts structure</h3>
+<pre>export declare const Verdict: Readonly&lt;{
+  Clean:     unique symbol;
+  Malicious: unique symbol;
+  ScanError: unique symbol;
+}&gt;;
+
+export type ScanVerdict = typeof Verdict[keyof typeof Verdict];
+
+export interface ScanOptions {
+  socket?:      string;
+  host?:        string;
+  port?:        number;
+  timeout?:     number;
+  retries?:     number;
+  retryDelay?:  number;
+}
+
+export interface MiddlewareOptions extends ScanOptions {
+  uploadField?: string;
+}
+
+export interface PoolOptions extends ScanOptions {
+  size?: number;
+}
+
+export interface ScanDirectoryResult {
+  clean:     string[];
+  malicious: string[];
+  errors:    string[];
+}
+
+export interface ClamdPool {
+  scan(filePath: string): Promise&lt;ScanVerdict&gt;;
+  scanBuffer(buffer: Buffer): Promise&lt;ScanVerdict&gt;;
+  scanStream(stream: NodeJS.ReadableStream): Promise&lt;ScanVerdict&gt;;
+  destroy(): Promise&lt;void&gt;;
+}
+
+export function scan(filePath: string, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+export function scanBuffer(buffer: Buffer, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+export function scanStream(stream: NodeJS.ReadableStream, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
+export function scanDirectory(dirPath: string, options?: ScanOptions): Promise&lt;ScanDirectoryResult&gt;;
+export function middleware(options?: MiddlewareOptions): (req: any, res: any, next: any) =&gt; void;
+export function scanS3(
+  params: { bucket: string; key: string; region?: string; credentials?: object },
+  options?: ScanOptions
+): Promise&lt;ScanVerdict&gt;;
+export function createPool(options?: PoolOptions): ClamdPool;
+export function watch(
+  dirPath: string,
+  options: ScanOptions,
+  callbacks: {
+    onClean: (filePath: string) =&gt; void;
+    onMalicious: (filePath: string) =&gt; void;
+    onError: (err: Error, filePath?: string) =&gt; void;
   }
-
-  const Verdict: Readonly&lt;{
-    Clean:     unique symbol;
-    Malicious: unique symbol;
-    ScanError: unique symbol;
-  }&gt;;
-
-  function scan(filePath: string, options?: ScanOptions): Promise&lt;ScanVerdict&gt;;
-
-  export { scan, Verdict };
-}</pre>
-
-      <p>
-        Place this file anywhere TypeScript can find it (e.g. <code>src/types/pompelmi.d.ts</code>)
-        and ensure your <code>tsconfig.json</code> includes it.
-      </p>
-      <p>Usage in TypeScript:</p>
-<pre>import { scan, Verdict } from 'pompelmi';
-
-const result = await scan('/path/to/file.pdf');
-if (result === Verdict.Malicious) { /* ... */ }
-
-// Narrowing helper (optional):
-function verdictLabel(v: typeof Verdict[keyof typeof Verdict]): string {
-  return v.description ?? String(v);
-}</pre>
+): import('fs').FSWatcher;</pre>
 
       <div class="note">
-        If you would like official <code>@types/pompelmi</code> declarations,
-        open an issue on <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>.
+        Types are now bundled &mdash; no need to install a separate <code>@types</code>
+        package or maintain a local <code>.d.ts</code> file. If you see TypeScript
+        errors after upgrading, ensure your <code>tsconfig.json</code> has
+        <code>"moduleResolution": "bundler"</code> or <code>"node16"</code>.
       </div>
     </div>
 
@@ -743,7 +872,7 @@ function verdictLabel(v: typeof Verdict[keyof typeof Verdict]): string {
 </div>
 
 <div id="footer">
-  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

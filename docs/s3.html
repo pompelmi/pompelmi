@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/s3.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Integration — pompelmi</title>
+<meta name="description" content="Scan AWS S3 objects directly with pompelmi. Stream GetObjectCommand output to clamd with no disk I/O. Includes IAM setup, Lambda trigger example, and pre-upload pattern.">
+<meta property="og:title" content="S3 Integration — pompelmi">
+<meta property="og:description" content="Scan AWS S3 objects directly with pompelmi. Stream GetObjectCommand output to clamd with no disk I/O. Includes IAM setup, Lambda trigger example, and pre-upload pattern.">
+<meta property="og:url" content="https://pompelmi.app/s3.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="S3 Integration — pompelmi">
+<meta name="twitter:description" content="Scan AWS S3 objects directly with pompelmi. Stream GetObjectCommand output to clamd with no disk I/O. Includes IAM setup, Lambda trigger example, and pre-upload pattern.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "S3 Integration — pompelmi",
+  "url": "https://pompelmi.app/s3.html",
+  "description": "Scan AWS S3 objects directly with pompelmi. Stream GetObjectCommand output to clamd with no disk I/O. Includes IAM setup, Lambda trigger example, and pre-upload pattern.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/s3.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="docker.html">Docker</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="blog.html">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">S3 Integration</span>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#basic-usage">Basic usage</a></li>
+      <li><a href="#iam">IAM permissions</a></li>
+      <li><a href="#credentials">Credentials</a></li>
+      <li><a href="#lambda">Lambda example</a></li>
+      <li><a href="#pre-upload">Pre-upload pattern</a></li>
+      <li><a href="#retry">Retry</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="requirements">
+      <h2>Requirements</h2>
+      <p>
+        <code>scanS3()</code> requires <code>@aws-sdk/client-s3</code>. pompelmi does not
+        bundle the SDK &mdash; it is an optional peer dependency, so you only pay for it
+        when you actually use the S3 integration.
+      </p>
+
+<pre>npm install @aws-sdk/client-s3</pre>
+
+      <p>
+        If the SDK is not installed when <code>scanS3()</code> is called, pompelmi
+        throws immediately with the message:
+      </p>
+<pre>Install AWS SDK: npm install @aws-sdk/client-s3</pre>
+
+      <p>
+        You also need a running clamd instance reachable from your application.
+        See <a href="docker.html">Docker &amp; Remote Scanning</a> for setup instructions.
+      </p>
+    </div>
+
+    <div class="section" id="basic-usage">
+      <h2>Basic usage</h2>
+      <p>
+        <code>scanS3()</code> downloads the S3 object as a stream and pipes it directly
+        to <code>scanStream()</code>. No disk I/O occurs in clamd mode.
+        All <code>ScanOptions</code> (<code>socket</code>, <code>host</code>,
+        <code>port</code>, <code>timeout</code>, <code>retries</code>,
+        <code>retryDelay</code>) pass through to the underlying <code>scanStream()</code>
+        call.
+      </p>
+
+<pre>const { scanS3, Verdict } = require('pompelmi');
+
+const result = await scanS3(
+  { bucket: 'my-uploads', key: 'incoming/report.pdf', region: 'us-east-1' },
+  { host: '127.0.0.1', port: 3310 }
+);
+
+switch (result) {
+  case Verdict.Clean:
+    console.log('File is safe');
+    break;
+  case Verdict.Malicious:
+    console.error('Malware detected!');
+    // quarantine or delete the object
+    break;
+  case Verdict.ScanError:
+    console.error('Scan inconclusive — treat as untrusted');
+    break;
+}</pre>
+    </div>
+
+    <div class="section" id="iam">
+      <h2>IAM permissions</h2>
+      <p>
+        The IAM principal running your application (Lambda execution role, EC2 instance
+        profile, ECS task role, etc.) needs <code>s3:GetObject</code> on the objects
+        you intend to scan. A minimal policy looks like this:
+      </p>
+
+<pre>{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "PompelmiScanRead",
+      "Effect": "Allow",
+      "Action": "s3:GetObject",
+      "Resource": "arn:aws:s3:::my-uploads/*"
+    }
+  ]
+}</pre>
+
+      <p>
+        If your Lambda also needs to delete infected objects (see the
+        <a href="#lambda">Lambda example</a> below), add <code>s3:DeleteObject</code>
+        to the same statement.
+      </p>
+    </div>
+
+    <div class="section" id="credentials">
+      <h2>Passing credentials explicitly</h2>
+      <p>
+        When running without an ambient IAM role (e.g. local development), pass
+        credentials directly in the <code>params</code> object.
+      </p>
+
+<pre>const { scanS3, Verdict } = require('pompelmi');
+
+const result = await scanS3(
+  {
+    bucket: 'my-uploads',
+    key: 'test/sample.docx',
+    region: 'eu-west-1',
+    credentials: {
+      accessKeyId:     process.env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+  },
+  { host: '127.0.0.1', port: 3310 }
+);</pre>
+
+      <div class="note">
+        When <code>credentials</code> is omitted, pompelmi uses the AWS SDK default
+        credential chain: environment variables (<code>AWS_ACCESS_KEY_ID</code> /
+        <code>AWS_SECRET_ACCESS_KEY</code>), shared credentials file
+        (<code>~/.aws/credentials</code>), EC2/ECS/Lambda instance metadata, and so on.
+        On AWS infrastructure you typically do not need to pass credentials at all.
+      </div>
+    </div>
+
+    <div class="section" id="lambda">
+      <h2>Lambda example</h2>
+      <p>
+        The following Lambda function is triggered by an S3 <code>ObjectCreated</code>
+        event. It scans each new object and deletes it if malware is detected.
+      </p>
+
+<pre>const { scanS3, Verdict } = require('pompelmi');
+const { S3Client, DeleteObjectCommand } = require('@aws-sdk/client-s3');
+
+const s3 = new S3Client({});
+
+exports.handler = async (event) =&gt; {
+  const results = [];
+
+  for (const record of event.Records) {
+    const bucket = record.s3.bucket.name;
+    const key    = decodeURIComponent(record.s3.object.key.replace(/\+/g, ' '));
+
+    const verdict = await scanS3(
+      { bucket, key },
+      {
+        host:    process.env.CLAMAV_HOST,
+        port:    Number(process.env.CLAMAV_PORT) || 3310,
+        timeout: 30_000,
+      }
+    );
+
+    if (verdict === Verdict.Malicious) {
+      console.error(`INFECTED: s3://${bucket}/${key}`);
+      await s3.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+      results.push({ key, status: 'deleted' });
+    } else {
+      results.push({ key, status: verdict.description });
+    }
+  }
+
+  return { statusCode: 200, body: JSON.stringify(results) };
+};</pre>
+
+      <div class="note">
+        clamd must be reachable from the Lambda function. The recommended architecture
+        is a clamd container running as an ECS sidecar or ECS Fargate task on the same
+        VPC as the Lambda, with a security group rule allowing port 3310 inbound from
+        the Lambda's security group.
+      </div>
+    </div>
+
+    <div class="section" id="pre-upload">
+      <h2>Scan before upload (pre-upload pattern)</h2>
+      <p>
+        Scan a local file before uploading it to S3. Only upload if the file is clean.
+        This prevents infected files from ever landing in the bucket.
+      </p>
+
+<pre>const { scan, Verdict } = require('pompelmi');
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+const fs = require('fs');
+
+const s3 = new S3Client({ region: 'us-east-1' });
+
+async function safeUpload(localPath, bucket, key) {
+  // Scan locally first
+  const verdict = await scan(localPath, {
+    host: process.env.CLAMAV_HOST,
+    port: Number(process.env.CLAMAV_PORT) || 3310,
+  });
+
+  if (verdict !== Verdict.Clean) {
+    throw new Error(`Upload rejected: scan result = ${verdict.description}`);
+  }
+
+  // Only reached when clean
+  await s3.send(new PutObjectCommand({
+    Bucket: bucket,
+    Key:    key,
+    Body:   fs.createReadStream(localPath),
+  }));
+
+  console.log(`Uploaded clean file to s3://${bucket}/${key}`);
+}
+
+await safeUpload('/tmp/user-upload.zip', 'my-uploads', 'processed/user-upload.zip');</pre>
+    </div>
+
+    <div class="section" id="retry">
+      <h2>Retry on transient errors</h2>
+      <p>
+        Use <code>retries</code> and <code>retryDelay</code> to handle transient
+        connection errors without extra wrapper code. Useful in Lambda where the
+        clamd container may occasionally restart.
+      </p>
+
+<pre>const result = await scanS3(
+  { bucket: 'my-uploads', key: 'incoming/archive.zip', region: 'us-east-1' },
+  {
+    host:        process.env.CLAMAV_HOST,
+    port:        3310,
+    retries:     3,
+    retryDelay:  500,   // ms between attempts
+    timeout:     20_000,
+  }
+);</pre>
+
+      <div class="note">
+        Retries apply to connection errors (<code>ECONNREFUSED</code>, timeout, etc.),
+        not to positive malware detections. A <code>Verdict.Malicious</code> result is
+        never retried.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

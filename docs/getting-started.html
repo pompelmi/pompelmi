@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/getting-started.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Getting Started — pompelmi</title>
+<meta name="description" content="Install pompelmi, start clamd with Docker, and scan your first file in under 5 minutes. Supports TCP, UNIX socket, and local clamscan modes.">
+<meta property="og:title" content="Getting Started — pompelmi">
+<meta property="og:description" content="Install pompelmi, start clamd with Docker, and scan your first file in under 5 minutes. Supports TCP, UNIX socket, and local clamscan modes.">
+<meta property="og:url" content="https://pompelmi.app/getting-started.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Getting Started — pompelmi">
+<meta name="twitter:description" content="Install pompelmi, start clamd with Docker, and scan your first file in under 5 minutes. Supports TCP, UNIX socket, and local clamscan modes.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Getting Started — pompelmi",
+  "url": "https://pompelmi.app/getting-started.html",
+  "description": "Install pompelmi, start clamd with Docker, and scan your first file in under 5 minutes. Supports TCP, UNIX socket, and local clamscan modes.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/getting-started.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html" class="active">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="docker.html">Docker</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="blog.html">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Getting Started</span>
+      <li><a href="#prerequisites">Prerequisites</a></li>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#quickstart">Quickstart</a></li>
+      <li><a href="#verdicts">Verdicts</a></li>
+      <li><a href="#express-example">Express example</a></li>
+      <li><a href="#next-steps">Next steps</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="prerequisites">
+      <h2>Prerequisites</h2>
+      <p>
+        pompelmi supports three scanning modes. Choose the one that fits your deployment:
+      </p>
+
+      <table>
+        <tr>
+          <th>Mode</th>
+          <th>How it works</th>
+          <th>When to use</th>
+        </tr>
+        <tr>
+          <td><strong>TCP</strong></td>
+          <td>Connects to a running clamd instance over <code>host:port</code>.</td>
+          <td>Docker sidecar, remote ClamAV, production environments.</td>
+        </tr>
+        <tr>
+          <td><strong>UNIX socket</strong></td>
+          <td>Connects to clamd via a local <code>.sock</code> file. Lower latency than TCP.</td>
+          <td>clamd running as a system daemon on the same machine.</td>
+        </tr>
+        <tr>
+          <td><strong>Local clamscan</strong></td>
+          <td>Spawns a <code>clamscan</code> child process. No daemon needed.</td>
+          <td>Development machines, CI pipelines, simple setups.</td>
+        </tr>
+      </table>
+
+      <p>
+        For local mode, install ClamAV on your machine (<code>brew install clamav</code> on
+        macOS, <code>apt-get install clamav</code> on Debian/Ubuntu, or the
+        <a href="https://www.clamav.net/downloads" rel="noopener" target="_blank">ClamAV installer</a>
+        on Windows).
+      </p>
+
+      <p>
+        For TCP or UNIX socket mode, the fastest way to get a clamd instance running is
+        the official Docker image:
+      </p>
+<pre>docker run -d --name clamav -p 3310:3310 clamav/clamav:stable</pre>
+
+      <div class="note">
+        First boot downloads ~300&nbsp;MB of virus definitions. Wait for
+        <code>docker inspect --format='{{.State.Health.Status}}' clamav</code>
+        to return <code>healthy</code> before scanning. See
+        <a href="docker.html#firstboot">Docker &rarr; First boot</a> for details.
+      </div>
+    </div>
+
+    <div class="section" id="installation">
+      <h2>Installation</h2>
+      <p>Install the pompelmi package from npm:</p>
+
+      <span class="platform-label">npm</span>
+<pre>npm install pompelmi</pre>
+
+      <span class="platform-label">yarn</span>
+<pre>yarn add pompelmi</pre>
+
+      <span class="platform-label">pnpm</span>
+<pre>pnpm add pompelmi</pre>
+
+      <p>
+        pompelmi has zero runtime dependencies. The package ships CommonJS and ESM
+        entry points and bundled TypeScript declarations.
+      </p>
+    </div>
+
+    <div class="section" id="quickstart">
+      <h2>Quickstart</h2>
+
+      <h3>Scan a file via TCP (clamd in Docker)</h3>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const result = await scan('/path/to/upload.pdf', {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+if (result === Verdict.Clean) {
+  console.log('File is clean');
+} else if (result === Verdict.Malicious) {
+  console.log('Malware detected!');
+} else {
+  console.log('Scan error — treat as untrusted');
+}</pre>
+
+      <h3>Scan a file via UNIX socket</h3>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const result = await scan('/path/to/upload.pdf', {
+  socket: '/run/clamav/clamd.sock',
+});
+
+console.log(result.description); // 'Clean' | 'Malicious' | 'ScanError'</pre>
+
+      <h3>Scan an in-memory Buffer (multer memoryStorage)</h3>
+<pre>const { scanBuffer, Verdict } = require('pompelmi');
+
+// req.file.buffer from multer memoryStorage
+const result = await scanBuffer(req.file.buffer, {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+if (result === Verdict.Malicious) {
+  return res.status(400).json({ error: 'Malware detected' });
+}</pre>
+
+      <h3>Scan a stream (S3 / HTTP)</h3>
+<pre>const { scanStream, Verdict } = require('pompelmi');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+
+const s3 = new S3Client({ region: 'us-east-1' });
+const { Body } = await s3.send(new GetObjectCommand({
+  Bucket: 'my-uploads',
+  Key: 'incoming/report.pdf',
+}));
+
+const result = await scanStream(Body, {
+  host: '127.0.0.1',
+  port: 3310,
+});
+
+if (result === Verdict.Malicious) {
+  // delete the object or quarantine
+}</pre>
+    </div>
+
+    <div class="section" id="verdicts">
+      <h2>Verdicts</h2>
+      <p>
+        Every scan function returns a Promise that resolves to one of three Symbol constants.
+        Always compare with <code>===</code> — never against raw strings.
+      </p>
+
+      <table>
+        <tr>
+          <th>Constant</th>
+          <th><code>.description</code></th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td class="result-clean"><code>Verdict.Clean</code></td>
+          <td><code>'Clean'</code></td>
+          <td>No threats detected. The file is safe to use.</td>
+        </tr>
+        <tr>
+          <td class="result-malicious"><code>Verdict.Malicious</code></td>
+          <td><code>'Malicious'</code></td>
+          <td>A virus or malware signature was matched. Reject the file.</td>
+        </tr>
+        <tr>
+          <td class="result-scanerror"><code>Verdict.ScanError</code></td>
+          <td><code>'ScanError'</code></td>
+          <td>The scan failed. The file's safety is unknown — treat as untrusted.</td>
+        </tr>
+      </table>
+
+      <p>
+        Use <code>result.description</code> for logging and serialisation —
+        it returns a plain string such as <code>'Clean'</code> or <code>'Malicious'</code>.
+      </p>
+<pre>const { scan, Verdict } = require('pompelmi');
+const result = await scan('/tmp/upload.zip', { host: '127.0.0.1', port: 3310 });
+console.log(result.description);                    // 'Clean'
+console.log(result === Verdict.Clean);              // true
+console.log(result === Verdict.Malicious);          // false</pre>
+    </div>
+
+    <div class="section" id="express-example">
+      <h2>Express file upload example</h2>
+      <p>
+        The following is a complete Express + multer example that scans every uploaded
+        file and returns a 400 if malware is detected.
+      </p>
+
+<pre>const express  = require('express');
+const multer   = require('multer');
+const { scanBuffer, Verdict } = require('pompelmi');
+
+const app    = express();
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/upload', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  let result;
+  try {
+    result = await scanBuffer(req.file.buffer, {
+      host: process.env.CLAMAV_HOST || '127.0.0.1',
+      port: Number(process.env.CLAMAV_PORT) || 3310,
+    });
+  } catch (err) {
+    console.error('Scan error:', err.message);
+    return res.status(500).json({ error: 'Scan failed' });
+  }
+
+  if (result === Verdict.Malicious) {
+    return res.status(400).json({ error: 'Malware detected — upload rejected' });
+  }
+
+  if (result === Verdict.ScanError) {
+    return res.status(500).json({ error: 'Scan inconclusive — upload rejected' });
+  }
+
+  // Verdict.Clean — proceed with saving the file
+  res.json({ ok: true, filename: req.file.originalname });
+});
+
+app.listen(3000, () =&gt; console.log('Server on http://localhost:3000'));</pre>
+
+      <div class="note">
+        Set <code>CLAMAV_HOST</code> and <code>CLAMAV_PORT</code> environment variables
+        in your deployment. In a Docker Compose setup, use the service name as the host
+        (e.g. <code>clamav</code>). See <a href="docker.html#appintegration">Docker &rarr; App integration</a>.
+      </div>
+    </div>
+
+    <div class="section" id="next-steps">
+      <h2>Next steps</h2>
+      <ul>
+        <li>
+          <a href="api.html">API Reference</a> &mdash; full documentation for
+          <code>scan()</code>, <code>scanBuffer()</code>, <code>scanStream()</code>,
+          <code>scanDirectory()</code>, <code>middleware()</code>, <code>scanS3()</code>,
+          <code>createPool()</code>, <code>watch()</code>, and all ScanOptions.
+        </li>
+        <li>
+          <a href="docker.html">Docker &amp; Remote Scanning</a> &mdash; docker-compose.yml,
+          UNIX socket mounts, healthcheck, and troubleshooting.
+        </li>
+        <li>
+          <a href="github-action.html">GitHub Action</a> &mdash; scan your repository
+          on every push or pull request with zero setup.
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

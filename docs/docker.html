@@ -4,16 +4,16 @@
 <link rel="canonical" href="https://pompelmi.app/docker.html" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Docker — pompelmi</title>
-<meta name="description" content="Run ClamAV in Docker with pompelmi. Includes docker-compose.yml, clamd TCP setup, healthcheck config, and Node.js integration. Open source on GitHub.">
-<meta property="og:title" content="Docker — pompelmi">
-<meta property="og:description" content="Run pompelmi with ClamAV inside Docker. Covers official images, Dockerfile setup, clamd TCP socket configuration, and production container patterns.">
+<title>Docker &amp; Remote Scanning — pompelmi</title>
+<meta name="description" content="Connect pompelmi to clamd via TCP or UNIX socket. Includes docker-compose.yml, UNIX socket mount, scanBuffer/scanStream no-disk-IO patterns, healthcheck, and troubleshooting.">
+<meta property="og:title" content="Docker &amp; Remote Scanning — pompelmi">
+<meta property="og:description" content="Connect pompelmi to clamd via TCP or UNIX socket. Includes docker-compose.yml, UNIX socket mount, scanBuffer/scanStream no-disk-IO patterns, healthcheck, and troubleshooting.">
 <meta property="og:url" content="https://pompelmi.app/docker.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pompelmi.app/grapefruit.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Docker — pompelmi">
-<meta name="twitter:description" content="Run pompelmi with ClamAV inside Docker. Covers official images, Dockerfile setup, clamd TCP socket configuration, and production container patterns.">
+<meta name="twitter:title" content="Docker &amp; Remote Scanning — pompelmi">
+<meta name="twitter:description" content="Connect pompelmi to clamd via TCP or UNIX socket. Includes docker-compose.yml, UNIX socket mount, scanBuffer/scanStream no-disk-IO patterns, healthcheck, and troubleshooting.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -21,9 +21,9 @@
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Docker — pompelmi",
+  "headline": "Docker & Remote Scanning — pompelmi",
   "url": "https://pompelmi.app/docker.html",
-  "description": "Run ClamAV in Docker with pompelmi. Includes docker-compose.yml, clamd TCP setup, healthcheck config, and Node.js integration. Open source on GitHub.",
+  "description": "Connect pompelmi to clamd via TCP or UNIX socket. Includes docker-compose.yml, UNIX socket mount, scanBuffer/scanStream no-disk-IO patterns, healthcheck, and troubleshooting.",
   "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
   "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
   "mainEntityOfPage": "https://pompelmi.app/docker.html"
@@ -61,39 +61,45 @@
   <div id="sidebar">
     <ul>
       <span class="sidebar-label">Docker</span>
-      <li><a href="#why">Why Docker?</a></li>
-      <li><a href="#compose">docker-compose.yml</a></li>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#tcp-sidecar">TCP: Docker sidecar</a></li>
       <li><a href="#firstboot">First boot</a></li>
-      <li><a href="#usage">Usage</a></li>
+      <li><a href="#unix-daemon">UNIX socket: daemon</a></li>
+      <li><a href="#unix-docker">UNIX socket: Docker mount</a></li>
       <li><a href="#appintegration">App integration</a></li>
+      <li><a href="#no-disk-io">scanBuffer / scanStream</a></li>
+      <li><a href="#timeout">Timeout</a></li>
+      <li><a href="#retry">Retry &amp; healthcheck</a></li>
       <li><a href="#troubleshooting">Troubleshooting</a></li>
     </ul>
   </div>
 
   <div id="content">
 
-    <div class="section" id="why">
-      <h2>Why use Docker?</h2>
+    <div class="section" id="overview">
+      <h2>Overview</h2>
       <p>
-        The default pompelmi path spawns a local <code>clamscan</code> binary. That works
-        great, but it means ClamAV must be installed on every machine that runs your code.
-        If you prefer to keep your application container lean, or if you are running in an
-        environment where installing system packages is not practical, running ClamAV in its
-        own container is the cleaner option.
+        pompelmi can connect to clamd in two ways: via TCP (<code>host:port</code>) or via
+        a UNIX domain socket (<code>socket</code> path). Both use the ClamAV
+        <strong>INSTREAM protocol</strong>: data is sent in 64&nbsp;KB chunks, each
+        prefixed with a 4-byte big-endian length. The stream is terminated by a
+        four-zero-byte sequence (<code>\x00\x00\x00\x00</code>).
       </p>
       <p>
-        The trade-off is a TCP hop instead of a process fork. In practice, on a local or
-        private network, the latency difference is negligible compared to the scan time itself.
+        UNIX sockets have lower latency than TCP because there is no loopback networking
+        overhead. TCP is more flexible for multi-container and remote setups. Both modes
+        produce identical <code>Verdict</code> results.
       </p>
     </div>
 
-    <div class="section" id="compose">
-      <h2>docker-compose.yml</h2>
+    <div class="section" id="tcp-sidecar">
+      <h2>TCP: Docker sidecar</h2>
       <p>
-        Drop this into your project. It starts a clamd instance on port 3310 and persists
-        virus definitions across restarts using a named volume.
+        The simplest production setup is running clamd as a Docker sidecar on the same
+        host as your application.
       </p>
 
+      <span class="platform-label">docker-compose.yml</span>
 <pre>services:
   clamav:
     image: clamav/clamav:stable
@@ -105,89 +111,7 @@
       test: ["CMD", "clamdcheck.sh"]
       interval: 60s
       retries: 3
-      start_period: 120s            # see First boot below
-
-volumes:
-  clamav_db:</pre>
-
-      <span class="platform-label">Start the container</span>
-<pre>docker compose up -d</pre>
-
-      <span class="platform-label">Check it is healthy</span>
-<pre>docker compose ps
-# clamav   running (healthy)</pre>
-    </div>
-
-    <div class="section" id="firstboot">
-      <h2>First boot &mdash; expect 1&ndash;2 minutes</h2>
-      <p>
-        The very first time the container starts, ClamAV downloads its virus definition
-        database (~300&nbsp;MB). This takes <strong>1&ndash;2 minutes</strong> depending
-        on your connection speed. clamd will not accept scan requests until the download
-        is complete.
-      </p>
-      <p>
-        The <code>start_period: 120s</code> in the healthcheck gives it that runway.
-        During this window the container reports <code>starting</code>, not
-        <code>healthy</code>. That is expected &mdash; do not restart it.
-      </p>
-
-      <div class="note">
-        On every subsequent start the definitions load straight from the
-        <code>clamav_db</code> volume, so startup is fast. Only the very first
-        cold start (or after a volume wipe) triggers the long download.
-      </div>
-
-      <div class="warn">
-        Do not send scan requests while the container is still in <code>starting</code>
-        state. clamd will refuse the connection and pompelmi will reject with
-        <code>ECONNREFUSED</code>. Use the healthcheck or a retry mechanism in your
-        application startup path.
-      </div>
-    </div>
-
-    <div class="section" id="usage">
-      <h2>Using it with pompelmi</h2>
-      <p>
-        Once the container is healthy, point pompelmi at it by passing <code>host</code>
-        and <code>port</code>. No other changes to your code are needed.
-      </p>
-
-<pre>const pompelmi = require('pompelmi');
-
-const result = await pompelmi.scan('/path/to/upload.zip', {
-  host: '127.0.0.1',
-  port: 3310,
-});
-
-// Verdict.Clean | Verdict.Malicious | Verdict.ScanError — exactly the same as the CLI path</pre>
-
-      <p>
-        See <a href="api.html#scan-options">API &rarr; options object</a> for the full
-        list of options including <code>timeout</code>.
-      </p>
-    </div>
-
-    <div class="section" id="appintegration">
-      <h2>App integration</h2>
-      <p>
-        If your application runs in the same Compose file, use <code>depends_on</code>
-        with a health condition so your app waits for clamd to be ready before it starts
-        accepting traffic.
-      </p>
-
-<pre>services:
-  clamav:
-    image: clamav/clamav:stable
-    ports:
-      - "3310:3310"
-    volumes:
-      - clamav_db:/var/lib/clamav
-    healthcheck:
-      test: ["CMD", "clamdcheck.sh"]
-      interval: 60s
-      retries: 3
-      start_period: 120s
+      start_period: 120s            # first-boot download runway
 
   app:
     build: .
@@ -201,11 +125,250 @@ const result = await pompelmi.scan('/path/to/upload.zip', {
 volumes:
   clamav_db:</pre>
 
-      <div class="tip">
-        Inside a Compose network, use the service name as the hostname. In the example
-        above, <code>host: 'clamav'</code> (not <code>'127.0.0.1'</code>) is the correct
-        value for <code>CLAMAV_HOST</code>.
+      <span class="platform-label">Application code</span>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const result = await scan('/path/to/upload.zip', {
+  host: process.env.CLAMAV_HOST || '127.0.0.1',
+  port: Number(process.env.CLAMAV_PORT) || 3310,
+});
+
+if (result === Verdict.Malicious) { /* reject */ }</pre>
+
+      <p>For quick local development without Compose:</p>
+<pre>docker run -d --name clamav -p 3310:3310 clamav/clamav:stable</pre>
+    </div>
+
+    <div class="section" id="firstboot">
+      <h2>First boot &mdash; expect 1&ndash;2 minutes</h2>
+      <p>
+        The very first time the ClamAV container starts, <code>freshclam</code> downloads
+        the virus definition database (~300&nbsp;MB). clamd will not accept scan requests
+        until the download is complete.
+      </p>
+      <p>
+        The <code>start_period: 120s</code> in the healthcheck gives it that runway.
+        During this window the container reports <code>starting</code>, not
+        <code>healthy</code>.
+      </p>
+
+      <div class="warn">
+        Do not restart the container while it is still in <code>starting</code> state &mdash;
+        that will cancel the download and force it to restart from scratch.
+        If clamd refuses connections during this window, pompelmi will throw
+        <code>ECONNREFUSED</code>. Use the healthcheck or a retry loop in your
+        application startup path.
       </div>
+
+      <div class="note">
+        On every subsequent start the definitions load from the <code>clamav_db</code>
+        named volume, so startup is fast (a few seconds). Only the very first cold start,
+        or a start after wiping the volume, triggers the long download.
+      </div>
+    </div>
+
+    <div class="section" id="unix-daemon">
+      <h2>UNIX socket: local clamd daemon</h2>
+      <p>
+        If you run clamd as a system daemon (rather than in Docker), it exposes a UNIX
+        socket at <code>/run/clamav/clamd.sock</code> by default.
+      </p>
+
+      <span class="platform-label">Install on Debian/Ubuntu</span>
+<pre>sudo apt-get install -y clamav clamav-daemon
+sudo freshclam          # download definitions
+sudo systemctl enable --now clamav-daemon</pre>
+
+      <span class="platform-label">Application code</span>
+<pre>const { scan, Verdict } = require('pompelmi');
+
+const result = await scan('/path/to/upload.pdf', {
+  socket: '/run/clamav/clamd.sock',
+});
+
+if (result === Verdict.Clean) {
+  // safe to proceed
+}</pre>
+
+      <div class="note">
+        The socket path can vary by distribution. Check <code>clamd.conf</code>
+        (usually <code>/etc/clamav/clamd.conf</code>) for the <code>LocalSocket</code>
+        directive to confirm the path on your system.
+      </div>
+    </div>
+
+    <div class="section" id="unix-docker">
+      <h2>UNIX socket: Docker with socket mount</h2>
+      <p>
+        You can share a UNIX socket between the ClamAV container and your app container
+        using a named volume that holds only the socket file.
+      </p>
+
+      <span class="platform-label">docker-compose.yml</span>
+<pre>services:
+  clamav:
+    image: clamav/clamav:stable
+    volumes:
+      - clamav_db:/var/lib/clamav
+      - clamav_socket:/run/clamav     # share socket directory
+    healthcheck:
+      test: ["CMD", "clamdcheck.sh"]
+      interval: 60s
+      retries: 3
+      start_period: 120s
+
+  app:
+    build: .
+    depends_on:
+      clamav:
+        condition: service_healthy
+    volumes:
+      - clamav_socket:/run/clamav:ro  # mount read-only in app
+    environment:
+      CLAMAV_SOCKET: /run/clamav/clamd.sock
+
+volumes:
+  clamav_db:
+  clamav_socket:</pre>
+
+      <span class="platform-label">Application code</span>
+<pre>const { scanBuffer, Verdict } = require('pompelmi');
+
+const result = await scanBuffer(req.file.buffer, {
+  socket: process.env.CLAMAV_SOCKET || '/run/clamav/clamd.sock',
+});</pre>
+    </div>
+
+    <div class="section" id="appintegration">
+      <h2>App integration</h2>
+      <p>
+        Always use <code>depends_on</code> with <code>condition: service_healthy</code>
+        so your application container waits for clamd to be fully ready before it starts
+        accepting traffic.
+      </p>
+
+<pre>  app:
+    build: .
+    depends_on:
+      clamav:
+        condition: service_healthy</pre>
+
+      <div class="tip">
+        Inside a Compose network, use the service name as the hostname. In the examples
+        above, use <code>host: 'clamav'</code> (not <code>'127.0.0.1'</code>) as the
+        value of <code>CLAMAV_HOST</code>. Docker's embedded DNS resolves service names
+        automatically within the same Compose project.
+      </div>
+    </div>
+
+    <div class="section" id="no-disk-io">
+      <h2>scanBuffer and scanStream &mdash; no disk I/O</h2>
+      <p>
+        In TCP or UNIX socket mode, both <code>scanBuffer()</code> and
+        <code>scanStream()</code> pipe data directly to clamd without writing anything
+        to disk. This makes them ideal for serverless and memory-only upload pipelines.
+      </p>
+
+      <span class="platform-label">scanBuffer — zero disk I/O in clamd mode</span>
+<pre>const { scanBuffer, Verdict } = require('pompelmi');
+
+// req.file.buffer from multer memoryStorage — never written to disk
+const result = await scanBuffer(req.file.buffer, {
+  host: 'clamav',
+  port: 3310,
+});
+
+if (result !== Verdict.Clean) {
+  return res.status(400).json({ error: 'Upload rejected' });
+}</pre>
+
+      <span class="platform-label">scanStream — pipe S3 body directly to clamd</span>
+<pre>const { scanStream, Verdict } = require('pompelmi');
+const { S3Client, GetObjectCommand } = require('@aws-sdk/client-s3');
+
+const { Body } = await s3.send(new GetObjectCommand({
+  Bucket: 'my-uploads',
+  Key: event.key,
+}));
+
+// Body is a Readable — piped straight to clamd, no temp file
+const result = await scanStream(Body, {
+  socket: '/run/clamav/clamd.sock',
+  timeout: 30000,
+});</pre>
+
+      <div class="note">
+        In <strong>local clamscan</strong> mode (no <code>host</code>, <code>port</code>,
+        or <code>socket</code> option), <code>scanBuffer</code> and <code>scanStream</code>
+        write a temporary file to <code>os.tmpdir()</code> and delete it in a
+        <code>finally</code> block. Switch to clamd mode to avoid the disk write.
+      </div>
+    </div>
+
+    <div class="section" id="timeout">
+      <h2>Timeout</h2>
+      <p>
+        The <code>timeout</code> option (default <code>15000</code>&nbsp;ms) controls how
+        long pompelmi waits for socket activity before giving up. Increase it for large
+        files or when clamd is under heavy load.
+      </p>
+
+<pre>const result = await scan('/uploads/large-archive.zip', {
+  host: '127.0.0.1',
+  port: 3310,
+  timeout: 60_000,   // 60 seconds for large files
+});</pre>
+
+      <p>
+        When the timeout is exceeded, pompelmi throws an error with the message:
+        <code>clamd connection timed out after &lt;N&gt;ms</code>.
+      </p>
+
+      <div class="note">
+        The <code>timeout</code> option applies to <strong>socket idle time</strong>, not
+        total scan time. Clamd streams the response incrementally; as long as data keeps
+        flowing, the timer resets. Very large files should still complete even with a
+        moderate timeout.
+      </div>
+    </div>
+
+    <div class="section" id="retry">
+      <h2>Retry &amp; healthcheck</h2>
+      <p>
+        New in v1.10.0: use <code>retries</code> and <code>retryDelay</code> to
+        automatically retry on connection errors without extra wrapper code.
+      </p>
+
+<pre>const result = await scan('/path/to/upload.pdf', {
+  host: '127.0.0.1',
+  port: 3310,
+  retries:    3,
+  retryDelay: 2000,   // wait 2s between attempts
+});</pre>
+
+      <p>
+        For application startup, use a manual retry loop until clamd is healthy before
+        accepting traffic:
+      </p>
+
+<pre>const { scan, Verdict } = require('pompelmi');
+
+async function waitForClamd(host, port, maxAttempts = 10) {
+  for (let i = 0; i &lt; maxAttempts; i++) {
+    try {
+      // EICAR test string as a buffer — always returns Malicious when clamd is live
+      await scan('/dev/null', { host, port, timeout: 3000 });
+      console.log('clamd is ready');
+      return;
+    } catch {
+      console.log(`clamd not ready, attempt ${i + 1}/${maxAttempts}...`);
+      await new Promise(r =&gt; setTimeout(r, 3000));
+    }
+  }
+  throw new Error('clamd did not become ready in time');
+}
+
+await waitForClamd(process.env.CLAMAV_HOST, 3310);</pre>
     </div>
 
     <div class="section" id="troubleshooting">
@@ -229,12 +392,17 @@ volumes:
         <tr>
           <td><code>clamd connection timed out</code></td>
           <td>The file is very large, or the container is under heavy load.</td>
-          <td>Increase <code>timeout</code> in <code>options</code>, or check container CPU/memory.</td>
+          <td>Increase <code>timeout</code> in options, or check container CPU/memory limits.</td>
         </tr>
         <tr>
-          <td>Always returns <code>"ScanError"</code></td>
+          <td>Always returns <code>ScanError</code></td>
           <td>Definitions are present but corrupted, or clamd restarted mid-stream.</td>
           <td>Run <code>docker compose restart clamav</code> and wait for <code>healthy</code>.</td>
+        </tr>
+        <tr>
+          <td><code>ENOENT</code> on socket path</td>
+          <td>The UNIX socket file does not exist yet (clamd still starting).</td>
+          <td>Wait for the container healthcheck, or retry with backoff until the socket file appears.</td>
         </tr>
       </table>
     </div>
@@ -243,7 +411,7 @@ volumes:
 </div>
 
 <div id="footer">
-  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;

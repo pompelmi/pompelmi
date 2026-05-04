@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/github-action.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Action — pompelmi</title>
+<meta name="description" content="Scan your repository for viruses on every push or PR with the pompelmi GitHub Action. ClamAV bundled in Docker — no secrets, no external services required.">
+<meta property="og:title" content="GitHub Action — pompelmi">
+<meta property="og:description" content="Scan your repository for viruses on every push or PR with the pompelmi GitHub Action. ClamAV bundled in Docker — no secrets, no external services required.">
+<meta property="og:url" content="https://pompelmi.app/github-action.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GitHub Action — pompelmi">
+<meta name="twitter:description" content="Scan your repository for viruses on every push or PR with the pompelmi GitHub Action. ClamAV bundled in Docker — no secrets, no external services required.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "GitHub Action — pompelmi",
+  "url": "https://pompelmi.app/github-action.html",
+  "description": "Scan your repository for viruses on every push or PR with the pompelmi GitHub Action. ClamAV bundled in Docker — no secrets, no external services required.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/github-action.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="docker.html">Docker</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="blog.html">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">GitHub Action</span>
+      <li><a href="#what-it-does">What it does</a></li>
+      <li><a href="#minimal-usage">Minimal usage</a></li>
+      <li><a href="#inputs">Inputs</a></li>
+      <li><a href="#outputs">Outputs</a></li>
+      <li><a href="#pr-example">PR scan example</a></li>
+      <li><a href="#subdir-example">Scan subdirectory</a></li>
+      <li><a href="#job-summary">Job summary</a></li>
+      <li><a href="#layer-caching">Layer caching</a></li>
+      <li><a href="#badge">Badge</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="what-it-does">
+      <h2>What the Action does</h2>
+      <p>
+        The pompelmi GitHub Action scans your repository (or a subdirectory) for
+        viruses and malware using ClamAV. Everything runs inside Docker on the GitHub
+        Actions runner &mdash; no external services, no API keys, no data egress.
+      </p>
+      <p>The Action performs these steps in order:</p>
+      <ol>
+        <li>Builds a Docker image based on <code>node:20-slim</code> with ClamAV installed.</li>
+        <li>Runs <code>freshclam</code> to download the latest virus definitions.</li>
+        <li>Resolves the scan path (relative to the workspace root).</li>
+        <li>Calls <code>scanDirectory(path)</code> for directories, or <code>scan(path)</code> for single files.</li>
+        <li>Writes the <code>status</code> and <code>infected-files</code> step outputs.</li>
+        <li>Posts a formatted table to <code>$GITHUB_STEP_SUMMARY</code> so results appear in the workflow summary UI.</li>
+        <li>Exits with code 1 if any infected file is found and <code>fail-on-virus</code> is <code>'true'</code>.</li>
+      </ol>
+    </div>
+
+    <div class="section" id="minimal-usage">
+      <h2>Minimal usage</h2>
+      <p>
+        Add these two steps to any workflow. The Action scans the entire workspace and
+        fails the job if any malware is detected.
+      </p>
+
+<pre>steps:
+  - uses: actions/checkout@v4
+  - uses: pompelmi/pompelmi@v1.8.0</pre>
+
+      <div class="note">
+        No configuration needed for a basic repository scan. <code>path</code> defaults
+        to <code>.</code> (the workspace root), and <code>fail-on-virus</code> defaults
+        to <code>'true'</code>.
+      </div>
+    </div>
+
+    <div class="section" id="inputs">
+      <h2>Inputs</h2>
+      <table>
+        <tr>
+          <th>Input</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>path</code></td>
+          <td><code>'.'</code></td>
+          <td>Path to scan, relative to the workspace root. Can be a file or directory.</td>
+        </tr>
+        <tr>
+          <td><code>fail-on-virus</code></td>
+          <td><code>'true'</code></td>
+          <td>Set to <code>'false'</code> to let the job continue even when a virus is found. Use the <code>status</code> output to handle the result yourself.</td>
+        </tr>
+        <tr>
+          <td><code>comment-on-pr</code></td>
+          <td><code>'true'</code></td>
+          <td>Post a comment to the pull request with scan results. Requires <code>GITHUB_TOKEN</code> to be available. Only runs on <code>pull_request</code> events.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="outputs">
+      <h2>Outputs</h2>
+      <table>
+        <tr>
+          <th>Output</th>
+          <th>Values</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>status</code></td>
+          <td><code>'clean'</code> | <code>'infected'</code></td>
+          <td>Overall scan result.</td>
+        </tr>
+        <tr>
+          <td><code>infected-files</code></td>
+          <td>newline-separated paths, or empty string</td>
+          <td>Paths of all infected files found during the scan. Empty when status is <code>'clean'</code>.</td>
+        </tr>
+      </table>
+
+      <p>
+        Reference outputs in subsequent steps as
+        <code>${{ steps.&lt;id&gt;.outputs.status }}</code> and
+        <code>${{ steps.&lt;id&gt;.outputs.infected-files }}</code>.
+      </p>
+    </div>
+
+    <div class="section" id="pr-example">
+      <h2>Example: scan on every PR</h2>
+      <p>
+        This workflow scans the repository on every push to <code>main</code> and on
+        every pull request. The <code>id</code> field lets you reference the outputs.
+      </p>
+
+<pre>name: Virus scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # needed for comment-on-pr
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scan repository
+        id: pompelmi
+        uses: pompelmi/pompelmi@v1.8.0
+        with:
+          comment-on-pr: 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Print result
+        run: echo "Scan status: ${{ steps.pompelmi.outputs.status }}"</pre>
+
+      <div class="note">
+        A working example workflow is available in the repository at
+        <code>.github/workflows/action-example.yml</code>.
+      </div>
+    </div>
+
+    <div class="section" id="subdir-example">
+      <h2>Example: scan only uploads/</h2>
+      <p>
+        Set <code>fail-on-virus: 'false'</code> to inspect results yourself and take
+        custom action (e.g. notify a Slack channel or delete only the infected files).
+      </p>
+
+<pre>steps:
+  - uses: actions/checkout@v4
+
+  - name: Scan uploads directory
+    id: scan
+    uses: pompelmi/pompelmi@v1.8.0
+    with:
+      path: 'uploads'
+      fail-on-virus: 'false'
+
+  - name: Handle infected files
+    if: steps.scan.outputs.status == 'infected'
+    run: |
+      echo "Infected files found:"
+      echo "${{ steps.scan.outputs.infected-files }}"
+      # add your remediation logic here
+      exit 1</pre>
+    </div>
+
+    <div class="section" id="job-summary">
+      <h2>Job summary</h2>
+      <p>
+        After each scan the Action writes a formatted table to
+        <code>$GITHUB_STEP_SUMMARY</code>. The table appears on the workflow run page
+        in the GitHub UI under the <strong>Summary</strong> tab.
+      </p>
+
+<pre>## pompelmi scan results
+
+| File | Status |
+|------|--------|
+| src/index.js | Clean |
+| uploads/report.pdf | Clean |
+
+**Overall: clean** &mdash; 2 files scanned, 0 infected.</pre>
+
+      <p>
+        When infected files are detected, the table highlights them and the overall
+        status row reads <strong>infected</strong> in red.
+      </p>
+    </div>
+
+    <div class="section" id="layer-caching">
+      <h2>Layer caching</h2>
+      <p>
+        The Action builds a Docker image on every run. GitHub Actions caches Docker
+        layers automatically on <code>ubuntu-latest</code> runners.
+      </p>
+
+      <table>
+        <tr>
+          <th>Run type</th>
+          <th>Typical duration</th>
+          <th>Notes</th>
+        </tr>
+        <tr>
+          <td>First run (cold cache)</td>
+          <td>30&ndash;90 seconds</td>
+          <td>Builds the image and downloads ClamAV definitions from scratch.</td>
+        </tr>
+        <tr>
+          <td>Subsequent runs (warm cache)</td>
+          <td>10&ndash;30 seconds</td>
+          <td>Docker layers are restored from cache. Only changed layers are rebuilt.</td>
+        </tr>
+      </table>
+
+      <div class="note">
+        <code>freshclam</code> always runs to fetch the latest definitions, even on
+        warm cache runs. This adds a few seconds but ensures your signatures are current.
+      </div>
+
+      <p>
+        On <strong>self-hosted runners</strong>, the Docker layer cache persists on disk
+        between runs (no eviction), so warm runs are consistently fast. On
+        <strong>GitHub-hosted runners</strong>, the cache is shared across the repository
+        and may be evicted after 7 days of inactivity.
+      </p>
+    </div>
+
+    <div class="section" id="badge">
+      <h2>Add this badge</h2>
+      <p>
+        Show users that your repository is scanned for malware by adding the
+        pompelmi badge to your README:
+      </p>
+
+<pre>[![Scanned by pompelmi](https://img.shields.io/badge/scanned%20by-pompelmi-orange)](https://github.com/pompelmi/pompelmi)</pre>
+
+      <p>
+        Renders as:
+        <img src="https://img.shields.io/badge/scanned%20by-pompelmi-orange" alt="Scanned by pompelmi" style="vertical-align:middle; margin-left:4px;">
+      </p>
+
+      <div class="note">
+        See <code>BADGE.md</code> in the repository root for additional badge variants
+        (SVG data URI, dark/light theme versions) with full copy-paste snippets.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.10.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>
