@@ -10,20 +10,45 @@ const pkg = require('../package.json');
 // ── Logo ──────────────────────────────────────────────────────────────────────
 
 async function printLogo() {
+  const titleLines = [
+    '\x1b[33mpompelmi\x1b[0m — ClamAV Antivirus Scanning for Node.js',
+    '\x1b[90mv' + pkg.version + ' • Zero dependencies • TCP • UNIX socket\x1b[0m',
+  ];
+
   try {
     const terminalImage = (await import('terminal-image')).default;
     const imgPath = path.join(__dirname, '../src/grapefruit.png');
     if (fs.existsSync(imgPath)) {
       const image = await terminalImage.file(imgPath, {
-        width: '20%',
-        height: '20%',
+        width: 24,
         preserveAspectRatio: true,
       });
-      process.stdout.write(image);
+
+      const rawLines = image.split('\n');
+      // Drop trailing blank line that terminal-image appends
+      const imgLines = rawLines[rawLines.length - 1].trim() === ''
+        ? rawLines.slice(0, -1)
+        : rawLines;
+      const pad = '  ';
+      const gap = '   ';
+      const maxRows = Math.max(imgLines.length, titleLines.length);
+
+      process.stdout.write('\n');
+      for (let i = 0; i < maxRows; i++) {
+        const imgPart  = imgLines[i]  ?? ' '.repeat(24);
+        const textPart = i === 0 ? titleLines[0]
+                       : i === 1 ? titleLines[1]
+                       : '';
+        process.stdout.write(pad + imgPart + gap + textPart + '\n');
+      }
+      process.stdout.write('\n');
+      return;
     }
   } catch (_) {}
-  console.log('\x1b[33m  pompelmi\x1b[0m — ClamAV Antivirus Scanning for Node.js');
-  console.log('\x1b[90m  v' + pkg.version + ' • Zero dependencies • TCP • UNIX socket • GitHub Action\x1b[0m\n');
+
+  // Fallback: text-only header
+  console.log('\n\x1b[33m  pompelmi\x1b[0m — ClamAV Antivirus Scanning for Node.js');
+  console.log('\x1b[90m  v' + pkg.version + ' • Zero dependencies • TCP • UNIX socket\x1b[0m\n');
 }
 
 // ── Argument parsing ──────────────────────────────────────────────────────────
