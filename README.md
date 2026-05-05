@@ -86,10 +86,48 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
-- Works with Express, Fastify, and any other Node.js HTTP framework
+- Works with Express, Fastify, NestJS, and any other Node.js HTTP framework
 - Zero runtime dependencies — ships nothing but source code
 - Tested with EICAR standard antivirus test files
 - CommonJS module; TypeScript type declarations available inline
+
+---
+
+## Framework Integrations
+
+Official integration packages for popular frameworks:
+
+| Package | Framework | Install |
+|---------|-----------|---------|
+| [@pompelmi/nestjs](./packages/nestjs/) | NestJS | `npm i @pompelmi/nestjs` |
+| [@pompelmi/fastify](./packages/fastify/) | Fastify | `npm i @pompelmi/fastify` |
+
+### NestJS
+
+```ts
+import { PompelmiModule, PompelmiService } from '@pompelmi/nestjs';
+
+// app.module.ts
+@Module({ imports: [PompelmiModule.forRoot({ host: 'localhost', port: 3310 })] })
+export class AppModule {}
+
+// upload.service.ts
+constructor(private readonly pompelmi: PompelmiService) {}
+const result = await this.pompelmi.scanBuffer(file.buffer);
+```
+
+### Fastify
+
+```js
+const pompelmi = require('@pompelmi/fastify');
+await fastify.register(pompelmi, { host: 'localhost', port: 3310 });
+
+// Scan manually
+const result = await fastify.pompelmi.scanBuffer(buffer);
+
+// Or use the preHandler hook
+fastify.post('/upload', { preHandler: fastify.pompelmi.preHandler({ field: 'file' }) }, handler);
+```
 
 ---
 

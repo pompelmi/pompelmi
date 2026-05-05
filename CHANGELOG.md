@@ -5,6 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.13.0] - 2026-05-05
+
+### Added
+- **@pompelmi/nestjs** — NestJS module with `PompelmiModule.forRoot()` / `.forRootAsync()`, injectable `PompelmiService` (scan / scanBuffer / isMalware), `PompelmiGuard` (blocks malicious uploads via `CanActivate`), and `PompelmiInterceptor` (throws `BadRequestException` on infection). Full TypeScript declarations included.
+- **@pompelmi/fastify** — Fastify plugin that decorates the instance with `fastify.pompelmi` (scan / scanBuffer / scanStream / preHandler). The `preHandler()` helper returns a route-level hook that scans uploaded files before the route handler runs. Supports custom `onMalicious` callbacks and full TypeScript declarations.
+- **Framework Integrations** section in `README.md` — table of official packages with usage snippets for NestJS and Fastify.
+
+---
+
 ## [1.12.0] - 2026-05-05
 
 ### Added
