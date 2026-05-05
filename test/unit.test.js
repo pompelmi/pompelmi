@@ -1491,3 +1491,192 @@ describe('ScanEmitter', () => {
         assert.equal(typeof createScanner, 'function');
     });
 });
+
+// ─── CLI — argument parsing ───────────────────────────────────────────────────
+
+describe('CLI argument parsing', () => {
+    function parseArgs(argv) {
+        const args = argv.slice(2);
+        const opts = {
+            command: null, target: null,
+            host: undefined, port: undefined, socket: undefined,
+            timeout: 15000, retries: 0,
+            json: false, quiet: false, delete: false, recursive: true,
+        };
+        let i = 0;
+        while (i < args.length) {
+            const a = args[i];
+            if (a === 'scan' || a === 'watch' || a === 'version' || a === 'help') opts.command = a;
+            else if (a === '--json') opts.json = true;
+            else if (a === '--quiet' || a === '-q') opts.quiet = true;
+            else if (a === '--recursive' || a === '-r') opts.recursive = true;
+            else if (a === '--delete') opts.delete = true;
+            else if (a === '--host') opts.host = args[++i];
+            else if (a === '--port') opts.port = parseInt(args[++i], 10);
+            else if (a === '--socket') opts.socket = args[++i];
+            else if (a === '--timeout') opts.timeout = parseInt(args[++i], 10);
+            else if (a === '--retries') opts.retries = parseInt(args[++i], 10);
+            else if (!a.startsWith('-') && opts.command && !opts.target) opts.target = a;
+            i++;
+        }
+        return opts;
+    }
+
+    it('parses scan command with target', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './uploads']);
+        assert.equal(opts.command, 'scan');
+        assert.equal(opts.target, './uploads');
+        assert.equal(opts.json, false);
+    });
+
+    it('parses --json flag', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './uploads', '--json']);
+        assert.equal(opts.json, true);
+    });
+
+    it('parses --quiet / -q flag', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './file', '-q']);
+        assert.equal(opts.quiet, true);
+    });
+
+    it('parses --host and --port', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './f', '--host', '10.0.0.1', '--port', '3310']);
+        assert.equal(opts.host, '10.0.0.1');
+        assert.equal(opts.port, 3310);
+    });
+
+    it('parses --socket', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './f', '--socket', '/run/clamav/clamd.sock']);
+        assert.equal(opts.socket, '/run/clamav/clamd.sock');
+    });
+
+    it('parses --timeout and --retries', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './f', '--timeout', '5000', '--retries', '3']);
+        assert.equal(opts.timeout, 5000);
+        assert.equal(opts.retries, 3);
+    });
+
+    it('parses watch command', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'watch', '/uploads']);
+        assert.equal(opts.command, 'watch');
+        assert.equal(opts.target, '/uploads');
+    });
+
+    it('parses version command', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'version']);
+        assert.equal(opts.command, 'version');
+    });
+
+    it('parses help command', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'help']);
+        assert.equal(opts.command, 'help');
+    });
+
+    it('defaults: timeout=15000 retries=0 json=false quiet=false', () => {
+        const opts = parseArgs(['node', 'pompelmi', 'scan', './f']);
+        assert.equal(opts.timeout, 15000);
+        assert.equal(opts.retries, 0);
+        assert.equal(opts.json, false);
+        assert.equal(opts.quiet, false);
+    });
+});
+
+// ─── CLI — progress bar ───────────────────────────────────────────────────────
+
+describe('CLI progress bar', () => {
+    function progressBar(done, total, infected) {
+        const pct = total === 0 ? 0 : Math.floor((done / total) * 100);
+        const filled = Math.floor(pct / 5);
+        const empty = 20 - filled;
+        const bar = '█'.repeat(filled) + '░'.repeat(empty);
+        return `  Scanning... [${bar}] ${pct}% • ${done}/${total} files • ${infected} infected`;
+    }
+
+    it('shows 0% when done=0', () => {
+        const s = progressBar(0, 10, 0);
+        assert.ok(s.includes('0%'));
+        assert.ok(s.includes('0/10'));
+        assert.ok(s.includes('░'.repeat(20)));
+    });
+
+    it('shows 50% when done=5/10', () => {
+        const s = progressBar(5, 10, 0);
+        assert.ok(s.includes('50%'));
+        assert.ok(s.includes('5/10'));
+    });
+
+    it('shows 100% when done=total', () => {
+        const s = progressBar(10, 10, 0);
+        assert.ok(s.includes('100%'));
+        assert.ok(s.includes('█'.repeat(20)));
+    });
+
+    it('shows infected count', () => {
+        const s = progressBar(3, 10, 2);
+        assert.ok(s.includes('2 infected'));
+    });
+
+    it('handles total=0 without division error', () => {
+        const s = progressBar(0, 0, 0);
+        assert.ok(s.includes('0%'));
+    });
+});
+
+// ─── CLI — JSON output format ─────────────────────────────────────────────────
+
+describe('CLI JSON output format', () => {
+    function buildJsonOutput(results, elapsed) {
+        return {
+            scanned: results.length,
+            infected: results.filter(r => r.verdict === 'infected').length,
+            errors: results.filter(r => r.verdict === 'error').length,
+            time: Math.round(elapsed / 100) / 10,
+            results: results.map(r => {
+                const o = { file: r.file, verdict: r.verdict };
+                if (r.viruses) o.viruses = r.viruses;
+                return o;
+            }),
+        };
+    }
+
+    it('counts scanned/infected/errors correctly', () => {
+        const results = [
+            { file: '/a.pdf',    verdict: 'clean' },
+            { file: '/b.exe',    verdict: 'infected', viruses: ['Win.Malware.Agent'] },
+            { file: '/c.zip',    verdict: 'error' },
+        ];
+        const out = buildJsonOutput(results, 1200);
+        assert.equal(out.scanned,  3);
+        assert.equal(out.infected, 1);
+        assert.equal(out.errors,   1);
+    });
+
+    it('rounds time to 1 decimal', () => {
+        const out = buildJsonOutput([], 1234);
+        assert.equal(out.time, 1.2);
+    });
+
+    it('includes viruses array for infected files', () => {
+        const results = [
+            { file: '/bad.exe', verdict: 'infected', viruses: ['Win.Malware.Agent-1234'] },
+        ];
+        const out = buildJsonOutput(results, 500);
+        assert.deepEqual(out.results[0].viruses, ['Win.Malware.Agent-1234']);
+    });
+
+    it('omits viruses key for clean files', () => {
+        const results = [{ file: '/good.pdf', verdict: 'clean' }];
+        const out = buildJsonOutput(results, 100);
+        assert.equal(out.results[0].viruses, undefined);
+    });
+
+    it('produces valid JSON when serialised', () => {
+        const results = [
+            { file: '/a.txt', verdict: 'clean' },
+            { file: '/b.exe', verdict: 'infected', viruses: [] },
+        ];
+        const json = JSON.stringify(buildJsonOutput(results, 800));
+        const parsed = JSON.parse(json);
+        assert.equal(parsed.scanned, 2);
+    });
+});

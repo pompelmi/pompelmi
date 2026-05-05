@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/cli.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CLI Reference — pompelmi</title>
+<meta name="description" content="pompelmi CLI reference: scan files and directories for viruses from any terminal. Supports TCP, UNIX socket, JSON output, progress bar, watch mode, and npx usage.">
+<meta property="og:title" content="CLI Reference — pompelmi">
+<meta property="og:description" content="pompelmi CLI reference: scan files and directories for viruses from any terminal. Supports TCP, UNIX socket, JSON output, progress bar, watch mode, and npx usage.">
+<meta property="og:url" content="https://pompelmi.app/cli.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CLI Reference — pompelmi">
+<meta name="twitter:description" content="pompelmi CLI reference: scan files and directories for viruses from any terminal. Supports TCP, UNIX socket, JSON output, progress bar, watch mode, and npx usage.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "CLI Reference — pompelmi",
+  "url": "https://pompelmi.app/cli.html",
+  "description": "pompelmi CLI reference: scan files and directories for viruses from any terminal. Supports TCP, UNIX socket, JSON output, progress bar, watch mode, and npx usage.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/cli.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="about.html">About</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API</a>
+  <a href="docker.html">Docker</a>
+  <a href="cli.html" class="active">CLI</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="blog.html">Blog</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">CLI Reference</span>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#quickstart">Quick start</a></li>
+      <li><a href="#commands">Commands</a></li>
+      <li><a href="#options">Options</a></li>
+      <li><a href="#output-format">Output format</a></li>
+      <li><a href="#json-output">JSON output</a></li>
+      <li><a href="#exit-codes">Exit codes</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#shell-scripts">Shell scripts</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="installation">
+      <h2>Installation</h2>
+      <p>
+        Install pompelmi globally to get the <code>pompelmi</code> command available anywhere in your terminal:
+      </p>
+
+      <span class="platform-label">npm</span>
+<pre>npm install -g pompelmi</pre>
+
+      <span class="platform-label">yarn</span>
+<pre>yarn global add pompelmi</pre>
+
+      <span class="platform-label">pnpm</span>
+<pre>pnpm add -g pompelmi</pre>
+
+      <p>
+        You can also run it without installing using <code>npx</code> — no global install required:
+      </p>
+<pre>npx pompelmi scan ./uploads/document.pdf</pre>
+
+      <div class="note">
+        The CLI requires ClamAV to be installed on your machine or reachable over TCP.
+        For local scanning, install ClamAV (<code>brew install clamav</code> on macOS,
+        <code>apt-get install clamav</code> on Debian/Ubuntu). For TCP mode, start a
+        clamd instance — the fastest way is <code>docker run -d -p 3310:3310 clamav/clamav:stable</code>.
+      </div>
+    </div>
+
+    <div class="section" id="quickstart">
+      <h2>Quick start</h2>
+
+      <h3>Scan a file</h3>
+<pre>npx pompelmi scan ./uploads/document.pdf</pre>
+
+      <h3>Scan a directory recursively</h3>
+<pre>npx pompelmi scan ./uploads --recursive</pre>
+
+      <h3>Output as JSON for scripting</h3>
+<pre>npx pompelmi scan ./uploads --json</pre>
+    </div>
+
+    <div class="section" id="commands">
+      <h2>Commands reference</h2>
+
+      <table>
+        <tr>
+          <th>Command</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>pompelmi scan &lt;file|dir&gt;</code></td>
+          <td>Scan a file or directory for viruses. Exits with code 1 if a virus is found.</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi watch &lt;dir&gt;</code></td>
+          <td>Watch a directory and auto-scan files as they are created or modified. Runs until interrupted with <code>Ctrl+C</code>.</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi version</code></td>
+          <td>Print the installed version number and exit.</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi help</code></td>
+          <td>Print usage with all commands, options, and examples.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="options">
+      <h2>Options reference</h2>
+
+      <table>
+        <tr>
+          <th>Option</th>
+          <th>Default</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>--recursive</code>, <code>-r</code></td>
+          <td>true</td>
+          <td>Scan directory recursively (all subdirectories).</td>
+        </tr>
+        <tr>
+          <td><code>--host &lt;host&gt;</code></td>
+          <td><em>none</em></td>
+          <td>Connect to clamd at this hostname or IP. If omitted, uses local <code>clamscan</code>.</td>
+        </tr>
+        <tr>
+          <td><code>--port &lt;port&gt;</code></td>
+          <td>3310</td>
+          <td>TCP port for clamd connection.</td>
+        </tr>
+        <tr>
+          <td><code>--socket &lt;path&gt;</code></td>
+          <td><em>none</em></td>
+          <td>UNIX socket path (e.g. <code>/run/clamav/clamd.sock</code>). Takes priority over <code>--host</code>/<code>--port</code>.</td>
+        </tr>
+        <tr>
+          <td><code>--timeout &lt;ms&gt;</code></td>
+          <td>15000</td>
+          <td>Connection timeout in milliseconds.</td>
+        </tr>
+        <tr>
+          <td><code>--retries &lt;n&gt;</code></td>
+          <td>0</td>
+          <td>Number of auto-retries on connection failure before giving up.</td>
+        </tr>
+        <tr>
+          <td><code>--json</code></td>
+          <td>false</td>
+          <td>Output results as a JSON object. Suppresses logo, colors, and progress bar. Ideal for scripting.</td>
+        </tr>
+        <tr>
+          <td><code>--quiet</code>, <code>-q</code></td>
+          <td>false</td>
+          <td>Only print infected files and the summary. Clean results are hidden.</td>
+        </tr>
+        <tr>
+          <td><code>--delete</code></td>
+          <td>false</td>
+          <td>After scanning, prompt for confirmation and delete infected files.</td>
+        </tr>
+      </table>
+
+      <div class="note">
+        <strong>Local vs TCP mode:</strong> If neither <code>--host</code>, <code>--port</code>, nor <code>--socket</code>
+        is provided, pompelmi spawns a local <code>clamscan</code> child process. This requires ClamAV to be installed
+        on the machine. For Docker or CI environments, use <code>--host</code> / <code>--port</code> to point at a
+        running clamd container.
+      </div>
+    </div>
+
+    <div class="section" id="output-format">
+      <h2>Default output format</h2>
+      <p>
+        By default, results are printed using box-drawing characters with ANSI colours.
+        Each file shows one of three states: <strong style="color:#3a6e1a">CLEAN</strong>,
+        <strong style="color:#a03c1c">INFECTED</strong>, or <strong style="color:#7a6000">ERROR</strong>.
+        For infected files the matched virus name is shown below:
+      </p>
+<pre>┌──────────────────────────────────────────────┐
+│  🍊 pompelmi scan results                    │
+├──────────────────────────────────────────────┤
+│  ✅ CLEAN     /uploads/document.pdf          │
+│  🚨 INFECTED  /uploads/malware.exe           │
+│     └─ Win.Malware.Agent-1234                │
+│  ⚠️  ERROR    /uploads/encrypted.zip         │
+├──────────────────────────────────────────────┤
+│  Scanned: 3  • Infected: 1 • Time: 1.2s     │
+└──────────────────────────────────────────────┘</pre>
+
+      <p>
+        For directory scans, a live progress bar is displayed on a single line (overwritten with
+        <code>\r</code>) while scanning is in progress:
+      </p>
+<pre>  Scanning... [████████░░░░░░░░░░░░] 40% • 20/50 files • 1 infected</pre>
+    </div>
+
+    <div class="section" id="json-output">
+      <h2>JSON output (<code>--json</code>)</h2>
+      <p>
+        When <code>--json</code> is passed, pompelmi prints a single JSON object to stdout and
+        exits. No logo, no colours, no progress bar — ideal for piping into <code>jq</code> or
+        other tools.
+      </p>
+<pre>{
+  "scanned": 3,
+  "infected": 1,
+  "errors": 0,
+  "time": 1.2,
+  "results": [
+    { "file": "/uploads/document.pdf", "verdict": "clean" },
+    { "file": "/uploads/malware.exe",  "verdict": "infected",
+      "viruses": ["Win.Malware.Agent-1234"] },
+    { "file": "/uploads/encrypted.zip", "verdict": "error" }
+  ]
+}</pre>
+
+      <table>
+        <tr>
+          <th>Field</th>
+          <th>Type</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>scanned</code></td>
+          <td>number</td>
+          <td>Total number of files scanned.</td>
+        </tr>
+        <tr>
+          <td><code>infected</code></td>
+          <td>number</td>
+          <td>Number of files with a virus detected.</td>
+        </tr>
+        <tr>
+          <td><code>errors</code></td>
+          <td>number</td>
+          <td>Number of files that could not be scanned.</td>
+        </tr>
+        <tr>
+          <td><code>time</code></td>
+          <td>number</td>
+          <td>Total scan time in seconds (rounded to 1 decimal place).</td>
+        </tr>
+        <tr>
+          <td><code>results[].file</code></td>
+          <td>string</td>
+          <td>Absolute path to the scanned file.</td>
+        </tr>
+        <tr>
+          <td><code>results[].verdict</code></td>
+          <td><code>"clean"</code> | <code>"infected"</code> | <code>"error"</code></td>
+          <td>Scan result for this file.</td>
+        </tr>
+        <tr>
+          <td><code>results[].viruses</code></td>
+          <td>string[] (optional)</td>
+          <td>List of matched virus names. Present only when <code>verdict</code> is <code>"infected"</code>.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="exit-codes">
+      <h2>Exit codes</h2>
+
+      <table>
+        <tr>
+          <th>Code</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td class="code-cell"><strong>0</strong></td>
+          <td class="result-clean">All files are clean. No threats detected.</td>
+        </tr>
+        <tr>
+          <td class="code-cell"><strong>1</strong></td>
+          <td class="result-malicious">At least one virus was found.</td>
+        </tr>
+        <tr>
+          <td class="code-cell"><strong>2</strong></td>
+          <td class="result-scanerror">At least one file could not be scanned (error).</td>
+        </tr>
+        <tr>
+          <td class="code-cell"><strong>3</strong></td>
+          <td class="result-scanerror">clamd was unreachable (connection refused or timeout).</td>
+        </tr>
+      </table>
+
+      <p>
+        Exit codes make it easy to integrate pompelmi into shell scripts and CI pipelines.
+        A non-zero exit causes <code>set -e</code> scripts and most CI systems to fail the step automatically.
+      </p>
+    </div>
+
+    <div class="section" id="examples">
+      <h2>Examples</h2>
+
+      <h3>1. Scan a single file (local clamscan)</h3>
+<pre>pompelmi scan ./uploads/resume.pdf</pre>
+
+      <h3>2. Scan a directory recursively</h3>
+<pre>pompelmi scan ./uploads --recursive</pre>
+
+      <h3>3. Scan via clamd over TCP (Docker sidecar)</h3>
+<pre>pompelmi scan ./uploads \
+  --host 127.0.0.1 \
+  --port 3310 \
+  --recursive</pre>
+
+      <h3>4. Scan via UNIX socket (lower latency)</h3>
+<pre>pompelmi scan ./uploads --socket /run/clamav/clamd.sock</pre>
+
+      <h3>5. JSON output — pipe into jq</h3>
+<pre>pompelmi scan ./uploads --json | jq '.infected'</pre>
+
+      <h3>6. Quiet mode — only show infected files</h3>
+<pre>pompelmi scan ./uploads --quiet</pre>
+
+      <h3>7. Delete infected files interactively</h3>
+<pre>pompelmi scan ./uploads --recursive --delete</pre>
+
+      <h3>8. Watch a directory for incoming uploads</h3>
+<pre>pompelmi watch ./uploads --host 127.0.0.1 --port 3310</pre>
+
+      <div class="note">
+        Use <code>npx pompelmi</code> instead of <code>pompelmi</code> if you have not installed it globally.
+        <code>npx</code> downloads the latest version on the fly — no global install needed.
+      </div>
+    </div>
+
+    <div class="section" id="shell-scripts">
+      <h2>Shell script integration</h2>
+      <p>
+        Because pompelmi uses standard exit codes, it integrates cleanly into any shell script.
+        The following example scans an incoming upload directory, posts a Slack message if a virus
+        is found, and exits non-zero so the calling CI job fails:
+      </p>
+
+<pre>#!/usr/bin/env bash
+set -euo pipefail
+
+UPLOAD_DIR="${1:?Usage: scan-uploads.sh &lt;dir&gt;}"
+CLAMD_HOST="${CLAMAV_HOST:-127.0.0.1}"
+CLAMD_PORT="${CLAMAV_PORT:-3310}"
+
+echo "Scanning $UPLOAD_DIR..."
+
+RESULT=$(pompelmi scan "$UPLOAD_DIR" \
+  --host "$CLAMD_HOST" \
+  --port "$CLAMD_PORT" \
+  --recursive \
+  --json)
+
+INFECTED=$(echo "$RESULT" | jq -r '.infected')
+SCANNED=$(echo  "$RESULT" | jq -r '.scanned')
+
+echo "Scanned: $SCANNED — Infected: $INFECTED"
+
+if [ "$INFECTED" -gt 0 ]; then
+  echo "VIRUS DETECTED — failing build."
+  # Post a Slack message, open a ticket, etc.
+  exit 1
+fi
+
+echo "All files clean."</pre>
+
+      <h3>GitHub Actions example</h3>
+      <p>
+        Scan your repository on every pull request. Uses the pompelmi
+        <a href="github-action.html">GitHub Action</a> under the hood, but you can also call the
+        CLI directly in a <code>run</code> step:
+      </p>
+<pre>- name: Scan uploads with pompelmi
+  run: |
+    npx pompelmi scan ./uploads \
+      --host localhost \
+      --port 3310 \
+      --json \
+      | tee scan-results.json
+    jq -e '.infected == 0' scan-results.json</pre>
+
+      <div class="tip">
+        Combine <code>--json</code> with <code>jq -e</code> to fail the CI step when any virus is
+        found, while still capturing the full results in an artifact.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.12.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

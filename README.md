@@ -21,12 +21,28 @@
 
 ---
 
+## Quick Start
+
+```bash
+# Scan a file
+npx pompelmi scan ./uploads/file.pdf
+
+# Scan a directory
+npx pompelmi scan ./uploads --recursive
+
+# Output as JSON
+npx pompelmi scan ./uploads --json
+```
+
+---
+
 ## Documentation
 
 | Guide | Description |
 |-------|-------------|
 | [Getting Started](./docs/getting-started.md) | Installation, prerequisites, quickstart examples |
 | [API Reference](./docs/api.md) | Full function signatures, options, verdicts, error conditions |
+| [CLI Reference](./docs/cli.html) | Terminal commands, options, examples |
 | [S3 Integration](./docs/s3.md) | Scan S3 objects directly, IAM setup, Lambda pattern |
 | [Docker / Remote Scanning](./docs/docker.md) | TCP sidecar, UNIX socket mount, docker-compose patterns |
 | [GitHub Action](./docs/github-action.md) | CI scanning, inputs/outputs, caching, example workflows |
@@ -56,6 +72,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 
 ## Features
 
+- Standalone CLI — scan files from any terminal with `npx pompelmi scan`
 - Single `scan(filePath, [options])` function — works locally or against a remote clamd instance
 - `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
 - `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.

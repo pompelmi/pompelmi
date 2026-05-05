@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.12.0] - 2026-05-05
+
+### Added
+- **CLI tool** (`bin/pompelmi.js`) — `pompelmi scan`, `pompelmi watch`, `pompelmi version`, and `pompelmi help` commands. Renders grapefruit logo via `terminal-image` at startup.
+- **`pompelmi scan <file|dir>`** — scan a file or directory recursively; supports `--host`, `--port`, `--socket`, `--timeout`, `--retries`, `--quiet`, `--json`, and `--delete` flags.
+- **`pompelmi watch <dir>`** — watch a directory and auto-scan files as they are created or modified; displays a live counter line.
+- **JSON output mode** (`--json`) — outputs a structured JSON object; suppresses logo, colours, and progress bar. Ideal for scripting and CI pipelines.
+- **Progress bar** for directory scans — single-line overwrite with `\r`; shows percentage, file count, and infected count.
+- **Exit codes** — `0` clean, `1` infected, `2` error, `3` clamd unreachable.
+- **`terminal-image`** added as a runtime dependency for logo rendering.
+- **`docs/cli.html`** — full CLI documentation page matching the existing docs design system.
+- **Navbar updated** across all `docs/` HTML pages to include a CLI link.
+- **README Quick Start** section with `npx pompelmi scan` examples.
+- **README Documentation table** — added CLI Reference row.
+- **README Features list** — added Standalone CLI entry.
+
+---
+
 ## [1.11.0] - 2026-05-04
 
 ### Added
