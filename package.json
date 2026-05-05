@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "1.12.0",
+  "version": "1.12.1",
   "description": "ClamAV for humans — scan any file and get back Clean, Malicious, or ScanError. No daemons. No cloud. No native bindings.",
   "license": "ISC",
   "author": "pompelmi contributors",
