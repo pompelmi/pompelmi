@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/dashboard.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML Security Dashboard — pompelmi</title>
+<meta name="description" content="Generate beautiful, self-contained HTML security reports from pompelmi scan results. Use --report in the CLI or generateDashboard() in the API.">
+<meta property="og:title" content="HTML Security Dashboard — pompelmi">
+<meta property="og:description" content="Generate beautiful, self-contained HTML security reports from pompelmi scan results. Use --report in the CLI or generateDashboard() in the API.">
+<meta property="og:url" content="https://pompelmi.app/dashboard.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="HTML Security Dashboard — pompelmi">
+<meta name="twitter:description" content="Generate beautiful, self-contained HTML security reports from pompelmi scan results. Use --report in the CLI or generateDashboard() in the API.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "HTML Security Dashboard — pompelmi",
+  "url": "https://pompelmi.app/dashboard.html",
+  "description": "Generate beautiful, self-contained HTML security reports from pompelmi scan results.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/dashboard.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html" class="active">Dashboard</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Dashboard</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#cli">CLI usage</a></li>
+      <li><a href="#api">API usage</a></li>
+      <li><a href="#options">Options</a></li>
+      <li><a href="#share-card">Share card (SVG)</a></li>
+      <li><a href="#examples">Examples</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>HTML Security Dashboard</h2>
+      <p>
+        The pompelmi dashboard generates a self-contained <code>.html</code> report from any scan
+        result — no external dependencies, no internet connection required. The file embeds all CSS
+        inline so you can share it, attach it to a Jira ticket, or archive it alongside an audit.
+      </p>
+
+      <p>The report includes:</p>
+      <ul style="margin: 10px 0 0 20px; line-height: 2;">
+        <li>Large summary statistics: total scanned, clean, infected, errors, scan time</li>
+        <li>A colour-coded status banner (green for all clean, red for threats found)</li>
+        <li>A table of every scanned file with a verdict badge and virus name</li>
+        <li>An <em>Infected Files</em> section with highlighted virus names</li>
+        <li>Scan metadata: timestamp, connection info, pompelmi version</li>
+        <li>Dark mode via <code>prefers-color-scheme</code></li>
+        <li>Print-friendly CSS — looks great on paper too</li>
+      </ul>
+    </div>
+
+    <div class="section" id="cli">
+      <h2>CLI usage</h2>
+
+      <h3>Generate a report after a scan</h3>
+      <p>Add <code>--report</code> to any <code>pompelmi scan</code> command:</p>
+<pre>npx pompelmi scan ./uploads --report</pre>
+      <p>
+        This saves <code>pompelmi-report.html</code> in the current directory after scanning
+        completes. Use <code>--output</code> to choose a different path:
+      </p>
+<pre>npx pompelmi scan ./uploads --report --output security-report.html</pre>
+
+      <h3>With a running clamd</h3>
+<pre>npx pompelmi scan ./uploads \
+  --host 127.0.0.1 \
+  --port 3310 \
+  --report \
+  --output /tmp/scan-$(date +%Y%m%d).html</pre>
+
+      <div class="note">
+        The <code>--report</code> and <code>--json</code> flags are independent — you can use both
+        at the same time to get machine-readable JSON output on stdout <em>and</em> an HTML file on
+        disk.
+      </div>
+    </div>
+
+    <div class="section" id="api">
+      <h2>API usage</h2>
+      <p>
+        Import <code>generateDashboard</code> directly to build reports programmatically.
+        It accepts the same result shapes as <code>scanDirectory()</code> and the CLI scan loop.
+      </p>
+
+      <h3>From scanDirectory()</h3>
+<pre>const { scanDirectory, generateDashboard } = require('pompelmi');
+
+const results = await scanDirectory('/uploads');
+
+const html = generateDashboard(results, {
+  elapsed: 1234,          // ms — shown as scan time
+  host: 'localhost',
+  port: 3310,
+  outputPath: 'report.html',  // writes to disk AND returns the string
+});
+
+console.log('Report saved — bytes:', html.length);</pre>
+
+      <h3>From a manual scan loop</h3>
+<pre>const { scan, Verdict, generateDashboard } = require('pompelmi');
+const files = ['./a.pdf', './b.exe', './c.txt'];
+const start = Date.now();
+
+const rows = await Promise.all(files.map(async (file) => {
+  const v = await scan(file, { host: 'localhost', port: 3310 });
+  return {
+    file,
+    verdict: v === Verdict.Clean ? 'clean'
+           : v === Verdict.Malicious ? 'infected'
+           : 'error',
+    viruses: [],
+  };
+}));
+
+generateDashboard(rows, {
+  elapsed: Date.now() - start,
+  outputPath: 'report.html',
+});</pre>
+    </div>
+
+    <div class="section" id="options">
+      <h2>generateDashboard(scanResults, options)</h2>
+
+      <h3>Parameters</h3>
+
+      <table>
+        <tr>
+          <th>Parameter</th>
+          <th>Type</th>
+          <th>Required</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td><code>scanResults</code></td>
+          <td><code>ScanRow[]</code> | <code>DirectoryScanResult</code></td>
+          <td>Yes</td>
+          <td>
+            Array of <code>{file, verdict, viruses?}</code> objects from a manual scan, or the object
+            returned by <code>scanDirectory()</code> with <code>{clean[], malicious[], errors[]}</code>.
+          </td>
+        </tr>
+        <tr>
+          <td><code>options.elapsed</code></td>
+          <td>number</td>
+          <td>No</td>
+          <td>Total scan time in milliseconds. Shown in the stats card as "X.XXs".</td>
+        </tr>
+        <tr>
+          <td><code>options.clamdVersion</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>ClamAV version string to display in the metadata section.</td>
+        </tr>
+        <tr>
+          <td><code>options.host</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>clamd host used for the scan — shown in metadata.</td>
+        </tr>
+        <tr>
+          <td><code>options.port</code></td>
+          <td>number</td>
+          <td>No</td>
+          <td>clamd port used for the scan — shown in metadata.</td>
+        </tr>
+        <tr>
+          <td><code>options.socket</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>UNIX socket path used for the scan — shown in metadata.</td>
+        </tr>
+        <tr>
+          <td><code>options.outputPath</code></td>
+          <td>string</td>
+          <td>No</td>
+          <td>
+            If provided, the HTML is written to this path with <code>fs.writeFileSync</code> in addition
+            to being returned. Relative paths are resolved from the current working directory.
+          </td>
+        </tr>
+      </table>
+
+      <h3>Return value</h3>
+      <p>
+        Returns the full HTML string regardless of whether <code>outputPath</code> was set.
+        You can write it wherever you want, embed it in a response, or compare it in tests.
+      </p>
+
+      <h3>TypeScript</h3>
+<pre>import { generateDashboard, DashboardOptions, ScanRow } from 'pompelmi';
+
+const rows: ScanRow[] = [
+  { file: '/a.pdf', verdict: 'clean', viruses: [] },
+  { file: '/b.exe', verdict: 'infected', viruses: ['Win.Malware.X'] },
+];
+
+const html: string = generateDashboard(rows, { outputPath: 'report.html' });</pre>
+    </div>
+
+    <div class="section" id="share-card">
+      <h2>Share card (SVG)</h2>
+      <p>
+        <code>generateShareCard</code> produces a compact SVG card showing the scan summary.
+        It is suitable for embedding in a GitHub README, attaching to a Slack message, or
+        posting on social media.
+      </p>
+
+      <h3>CLI</h3>
+<pre>npx pompelmi scan ./uploads --share-card</pre>
+      <p>Saves <code>pompelmi-scan-card.svg</code> in the current directory. Custom path:</p>
+<pre>npx pompelmi scan ./uploads --share-card --output scan-result.svg</pre>
+
+      <h3>API</h3>
+<pre>const { generateShareCard } = require('pompelmi');
+
+const svg = generateShareCard(results, {
+  outputPath: 'pompelmi-scan-card.svg',
+});
+
+// Embed in README:
+// ![scan result](pompelmi-scan-card.svg)</pre>
+
+      <h3>Output</h3>
+      <p>The SVG card is 560 × 200 px and includes:</p>
+      <ul style="margin: 10px 0 0 20px; line-height: 2;">
+        <li>pompelmi grapefruit logo and branding</li>
+        <li>Headline: <em>"X files scanned — All clean"</em> or <em>"X files scanned — Y infected"</em></li>
+        <li>Stat row: total / clean / infected counts</li>
+        <li>Scan date and pompelmi version in the footer</li>
+        <li>Green theme for clean scans, red theme for infected scans</li>
+      </ul>
+    </div>
+
+    <div class="section" id="examples">
+      <h2>Examples</h2>
+
+      <h3>CI pipeline: save report as an artifact</h3>
+<pre>- name: Scan uploads
+  run: |
+    npx pompelmi scan ./uploads \
+      --host localhost \
+      --port 3310 \
+      --report \
+      --output scan-report.html \
+      --share-card \
+      --output scan-card.svg
+
+- name: Upload scan report
+  uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: pompelmi-security-report
+    path: |
+      scan-report.html
+      scan-card.svg</pre>
+
+      <h3>Express route: return HTML report on demand</h3>
+<pre>const express = require('express');
+const { scanDirectory, generateDashboard } = require('pompelmi');
+
+const app = express();
+
+app.get('/admin/scan-report', async (req, res) => {
+  const results = await scanDirectory('/var/uploads');
+  const html = generateDashboard(results, { host: 'localhost', port: 3310 });
+  res.setHeader('Content-Type', 'text/html');
+  res.send(html);
+});</pre>
+
+      <h3>Embed scan card in README</h3>
+<pre>npx pompelmi scan ./uploads --share-card --output docs/scan-card.svg
+
+# In README.md:
+![Scan result](docs/scan-card.svg)</pre>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.14.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

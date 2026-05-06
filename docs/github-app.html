@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/github-app.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub App — pompelmi</title>
+<meta name="description" content="One-click pompelmi virus scanning for every pull request. Install the pompelmi GitHub App to get automatic check runs and diff annotations on every PR — no workflow file needed.">
+<meta property="og:title" content="GitHub App — pompelmi">
+<meta property="og:description" content="One-click pompelmi virus scanning for every pull request. Install the pompelmi GitHub App to get automatic check runs and diff annotations on every PR — no workflow file needed.">
+<meta property="og:url" content="https://pompelmi.app/github-app.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="GitHub App — pompelmi">
+<meta name="twitter:description" content="One-click pompelmi virus scanning for every pull request. No workflow file needed.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "GitHub App — pompelmi",
+  "url": "https://pompelmi.app/github-app.html",
+  "description": "One-click pompelmi virus scanning for every pull request via GitHub App — no workflow file needed.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/github-app.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html" class="active">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">GitHub App</span>
+      <li><a href="#action-vs-app">Action vs App</a></li>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#permissions">Permissions</a></li>
+      <li><a href="#check-runs">Check runs</a></li>
+      <li><a href="#annotations">Annotations</a></li>
+      <li><a href="#self-hosting">Self-hosting</a></li>
+      <li><a href="#config">Configuration</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="action-vs-app">
+      <h2>GitHub Action vs GitHub App</h2>
+      <p>
+        pompelmi offers two GitHub integrations. Use whichever fits your workflow:
+      </p>
+
+      <table>
+        <tr>
+          <th></th>
+          <th>GitHub Action</th>
+          <th>GitHub App</th>
+        </tr>
+        <tr>
+          <td><strong>Setup</strong></td>
+          <td>Add a workflow file to <code>.github/workflows/</code></td>
+          <td>One-click install — no workflow file needed</td>
+        </tr>
+        <tr>
+          <td><strong>Scope</strong></td>
+          <td>Per-repository</td>
+          <td>Organization-wide (one install covers every repo)</td>
+        </tr>
+        <tr>
+          <td><strong>Check runs</strong></td>
+          <td>Optional (via <code>comment-on-pr</code>)</td>
+          <td>Native — always shows pass/fail on the PR</td>
+        </tr>
+        <tr>
+          <td><strong>Diff annotations</strong></td>
+          <td>Not supported</td>
+          <td>Infected files appear as annotations on the PR diff</td>
+        </tr>
+        <tr>
+          <td><strong>Maintenance</strong></td>
+          <td>You own the workflow YAML</td>
+          <td>Managed by the pompelmi team</td>
+        </tr>
+        <tr>
+          <td><strong>Best for</strong></td>
+          <td>Individual repos, custom pipelines</td>
+          <td>Organizations wanting zero-config scanning on every PR</td>
+        </tr>
+      </table>
+
+      <div class="note">
+        The GitHub Action is available at
+        <a href="github-action.html">pompelmi/pompelmi</a> on the GitHub Marketplace.
+        This page documents the GitHub App — the zero-config alternative for organizations.
+      </div>
+    </div>
+
+    <div class="section" id="installation">
+      <h2>Installing the App</h2>
+      <ol style="margin: 10px 0 0 20px; line-height: 2.2;">
+        <li>Go to the <strong>pompelmi GitHub App</strong> page on the GitHub Marketplace.</li>
+        <li>Click <strong>Install</strong> and choose the organization or specific repositories to protect.</li>
+        <li>Review and accept the requested permissions (listed below).</li>
+        <li>The App begins scanning new and updated pull requests immediately.</li>
+      </ol>
+
+      <p>
+        No workflow file is needed. No secrets to configure. Scanning starts on the next
+        <code>pull_request</code> event in the selected repositories.
+      </p>
+
+      <div class="tip">
+        You can limit the App to specific repositories during installation. Return to the App's
+        settings page on GitHub at any time to add or remove repositories.
+      </div>
+    </div>
+
+    <div class="section" id="permissions">
+      <h2>Required permissions</h2>
+      <p>
+        The App requests the minimum permissions needed to scan PR files and report results.
+        It never reads code outside the pull request diff:
+      </p>
+
+      <table>
+        <tr>
+          <th>Permission</th>
+          <th>Access level</th>
+          <th>Why it is needed</th>
+        </tr>
+        <tr>
+          <td><strong>Contents</strong></td>
+          <td>Read</td>
+          <td>Download the files changed in a pull request for scanning.</td>
+        </tr>
+        <tr>
+          <td><strong>Pull requests</strong></td>
+          <td>Read</td>
+          <td>Discover which files were added or modified in the PR.</td>
+        </tr>
+        <tr>
+          <td><strong>Checks</strong></td>
+          <td>Write</td>
+          <td>Post check run results and diff annotations back to GitHub.</td>
+        </tr>
+      </table>
+
+      <p>
+        The App does not store file contents, does not transmit data outside your network,
+        and does not require any API keys or cloud accounts.
+      </p>
+    </div>
+
+    <div class="section" id="check-runs">
+      <h2>How check runs work</h2>
+      <p>
+        When a pull request is opened, updated, or reopened, the App:
+      </p>
+      <ol style="margin: 10px 0 0 20px; line-height: 2.2;">
+        <li>Creates a check run on the PR with status <strong>In progress</strong>.</li>
+        <li>Fetches the list of changed files from the GitHub API (respects the 50 MB file size limit).</li>
+        <li>Downloads each changed file and streams it to clamd for scanning — no disk I/O.</li>
+        <li>
+          Marks the check run <strong>Completed</strong>:
+          <ul style="margin-top: 6px; margin-left: 20px; line-height: 2;">
+            <li><code>conclusion: success</code> — all files clean (green ✓ on the PR)</li>
+            <li><code>conclusion: failure</code> — one or more infected files (red ✗ on the PR)</li>
+          </ul>
+        </li>
+      </ol>
+
+      <p>
+        The check run result appears in the <em>Checks</em> tab of the pull request alongside
+        other CI results, and in the merge eligibility section at the bottom.
+      </p>
+    </div>
+
+    <div class="section" id="annotations">
+      <h2>Diff annotations</h2>
+      <p>
+        When infected files are found, the App posts <strong>file-level annotations</strong>
+        on the PR diff. Each infected file is annotated with the matched virus name:
+      </p>
+
+<pre>⚠ Win.Malware.Agent-1234
+    detected in uploads/malware.exe</pre>
+
+      <p>
+        Annotations appear inline in the <em>Files changed</em> tab of the PR, making it
+        immediately obvious which uploaded file triggered the alert — without needing to read
+        a separate log.
+      </p>
+    </div>
+
+    <div class="section" id="self-hosting">
+      <h2>Self-hosting the App server</h2>
+      <p>
+        The App backend is an open-source <a href="https://probot.github.io/" rel="noopener" target="_blank">Probot</a>
+        application that you can run on your own infrastructure:
+      </p>
+
+<pre>git clone https://github.com/pompelmi/pompelmi-github-app
+cd pompelmi-github-app
+npm install</pre>
+
+      <p>Set the following environment variables (or create a <code>.env</code> file):</p>
+
+<pre>APP_ID=&lt;your GitHub App ID&gt;
+PRIVATE_KEY=&lt;RSA private key PEM&gt;
+WEBHOOK_SECRET=&lt;webhook secret&gt;
+CLAMD_HOST=localhost
+CLAMD_PORT=3310</pre>
+
+      <p>Start the server:</p>
+<pre>npm start</pre>
+
+      <p>
+        The server listens for <code>pull_request</code> webhook events, scans changed files, and
+        posts check runs and annotations back to GitHub using the GitHub API.
+        Point your GitHub App's webhook URL at this server.
+      </p>
+
+      <div class="note">
+        The App server requires a ClamAV daemon (<code>clamd</code>) reachable over TCP or UNIX
+        socket. For production deployments the recommended setup is a clamd Docker sidecar:
+        <code>docker run -d -p 3310:3310 clamav/clamav:stable</code>
+      </div>
+    </div>
+
+    <div class="section" id="config">
+      <h2>App configuration (<code>.github/app.yml</code>)</h2>
+      <p>
+        The <code>.github/app.yml</code> file in the pompelmi repository describes the App's
+        metadata, permission requirements, and webhook event configuration. It is used when
+        registering or updating the App on GitHub — you do not need to add it to your repositories.
+      </p>
+
+<pre># Triggers on pull_request: opened, synchronize, reopened
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+# Minimum permissions
+default_permissions:
+  contents: read
+  checks: write
+  pull_requests: read</pre>
+
+      <p>
+        See the <a href="https://github.com/pompelmi/pompelmi/blob/main/.github/app.yml"
+        rel="noopener" target="_blank">full app.yml</a> in the repository for the complete
+        reference and implementation notes.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.14.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

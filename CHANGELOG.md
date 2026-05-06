@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.14.0] - 2026-05-06
+
+### Added
+- **HTML security dashboard** — `generateDashboard(scanResults, options)` generates a self-contained HTML report with summary stats, colour-coded status banner, file table with verdict badges, infected files section, scan metadata, dark mode via `prefers-color-scheme`, and print-friendly CSS. No external dependencies.
+- **SVG share card** — `generateShareCard(scanResults, options)` generates a 560 × 200 px SVG card showing the scan summary. Suitable for embedding in READMEs or sharing on social media. Green theme for clean scans, red for infected.
+- **CLI `--report` flag** — `pompelmi scan ./uploads --report` saves `pompelmi-report.html` after scanning. Use `--output <path>` to customise the filename.
+- **CLI `--share-card` flag** — `pompelmi scan ./uploads --share-card` saves `pompelmi-scan-card.svg` after scanning. Use `--output <path>` to customise the filename.
+- **`@pompelmi/nextjs`** — new package providing `withPompelmi(handler, options)` (App Router / Next.js 13+) and `withPompelmiHandler(handler, options)` (Pages Router). Scans the raw request body before the handler runs; returns HTTP 400 on malicious files. Full TypeScript declarations included.
+- **GitHub App configuration** — `.github/app.yml` describes the pompelmi GitHub App that organizations can install for zero-config virus scanning on every pull request. Posts native check runs with pass/fail status and inline diff annotations for infected files.
+- **`docs/dashboard.html`** — new documentation page covering `generateDashboard`, `generateShareCard`, CLI flags, options reference, and usage examples.
+- **`docs/github-app.html`** — new documentation page explaining the GitHub App, the Action vs App comparison table, installation steps, permissions, check run flow, and self-hosting instructions.
+- **Navbar updated** across all `docs/` HTML pages to include Dashboard and GitHub App links.
+- **`docs/cli.html` updated** — added `--report`, `--share-card`, and `--output` to the options table and added dedicated `#report` and `#share-card` sections.
+- **README.md updated** — added HTML dashboard, SVG share card, and GitHub App to the Features list; added GitHub App callout under the GitHub Action section.
+
+### Changed
+- `src/index.js` — exports `generateDashboard` and `generateShareCard` alongside existing API.
+- `types/index.d.ts` — full TypeScript declarations for `generateDashboard`, `DashboardOptions`, `generateShareCard`, `ShareCardOptions`, and `ScanRow`.
+
+---
+
 ## [1.13.0] - 2026-05-05
 
 ### Added

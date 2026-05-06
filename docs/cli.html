@@ -50,8 +50,10 @@
   <a href="api.html">API Reference</a>
   <a href="docker.html">Docker</a>
   <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
   <a href="s3.html">S3 Integration</a>
   <a href="cli.html" class="active">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
   <a href="about.html">About</a>
   <a href="blog.html">Blog</a>
   <a href="contacts.html">Contacts</a>
@@ -72,6 +74,8 @@
       <li><a href="#output-format">Output format</a></li>
       <li><a href="#json-output">JSON output</a></li>
       <li><a href="#exit-codes">Exit codes</a></li>
+      <li><a href="#report">HTML report</a></li>
+      <li><a href="#share-card">Share card</a></li>
       <li><a href="#examples">Examples</a></li>
       <li><a href="#shell-scripts">Shell scripts</a></li>
     </ul>
@@ -200,6 +204,21 @@
           <td><code>--delete</code></td>
           <td>false</td>
           <td>After scanning, prompt for confirmation and delete infected files.</td>
+        </tr>
+        <tr>
+          <td><code>--report</code></td>
+          <td>false</td>
+          <td>Generate a self-contained HTML security dashboard after scanning. See <a href="dashboard.html">Dashboard</a>.</td>
+        </tr>
+        <tr>
+          <td><code>--share-card</code></td>
+          <td>false</td>
+          <td>Generate a shareable SVG scan result card after scanning. See <a href="dashboard.html#share-card">Share card</a>.</td>
+        </tr>
+        <tr>
+          <td><code>--output &lt;file&gt;</code></td>
+          <td><em>see note</em></td>
+          <td>Output path for <code>--report</code> (default: <code>pompelmi-report.html</code>) or <code>--share-card</code> (default: <code>pompelmi-scan-card.svg</code>). File extension determines which output it applies to.</td>
         </tr>
       </table>
 
@@ -333,6 +352,36 @@
       </p>
     </div>
 
+    <div class="section" id="report">
+      <h2>HTML report (<code>--report</code>)</h2>
+      <p>
+        The <code>--report</code> flag generates a self-contained HTML security dashboard after
+        scanning. The file contains no external dependencies and can be opened in any browser,
+        archived, or attached to a ticket.
+      </p>
+<pre>npx pompelmi scan ./uploads --report</pre>
+      <p>Saves <code>pompelmi-report.html</code> in the current directory. Use <code>--output</code> to change the path:</p>
+<pre>npx pompelmi scan ./uploads --report --output /tmp/security-$(date +%Y%m%d).html</pre>
+      <p>
+        The report includes summary stats, a colour-coded status banner, a full file table with
+        verdict badges, an infected files section, and scan metadata. It supports dark mode via
+        <code>prefers-color-scheme</code> and is print-friendly.
+        See the <a href="dashboard.html">Dashboard documentation</a> for the full API reference.
+      </p>
+    </div>
+
+    <div class="section" id="share-card">
+      <h2>Share card (<code>--share-card</code>)</h2>
+      <p>
+        The <code>--share-card</code> flag generates a compact SVG card showing the scan summary.
+        Suitable for embedding in a GitHub README or sharing on social media.
+      </p>
+<pre>npx pompelmi scan ./uploads --share-card</pre>
+      <p>Saves <code>pompelmi-scan-card.svg</code> in the current directory. Custom path:</p>
+<pre>npx pompelmi scan ./uploads --share-card --output docs/scan-card.svg</pre>
+      <p>The card shows: total files scanned, clean count, infected count, date, and pompelmi version.</p>
+    </div>
+
     <div class="section" id="examples">
       <h2>Examples</h2>
 
@@ -408,7 +457,8 @@ echo "All files clean."</pre>
       <h3>GitHub Actions example</h3>
       <p>
         Scan your repository on every pull request. Uses the pompelmi
-        <a href="github-action.html">GitHub Action</a> under the hood, but you can also call the
+        <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a> under the hood, but you can also call the
         CLI directly in a <code>run</code> step:
       </p>
 <pre>- name: Scan uploads with pompelmi

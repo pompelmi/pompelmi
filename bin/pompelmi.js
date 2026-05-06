@@ -67,6 +67,10 @@ function parseArgs(argv) {
     quiet: false,
     delete: false,
     recursive: true,
+    report: false,
+    reportOutput: null,
+    shareCard: false,
+    shareCardOutput: null,
   };
 
   let i = 0;
@@ -92,6 +96,14 @@ function parseArgs(argv) {
       opts.timeout = parseInt(args[++i], 10);
     } else if (a === '--retries') {
       opts.retries = parseInt(args[++i], 10);
+    } else if (a === '--report') {
+      opts.report = true;
+    } else if (a === '--share-card') {
+      opts.shareCard = true;
+    } else if (a === '--output') {
+      const next = args[++i];
+      if (next && next.endsWith('.svg')) opts.shareCardOutput = next;
+      else opts.reportOutput = next;
     } else if (!a.startsWith('-') && opts.command && !opts.target) {
       opts.target = a;
     }
@@ -276,6 +288,26 @@ async function cmdScan(opts) {
 
   printResults(results, elapsed, opts);
 
+  if (opts.report) {
+    const { generateDashboard } = require('../src/Dashboard.js');
+    const outPath = opts.reportOutput || 'pompelmi-report.html';
+    generateDashboard(results, {
+      elapsed,
+      host: opts.host,
+      port: opts.port,
+      socket: opts.socket,
+      outputPath: outPath,
+    });
+    if (!opts.quiet) console.log(`\n  Report saved: ${outPath}`);
+  }
+
+  if (opts.shareCard) {
+    const { generateShareCard } = require('../src/ShareCard.js');
+    const outPath = opts.shareCardOutput || 'pompelmi-scan-card.svg';
+    generateShareCard(results, { outputPath: outPath });
+    if (!opts.quiet) console.log(`  Share card saved: ${outPath}`);
+  }
+
   const hasInfected = results.some(r => r.verdict === 'infected');
   const hasError    = results.some(r => r.verdict === 'error');
   const clamdDown   = results.some(r => r._clamdUnreachable);
@@ -361,6 +393,10 @@ SCAN OPTIONS
   --json             Output results as JSON (no logo, no colors)
   --quiet, -q        Only print infected files and summary
   --delete           Delete infected files after confirmation
+  --report           Generate an HTML security dashboard report
+  --share-card       Generate a shareable SVG scan result card
+  --output <file>    Output path for --report (default: pompelmi-report.html)
+                     or --share-card (default: pompelmi-scan-card.svg)
 
 WATCH OPTIONS
   --host, --port, --socket, --timeout   (same as scan)

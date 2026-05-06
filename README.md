@@ -73,6 +73,9 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 ## Features
 
 - Standalone CLI — scan files from any terminal with `npx pompelmi scan`
+- HTML security dashboard — generate beautiful scan reports with `--report` ([docs](./docs/dashboard.html))
+- SVG share card — shareable scan result card with `--share-card` ([docs](./docs/dashboard.html#share-card))
+- GitHub App — one-click installation for organizations, zero-config PR scanning ([docs](./docs/github-app.html))
 - Single `scan(filePath, [options])` function — works locally or against a remote clamd instance
 - `scanBuffer(buffer, [options])` — scan in-memory Buffers directly, no temp file required in TCP mode
 - `scanStream(stream, [options])` — scan a Readable stream directly. In TCP mode, streamed to clamd with no disk I/O.
@@ -502,6 +505,8 @@ Scan any repository for viruses on every push or pull request — ClamAV is bund
 | `status` | `"clean"` or `"infected"` |
 
 A ready-to-copy workflow is available at [`.github/workflows/action-example.yml`](./.github/workflows/action-example.yml). Full reference — inputs, outputs, layer caching, and more examples — in **[docs/github-action.md](./docs/github-action.md)**.
+
+> **For organizations:** install the [pompelmi GitHub App](./docs/github-app.html) for zero-config scanning on every PR — no workflow file needed.
 
 ---
 

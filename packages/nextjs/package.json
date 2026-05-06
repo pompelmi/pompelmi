@@ -1,0 +1,39 @@
+{
+  "name": "@pompelmi/nextjs",
+  "version": "1.0.0",
+  "description": "Next.js middleware for pompelmi — in-process ClamAV virus scanning with zero extra dependencies",
+  "license": "ISC",
+  "author": "pompelmi contributors",
+  "homepage": "https://pompelmi.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/nextjs"
+  },
+  "keywords": [
+    "nextjs",
+    "next",
+    "clamav",
+    "antivirus",
+    "virus-scan",
+    "malware",
+    "file-upload",
+    "security",
+    "pompelmi",
+    "app-router",
+    "pages-router"
+  ],
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "test": "node --test test/index.test.js"
+  },
+  "peerDependencies": {
+    "next": ">=13",
+    "pompelmi": ">=1.13.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

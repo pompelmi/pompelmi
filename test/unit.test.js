@@ -1680,3 +1680,176 @@ describe('CLI JSON output format', () => {
         assert.equal(parsed.scanned, 2);
     });
 });
+
+// ─── generateDashboard ────────────────────────────────────────────────────────
+
+describe('generateDashboard', () => {
+    const { generateDashboard } = require('../src/Dashboard.js');
+
+    const sampleRows = [
+        { file: '/uploads/clean.pdf',    verdict: 'clean',    viruses: [] },
+        { file: '/uploads/evil.exe',     verdict: 'infected', viruses: ['Win.Malware.Agent-1234'] },
+        { file: '/uploads/unknown.bin',  verdict: 'error',    viruses: [] },
+    ];
+
+    it('returns a string', () => {
+        const html = generateDashboard(sampleRows);
+        assert.equal(typeof html, 'string');
+    });
+
+    it('output starts with <!DOCTYPE html>', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.startsWith('<!DOCTYPE html>'), 'should start with DOCTYPE');
+    });
+
+    it('contains summary stat counts', () => {
+        const html = generateDashboard(sampleRows, { elapsed: 1500 });
+        assert.ok(html.includes('>3<'), 'total count');
+        assert.ok(html.includes('>1<'), 'infected count appears');
+    });
+
+    it('shows infected banner when there are infected files', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('class="banner infected"'), 'infected banner present');
+    });
+
+    it('shows clean banner when all files are clean', () => {
+        const cleanRows = [
+            { file: '/a.txt', verdict: 'clean', viruses: [] },
+            { file: '/b.pdf', verdict: 'clean', viruses: [] },
+        ];
+        const html = generateDashboard(cleanRows);
+        assert.ok(html.includes('class="banner clean"'), 'clean banner present');
+    });
+
+    it('contains virus name in output', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('Win.Malware.Agent-1234'), 'virus name present');
+    });
+
+    it('contains file paths', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('/uploads/clean.pdf'));
+        assert.ok(html.includes('/uploads/evil.exe'));
+    });
+
+    it('contains pompelmi footer', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('pompelmi.app'), 'footer link present');
+    });
+
+    it('contains dark mode media query', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('prefers-color-scheme'), 'dark mode CSS present');
+    });
+
+    it('contains print media query', () => {
+        const html = generateDashboard(sampleRows);
+        assert.ok(html.includes('@media print'), 'print CSS present');
+    });
+
+    it('accepts DirectoryScanResult shape', () => {
+        const dirResult = {
+            clean:     ['/a.txt', '/b.pdf'],
+            malicious: ['/c.exe'],
+            errors:    [],
+        };
+        const html = generateDashboard(dirResult);
+        assert.ok(html.includes('/c.exe'), 'malicious file path present');
+    });
+
+    it('writes file when outputPath is provided', () => {
+        const fs   = require('fs');
+        const os   = require('os');
+        const path = require('path');
+        const outPath = path.join(os.tmpdir(), `pompelmi-test-${Date.now()}.html`);
+        generateDashboard(sampleRows, { outputPath: outPath });
+        assert.ok(fs.existsSync(outPath), 'HTML file written to disk');
+        fs.unlinkSync(outPath);
+    });
+
+    it('escapes HTML in file paths', () => {
+        const rows = [{ file: '<script>alert(1)</script>', verdict: 'clean', viruses: [] }];
+        const html = generateDashboard(rows);
+        assert.ok(!html.includes('<script>alert(1)</script>'), 'raw script tag should be escaped');
+        assert.ok(html.includes('&lt;script&gt;'), 'entities should appear instead');
+    });
+});
+
+// ─── generateShareCard ────────────────────────────────────────────────────────
+
+describe('generateShareCard', () => {
+    const { generateShareCard } = require('../src/ShareCard.js');
+
+    const cleanRows = [
+        { file: '/a.pdf', verdict: 'clean',    viruses: [] },
+        { file: '/b.txt', verdict: 'clean',    viruses: [] },
+    ];
+    const infectedRows = [
+        { file: '/a.pdf', verdict: 'clean',    viruses: [] },
+        { file: '/b.exe', verdict: 'infected', viruses: ['Win.Malware.X'] },
+    ];
+
+    it('returns a string', () => {
+        const svg = generateShareCard(cleanRows);
+        assert.equal(typeof svg, 'string');
+    });
+
+    it('starts with <svg', () => {
+        const svg = generateShareCard(cleanRows);
+        assert.ok(svg.trimStart().startsWith('<svg'), 'output should be an SVG element');
+    });
+
+    it('is valid XML (closes <svg> tag)', () => {
+        const svg = generateShareCard(cleanRows);
+        assert.ok(svg.includes('</svg>'), 'SVG must be closed');
+    });
+
+    it('shows All clean message for clean scans', () => {
+        const svg = generateShareCard(cleanRows);
+        assert.ok(svg.includes('All clean'), 'clean message present');
+    });
+
+    it('shows infected count for infected scans', () => {
+        const svg = generateShareCard(infectedRows);
+        assert.ok(svg.includes('infected'), 'infected text present');
+        assert.ok(svg.includes('>1<'), 'infected count present');
+    });
+
+    it('contains pompelmi branding', () => {
+        const svg = generateShareCard(cleanRows);
+        assert.ok(svg.includes('pompelmi'), 'branding present');
+    });
+
+    it('contains date', () => {
+        const svg = generateShareCard(cleanRows);
+        const year = new Date().getFullYear().toString();
+        assert.ok(svg.includes(year), 'current year present');
+    });
+
+    it('writes file when outputPath is provided', () => {
+        const fs   = require('fs');
+        const os   = require('os');
+        const path = require('path');
+        const outPath = path.join(os.tmpdir(), `pompelmi-test-${Date.now()}.svg`);
+        generateShareCard(cleanRows, { outputPath: outPath });
+        assert.ok(fs.existsSync(outPath), 'SVG file written to disk');
+        fs.unlinkSync(outPath);
+    });
+
+    it('accepts DirectoryScanResult shape', () => {
+        const dirResult = { clean: ['/a.txt'], malicious: ['/b.exe'], errors: [] };
+        const svg = generateShareCard(dirResult);
+        assert.ok(svg.includes('pompelmi'), 'SVG generated from DirectoryScanResult');
+    });
+
+    it('shows clean stats row with correct total', () => {
+        const rows = [
+            { file: '/a.txt', verdict: 'clean', viruses: [] },
+            { file: '/b.txt', verdict: 'clean', viruses: [] },
+            { file: '/c.txt', verdict: 'clean', viruses: [] },
+        ];
+        const svg = generateShareCard(rows);
+        assert.ok(svg.includes('>3<') || svg.includes('>3 file'), 'total of 3 shown');
+    });
+});

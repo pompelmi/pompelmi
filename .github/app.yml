@@ -1,0 +1,58 @@
+name: pompelmi
+description: >
+  Automatic virus scanning for every pull request.
+  pompelmi scans changed files with ClamAV and reports results
+  as a GitHub check run with inline diff annotations — no workflow
+  file required.
+
+url: https://pompelmi.app
+
+# ── Permissions ───────────────────────────────────────────────────────────────
+
+default_permissions:
+  # Read repository contents to fetch changed files
+  contents: read
+  # Write check runs to post pass/fail status + annotations
+  checks: write
+  # Read pull requests to discover changed files
+  pull_requests: read
+
+# ── Events ────────────────────────────────────────────────────────────────────
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+# ── Webhook ───────────────────────────────────────────────────────────────────
+
+# The App posts webhook events to the URL you configure during installation.
+# Your server (or Probot app) receives pull_request events, fetches changed
+# files from the GitHub API, runs pompelmi scan on each one, and posts a
+# check_run result with annotations for any infected file found.
+
+# ── Check run behaviour ───────────────────────────────────────────────────────
+
+# On every PR event the App:
+#   1. Creates a check run with status "in_progress"
+#   2. Downloads the changed files (up to 50 MB each) and pipes them to clamd
+#   3. Marks the check run "completed":
+#        conclusion: "success"  → all files clean
+#        conclusion: "failure"  → one or more infected files found
+#   4. Posts file-level annotations on the PR diff for each infected file,
+#      showing the virus name as the annotation message.
+
+# ── Implementation notes ──────────────────────────────────────────────────────
+
+# Reference server implementation:
+#   https://github.com/pompelmi/pompelmi-github-app
+#
+# Required environment variables for the server:
+#   APP_ID            — GitHub App ID (from App settings)
+#   PRIVATE_KEY       — RSA private key (PEM, from App settings)
+#   WEBHOOK_SECRET    — Secret set during App registration
+#   CLAMD_HOST        — clamd host (default: localhost)
+#   CLAMD_PORT        — clamd port (default: 3310)
+#   CLAMD_SOCKET      — UNIX socket alternative to host/port

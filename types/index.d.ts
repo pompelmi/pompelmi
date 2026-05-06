@@ -215,3 +215,54 @@ export interface ScanEmitter extends EventEmitter {
  * scanner.scanDirectory('/uploads');
  */
 export declare function createScanner(options?: ScanOptions): ScanEmitter;
+
+/** Options for generateDashboard */
+export interface DashboardOptions {
+  /** Scan duration in milliseconds */
+  elapsed?: number;
+  /** ClamAV version string, if available */
+  clamdVersion?: string;
+  /** clamd host used for the scan */
+  host?: string;
+  /** clamd port used for the scan */
+  port?: number;
+  /** UNIX socket used for the scan */
+  socket?: string;
+  /** Write the HTML to this path (optional) */
+  outputPath?: string;
+}
+
+/** A scan result row (output of the CLI or manual scan loop) */
+export interface ScanRow {
+  file: string;
+  verdict: 'clean' | 'infected' | 'error';
+  viruses?: string[];
+}
+
+/**
+ * Generate a self-contained HTML security dashboard report.
+ * Accepts an array of ScanRow objects or a DirectoryScanResult.
+ * When outputPath is set, the file is also written to disk.
+ * Returns the HTML string.
+ */
+export declare function generateDashboard(
+  scanResults: ScanRow[] | DirectoryScanResult,
+  options?: DashboardOptions
+): string;
+
+/** Options for generateShareCard */
+export interface ShareCardOptions {
+  /** Write the SVG to this path (optional) */
+  outputPath?: string;
+}
+
+/**
+ * Generate a shareable SVG card showing the scan summary.
+ * Suitable for embedding in READMEs or sharing on social media.
+ * When outputPath is set, the file is also written to disk.
+ * Returns the SVG string.
+ */
+export declare function generateShareCard(
+  scanResults: ScanRow[] | DirectoryScanResult,
+  options?: ShareCardOptions
+): string;
