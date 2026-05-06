@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/demo.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Demo — pompelmi</title>
+<meta name="description" content="Try pompelmi in the browser — upload a file and see the scan animation with Clean, Malicious, and ScanError verdicts. No install required.">
+<meta property="og:title" content="Interactive Demo — pompelmi">
+<meta property="og:description" content="Try pompelmi's terminal UI in the browser. Upload a file and see a simulated ClamAV virus scan with animated output.">
+<meta property="og:url" content="https://pompelmi.app/demo.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  #demo-section {
+    margin: 32px 0;
+  }
+
+  .demo-card {
+    background: #1a1a1a;
+    border-radius: 10px;
+    border: 1px solid #333;
+    overflow: hidden;
+    max-width: 720px;
+    margin: 24px 0;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  }
+
+  .demo-titlebar {
+    background: #2d2d2d;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #3a3a3a;
+  }
+
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #febc2e; }
+  .dot-g { background: #28c840; }
+
+  .demo-titlebar span {
+    margin-left: 8px;
+    color: #888;
+    font-family: "Courier New", monospace;
+    font-size: 13px;
+  }
+
+  .demo-terminal {
+    padding: 20px 24px;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: #d4d4d4;
+    min-height: 180px;
+  }
+
+  .line-prompt { color: #4ec9b0; }
+  .line-dim    { color: #666; }
+  .line-clean  { color: #28c840; font-weight: bold; }
+  .line-mal    { color: #ff5f57; font-weight: bold; }
+  .line-warn   { color: #febc2e; font-weight: bold; }
+  .line-info   { color: #9cdcfe; }
+  .line-muted  { color: #888; }
+
+  .cursor {
+    display: inline-block;
+    width: 8px; height: 14px;
+    background: #d4d4d4;
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+  }
+  @keyframes blink { 50% { opacity: 0; } }
+
+  .drop-zone {
+    border: 2px dashed #c0603a;
+    border-radius: 8px;
+    padding: 36px 24px;
+    text-align: center;
+    cursor: pointer;
+    background: #fff8f5;
+    transition: background 0.2s, border-color 0.2s;
+    max-width: 480px;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    background: #ffeee6;
+    border-color: #a03c1c;
+  }
+  .drop-zone p {
+    color: #666;
+    margin: 6px 0 0 0;
+    font-size: 14px;
+  }
+  .drop-zone strong { color: #a03c1c; font-size: 16px; }
+
+  .verdict-selector {
+    margin: 20px 0;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .verdict-btn {
+    padding: 8px 18px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    font-family: Georgia, serif;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.15s;
+  }
+  .verdict-btn.clean  { background: #e8f8ea; color: #1a7a2a; border-color: #a8d8b0; }
+  .verdict-btn.clean.active,  .verdict-btn.clean:hover  { background: #28c840; color: #fff; border-color: #28c840; }
+  .verdict-btn.mal    { background: #fdecea; color: #b91c1c; border-color: #f5a0a0; }
+  .verdict-btn.mal.active,    .verdict-btn.mal:hover    { background: #e53e3e; color: #fff; border-color: #e53e3e; }
+  .verdict-btn.error  { background: #fefce8; color: #92400e; border-color: #fde68a; }
+  .verdict-btn.error.active,  .verdict-btn.error:hover  { background: #febc2e; color: #fff; border-color: #febc2e; }
+
+  .scan-btn {
+    margin-top: 16px;
+    padding: 10px 28px;
+    background: #a03c1c;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-family: Georgia, serif;
+    font-size: 15px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .scan-btn:hover { background: #c04820; }
+  .scan-btn:disabled { background: #999; cursor: not-allowed; }
+
+  .eicar-box {
+    background: #f9f4f0;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 24px 0;
+    max-width: 640px;
+  }
+  .eicar-box h3 { color: #a03c1c; margin-bottom: 10px; }
+  .eicar-box code {
+    display: block;
+    background: #1a1a1a;
+    color: #ff5f57;
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 11px;
+    word-break: break-all;
+    margin: 10px 0;
+    font-family: "Courier New", monospace;
+  }
+  .eicar-box p { color: #555; font-size: 14px; margin: 8px 0; }
+
+  #selected-file-name {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #666;
+    font-style: italic;
+  }
+  #selected-file-name strong { color: #333; font-style: normal; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="demo.html" class="active">Demo</a>
+  <a href="comparison.html">Comparison</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Interactive Demo</span>
+      <li><a href="#try-it">Try It Now</a></li>
+      <li><a href="#verdicts">Simulate Verdicts</a></li>
+      <li><a href="#eicar">EICAR Test File</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <h1 id="try-it">Interactive Demo</h1>
+
+    <p>
+      Experience pompelmi's terminal output without installing anything.
+      Drop a file below (or use the file picker) and watch the simulated scan run —
+      showing exactly what you'd see in a real Node.js application.
+    </p>
+
+    <div class="notice" style="background:#fff8f0;border:1px solid #e8846a;border-radius:6px;padding:12px 16px;margin:20px 0;max-width:640px;">
+      <strong>Simulation only</strong> — the browser cannot run a ClamAV daemon.
+      This demo faithfully reproduces the UX and terminal output of pompelmi.
+      For real scanning, <a href="getting-started.html">install pompelmi</a> in your Node.js project.
+    </div>
+
+    <h2 id="verdicts" style="margin-top:32px;">1. Choose a verdict to simulate</h2>
+
+    <div class="verdict-selector">
+      <button class="verdict-btn clean active" onclick="setVerdict('clean', this)">&#10003; Clean</button>
+      <button class="verdict-btn mal"          onclick="setVerdict('malicious', this)">&#9888; Malicious</button>
+      <button class="verdict-btn error"         onclick="setVerdict('error', this)">&#9888; ScanError</button>
+    </div>
+
+    <h2 style="margin-top:24px;">2. Drop a file (or click to select)</h2>
+
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <strong>Drop any file here</strong>
+      <p>or click to browse — the file is never uploaded or sent anywhere</p>
+      <input type="file" id="file-input" style="display:none" onchange="onFileSelected(this)">
+    </div>
+    <p id="selected-file-name" style="display:none">Selected: <strong id="fname"></strong></p>
+
+    <button class="scan-btn" id="scan-btn" disabled onclick="runScan()">Run Scan</button>
+
+    <h2 style="margin-top:32px;">3. Terminal output</h2>
+
+    <div class="demo-card" id="demo-section">
+      <div class="demo-titlebar">
+        <span class="dot dot-r"></span>
+        <span class="dot dot-y"></span>
+        <span class="dot dot-g"></span>
+        <span>pompelmi scan</span>
+      </div>
+      <div class="demo-terminal" id="terminal">
+        <span class="line-dim">Waiting for file&hellip;</span><span class="cursor"></span>
+      </div>
+    </div>
+
+    <hr>
+
+    <h2 id="eicar">EICAR Test File</h2>
+
+    <p>
+      The EICAR test string is a safe, inert file used to verify that antivirus
+      software is working correctly. It is not a real virus — every reputable AV
+      engine recognises it and reports it as <em>infected</em>.
+    </p>
+
+    <div class="eicar-box">
+      <h3>EICAR test string</h3>
+      <code id="eicar-string">X5O!P%@AP[4\PZX54(P^)7CC)7}$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*</code>
+      <p>
+        Save this string (exactly as shown, no trailing newline) to a file named
+        <strong>eicar.com</strong>, then pass it to pompelmi:
+      </p>
+      <pre style="background:#1a1a1a;color:#9cdcfe;padding:12px 16px;border-radius:6px;font-size:13px;overflow-x:auto;margin:10px 0;">const { scan, Verdict } = require('pompelmi');
+const result = await scan('./eicar.com', { host: 'localhost', port: 3310 });
+// result === Verdict.Malicious  ✓</pre>
+      <p>pompelmi will return <strong style="color:#e53e3e">Verdict.Malicious</strong> for this file.</p>
+      <button class="scan-btn" style="margin-top:8px;" onclick="simulateEicar()">Simulate EICAR scan</button>
+    </div>
+
+    <hr>
+
+    <h2 id="how-it-works">How pompelmi actually works</h2>
+
+    <p>
+      In a real Node.js application, pompelmi communicates with a running
+      <strong>clamd</strong> daemon over TCP or a UNIX socket using the
+      <code>INSTREAM</code> protocol:
+    </p>
+
+    <ol style="margin:12px 0 12px 24px;line-height:2;">
+      <li>Your app calls <code>await scan(filePath, { host, port })</code></li>
+      <li>pompelmi opens a TCP connection to clamd</li>
+      <li>The file is streamed in 64 KB chunks — no disk writes, no temp files</li>
+      <li>clamd inspects each chunk and responds with <code>stream: OK</code> or <code>stream: &lt;name&gt; FOUND</code></li>
+      <li>pompelmi returns one of three Symbols: <code>Verdict.Clean</code>, <code>Verdict.Malicious</code>, or <code>Verdict.ScanError</code></li>
+    </ol>
+
+    <p>
+      <a href="getting-started.html">Get started</a> — scan your first file in under 5 minutes.
+    </p>
+
+  </div>
+</div>
+
+<div id="footer">
+  <p>&copy; pompelmi contributors &mdash; <a href="https://github.com/pompelmi/pompelmi">GitHub</a> &mdash; <a href="https://pompelmi.app">pompelmi.app</a></p>
+</div>
+
+<script>
+  // ── State ─────────────────────────────────────────────────────────────────────
+
+  let currentVerdict = 'clean';
+  let currentFile = null;
+
+  // ── Verdict selector ──────────────────────────────────────────────────────────
+
+  function setVerdict(verdict, btn) {
+    currentVerdict = verdict;
+    document.querySelectorAll('.verdict-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+  }
+
+  // ── File selection ────────────────────────────────────────────────────────────
+
+  function onFileSelected(input) {
+    if (!input.files.length) return;
+    currentFile = input.files[0];
+    document.getElementById('fname').textContent = currentFile.name;
+    document.getElementById('selected-file-name').style.display = 'block';
+    document.getElementById('scan-btn').disabled = false;
+  }
+
+  const dropZone = document.getElementById('drop-zone');
+
+  dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (!f) return;
+    currentFile = f;
+    document.getElementById('fname').textContent = f.name;
+    document.getElementById('selected-file-name').style.display = 'block';
+    document.getElementById('scan-btn').disabled = false;
+  });
+
+  // ── Animated scan ─────────────────────────────────────────────────────────────
+
+  function formatBytes(n) {
+    if (n < 1024) return n + ' B';
+    if (n < 1048576) return (n / 1024).toFixed(1) + ' KB';
+    return (n / 1048576).toFixed(2) + ' MB';
+  }
+
+  async function runScan() {
+    if (!currentFile) return;
+    const btn = document.getElementById('scan-btn');
+    btn.disabled = true;
+    await animate(currentFile.name, currentFile.size, currentVerdict);
+    btn.disabled = false;
+  }
+
+  async function simulateEicar() {
+    await animate('eicar.com', 68, 'malicious');
+  }
+
+  async function animate(filename, size, verdict) {
+    const term = document.getElementById('terminal');
+    term.innerHTML = '';
+
+    const lines = buildLines(filename, size, verdict);
+
+    for (let i = 0; i < lines.length; i++) {
+      await sleep(lines[i].delay || 80);
+      const div = document.createElement('div');
+      div.innerHTML = lines[i].html;
+      term.appendChild(div);
+      term.scrollTop = term.scrollHeight;
+    }
+  }
+
+  function buildLines(filename, size, verdict) {
+    const chunks = Math.max(1, Math.ceil(size / 65536));
+    const ms = 120 + Math.floor(Math.random() * 180);
+
+    const lines = [
+      { html: `<span class="line-prompt">$</span> <span class="line-info">pompelmi scan ./${esc(filename)}</span>`, delay: 0 },
+      { html: `<span class="line-dim">  &nbsp;&nbsp;pompelmi v1.15.0  •  ClamAV INSTREAM protocol</span>`, delay: 300 },
+      { html: `<span class="line-dim">  Scanning ${esc(filename)} (${formatBytes(size)})&hellip;</span>`, delay: 180 },
+    ];
+
+    for (let i = 0; i < chunks; i++) {
+      const pct = Math.round(((i + 1) / chunks) * 100);
+      const filled = Math.floor(pct / 5);
+      const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+      lines.push({
+        html: `<span class="line-dim">  Scanning... [${bar}] ${pct}%</span>`,
+        delay: Math.floor(ms / chunks),
+      });
+    }
+
+    lines.push({ html: `<span class="line-dim">  &nbsp;</span>`, delay: 120 });
+
+    if (verdict === 'clean') {
+      lines.push({ html: `<span class="line-clean">  ✔  ${esc(filename)} — Clean</span>`, delay: 100 });
+      lines.push({ html: `<span class="line-muted">  &nbsp;</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-clean">  1 file scanned &mdash; 0 infected &mdash; 0 errors</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-muted">  Scan completed in ${ms}ms</span>`, delay: 60 });
+    } else if (verdict === 'malicious') {
+      lines.push({ html: `<span class="line-mal">  ✘  ${esc(filename)} — MALICIOUS (Win.Malware.Eicar-1)</span>`, delay: 100 });
+      lines.push({ html: `<span class="line-muted">  &nbsp;</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-mal">  1 file scanned &mdash; 1 INFECTED &mdash; 0 errors</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-dim">  Scan completed in ${ms}ms</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-dim">  &nbsp;</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-mal">  Verdict: Malicious</span>`, delay: 80 });
+      lines.push({ html: `<span class="line-dim">  Your app receives Verdict.Malicious — reject or quarantine the file.</span>`, delay: 80 });
+    } else {
+      lines.push({ html: `<span class="line-warn">  ⚠  ${esc(filename)} — ScanError (clamd unreachable)</span>`, delay: 100 });
+      lines.push({ html: `<span class="line-muted">  &nbsp;</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-warn">  1 file scanned &mdash; 0 infected &mdash; 1 error</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-dim">  Scan completed in ${ms}ms</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-dim">  &nbsp;</span>`, delay: 60 });
+      lines.push({ html: `<span class="line-warn">  Verdict: ScanError</span>`, delay: 80 });
+      lines.push({ html: `<span class="line-dim">  Your app receives Verdict.ScanError — log and handle gracefully.</span>`, delay: 80 });
+    }
+
+    return lines;
+  }
+
+  function esc(s) {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+
+</body>
+</html>

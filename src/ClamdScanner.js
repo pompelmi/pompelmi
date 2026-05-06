@@ -4,6 +4,8 @@ const net            = require('net');
 const fs             = require('fs');
 const { Verdict }    = require('./verdicts.js');
 
+const isBun = typeof Bun !== 'undefined';
+
 // ClamAV INSTREAM protocol:
 //   1. Send "zINSTREAM\0"
 //   2. Send N chunks, each prefixed with a 4-byte big-endian length
@@ -63,24 +65,46 @@ function scanViaClamd(filePath, options = {}) {
             conn.on('data',  (chunk) => chunks.push(chunk));
             conn.on('end',   () => settle(resolve, parseClamdResponse(Buffer.concat(chunks))));
 
-            conn.on('connect', () => {
+            conn.on('connect', async () => {
                 conn.write(CLAMD_INSTREAM);
 
-                const fileStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
-
-                fileStream.on('error', (err) => settle(reject, err));
-
-                fileStream.on('data', (chunk) => {
-                    const header = Buffer.allocUnsafe(4);
-                    header.writeUInt32BE(chunk.length, 0);
-                    conn.write(header);
-                    conn.write(chunk);
-                });
-
-                fileStream.on('end', () => {
+                if (isBun) {
+                    // Bun.file() is faster than fs.createReadStream on Bun
+                    let fileData;
+                    try {
+                        fileData = await Bun.file(filePath).bytes();
+                    } catch (err) {
+                        return settle(reject, err);
+                    }
+                    const buf = Buffer.from(fileData);
+                    let offset = 0;
+                    while (offset < buf.length) {
+                        const chunk  = buf.slice(offset, offset + CHUNK_SIZE);
+                        const header = Buffer.allocUnsafe(4);
+                        header.writeUInt32BE(chunk.length, 0);
+                        conn.write(header);
+                        conn.write(chunk);
+                        offset += chunk.length;
+                    }
                     conn.write(Buffer.alloc(4)); // terminating zero-length chunk
                     conn.end();
-                });
+                } else {
+                    const fileStream = fs.createReadStream(filePath, { highWaterMark: CHUNK_SIZE });
+
+                    fileStream.on('error', (err) => settle(reject, err));
+
+                    fileStream.on('data', (chunk) => {
+                        const header = Buffer.allocUnsafe(4);
+                        header.writeUInt32BE(chunk.length, 0);
+                        conn.write(header);
+                        conn.write(chunk);
+                    });
+
+                    fileStream.on('end', () => {
+                        conn.write(Buffer.alloc(4)); // terminating zero-length chunk
+                        conn.end();
+                    });
+                }
             });
         });
     }

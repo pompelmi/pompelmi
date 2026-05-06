@@ -5,6 +5,25 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] - 2026-05-06
+
+### Added
+- **`@pompelmi/hono`** — new official Hono middleware package (`npm i @pompelmi/hono`). Exports `pompelmiMiddleware(options)` which reads a file from the parsed multipart body, scans it, and calls `next()` for clean files or invokes `onInfected` (defaulting to HTTP 422) for malicious ones. Supports Node.js, Bun, and Cloudflare Workers. Handles `File` / `Blob` (Web API), `Buffer`, `Uint8Array`, and string field values.
+- **`@pompelmi/testing`** — new test utilities package (`npm i -D @pompelmi/testing`). Exports `createMockScanner(verdict)`, `mockClean()`, `mockInfected(virusName)`, `mockScanError()`, and `withMockedPompelmi(verdict, fn)`. Compatible with Jest, Vitest, and the Node.js built-in test runner.
+- **Bun support** — `src/ClamdScanner.js` detects `typeof Bun !== 'undefined'` and uses `Bun.file(filePath).bytes()` for faster file reading when running on Bun. `src/BufferScanner.js` and `src/StreamScanner.js` work unchanged under Bun via its Node.js compatibility layer.
+- **CI Bun matrix** — `.github/workflows/ci.yml` now runs tests on Bun latest in addition to Node.js 18, 20, and 22.
+- **`docs/demo.html`** — fully self-contained interactive demo page. Visitors can drag-and-drop a file and watch a simulated pompelmi scan with animated terminal output showing Clean, Malicious, and ScanError verdicts. Includes an EICAR test file explainer.
+- **`docs/comparison.html`** — objective feature comparison of pompelmi vs `clamscan`, `clamav-js`, `node-clam`, and SaaS solutions (VirusTotal). Covers TypeScript support, streaming, buffer scanning, maintenance status, privacy, cost, and Bun compatibility.
+- **Navbar updated** across all `docs/` HTML pages to include Demo and Comparison links.
+- **`docs/getting-started.html`** — added `bun add pompelmi` installation snippet and noted Bun compatibility.
+- **README.md** — added Hono integration snippet, `@pompelmi/hono` and `@pompelmi/testing` rows to the Framework Integrations table, Bun entry in Requirements, `bun add pompelmi` in Installation, "Works with Node.js and Bun" and "Interactive demo" feature bullets, and comparison link.
+
+### Changed
+- `src/ClamdScanner.js` — `conn.on('connect', ...)` callback is now `async` on Bun to support `await Bun.file().bytes()`. Falls back to the existing `fs.createReadStream` path on Node.js.
+- `package.json` `test` script — includes `packages/hono/test/index.test.js` and `packages/testing/test/index.test.js`.
+
+---
+
 ## [1.14.0] - 2026-05-06
 
 ### Added

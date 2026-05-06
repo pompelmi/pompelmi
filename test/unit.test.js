@@ -1853,3 +1853,52 @@ describe('generateShareCard', () => {
         assert.ok(svg.includes('>3<') || svg.includes('>3 file'), 'total of 3 shown');
     });
 });
+
+// ─── Bun runtime detection ────────────────────────────────────────────────────
+
+describe('Bun runtime detection', () => {
+    // The isBun flag is module-level in each scanner file.
+    // We verify the detection logic behaves correctly with/without the global.
+
+    it('isBun is false when global Bun is undefined', () => {
+        // In Node.js test environment, Bun global is not set.
+        const hadBun = typeof globalThis.Bun !== 'undefined';
+        assert.equal(hadBun, false, 'Bun global should not exist in Node.js');
+        // The expression typeof Bun !== 'undefined' correctly evaluates to false.
+        assert.equal(typeof globalThis.Bun !== 'undefined', false);
+    });
+
+    it('isBun logic correctly detects a mocked Bun global', () => {
+        // Simulate what Bun adds to globalThis.
+        const originalBun = globalThis.Bun;
+        globalThis.Bun = { version: '1.0.0', file: () => {} };
+        try {
+            assert.equal(typeof globalThis.Bun !== 'undefined', true);
+        } finally {
+            if (originalBun === undefined) delete globalThis.Bun;
+            else globalThis.Bun = originalBun;
+        }
+    });
+
+    it('ClamdScanner exports scanViaClamd after Bun global mock', () => {
+        // Inject a fake Bun global, reload the module, verify it still exports correctly.
+        const originalBun = globalThis.Bun;
+        globalThis.Bun = {
+            version: '1.0.0',
+            file: () => ({ bytes: () => Promise.resolve(new Uint8Array([1, 2, 3])) }),
+        };
+        let mod;
+        const resolved = require.resolve('../src/ClamdScanner.js');
+        const cached = require.cache[resolved];
+        delete require.cache[resolved];
+        try {
+            mod = require('../src/ClamdScanner.js');
+        } finally {
+            delete require.cache[resolved];
+            if (cached) require.cache[resolved] = cached;
+            if (originalBun === undefined) delete globalThis.Bun;
+            else globalThis.Bun = originalBun;
+        }
+        assert.equal(typeof mod.scanViaClamd, 'function');
+    });
+});

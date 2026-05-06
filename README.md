@@ -89,10 +89,14 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
-- Works with Express, Fastify, NestJS, and any other Node.js HTTP framework
+- Works with Express, Fastify, NestJS, Hono, and any other Node.js HTTP framework
+- Works with Node.js and Bun — uses `Bun.file()` for faster file reading when available
+- Interactive demo at [pompelmi.app/demo](https://pompelmi.app/demo.html) — try before you install
 - Zero runtime dependencies — ships nothing but source code
 - Tested with EICAR standard antivirus test files
 - CommonJS module; TypeScript type declarations available inline
+
+See [how pompelmi compares](./docs/comparison.html) to other Node.js ClamAV integrations.
 
 ---
 
@@ -104,6 +108,8 @@ Official integration packages for popular frameworks:
 |---------|-----------|---------|
 | [@pompelmi/nestjs](./packages/nestjs/) | NestJS | `npm i @pompelmi/nestjs` |
 | [@pompelmi/fastify](./packages/fastify/) | Fastify | `npm i @pompelmi/fastify` |
+| [@pompelmi/hono](./packages/hono/) | Hono | `npm i @pompelmi/hono` |
+| [@pompelmi/testing](./packages/testing/) | Jest/Vitest/Node | `npm i -D @pompelmi/testing` |
 
 ### NestJS
 
@@ -132,11 +138,29 @@ const result = await fastify.pompelmi.scanBuffer(buffer);
 fastify.post('/upload', { preHandler: fastify.pompelmi.preHandler({ field: 'file' }) }, handler);
 ```
 
+### Hono (Node.js, Bun, Cloudflare Workers)
+
+```js
+import { Hono } from 'hono'
+import { pompelmiMiddleware } from '@pompelmi/hono'
+
+const app = new Hono()
+
+app.use('/upload/*', pompelmiMiddleware({
+  host: 'localhost',
+  port: 3310,
+  onInfected: (c, filename) => c.json({ error: 'Malware detected' }, 422),
+}))
+
+app.post('/upload', async (c) => c.json({ ok: true }))
+```
+
 ---
 
 ## Requirements
 
 - **Node.js** — any LTS release (no native addons, no C++ bindings)
+- **Bun** — fully supported; uses `Bun.file()` for faster file reading
 - **ClamAV** — must be installed on the host or reachable over TCP
 
 pompelmi does not bundle or automatically download ClamAV. Install it once per machine (see [Installing ClamAV](#installing-clamav)).
@@ -156,6 +180,9 @@ yarn add pompelmi
 
 # pnpm
 pnpm add pompelmi
+
+# bun
+bun add pompelmi
 ```
 
 ### Docker

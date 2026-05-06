@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/comparison.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>pompelmi vs Alternatives — Comparison</title>
+<meta name="description" content="Objective comparison of pompelmi vs clamscan, clamav-js, node-clam, and SaaS solutions like VirusTotal. See which Node.js ClamAV integration fits your project.">
+<meta property="og:title" content="pompelmi vs Alternatives — Comparison">
+<meta property="og:description" content="Feature-by-feature comparison of Node.js ClamAV libraries: pompelmi, clamscan, clamav-js, node-clam, and VirusTotal.">
+<meta property="og:url" content="https://pompelmi.app/comparison.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 24px 0;
+    font-size: 14px;
+    overflow-x: auto;
+    display: block;
+  }
+  .comparison-table th, .comparison-table td {
+    padding: 10px 14px;
+    border: 1px solid #e0d4cc;
+    text-align: left;
+    vertical-align: top;
+  }
+  .comparison-table thead th {
+    background: #f5ede8;
+    color: #5a2211;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .comparison-table thead th:first-child { width: 220px; }
+  .comparison-table tbody tr:nth-child(even) { background: #fdf9f7; }
+  .comparison-table tbody tr:hover { background: #fef3ee; }
+
+  .comparison-table .col-pompelmi { background: #fff8f2 !important; }
+  .comparison-table thead .col-pompelmi { background: #e8846a !important; color: #fff !important; }
+
+  .yes  { color: #1a7a2a; font-weight: bold; }
+  .no   { color: #b91c1c; }
+  .part { color: #92400e; }
+  .na   { color: #999; font-style: italic; }
+
+  .verdict-sym {
+    font-family: "Courier New", monospace;
+    background: #1a1a1a;
+    color: #4ec9b0;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .summary-card {
+    border: 1px solid #e0d4cc;
+    border-radius: 8px;
+    padding: 16px;
+    background: #fdf9f7;
+  }
+  .summary-card h4 { color: #a03c1c; margin-bottom: 6px; font-size: 15px; }
+  .summary-card p  { color: #555; font-size: 13px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="demo.html">Demo</a>
+  <a href="comparison.html" class="active">Comparison</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Comparison</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#feature-table">Feature Table</a></li>
+      <li><a href="#alternatives">Alternatives</a></li>
+      <li><a href="#saas">vs SaaS</a></li>
+      <li><a href="#choose">Which to choose?</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <h1 id="overview">pompelmi vs Alternatives</h1>
+
+    <p>
+      There are several ways to integrate ClamAV into a Node.js application.
+      This page compares pompelmi against the most commonly used alternatives,
+      based on objective criteria such as API design, maintenance status,
+      TypeScript support, streaming capability, and privacy characteristics.
+    </p>
+
+    <p>
+      All of the Node.js libraries listed below are open source.
+      The goal of this comparison is to help you choose the right tool for your
+      project — not to dismiss any of them.
+    </p>
+
+    <h2 id="feature-table" style="margin-top:32px;">Feature Comparison</h2>
+
+    <table class="comparison-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th class="col-pompelmi">pompelmi</th>
+          <th>clamscan</th>
+          <th>clamav-js</th>
+          <th>node-clam</th>
+          <th>VirusTotal API</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Maintained</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes</span></td>
+          <td><span class="no">No — last release 2017</span></td>
+          <td><span class="part">Infrequently</span></td>
+          <td><span class="yes">Yes</span></td>
+          <td><span class="yes">Yes (SaaS)</span></td>
+        </tr>
+        <tr>
+          <td><strong>TypeScript declarations</strong></td>
+          <td class="col-pompelmi"><span class="yes">Full — bundled .d.ts</span></td>
+          <td><span class="no">None</span></td>
+          <td><span class="no">None</span></td>
+          <td><span class="part">Community @types</span></td>
+          <td><span class="part">Depends on SDK used</span></td>
+        </tr>
+        <tr>
+          <td><strong>Buffer / in-memory scan</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>scanBuffer(buf)</code></span></td>
+          <td><span class="no">No — file path only</span></td>
+          <td><span class="no">No — file path only</span></td>
+          <td><span class="part">Via temp file</span></td>
+          <td><span class="yes">Yes</span></td>
+        </tr>
+        <tr>
+          <td><strong>Readable stream scan</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>scanStream(stream)</code></span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+        </tr>
+        <tr>
+          <td><strong>S3 / cloud storage scan</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>scanS3()</code></span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="yes">Yes (upload to API)</span></td>
+        </tr>
+        <tr>
+          <td><strong>Runtime verdicts</strong></td>
+          <td class="col-pompelmi"><span class="verdict-sym">Verdict.Clean</span> / <span class="verdict-sym">Malicious</span> / <span class="verdict-sym">ScanError</span><br><small>(Symbol-based — typo-proof)</small></td>
+          <td><span class="na">String / exit code</span></td>
+          <td><span class="na">String / exit code</span></td>
+          <td><span class="na">Callback / boolean</span></td>
+          <td><span class="na">JSON object</span></td>
+        </tr>
+        <tr>
+          <td><strong>clamd TCP / socket mode</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — both</span></td>
+          <td><span class="no">No — clamscan CLI only</span></td>
+          <td><span class="part">TCP only</span></td>
+          <td><span class="yes">Yes — both</span></td>
+          <td><span class="na">N/A</span></td>
+        </tr>
+        <tr>
+          <td><strong>Zero npm dependencies</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes (core)</span></td>
+          <td><span class="part">1–2 deps</span></td>
+          <td><span class="no">Multiple native bindings</span></td>
+          <td><span class="no">Several deps</span></td>
+          <td><span class="no">HTTP client + SDK deps</span></td>
+        </tr>
+        <tr>
+          <td><strong>No data egress / privacy</strong></td>
+          <td class="col-pompelmi"><span class="yes">Data never leaves your server</span></td>
+          <td><span class="yes">Local — data stays on server</span></td>
+          <td><span class="yes">Local — data stays on server</span></td>
+          <td><span class="yes">Local — data stays on server</span></td>
+          <td><span class="no">Files sent to VirusTotal servers</span></td>
+        </tr>
+        <tr>
+          <td><strong>Framework plugins</strong></td>
+          <td class="col-pompelmi"><span class="yes">Express, Next.js, NestJS, Fastify, Hono</span></td>
+          <td><span class="no">None</span></td>
+          <td><span class="no">None</span></td>
+          <td><span class="no">None</span></td>
+          <td><span class="na">REST API</span></td>
+        </tr>
+        <tr>
+          <td><strong>CLI tool</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>pompelmi scan</code></span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="na">Web UI / REST</span></td>
+        </tr>
+        <tr>
+          <td><strong>Connection pool</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>createPool()</code></span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="na">Rate limited</span></td>
+        </tr>
+        <tr>
+          <td><strong>Directory watcher</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes — <code>watch(dir)</code></span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+        </tr>
+        <tr>
+          <td><strong>Cost</strong></td>
+          <td class="col-pompelmi"><span class="yes">Free (ISC) / Enterprise $49.99/mo</span></td>
+          <td><span class="yes">Free (MIT)</span></td>
+          <td><span class="yes">Free</span></td>
+          <td><span class="yes">Free (MIT)</span></td>
+          <td><span class="no">Paid API quota</span></td>
+        </tr>
+        <tr>
+          <td><strong>Bun support</strong></td>
+          <td class="col-pompelmi"><span class="yes">Yes</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="no">No</span></td>
+          <td><span class="part">Untested</span></td>
+          <td><span class="yes">Yes</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="alternatives" style="margin-top:36px;">About each alternative</h2>
+
+    <h3>clamscan (npm)</h3>
+    <p>
+      A thin wrapper around the <code>clamscan</code> CLI binary. It spawns a child
+      process for every scan, making it slower than the INSTREAM protocol.
+      The last npm release was in 2017 and the package is effectively unmaintained.
+      No TypeScript declarations, no stream support, and no buffer scanning.
+    </p>
+    <p>
+      <strong>Best for:</strong> legacy scripts where clamd is not available and
+      a one-off file scan is sufficient.
+    </p>
+
+    <h3>clamav-js</h3>
+    <p>
+      Uses native bindings via <code>node-gyp</code> to call the libclamav C API.
+      Native bindings add build-time complexity, break on Node.js version upgrades,
+      and are hard to use in Docker or serverless environments.
+      No TypeScript declarations, no stream or buffer scanning API.
+    </p>
+    <p>
+      <strong>Best for:</strong> offline scanning without a running daemon, where
+      native binding complexity is acceptable.
+    </p>
+
+    <h3>node-clam</h3>
+    <p>
+      A more feature-complete ClamAV wrapper that supports both the CLI and clamd TCP
+      modes. It has more dependencies than pompelmi and a more complex configuration
+      API. Community-maintained TypeScript types are available via DefinitelyTyped.
+      Buffer and stream scanning are not directly supported; files must be on disk.
+    </p>
+    <p>
+      <strong>Best for:</strong> teams already using node-clam who want incremental
+      improvements without migrating.
+    </p>
+
+    <h2 id="saas" style="margin-top:32px;">vs SaaS (VirusTotal, Cloudmersive, etc.)</h2>
+
+    <p>
+      SaaS antivirus APIs offer multi-engine scanning (VirusTotal checks 70+
+      engines) and require no on-premise infrastructure. However:
+    </p>
+
+    <ul style="margin:12px 0 12px 24px;line-height:1.9;">
+      <li><strong>Privacy</strong> — every scanned file is sent to a third-party server.
+          This may violate GDPR, HIPAA, or internal data policies.</li>
+      <li><strong>Latency</strong> — network roundtrip adds 200–2000 ms per scan.</li>
+      <li><strong>Cost</strong> — per-scan or per-GB pricing adds up quickly at scale.</li>
+      <li><strong>Rate limits</strong> — free tiers are heavily throttled.</li>
+      <li><strong>Vendor lock-in</strong> — changing providers requires refactoring.</li>
+    </ul>
+
+    <p>
+      pompelmi keeps scanning fully in-process. Files never leave your infrastructure,
+      there is no per-scan cost, and latency is bounded by local network (typically
+      under 10 ms for clamd over UNIX socket).
+    </p>
+
+    <h2 id="choose" style="margin-top:32px;">Which should you choose?</h2>
+
+    <div class="summary-grid">
+      <div class="summary-card">
+        <h4>Choose pompelmi if&hellip;</h4>
+        <p>You need TypeScript support, stream / buffer scanning, framework plugins,
+        Bun compatibility, or a clean Symbol-based API. Privacy and zero egress matter.</p>
+      </div>
+      <div class="summary-card">
+        <h4>Choose node-clam if&hellip;</h4>
+        <p>You already depend on node-clam and don't want to migrate, or need legacy
+        Node.js support (&lt; 18).</p>
+      </div>
+      <div class="summary-card">
+        <h4>Choose VirusTotal if&hellip;</h4>
+        <p>You need multi-engine coverage, do not process sensitive data, and the
+        per-scan cost and latency are acceptable for your use case.</p>
+      </div>
+      <div class="summary-card">
+        <h4>Choose clamav-js if&hellip;</h4>
+        <p>You need offline scanning without any running daemon and native bindings are
+        acceptable in your build environment.</p>
+      </div>
+    </div>
+
+    <p>
+      Questions? Open a <a href="https://github.com/pompelmi/pompelmi/issues" target="_blank" rel="noopener">GitHub issue</a>
+      or <a href="contacts.html">contact us</a>.
+    </p>
+
+  </div>
+</div>
+
+<div id="footer">
+  <p>&copy; pompelmi contributors &mdash; <a href="https://github.com/pompelmi/pompelmi">GitHub</a> &mdash; <a href="https://pompelmi.app">pompelmi.app</a></p>
+</div>
+
+</body>
+</html>

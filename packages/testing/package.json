@@ -1,0 +1,35 @@
+{
+  "name": "@pompelmi/testing",
+  "version": "1.0.0",
+  "description": "Mock utilities for unit-testing applications that use pompelmi — Jest, Vitest, and Node test runner",
+  "license": "ISC",
+  "author": "pompelmi contributors",
+  "homepage": "https://pompelmi.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/testing"
+  },
+  "keywords": [
+    "pompelmi",
+    "testing",
+    "mock",
+    "jest",
+    "vitest",
+    "clamav",
+    "antivirus",
+    "unit-test"
+  ],
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "test": "node --test test/index.test.js"
+  },
+  "peerDependencies": {
+    "pompelmi": ">=1.14.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

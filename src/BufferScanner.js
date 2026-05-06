@@ -3,6 +3,9 @@
 const net         = require('net');
 const { Verdict } = require('./verdicts.js');
 
+// net.createConnection is polyfilled by Bun — no code changes needed
+const isBun = typeof Bun !== 'undefined'; // eslint-disable-line no-unused-vars
+
 const CLAMD_INSTREAM = Buffer.from('zINSTREAM\0');
 const CHUNK_SIZE     = 64 * 1024;
 
