@@ -111,7 +111,7 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
       const chunks = [];
       for await (const c of data) chunks.push(c);
       innerGotBuffer = Buffer.concat(chunks);
-      return new File([innerGotBuffer], 'inner.bin');
+      return new NodeFile([innerGotBuffer], 'inner.bin');
     };
     const handler = pompelmiUploadHandler({ inner });
     const result = await handler(makeArgs(Buffer.from('clean data')));
