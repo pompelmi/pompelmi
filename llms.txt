@@ -20,6 +20,17 @@ Options: `{ host?: string, port?: number, timeout?: number }`
 - Local mode: spawns `clamscan`, maps exit codes to verdicts
 - TCP mode: streams to clamd via INSTREAM protocol (set `host`)
 
+## Framework integrations
+
+Official packages for popular frameworks:
+
+- `@pompelmi/nestjs` — NestJS module (`PompelmiModule`, `PompelmiService`, `PompelmiInterceptor`)
+- `@pompelmi/fastify` — Fastify plugin (decorates `fastify.pompelmi` with scan/preHandler)
+- `@pompelmi/hono` — Hono middleware (`pompelmiMiddleware`) for Node.js, Bun, Cloudflare Workers
+- `@pompelmi/remix` — Remix upload handler (`pompelmiUploadHandler` for `unstable_parseMultipartFormData`)
+- `@pompelmi/nextjs` — Next.js App Router / Pages Router helpers
+- `@pompelmi/testing` — test utilities (`mockClean`, `mockInfected`, `withMockedPompelmi`)
+
 ## Installation
 
 npm install pompelmi

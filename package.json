@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "ClamAV for humans — scan any file and get back Clean, Malicious, or ScanError. No daemons. No cloud. No native bindings.",
   "license": "ISC",
   "author": "pompelmi contributors",
@@ -28,7 +28,8 @@
     "fastify",
     "nestjs",
     "multer",
-    "zero-dependencies"
+    "zero-dependencies",
+    "remix"
   ],
   "type": "commonjs",
   "main": "./src/index.js",
@@ -37,7 +38,7 @@
     "pompelmi": "./bin/pompelmi.js"
   },
   "scripts": {
-    "test": "node --test test/unit.test.js && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node test/scan.test.js",
+    "test": "node --test test/unit.test.js && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node test/scan.test.js",
     "lint": "eslint src/"
   },
   "publishConfig": {

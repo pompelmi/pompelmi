@@ -89,7 +89,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
-- Works with Express, Fastify, NestJS, Hono, and any other Node.js HTTP framework
+- Works with Express, Fastify, NestJS, Hono, Remix, and any other Node.js HTTP framework
 - Works with Node.js and Bun — uses `Bun.file()` for faster file reading when available
 - Interactive demo at [pompelmi.app/demo](https://pompelmi.app/demo.html) — try before you install
 - Zero runtime dependencies — ships nothing but source code
@@ -109,6 +109,7 @@ Official integration packages for popular frameworks:
 | [@pompelmi/nestjs](./packages/nestjs/) | NestJS | `npm i @pompelmi/nestjs` |
 | [@pompelmi/fastify](./packages/fastify/) | Fastify | `npm i @pompelmi/fastify` |
 | [@pompelmi/hono](./packages/hono/) | Hono | `npm i @pompelmi/hono` |
+| [@pompelmi/remix](./packages/remix/) | Remix | `npm i @pompelmi/remix` |
 | [@pompelmi/testing](./packages/testing/) | Jest/Vitest/Node | `npm i -D @pompelmi/testing` |
 
 ### NestJS
@@ -153,6 +154,23 @@ app.use('/upload/*', pompelmiMiddleware({
 }))
 
 app.post('/upload', async (c) => c.json({ ok: true }))
+```
+
+### Remix
+
+```ts
+import { unstable_parseMultipartFormData, json } from '@remix-run/node'
+import { pompelmiUploadHandler } from '@pompelmi/remix'
+
+export async function action({ request }) {
+  // Throws HTTP 422 automatically if malware is detected
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    pompelmiUploadHandler({ host: 'localhost', port: 3310 })
+  )
+  const file = formData.get('file')
+  return json({ name: file.name, size: file.size, ok: true })
+}
 ```
 
 ---

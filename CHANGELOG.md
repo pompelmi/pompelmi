@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.16.0] - 2026-05-07
+
+### Added
+- **`@pompelmi/remix`** — new official Remix upload handler package (`npm i @pompelmi/remix`). Exports `pompelmiUploadHandler(options)` — a drop-in `UploadHandler` for `unstable_parseMultipartFormData`. Scans every uploaded file with pompelmi before passing it to an optional inner handler (e.g. `unstable_createFileUploadHandler`). Throws an HTTP 422 `Response` automatically on malicious files (Remix catches it and returns it to the client). Supports `field` option to scan only one form field, `inner` handler chaining, and `onInfected` custom callback. Full TypeScript declarations included.
+
+### Changed
+- `package.json` `test` script — includes `packages/remix/test/index.test.js`.
+
+---
+
 ## [1.15.0] - 2026-05-06
 
 ### Added

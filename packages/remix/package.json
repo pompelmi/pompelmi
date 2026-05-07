@@ -1,0 +1,38 @@
+{
+  "name": "@pompelmi/remix",
+  "version": "1.0.0",
+  "description": "Remix upload handler for pompelmi — in-process ClamAV virus scanning with zero extra dependencies",
+  "license": "ISC",
+  "author": "pompelmi contributors",
+  "homepage": "https://pompelmi.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/remix"
+  },
+  "keywords": [
+    "remix",
+    "remix-run",
+    "upload-handler",
+    "clamav",
+    "antivirus",
+    "virus-scan",
+    "malware",
+    "file-upload",
+    "security",
+    "pompelmi",
+    "fullstack"
+  ],
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "scripts": {
+    "test": "node --test test/index.test.js"
+  },
+  "peerDependencies": {
+    "pompelmi": ">=1.15.0"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

@@ -69,7 +69,8 @@
       <span class="sidebar-label">On this page</span>
       <li><a href="#overview">Overview</a></li>
       <li><a href="#install">Install</a></li>
-      <li><a href="#upload-handler">Upload handler</a></li>
+      <li><a href="#upload-handler">@pompelmi/remix (recommended)</a></li>
+      <li><a href="#upload-handler-manual">Manual upload handler</a></li>
       <li><a href="#action">Route Action</a></li>
       <li><a href="#component">Route component</a></li>
       <li><a href="#resource-route">Resource Route variant</a></li>
@@ -101,14 +102,50 @@
 
     <div class="section" id="install">
       <h2>Install</h2>
-<pre>npm install pompelmi</pre>
+<pre>npm install @pompelmi/remix pompelmi</pre>
       <p>Install ClamAV on your server:</p>
       <span class="platform-label">Linux (Debian / Ubuntu)</span>
 <pre>sudo apt-get install -y clamav &amp;&amp; sudo freshclam</pre>
     </div>
 
     <div class="section" id="upload-handler">
-      <h2>Custom upload handler</h2>
+      <h2>Using @pompelmi/remix (recommended)</h2>
+      <p>
+        Since pompelmi v1.16.0, the official <code>@pompelmi/remix</code> package
+        ships a ready-made <code>pompelmiUploadHandler</code> that plugs directly
+        into <code>unstable_parseMultipartFormData</code>. Malicious files throw
+        an HTTP 422 <code>Response</code> automatically — Remix catches it and
+        returns it to the client.
+      </p>
+<pre>// app/routes/upload.tsx
+import { unstable_parseMultipartFormData, json } from '@remix-run/node';
+import { pompelmiUploadHandler } from '@pompelmi/remix';
+import type { ActionFunctionArgs } from '@remix-run/node';
+
+export async function action({ request }: ActionFunctionArgs) {
+  // Throws HTTP 422 automatically if malware is detected
+  const formData = await unstable_parseMultipartFormData(
+    request,
+    pompelmiUploadHandler({ host: 'localhost', port: 3310 })
+  );
+
+  const file = formData.get('file') as File;
+  if (!file) return json({ error: 'No file provided.' }, { status: 400 });
+
+  return json({ status: 'ok', name: file.name, size: file.size });
+}</pre>
+
+      <div class="tip">
+        Chain <code>pompelmiUploadHandler</code> with an inner handler to write
+        clean files to disk:
+        <code>pompelmiUploadHandler({ inner: unstable_createFileUploadHandler({ directory: '/tmp' }), ... })</code>
+      </div>
+
+      <p>You can also use pompelmi directly without the integration package — read on for the manual approach.</p>
+    </div>
+
+    <div class="section" id="upload-handler-manual">
+      <h2>Manual upload handler (without @pompelmi/remix)</h2>
       <p>
         Remix's <code>unstable_parseMultipartFormData</code> accepts an
         <em>upload handler</em> — an async function that receives each part of the
@@ -118,13 +155,11 @@
       </p>
 <pre>// app/utils/uploadHandler.server.ts
 import { unstable_createFileUploadHandler } from '@remix-run/node';
-import { join } from 'path';
 import { tmpdir } from 'os';
 
 export const tempFileUploadHandler = unstable_createFileUploadHandler({
   directory: tmpdir(),
   maxPartSize: 50 * 1024 * 1024, // 50 MB
-  // avoidFileConflicts generates a unique filename
   avoidFileConflicts: true,
 });</pre>
 
@@ -299,7 +334,7 @@ export async function action({ request }: ActionFunctionArgs) {
 </div>
 
 <div id="footer">
-  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  pompelmi v1.16.0 &nbsp;&mdash;&nbsp;
   License: ISC &nbsp;&mdash;&nbsp;
   <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
   &nbsp;&mdash;&nbsp;
