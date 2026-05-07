@@ -2,6 +2,9 @@
 
 const { scanBuffer, Verdict } = require('pompelmi');
 
+// File is a global in Node 20+; on Node 18 it lives in node:buffer
+const NodeFile = globalThis.File ?? require('node:buffer').File;
+
 const SCAN_KEYS = ['host', 'port', 'socket', 'timeout', 'retries', 'retryDelay'];
 
 function buildScanOptions(options) {
@@ -62,7 +65,7 @@ function pompelmiUploadHandler(options) {
       const buf = await collectStream(data);
       // Text field (no filename) → return as string; file field → return as File
       if (!filename) return buf.toString('utf8');
-      return new File([buf], filename, { type: contentType });
+      return new NodeFile([buf], filename, { type: contentType });
     }
 
     const buffer = await collectStream(data);
@@ -86,7 +89,7 @@ function pompelmiUploadHandler(options) {
       return inner({ name, filename, contentType, data: replay() });
     }
 
-    return new File([buffer], filename, { type: contentType });
+    return new NodeFile([buffer], filename, { type: contentType });
   };
 }
 

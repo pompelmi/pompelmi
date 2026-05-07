@@ -5,6 +5,9 @@ const assert = require('node:assert/strict');
 const Module = require('module');
 const path   = require('path');
 
+// File is a global in Node 20+; on Node 18 it lives in node:buffer
+const NodeFile = globalThis.File ?? require('node:buffer').File;
+
 // ── Mock pompelmi ─────────────────────────────────────────────────────────────
 
 const Clean     = Symbol('Clean');
@@ -65,7 +68,7 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
     mockScanResult = Clean;
     const handler = pompelmiUploadHandler({});
     const result = await handler(makeArgs(Buffer.from('safe content')));
-    assert.ok(result instanceof File);
+    assert.ok(result instanceof NodeFile);
     assert.equal(result.name, 'upload.bin');
   });
 
@@ -112,7 +115,7 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
     };
     const handler = pompelmiUploadHandler({ inner });
     const result = await handler(makeArgs(Buffer.from('clean data')));
-    assert.ok(result instanceof File);
+    assert.ok(result instanceof NodeFile);
     assert.equal(innerGotBuffer.toString(), 'clean data');
   });
 
@@ -132,7 +135,7 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
     const args = makeArgs(Buffer.from('eicar'), 'resume', 'resume.pdf');
     const result = await handler(args);
     // no inner handler → returns File directly without scanning
-    assert.ok(result instanceof File);
+    assert.ok(result instanceof NodeFile);
   });
 
   it('scans targeted field when `field` option matches', async () => {
@@ -153,7 +156,7 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
     mockScanResult = ScanError;
     const handler = pompelmiUploadHandler({});
     const result = await handler(makeArgs(Buffer.from('data')));
-    assert.ok(result instanceof File);
+    assert.ok(result instanceof NodeFile);
   });
 
   it('skips scan for empty buffer', async () => {
@@ -162,6 +165,6 @@ describe('@pompelmi/remix pompelmiUploadHandler', () => {
     async function* empty() { yield Buffer.alloc(0); }
     const args = { name: 'file', filename: 'empty.bin', contentType: 'application/octet-stream', data: empty() };
     const result = await handler(args);
-    assert.ok(result instanceof File);
+    assert.ok(result instanceof NodeFile);
   });
 });
