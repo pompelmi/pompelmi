@@ -28,6 +28,7 @@ Official packages for popular frameworks:
 - `@pompelmi/fastify` — Fastify plugin (decorates `fastify.pompelmi` with scan/preHandler)
 - `@pompelmi/hono` — Hono middleware (`pompelmiMiddleware`) for Node.js, Bun, Cloudflare Workers
 - `@pompelmi/remix` — Remix upload handler (`pompelmiUploadHandler` for `unstable_parseMultipartFormData`)
+- `@pompelmi/sveltekit` — SvelteKit helper (`scanUpload`, `scanFormData` for +page.server.ts and +server.ts)
 - `@pompelmi/nextjs` — Next.js App Router / Pages Router helpers
 - `@pompelmi/testing` — test utilities (`mockClean`, `mockInfected`, `withMockedPompelmi`)
 

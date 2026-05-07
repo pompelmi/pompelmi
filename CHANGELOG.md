@@ -8,10 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.16.0] - 2026-05-07
 
 ### Added
-- **`@pompelmi/remix`** — new official Remix upload handler package (`npm i @pompelmi/remix`). Exports `pompelmiUploadHandler(options)` — a drop-in `UploadHandler` for `unstable_parseMultipartFormData`. Scans every uploaded file with pompelmi before passing it to an optional inner handler (e.g. `unstable_createFileUploadHandler`). Throws an HTTP 422 `Response` automatically on malicious files (Remix catches it and returns it to the client). Supports `field` option to scan only one form field, `inner` handler chaining, and `onInfected` custom callback. Full TypeScript declarations included.
+- **`@pompelmi/remix`** — new official Remix upload handler package (`npm i @pompelmi/remix`). Exports `pompelmiUploadHandler(options)` — a drop-in `UploadHandler` for `unstable_parseMultipartFormData`. Scans every uploaded file with pompelmi before passing it to an optional inner handler (e.g. `unstable_createFileUploadHandler`). Throws an HTTP 422 `Response` automatically on malicious files (Remix catches it and returns it to the client). Supports `field` option to scan only one form field, `inner` handler chaining, and `onInfected` custom callback. Full TypeScript declarations included. 12 unit tests.
+- **`@pompelmi/sveltekit`** — new official SvelteKit helper package (`npm i @pompelmi/sveltekit`). Exports `scanUpload(file, options)` and `scanFormData(formData, options)`. Works in both `+page.server.ts` form actions and `+server.ts` API routes. Throws HTTP 422 `Response` automatically on malicious files; supports custom `onInfected` callbacks. Full TypeScript declarations included. 17 unit tests.
+- **Node 18 compatibility** — `@pompelmi/remix` and `@pompelmi/sveltekit` use `globalThis.File ?? require('node:buffer').File` so they work on Node.js 18.x, 20.x, and 22.x (`File` became a global only in Node.js 20).
+- **`test/eicar.txt`** — added missing EICAR standard antivirus test fixture so the `scan.test.js` "Malicious file" integration case passes when ClamAV is installed locally.
 
 ### Changed
-- `package.json` `test` script — includes `packages/remix/test/index.test.js`.
+- `package.json` `test` script — includes `packages/remix/test/index.test.js` and `packages/sveltekit/test/index.test.js`.
+- `test/scan.test.js` — exits with code 1 when any integration test fails (was silently exiting 0).
+- `.github/workflows` — added `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true` to all four workflow files to opt into Node.js 24 runners ahead of the forced migration.
 
 ---
 

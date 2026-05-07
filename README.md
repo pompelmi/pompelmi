@@ -89,7 +89,7 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
-- Works with Express, Fastify, NestJS, Hono, Remix, and any other Node.js HTTP framework
+- Works with Express, Fastify, NestJS, Hono, Remix, SvelteKit, and any other Node.js HTTP framework
 - Works with Node.js and Bun — uses `Bun.file()` for faster file reading when available
 - Interactive demo at [pompelmi.app/demo](https://pompelmi.app/demo.html) — try before you install
 - Zero runtime dependencies — ships nothing but source code
@@ -110,6 +110,7 @@ Official integration packages for popular frameworks:
 | [@pompelmi/fastify](./packages/fastify/) | Fastify | `npm i @pompelmi/fastify` |
 | [@pompelmi/hono](./packages/hono/) | Hono | `npm i @pompelmi/hono` |
 | [@pompelmi/remix](./packages/remix/) | Remix | `npm i @pompelmi/remix` |
+| [@pompelmi/sveltekit](./packages/sveltekit/) | SvelteKit | `npm i @pompelmi/sveltekit` |
 | [@pompelmi/testing](./packages/testing/) | Jest/Vitest/Node | `npm i -D @pompelmi/testing` |
 
 ### NestJS
@@ -170,6 +171,23 @@ export async function action({ request }) {
   )
   const file = formData.get('file')
   return json({ name: file.name, size: file.size, ok: true })
+}
+```
+
+### SvelteKit
+
+```ts
+// +page.server.ts
+import { scanUpload } from '@pompelmi/sveltekit'
+import type { Actions } from './$types'
+
+export const actions: Actions = {
+  default: async ({ request }) => {
+    const formData = await request.formData()
+    // Throws HTTP 422 automatically if malware is detected
+    await scanUpload(formData.get('file') as File, { host: 'localhost', port: 3310 })
+    return { success: true }
+  }
 }
 ```
 

@@ -29,7 +29,9 @@
     "nestjs",
     "multer",
     "zero-dependencies",
-    "remix"
+    "remix",
+    "sveltekit",
+    "svelte"
   ],
   "type": "commonjs",
   "main": "./src/index.js",
@@ -38,7 +40,7 @@
     "pompelmi": "./bin/pompelmi.js"
   },
   "scripts": {
-    "test": "node --test test/unit.test.js && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node test/scan.test.js",
+    "test": "node --test test/unit.test.js && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node --test packages/sveltekit/test/index.test.js && node test/scan.test.js",
     "lint": "eslint src/"
   },
   "publishConfig": {
