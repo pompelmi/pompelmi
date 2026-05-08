@@ -71,12 +71,14 @@ function parseArgs(argv) {
     reportOutput: null,
     shareCard: false,
     shareCardOutput: null,
+    quarantine: null,
+    scorecardConfig: null,
   };
 
   let i = 0;
   while (i < args.length) {
     const a = args[i];
-    if (a === 'scan' || a === 'watch' || a === 'version' || a === 'help') {
+    if (a === 'scan' || a === 'watch' || a === 'version' || a === 'help' || a === 'scorecard') {
       opts.command = a;
     } else if (a === '--json') {
       opts.json = true;
@@ -104,6 +106,10 @@ function parseArgs(argv) {
       const next = args[++i];
       if (next && next.endsWith('.svg')) opts.shareCardOutput = next;
       else opts.reportOutput = next;
+    } else if (a === '--quarantine') {
+      opts.quarantine = args[++i];
+    } else if (a === '--config') {
+      opts.scorecardConfig = args[++i];
     } else if (!a.startsWith('-') && opts.command && !opts.target) {
       opts.target = a;
     }
@@ -333,7 +339,9 @@ async function cmdWatch(opts) {
   if (!opts.json && !opts.quiet) await printLogo();
 
   const { watch } = require('../src/Watcher.js');
-  const scanOpts = buildScanOpts(opts);
+  const quarantineDir = opts.quarantine ? path.resolve(opts.quarantine) : null;
+  const watchOpts = { ...buildScanOpts(opts) };
+  if (quarantineDir) watchOpts.quarantine = quarantineDir;
 
   let scanned = 0, clean = 0, infected = 0;
 
@@ -345,7 +353,7 @@ async function cmdWatch(opts) {
 
   status();
 
-  watch(target, scanOpts, {
+  watch(target, watchOpts, {
     onClean(fp) {
       scanned++; clean++;
       if (!opts.quiet) process.stdout.write(`\n\x1b[32m✅ CLEAN\x1b[0m  ${fp}\n`);
@@ -354,6 +362,7 @@ async function cmdWatch(opts) {
     onMalicious(fp) {
       scanned++; infected++;
       process.stdout.write(`\n\x1b[31m🚨 INFECTED\x1b[0m  ${fp}\n`);
+      if (quarantineDir && !opts.quiet) process.stdout.write(`   Quarantined to ${quarantineDir}\n`);
       status();
     },
     onError(err) {
@@ -364,6 +373,44 @@ async function cmdWatch(opts) {
   });
 
   process.on('SIGINT', () => { process.stdout.write('\n'); process.exit(0); });
+}
+
+async function cmdScorecard(opts) {
+  let config = {};
+  if (opts.scorecardConfig) {
+    const cfgPath = path.resolve(opts.scorecardConfig);
+    if (!fs.existsSync(cfgPath)) {
+      console.error(`Error: config file not found: ${cfgPath}`);
+      process.exit(2);
+    }
+    config = require(cfgPath);
+  }
+
+  const { generateScorecard } = require('../src/Scorecard.js');
+  const scorecard = await generateScorecard(config);
+
+  const gradeColor = { A: '\x1b[32m', B: '\x1b[32m', C: '\x1b[33m', D: '\x1b[33m', F: '\x1b[31m' };
+  const color = gradeColor[scorecard.grade] || '\x1b[0m';
+  const reset = '\x1b[0m';
+
+  if (!opts.quiet) await printLogo();
+
+  console.log(`\n  Upload Security Scorecard\n`);
+  console.log(`  Grade: ${color}${scorecard.grade}${reset}   Score: ${scorecard.score}/100\n`);
+
+  for (const f of scorecard.findings) {
+    const icon = f.status === 'pass' ? '\x1b[32m✓\x1b[0m' : '\x1b[31m✗\x1b[0m';
+    console.log(`  ${icon}  ${f.check.padEnd(40)} (weight: ${f.weight})`);
+  }
+
+  if (scorecard.recommendations.length > 0) {
+    console.log(`\n  Recommendations:`);
+    for (const r of scorecard.recommendations) {
+      console.log(`    • ${r}`);
+    }
+  }
+
+  console.log('');
 }
 
 function cmdVersion() {
@@ -380,6 +427,7 @@ USAGE
 COMMANDS
   scan <file|dir>    Scan a file or directory for viruses
   watch <dir>        Watch a directory and auto-scan new/modified files
+  scorecard          Grade your upload security configuration (A-F)
   version            Print version number
   help               Show this help message
 
@@ -400,6 +448,10 @@ SCAN OPTIONS
 
 WATCH OPTIONS
   --host, --port, --socket, --timeout   (same as scan)
+  --quarantine <dir>  Move infected files to this directory (auto-created)
+
+SCORECARD OPTIONS
+  --config <file>     Path to a pompelmi.config.js file with your upload config
 
 EXIT CODES
   0   All files clean
@@ -428,6 +480,12 @@ EXAMPLES
 
   # Use with npx (no install required)
   npx pompelmi scan ./uploads
+
+  # Watch a directory with quarantine
+  pompelmi watch ./uploads --quarantine ./quarantine
+
+  # Grade your upload security config
+  npx pompelmi scorecard --config ./pompelmi.config.js
 `);
 }
 
@@ -454,6 +512,11 @@ async function main() {
 
   if (opts.command === 'watch') {
     await cmdWatch(opts);
+    return;
+  }
+
+  if (opts.command === 'scorecard') {
+    await cmdScorecard(opts);
     return;
   }
 }

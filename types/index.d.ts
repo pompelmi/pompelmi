@@ -142,14 +142,22 @@ export interface WatchCallbacks {
   onError?: (err: Error, filePath?: string) => void;
 }
 
+/** Options for watch() — extends ScanOptions with quarantine support */
+export interface WatchOptions extends ScanOptions {
+  /** Path to a quarantine directory. Infected files are moved here automatically. */
+  quarantine?: string;
+}
+
 /**
  * Watch a directory for new/modified files and scan each automatically.
  * Uses fs.watch with a 300 ms debounce. No dependencies.
+ * When `options.quarantine` is set, infected files are moved to that directory
+ * with a `.quarantined` extension and a sidecar JSON file.
  * Returns an FSWatcher; call .close() to stop watching.
  */
 export declare function watch(
   dirPath: string,
-  options?: ScanOptions,
+  options?: WatchOptions,
   callbacks?: WatchCallbacks
 ): FSWatcher;
 
@@ -266,3 +274,57 @@ export declare function generateShareCard(
   scanResults: ScanRow[] | DirectoryScanResult,
   options?: ShareCardOptions
 ): string;
+
+/** Input configuration for generateScorecard */
+export interface ScorecardConfig {
+  /** Whether virus scanning is enabled */
+  scanEnabled?: boolean;
+  /** Array of allowed MIME types (non-empty = pass) */
+  mimeTypeAllowlist?: string[];
+  /** Maximum file size in bytes (positive = pass) */
+  fileSizeLimit?: number;
+  /** Whether files are written to disk before scanning (false = pass) */
+  diskWriteBeforeScan?: boolean;
+  /** What to do on scan error: 'reject' = pass, anything else = fail */
+  scanErrorBehavior?: 'reject' | string;
+  /** What to do when clamd is unavailable: 'reject' = pass, anything else = fail */
+  clamdUnavailableBehavior?: 'reject' | string;
+  /** Whether TLS is enabled on the upload endpoint */
+  tlsEnabled?: boolean;
+}
+
+/** A single check result in a scorecard */
+export interface ScorecardFinding {
+  check: string;
+  status: 'pass' | 'fail';
+  weight: number;
+}
+
+/** Result returned by generateScorecard */
+export interface ScorecardResult {
+  /** Letter grade A–F */
+  grade: 'A' | 'B' | 'C' | 'D' | 'F';
+  /** Numeric score 0–100 */
+  score: number;
+  /** Per-check results */
+  findings: ScorecardFinding[];
+  /** Actionable recommendations for failed checks */
+  recommendations: string[];
+}
+
+/**
+ * Analyse a project's upload security configuration and return a grade A–F.
+ *
+ * @example
+ * const scorecard = await generateScorecard({
+ *   scanEnabled: true,
+ *   mimeTypeAllowlist: ['image/jpeg', 'image/png'],
+ *   fileSizeLimit: 10 * 1024 * 1024,
+ *   diskWriteBeforeScan: false,
+ *   scanErrorBehavior: 'reject',
+ *   clamdUnavailableBehavior: 'reject',
+ *   tlsEnabled: true,
+ * });
+ * console.log(scorecard.grade); // 'A'
+ */
+export declare function generateScorecard(config?: ScorecardConfig): Promise<ScorecardResult>;

@@ -8,5 +8,6 @@ const { notify }                                      = require('./WebhookNotifi
 const { createScanner }                               = require('./ScanEmitter.js');
 const { generateDashboard }                           = require('./Dashboard.js');
 const { generateShareCard }                           = require('./ShareCard.js');
+const { generateScorecard }                           = require('./Scorecard.js');
 
-module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch, notify, createScanner, generateDashboard, generateShareCard };
+module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch, notify, createScanner, generateDashboard, generateShareCard, generateScorecard };

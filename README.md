@@ -11,6 +11,7 @@
 <p align="center">
   <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/v/pompelmi.svg" alt="npm version"></a>
   <a href="https://www.npmjs.com/package/pompelmi"><img src="https://img.shields.io/npm/dw/pompelmi" alt="weekly downloads"></a>
+  <a href="https://hub.docker.com/r/pompelmi/scanner"><img src="https://img.shields.io/docker/pulls/pompelmi/scanner" alt="Docker Pulls"></a>
   <img src="https://img.shields.io/badge/dependencies-0-brightgreen" alt="zero dependencies">
   <img src="https://img.shields.io/badge/license-ISC-blue" alt="license">
   <a href="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml"><img src="https://github.com/pompelmi/pompelmi/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -73,6 +74,10 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 ## Features
 
 - Standalone CLI — scan files from any terminal with `npx pompelmi scan`
+- **Official Docker image** — `pompelmi/scanner` on Docker Hub: ClamAV + HTTP scan API in one pull ([docs](./docs/docker-image.html))
+- **Security scorecard** — grade your upload security A–F with `npx pompelmi scorecard` ([docs](./docs/scorecard.html))
+- **VS Code extension** — scan files directly from the IDE (scaffold in `packages/vscode/`) ([docs](./docs/vscode.html))
+- **Quarantine mode** — `watch ./uploads --quarantine ./quarantine` auto-moves infected files with sidecar JSON
 - HTML security dashboard — generate beautiful scan reports with `--report` ([docs](./docs/dashboard.html))
 - SVG share card — shareable scan result card with `--share-card` ([docs](./docs/dashboard.html#share-card))
 - GitHub App — one-click installation for organizations, zero-config PR scanning ([docs](./docs/github-app.html))

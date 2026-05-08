@@ -1902,3 +1902,185 @@ describe('Bun runtime detection', () => {
         assert.equal(typeof mod.scanViaClamd, 'function');
     });
 });
+
+// ─── Scorecard ────────────────────────────────────────────────────────────────
+
+describe('generateScorecard', () => {
+    const { generateScorecard } = require('../src/Scorecard.js');
+
+    it('returns grade A for a fully secured config', async () => {
+        const scorecard = await generateScorecard({
+            scanEnabled: true,
+            mimeTypeAllowlist: ['image/jpeg', 'image/png'],
+            fileSizeLimit: 10 * 1024 * 1024,
+            diskWriteBeforeScan: false,
+            scanErrorBehavior: 'reject',
+            clamdUnavailableBehavior: 'reject',
+            tlsEnabled: true,
+        });
+        assert.equal(scorecard.grade, 'A');
+        assert.ok(scorecard.score >= 90, `score should be >= 90, got ${scorecard.score}`);
+        assert.equal(scorecard.recommendations.length, 0);
+    });
+
+    it('returns grade F for an empty config', async () => {
+        const scorecard = await generateScorecard({});
+        assert.equal(scorecard.grade, 'F');
+        assert.ok(scorecard.score === 0, `score should be 0, got ${scorecard.score}`);
+        assert.ok(scorecard.recommendations.length > 0, 'should have recommendations');
+    });
+
+    it('returns grade B when TLS and scanErrorBehavior are missing', async () => {
+        // Missing tlsEnabled (5 pts) + scanErrorBehavior (10 pts) = 85/100 → B
+        const scorecard = await generateScorecard({
+            scanEnabled: true,
+            mimeTypeAllowlist: ['image/jpeg'],
+            fileSizeLimit: 5 * 1024 * 1024,
+            diskWriteBeforeScan: false,
+            scanErrorBehavior: 'allow',
+            clamdUnavailableBehavior: 'reject',
+            tlsEnabled: false,
+        });
+        assert.equal(scorecard.grade, 'B');
+        assert.equal(scorecard.recommendations.length, 2);
+    });
+
+    it('findings array has correct structure', async () => {
+        const scorecard = await generateScorecard({ scanEnabled: true });
+        assert.ok(Array.isArray(scorecard.findings));
+        for (const f of scorecard.findings) {
+            assert.ok(typeof f.check === 'string');
+            assert.ok(f.status === 'pass' || f.status === 'fail');
+            assert.ok(typeof f.weight === 'number' && f.weight > 0);
+        }
+    });
+
+    it('marks scanEnabled as pass when true', async () => {
+        const scorecard = await generateScorecard({ scanEnabled: true });
+        const finding = scorecard.findings.find(f => f.check === 'Virus scanning enabled');
+        assert.ok(finding, 'scanEnabled finding present');
+        assert.equal(finding.status, 'pass');
+    });
+
+    it('marks diskWriteBeforeScan as fail when true', async () => {
+        const scorecard = await generateScorecard({ diskWriteBeforeScan: true });
+        const finding = scorecard.findings.find(f => f.check === 'No disk write before scan');
+        assert.ok(finding, 'diskWriteBeforeScan finding present');
+        assert.equal(finding.status, 'fail');
+    });
+
+    it('score is between 0 and 100', async () => {
+        const scorecard = await generateScorecard({ scanEnabled: true, mimeTypeAllowlist: ['image/jpeg'] });
+        assert.ok(scorecard.score >= 0 && scorecard.score <= 100);
+    });
+});
+
+// ─── Quarantine ───────────────────────────────────────────────────────────────
+
+describe('quarantineFile', () => {
+    const { quarantineFile } = require('../src/Watcher.js');
+    const os   = require('os');
+    const path = require('path');
+    const fs   = require('fs');
+
+    it('moves the file to the quarantine directory', () => {
+        const tmpDir   = fs.mkdtempSync(path.join(os.tmpdir(), 'pompelmi-qtest-'));
+        const srcFile  = path.join(tmpDir, 'infected.txt');
+        const qDir     = path.join(tmpDir, 'quarantine');
+        fs.writeFileSync(srcFile, 'eicar-payload');
+
+        quarantineFile(srcFile, qDir, 'Eicar-Test-Signature');
+
+        assert.ok(!fs.existsSync(srcFile), 'source file should be moved');
+        const destFile = path.join(qDir, 'infected.txt.quarantined');
+        assert.ok(fs.existsSync(destFile), 'quarantined file should exist');
+        fs.rmSync(tmpDir, { recursive: true });
+    });
+
+    it('creates quarantine directory if it does not exist', () => {
+        const tmpDir  = fs.mkdtempSync(path.join(os.tmpdir(), 'pompelmi-qtest-'));
+        const srcFile = path.join(tmpDir, 'bad.exe');
+        const qDir    = path.join(tmpDir, 'deep', 'quarantine');
+        fs.writeFileSync(srcFile, 'payload');
+
+        quarantineFile(srcFile, qDir, 'Win.Test');
+
+        assert.ok(fs.existsSync(qDir), 'quarantine dir should be created');
+        fs.rmSync(tmpDir, { recursive: true });
+    });
+
+    it('writes a sidecar JSON with originalPath, virus, timestamp, sha256', () => {
+        const tmpDir   = fs.mkdtempSync(path.join(os.tmpdir(), 'pompelmi-qtest-'));
+        const srcFile  = path.join(tmpDir, 'file.pdf');
+        const qDir     = path.join(tmpDir, 'quarantine');
+        const content  = Buffer.from('fake-pdf-content');
+        fs.writeFileSync(srcFile, content);
+
+        quarantineFile(srcFile, qDir, 'PDF.Malware');
+
+        const sidecarPath = path.join(qDir, 'file.pdf.quarantined.json');
+        assert.ok(fs.existsSync(sidecarPath), 'sidecar JSON should exist');
+
+        const sidecar = JSON.parse(fs.readFileSync(sidecarPath, 'utf8'));
+        assert.equal(sidecar.originalPath, srcFile);
+        assert.equal(sidecar.virus, 'PDF.Malware');
+        assert.ok(typeof sidecar.timestamp === 'string');
+        assert.ok(typeof sidecar.sha256 === 'string' && sidecar.sha256.length === 64);
+
+        fs.rmSync(tmpDir, { recursive: true });
+    });
+});
+
+// ─── VS Code extension ────────────────────────────────────────────────────────
+
+describe('VS Code extension', () => {
+    it('exports activate and deactivate functions', () => {
+        const ext = require('../packages/vscode/src/extension.js');
+        assert.equal(typeof ext.activate,   'function');
+        assert.equal(typeof ext.deactivate, 'function');
+    });
+
+    it('activate registers three commands via mock vscode API', () => {
+        const registered = [];
+        const mockVscode = {
+            commands: {
+                registerCommand: (id, _handler) => { registered.push(id); return { dispose: () => {} }; },
+            },
+            workspace: {
+                getConfiguration: () => ({ get: (_k, d) => d }),
+                workspaceFolders: [],
+            },
+            window: { showInformationMessage: () => {}, showErrorMessage: () => {}, withProgress: () => {} },
+            ProgressLocation: { Notification: 15 },
+        };
+
+        // Patch require so extension.js gets mock vscode
+        const Module = require('module');
+        const orig   = Module._resolveFilename;
+        Module._resolveFilename = function(req, ...rest) {
+            if (req === 'vscode') return '__vscode_mock__';
+            return orig.call(this, req, ...rest);
+        };
+        require.cache['__vscode_mock__'] = { id: '__vscode_mock__', filename: '__vscode_mock__', loaded: true, exports: mockVscode, children: [], paths: [] };
+
+        // Force reload extension with mock in place
+        const extPath = require.resolve('../packages/vscode/src/extension.js');
+        delete require.cache[extPath];
+        const { activate } = require('../packages/vscode/src/extension.js');
+
+        const subscriptions = [];
+        activate({ subscriptions });
+
+        delete require.cache['__vscode_mock__'];
+        Module._resolveFilename = orig;
+
+        assert.ok(registered.includes('pompelmi.scanFile'),     'scanFile command registered');
+        assert.ok(registered.includes('pompelmi.scanWorkspace'), 'scanWorkspace command registered');
+        assert.ok(registered.includes('pompelmi.configure'),     'configure command registered');
+    });
+
+    it('deactivate does not throw', () => {
+        const { deactivate } = require('../packages/vscode/src/extension.js');
+        assert.doesNotThrow(() => deactivate());
+    });
+});

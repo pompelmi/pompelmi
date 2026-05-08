@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/scorecard.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Security Scorecard — pompelmi</title>
+<meta name="description" content="Grade your Node.js upload security A-F with the pompelmi scorecard API and CLI. Checks virus scanning, MIME type allowlists, disk-write behavior, TLS, and more.">
+<meta property="og:title" content="Security Scorecard — pompelmi">
+<meta property="og:description" content="Grade your Node.js upload security A-F with the pompelmi scorecard API and CLI.">
+<meta property="og:url" content="https://pompelmi.app/scorecard.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Security Scorecard — pompelmi">
+<meta name="twitter:description" content="Grade your Node.js upload security A-F with the pompelmi scorecard API and CLI.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "Security Scorecard — pompelmi",
+  "url": "https://pompelmi.app/scorecard.html",
+  "description": "Grade your Node.js upload security A-F with the pompelmi scorecard API and CLI.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/scorecard.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="docker-image.html">Docker Hub Image</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="scorecard.html" class="active">Scorecard</a>
+  <a href="vscode.html">VS Code</a>
+  <a href="demo.html">Demo</a>
+  <a href="comparison.html">Comparison</a>
+  <a href="deno.html">Deno</a>
+  <a href="cloudflare.html">Cloudflare Workers</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Security Scorecard</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#api">API usage</a></li>
+      <li><a href="#cli">CLI usage</a></li>
+      <li><a href="#checks">Checks &amp; weights</a></li>
+      <li><a href="#grades">Grade thresholds</a></li>
+      <li><a href="#config-file">Config file</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <h1>Security Scorecard</h1>
+    <p>The scorecard analyses your upload security configuration and returns a letter grade (A&ndash;F)
+       with specific findings and actionable recommendations. Great for CI gates, pull request
+       checks, and sharing on social media.</p>
+
+    <h2 id="overview">Overview</h2>
+    <p>Seven security checks are evaluated, each with a weighted score out of 100:</p>
+    <ul>
+      <li>Virus scanning enabled &mdash; 30 pts</li>
+      <li>MIME type allowlist &mdash; 20 pts</li>
+      <li>No disk write before scan &mdash; 15 pts</li>
+      <li>File size limit &mdash; 10 pts</li>
+      <li>Scan error behavior is reject &mdash; 10 pts</li>
+      <li>clamd unavailable behavior is reject &mdash; 10 pts</li>
+      <li>TLS enabled on upload endpoint &mdash; 5 pts</li>
+    </ul>
+
+    <h2 id="api">API usage</h2>
+    <pre><code class="language-javascript">const { generateScorecard } = require('pompelmi');
+
+const scorecard = await generateScorecard({
+  scanEnabled:              true,
+  mimeTypeAllowlist:        ['image/jpeg', 'image/png', 'application/pdf'],
+  fileSizeLimit:            10 * 1024 * 1024, // 10 MB
+  diskWriteBeforeScan:      false,
+  scanErrorBehavior:        'reject',
+  clamdUnavailableBehavior: 'reject',
+  tlsEnabled:               true,
+});
+
+console.log(scorecard.grade);        // 'A'
+console.log(scorecard.score);        // 100
+console.log(scorecard.findings);     // array of { check, status, weight }
+console.log(scorecard.recommendations); // [] (empty when all pass)</code></pre>
+
+    <h3>Return value</h3>
+    <pre><code class="language-typescript">{
+  grade:           'A' | 'B' | 'C' | 'D' | 'F';
+  score:           number; // 0–100
+  findings:        Array&lt;{ check: string; status: 'pass' | 'fail'; weight: number }&gt;;
+  recommendations: string[];
+}</code></pre>
+
+    <h2 id="cli">CLI usage</h2>
+    <pre><code class="language-bash"># Grade your config interactively
+npx pompelmi scorecard --config ./pompelmi.config.js</code></pre>
+
+    <p>Example output:</p>
+    <pre><code>  Upload Security Scorecard
+
+  Grade: A   Score: 100/100
+
+  ✓  Virus scanning enabled                    (weight: 30)
+  ✓  MIME type allowlist                        (weight: 20)
+  ✓  File size limit                            (weight: 10)
+  ✓  No disk write before scan                  (weight: 15)
+  ✓  Scan error behavior is reject              (weight: 10)
+  ✓  clamd unavailable behavior is reject       (weight: 10)
+  ✓  TLS enabled on upload endpoint             (weight: 5)</code></pre>
+
+    <h2 id="checks">Checks &amp; weights</h2>
+    <table>
+      <thead>
+        <tr><th>Config key</th><th>Check</th><th>Weight</th><th>Pass condition</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>scanEnabled</code></td><td>Virus scanning enabled</td><td>30</td><td><code>true</code></td></tr>
+        <tr><td><code>mimeTypeAllowlist</code></td><td>MIME type allowlist</td><td>20</td><td>Non-empty array</td></tr>
+        <tr><td><code>diskWriteBeforeScan</code></td><td>No disk write before scan</td><td>15</td><td><code>false</code></td></tr>
+        <tr><td><code>fileSizeLimit</code></td><td>File size limit</td><td>10</td><td>Positive number</td></tr>
+        <tr><td><code>scanErrorBehavior</code></td><td>Scan error behavior is reject</td><td>10</td><td><code>'reject'</code></td></tr>
+        <tr><td><code>clamdUnavailableBehavior</code></td><td>clamd unavailable behavior is reject</td><td>10</td><td><code>'reject'</code></td></tr>
+        <tr><td><code>tlsEnabled</code></td><td>TLS enabled on upload endpoint</td><td>5</td><td><code>true</code></td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="grades">Grade thresholds</h2>
+    <table>
+      <thead>
+        <tr><th>Grade</th><th>Score range</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>A</strong></td><td>90&ndash;100</td></tr>
+        <tr><td><strong>B</strong></td><td>75&ndash;89</td></tr>
+        <tr><td><strong>C</strong></td><td>60&ndash;74</td></tr>
+        <tr><td><strong>D</strong></td><td>45&ndash;59</td></tr>
+        <tr><td><strong>F</strong></td><td>0&ndash;44</td></tr>
+      </tbody>
+    </table>
+
+    <h2 id="config-file">Config file</h2>
+    <p>Create a <code>pompelmi.config.js</code> at your project root and pass it via <code>--config</code>:</p>
+    <pre><code class="language-javascript">// pompelmi.config.js
+module.exports = {
+  scanEnabled:              true,
+  mimeTypeAllowlist:        ['image/jpeg', 'image/png', 'application/pdf'],
+  fileSizeLimit:            5 * 1024 * 1024,
+  diskWriteBeforeScan:      false,
+  scanErrorBehavior:        'reject',
+  clamdUnavailableBehavior: 'reject',
+  tlsEnabled:               true,
+};</code></pre>
+
+    <h2 id="typescript">TypeScript</h2>
+    <pre><code class="language-typescript">import { generateScorecard, ScorecardConfig, ScorecardResult } from 'pompelmi';
+
+const config: ScorecardConfig = {
+  scanEnabled: true,
+  mimeTypeAllowlist: ['image/jpeg'],
+  fileSizeLimit: 10_000_000,
+  diskWriteBeforeScan: false,
+  scanErrorBehavior: 'reject',
+  clamdUnavailableBehavior: 'reject',
+  tlsEnabled: true,
+};
+
+const result: ScorecardResult = await generateScorecard(config);</code></pre>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.18.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,70 @@
+{
+  "name": "pompelmi",
+  "displayName": "pompelmi — Antivirus File Scanner",
+  "description": "Scan files for viruses directly from VS Code using pompelmi and ClamAV.",
+  "version": "0.1.0",
+  "publisher": "pompelmi",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other", "Linters"],
+  "keywords": ["antivirus", "clamav", "security", "malware", "virus"],
+  "icon": "icon.png",
+  "activationEvents": [
+    "onCommand:pompelmi.scanFile"
+  ],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "pompelmi.scanFile",
+        "title": "Scan with pompelmi",
+        "category": "pompelmi"
+      },
+      {
+        "command": "pompelmi.scanWorkspace",
+        "title": "Scan Workspace",
+        "category": "pompelmi"
+      },
+      {
+        "command": "pompelmi.configure",
+        "title": "Configure pompelmi",
+        "category": "pompelmi"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "pompelmi.scanFile",
+          "when": "resourceScheme == 'file'",
+          "group": "7_modification"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "pompelmi",
+      "properties": {
+        "pompelmi.host": {
+          "type": "string",
+          "default": "localhost",
+          "description": "clamd host"
+        },
+        "pompelmi.port": {
+          "type": "number",
+          "default": 3310,
+          "description": "clamd port"
+        },
+        "pompelmi.socket": {
+          "type": "string",
+          "default": "",
+          "description": "clamd UNIX socket path (e.g. /run/clamav/clamd.sock)"
+        }
+      }
+    }
+  }
+}

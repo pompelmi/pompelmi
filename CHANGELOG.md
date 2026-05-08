@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.18.0] - 2026-05-08
+
+### Added
+- **Official Docker image** — `pompelmi/scanner` on Docker Hub. Ships ClamAV + freshclam + clamd + a lightweight HTTP scan API server. Updated on every push to `main` and on every version tag via `.github/workflows/docker.yml`.
+- **HTTP scan API** — built into the Docker image: `POST /scan` (multipart file upload → `{ verdict, file, viruses }`), `GET /health`, `GET /stats`.
+- **Security scorecard** — `generateScorecard(config)` in `src/Scorecard.js`. Analyses seven upload security checks and returns `{ grade, score, findings, recommendations }` with a letter grade A–F. Exported from `src/index.js`.
+- **CLI `scorecard` command** — `npx pompelmi scorecard --config ./pompelmi.config.js`. Prints grade, per-check findings, and recommendations.
+- **VS Code extension scaffold** — `packages/vscode/` with `package.json` manifest (publisher: `pompelmi`, categories: Other + Linters), `src/extension.js` registering three commands (`pompelmi.scanFile`, `pompelmi.scanWorkspace`, `pompelmi.configure`), and `README.md`. Not yet published to VS Code Marketplace.
+- **Quarantine mode** — `watch(dirPath, { quarantine: '/path' }, callbacks)` auto-moves infected files to the quarantine directory with a `.quarantined` extension and writes a sidecar JSON file containing `{ originalPath, virus, timestamp, sha256 }`.
+- **CLI `--quarantine <dir>` flag** — `pompelmi watch ./uploads --quarantine ./quarantine`.
+- **`docs/docker-image.html`** — Docker Hub image guide with quick start, endpoints table, Docker Compose example, and API usage from Node.js.
+- **`docs/scorecard.html`** — Scorecard API and CLI reference with checks table, grade thresholds, config file example, and TypeScript types.
+- **`docs/vscode.html`** — VS Code extension guide with install instructions, commands, settings, and Docker integration.
+- **Navbar updated** across all `docs/` HTML pages to include Docker Hub Image, Scorecard, and VS Code links.
+- **`docs/cli.html` updated** — added `scorecard` command to the commands table, `--quarantine` flag docs, and new examples (watch with quarantine, scorecard grading).
+- **7 new unit tests** — scorecard grading logic (7 tests), quarantine file move and sidecar JSON (3 tests), VS Code extension command registration (3 tests). 173 unit tests total.
+
+### Changed
+- `src/Watcher.js` — `watch()` now accepts a `quarantine` option in the options object. Infected files are automatically moved when set. `quarantineFile` is exported for direct use.
+- `src/index.js` — exports `generateScorecard` alongside existing API.
+- `README.md` — added Docker Pulls badge; added Docker image, scorecard, VS Code extension, and quarantine mode to Features list.
+
+---
+
 ## [1.17.0] - 2026-05-08
 
 ### Added

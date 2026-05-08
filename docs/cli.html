@@ -54,6 +54,9 @@
   <a href="s3.html">S3 Integration</a>
   <a href="cli.html" class="active">CLI</a>
   <a href="dashboard.html">Dashboard</a>
+  <a href="docker-image.html">Docker Hub Image</a>
+  <a href="scorecard.html">Scorecard</a>
+  <a href="vscode.html">VS Code</a>
   <a href="demo.html">Demo</a>
   <a href="comparison.html">Comparison</a>
   <a href="deno.html">Deno</a>
@@ -81,6 +84,7 @@
       <li><a href="#report">HTML report</a></li>
       <li><a href="#share-card">Share card</a></li>
       <li><a href="#examples">Examples</a></li>
+      <li><a href="#scorecard">Scorecard</a></li>
       <li><a href="#shell-scripts">Shell scripts</a></li>
     </ul>
   </div>
@@ -143,6 +147,10 @@
         <tr>
           <td><code>pompelmi watch &lt;dir&gt;</code></td>
           <td>Watch a directory and auto-scan files as they are created or modified. Runs until interrupted with <code>Ctrl+C</code>.</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi scorecard</code></td>
+          <td>Grade your upload security configuration A&ndash;F. Pass <code>--config ./pompelmi.config.js</code> for a project-specific grade.</td>
         </tr>
         <tr>
           <td><code>pompelmi version</code></td>
@@ -419,6 +427,15 @@
 
       <h3>8. Watch a directory for incoming uploads</h3>
 <pre>pompelmi watch ./uploads --host 127.0.0.1 --port 3310</pre>
+
+      <h3>9. Watch with automatic quarantine</h3>
+<pre>pompelmi watch ./uploads --quarantine ./quarantine</pre>
+      <p>Infected files are moved to <code>./quarantine/</code> with a <code>.quarantined</code> extension.
+         A sidecar JSON file records <code>originalPath</code>, <code>virus</code>, <code>timestamp</code>, and <code>sha256</code>.</p>
+
+      <h3>10. Grade your upload security config</h3>
+<pre>npx pompelmi scorecard --config ./pompelmi.config.js</pre>
+      <p>See the <a href="scorecard.html">Scorecard documentation</a> for the full reference.</p>
 
       <div class="note">
         Use <code>npx pompelmi</code> instead of <code>pompelmi</code> if you have not installed it globally.

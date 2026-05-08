@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/vscode.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VS Code Extension — pompelmi</title>
+<meta name="description" content="Scan files for viruses directly from VS Code with the pompelmi extension. Right-click any file or run Scan Workspace from the Command Palette.">
+<meta property="og:title" content="VS Code Extension — pompelmi">
+<meta property="og:description" content="Scan files for viruses directly from VS Code with the pompelmi extension.">
+<meta property="og:url" content="https://pompelmi.app/vscode.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VS Code Extension — pompelmi">
+<meta name="twitter:description" content="Scan files for viruses directly from VS Code with the pompelmi extension.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  "headline": "VS Code Extension — pompelmi",
+  "url": "https://pompelmi.app/vscode.html",
+  "description": "Scan files for viruses directly from VS Code with the pompelmi extension.",
+  "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
+  "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
+  "mainEntityOfPage": "https://pompelmi.app/vscode.html"
+}
+</script>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="docker-image.html">Docker Hub Image</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="scorecard.html">Scorecard</a>
+  <a href="vscode.html" class="active">VS Code</a>
+  <a href="demo.html">Demo</a>
+  <a href="comparison.html">Comparison</a>
+  <a href="deno.html">Deno</a>
+  <a href="cloudflare.html">Cloudflare Workers</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">VS Code Extension</span>
+      <li><a href="#install">Installation</a></li>
+      <li><a href="#commands">Commands</a></li>
+      <li><a href="#notifications">Notifications</a></li>
+      <li><a href="#settings">Settings</a></li>
+      <li><a href="#docker">Using with Docker</a></li>
+      <li><a href="#source">Source code</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <h1>VS Code Extension</h1>
+    <p>The pompelmi VS Code extension lets developers scan files for viruses directly from the IDE &mdash;
+       right-click any file in the Explorer or run <em>Scan Workspace</em> from the Command Palette.</p>
+
+    <div class="tip">
+      <strong>Status:</strong> scaffold available in
+      <a href="https://github.com/pompelmi/pompelmi/tree/main/packages/vscode" rel="noopener" target="_blank">packages/vscode/</a>.
+      Marketplace publication coming soon.
+    </div>
+
+    <h2 id="install">Installation</h2>
+    <h3>Requirements</h3>
+    <ul>
+      <li><a href="https://www.clamav.net/" rel="noopener" target="_blank">ClamAV</a> installed locally,
+          or clamd running via Docker</li>
+      <li>Node.js and npm available in PATH (for <code>npx pompelmi</code>)</li>
+    </ul>
+
+    <h3>Install from Marketplace (coming soon)</h3>
+    <ol>
+      <li>Open VS Code</li>
+      <li>Press <code>Ctrl+P</code> (<code>Cmd+P</code> on macOS)</li>
+      <li>Run: <code>ext install pompelmi.pompelmi</code></li>
+    </ol>
+
+    <h3>Install from source</h3>
+    <pre><code class="language-bash">git clone https://github.com/pompelmi/pompelmi.git
+cd pompelmi/packages/vscode
+npm install -g vsce
+vsce package
+code --install-extension pompelmi-*.vsix</code></pre>
+
+    <h2 id="commands">Commands</h2>
+    <table>
+      <thead>
+        <tr><th>Command</th><th>ID</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Scan with pompelmi</td>
+          <td><code>pompelmi.scanFile</code></td>
+          <td>Right-click any file in Explorer &rarr; <em>"Scan with pompelmi"</em>. Also works on the active editor file.</td>
+        </tr>
+        <tr>
+          <td>Scan Workspace</td>
+          <td><code>pompelmi.scanWorkspace</code></td>
+          <td>Scans every file in the first workspace folder recursively.</td>
+        </tr>
+        <tr>
+          <td>Configure pompelmi</td>
+          <td><code>pompelmi.configure</code></td>
+          <td>Opens VS Code settings filtered to pompelmi options.</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2 id="notifications">Notifications</h2>
+    <p>Scan results appear as VS Code notifications:</p>
+    <pre><code>✅ document.pdf — Clean
+🚨 malware.exe — INFECTED (Win.Malware.Agent)
+⚠️ archive.zip — Scan error</code></pre>
+
+    <h2 id="settings">Settings</h2>
+    <table>
+      <thead>
+        <tr><th>Setting</th><th>Default</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>pompelmi.host</code></td>
+          <td><code>localhost</code></td>
+          <td>clamd host</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi.port</code></td>
+          <td><code>3310</code></td>
+          <td>clamd port</td>
+        </tr>
+        <tr>
+          <td><code>pompelmi.socket</code></td>
+          <td><em>(empty)</em></td>
+          <td>clamd UNIX socket path (takes precedence over host/port when set)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Add to your <code>settings.json</code>:</p>
+    <pre><code class="language-json">{
+  "pompelmi.host": "localhost",
+  "pompelmi.port": 3310
+}</code></pre>
+
+    <h2 id="docker">Using with Docker</h2>
+    <p>Start clamd via the official pompelmi Docker image, then point the extension at it:</p>
+    <pre><code class="language-bash">docker run -p 3310:3310 -p 8080:8080 pompelmi/scanner</code></pre>
+
+    <pre><code class="language-json">{
+  "pompelmi.host": "localhost",
+  "pompelmi.port": 3310
+}</code></pre>
+
+    <p>See <a href="docker-image.html">Docker Hub Image</a> for the full guide.</p>
+
+    <h2 id="source">Source code</h2>
+    <p>The extension scaffold is in
+       <a href="https://github.com/pompelmi/pompelmi/tree/main/packages/vscode" rel="noopener" target="_blank">packages/vscode/</a>.</p>
+    <p>File structure:</p>
+    <pre><code>packages/vscode/
+  package.json       — VS Code extension manifest
+  src/
+    extension.js     — activate / deactivate entry point
+  README.md</code></pre>
+
+    <p>Contributions welcome! Open an issue or PR on
+       <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>.</p>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.18.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>
