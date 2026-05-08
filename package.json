@@ -1,6 +1,6 @@
 {
   "name": "pompelmi",
-  "version": "1.16.0",
+  "version": "1.17.0",
   "description": "ClamAV for humans — scan any file and get back Clean, Malicious, or ScanError. No daemons. No cloud. No native bindings.",
   "license": "ISC",
   "author": "pompelmi contributors",
@@ -35,12 +35,19 @@
   ],
   "type": "commonjs",
   "main": "./src/index.js",
+  "module": "./src/index.mjs",
   "types": "./types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.mjs",
+      "require": "./src/index.js"
+    }
+  },
   "bin": {
     "pompelmi": "./bin/pompelmi.js"
   },
   "scripts": {
-    "test": "node --test test/unit.test.js && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node --test packages/sveltekit/test/index.test.js && node test/scan.test.js",
+    "test": "node --test test/unit.test.js && node --test test/esm.test.mjs && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node --test packages/sveltekit/test/index.test.js && node --test packages/cloudflare/test/index.test.mjs && node test/scan.test.js",
     "lint": "eslint src/"
   },
   "publishConfig": {

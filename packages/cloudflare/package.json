@@ -1,0 +1,38 @@
+{
+  "name": "@pompelmi/cloudflare",
+  "version": "1.0.0",
+  "description": "pompelmi adapter for Cloudflare Workers — scan file uploads via a remote clamd instance using Web APIs only.",
+  "license": "ISC",
+  "author": "pompelmi contributors",
+  "homepage": "https://pompelmi.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/pompelmi/pompelmi.git",
+    "directory": "packages/cloudflare"
+  },
+  "bugs": {
+    "url": "https://github.com/pompelmi/pompelmi/issues"
+  },
+  "keywords": [
+    "clamav",
+    "antivirus",
+    "virus-scan",
+    "malware",
+    "cloudflare",
+    "cloudflare-workers",
+    "file-upload",
+    "security"
+  ],
+  "type": "module",
+  "main": "./index.js",
+  "types": "./index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./index.js"
+    }
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/",
+    "access": "public"
+  }
+}

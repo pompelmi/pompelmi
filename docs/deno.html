@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/deno.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deno Support — pompelmi</title>
+<meta name="description" content="Use pompelmi with Deno to scan file uploads for malware via ClamAV. Import from npm:pompelmi with zero native bindings.">
+<meta property="og:title" content="Deno Support — pompelmi">
+<meta property="og:description" content="Use pompelmi with Deno to scan file uploads for malware via ClamAV. Import from npm:pompelmi with zero native bindings.">
+<meta property="og:url" content="https://pompelmi.app/deno.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Deno Support — pompelmi">
+<meta name="twitter:description" content="Use pompelmi with Deno to scan file uploads for malware via ClamAV. Import from npm:pompelmi with zero native bindings.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="demo.html">Demo</a>
+  <a href="comparison.html">Comparison</a>
+  <a href="deno.html" class="active">Deno</a>
+  <a href="cloudflare.html">Cloudflare Workers</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Deno</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#install">Installation</a></li>
+      <li><a href="#basic-usage">Basic Usage</a></li>
+      <li><a href="#http-server">HTTP Server</a></li>
+      <li><a href="#esm-import">ESM Import</a></li>
+      <li><a href="#configuration">Configuration</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Deno Support</h2>
+      <p>
+        pompelmi works with <a href="https://deno.com/" rel="noopener" target="_blank">Deno</a> via the
+        <code>npm:</code> specifier. No native bindings, no <code>node_modules</code> — Deno resolves
+        the package directly from the npm registry.
+      </p>
+      <div class="note">
+        pompelmi requires ClamAV to be installed on the host running the Deno process.
+        In TCP mode (<code>{ host, port }</code>), clamd can run anywhere reachable over the network.
+        In local mode, <code>clamscan</code> must be in <code>PATH</code>.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Installation</h2>
+      <p>No explicit installation step is required. Import directly using the <code>npm:</code> specifier:</p>
+<pre>import { scan, Verdict } from 'npm:pompelmi';</pre>
+      <p>
+        To pin a version, use <code>npm:pompelmi@1.17.0</code>. For an <code>import_map.json</code>:
+      </p>
+<pre>{
+  "imports": {
+    "pompelmi": "npm:pompelmi@1.17.0"
+  }
+}</pre>
+    </div>
+
+    <div class="section" id="basic-usage">
+      <h2>Basic Usage</h2>
+      <span class="platform-label">Scan a file (local clamscan mode)</span>
+<pre>import { scan, Verdict } from 'npm:pompelmi';
+
+const result = await scan('./uploads/document.pdf');
+
+if (result === Verdict.Malicious) {
+  console.error('Malware detected!');
+} else if (result === Verdict.Clean) {
+  console.log('File is clean.');
+}</pre>
+
+      <span class="platform-label">Scan via remote clamd (TCP mode)</span>
+<pre>import { scan, Verdict } from 'npm:pompelmi';
+
+const result = await scan('./uploads/document.pdf', {
+  host: 'localhost',
+  port: 3310,
+});
+
+console.log(result === Verdict.Clean ? 'clean' : 'infected or error');</pre>
+
+      <span class="platform-label">Scan a Buffer in memory</span>
+<pre>import { scanBuffer, Verdict } from 'npm:pompelmi';
+
+const data = await Deno.readFile('./uploads/image.jpg');
+const result = await scanBuffer(Buffer.from(data), {
+  host: 'localhost',
+  port: 3310,
+});
+
+console.log(result.description); // "Clean", "Malicious", or "ScanError"</pre>
+    </div>
+
+    <div class="section" id="http-server">
+      <h2>HTTP Server Example</h2>
+      <p>Full Deno HTTP server that scans multipart form uploads:</p>
+<pre>import { scanBuffer, Verdict } from 'npm:pompelmi';
+
+Deno.serve({ port: 8000 }, async (request) => {
+  if (request.method !== 'POST') {
+    return new Response('POST a file', { status: 405 });
+  }
+
+  const formData = await request.formData();
+  const file = formData.get('file');
+
+  if (!(file instanceof File)) {
+    return new Response('No file uploaded', { status: 400 });
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const result = await scanBuffer(buffer, {
+    host: 'localhost',
+    port: 3310,
+  });
+
+  if (result === Verdict.Malicious) {
+    return new Response('File rejected: malware detected', { status: 422 });
+  }
+  if (result === Verdict.ScanError) {
+    return new Response('Scan error — file rejected', { status: 500 });
+  }
+
+  return new Response('File accepted');
+});
+
+console.log('Listening on http://localhost:8000');</pre>
+    </div>
+
+    <div class="section" id="esm-import">
+      <h2>ESM / deno.json</h2>
+      <p>
+        pompelmi ships a <code>deno.json</code> at the repo root for Deno-native usage.
+        When importing via <code>npm:</code>, Deno handles ESM resolution automatically.
+      </p>
+<pre>// deno.json (repo root — already included in pompelmi)
+{
+  "name": "@pompelmi/pompelmi",
+  "version": "1.17.0",
+  "exports": "./src/index.js"
+}</pre>
+      <p>You can also import with the full ESM path:</p>
+<pre>import pompelmi from 'npm:pompelmi';
+const { scan, Verdict } = pompelmi;</pre>
+    </div>
+
+    <div class="section" id="configuration">
+      <h2>Configuration</h2>
+      <p>All <code>ScanOptions</code> work identically in Deno:</p>
+      <table>
+        <tr><th>Option</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>host</code></td><td>string</td><td>clamd hostname — enables TCP mode</td></tr>
+        <tr><td><code>port</code></td><td>number</td><td>clamd port (default: 3310)</td></tr>
+        <tr><td><code>socket</code></td><td>string</td><td>UNIX socket path</td></tr>
+        <tr><td><code>timeout</code></td><td>number</td><td>Socket idle timeout in ms (default: 15000)</td></tr>
+        <tr><td><code>retries</code></td><td>number</td><td>Retry attempts on connection error (default: 0)</td></tr>
+        <tr><td><code>retryDelay</code></td><td>number</td><td>Delay between retries in ms (default: 1000)</td></tr>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

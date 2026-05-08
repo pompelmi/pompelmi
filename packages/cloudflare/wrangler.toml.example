@@ -1,0 +1,13 @@
+name = "my-worker"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+CLAMAV_HOST = "your-clamd-host.example.com"
+CLAMAV_PORT = "3310"
+
+# Cloudflare Workers require a publicly reachable clamd instance.
+# Options:
+#   1. Run clamd on a VPS and expose port 3310 (add firewall rules).
+#   2. Use a Cloudflare Tunnel (cloudflared) to expose a private clamd instance.
+#      See: https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/

@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] - 2026-05-08
+
+### Added
+- **Native ESM support** — `import { scan, scanBuffer, Verdict } from 'pompelmi'` now works out of the box. Dual CJS/ESM build via `package.json` `exports` field; `src/index.mjs` re-exports everything through `createRequire` for full compatibility. `module` field added for bundler hints.
+- **Deno support** — pompelmi works in Deno via `import { scan } from 'npm:pompelmi'`. Added `deno.json` at repo root for Deno-native tooling.
+- **`@pompelmi/cloudflare`** — new official Cloudflare Workers adapter package (`npm i @pompelmi/cloudflare`). Exports `scanBuffer(buffer, options)` and `scanRequest(request, options)`. Uses `cloudflare:sockets` for TCP connections to a remote clamd — Web APIs only, no Node.js built-ins. Full TypeScript declarations and `wrangler.toml.example` included. 9 unit tests.
+- **FUNDING.yml** — added `open_collective: pompelmi` to `.github/FUNDING.yml` to surface the GitHub Sponsors button.
+- **`docs/deno.html`** — new documentation page covering Deno installation, basic usage, HTTP server example, `deno.json` setup, and configuration reference.
+- **`docs/cloudflare.html`** — new documentation page covering `@pompelmi/cloudflare` requirements, installation, `scanBuffer`, `scanRequest`, Wrangler configuration, API reference, and remote clamd setup options.
+- **Landing page runtime and framework logos** — `docs/index.html` now shows a "Works With" grid (Node.js • Bun • Deno • Cloudflare Workers) and a framework row (Express • Fastify • NestJS • Next.js • Hono • Remix • SvelteKit), plus live GitHub stars and npm weekly downloads badges from shields.io.
+- **ESM import test** (`test/esm.test.mjs`) — 3 tests verifying named exports, Verdict Symbol identity across CJS/ESM, and default export shape.
+- **Cloudflare Workers test** (`packages/cloudflare/test/index.test.mjs`) — 9 tests covering response parsing (clean, malicious, error, null-byte stripping) and `scanRequest` logic (clean pass-through, 422, 500, missing field, custom field name).
+
+### Changed
+- `package.json` — added `exports`, `module`, and updated `test` script to run ESM and Cloudflare tests.
+- `docs/getting-started.html` — added ESM import syntax section with CJS/ESM comparison, Deno specifier, and Cloudflare adapter snippets.
+- Navbar updated across all `docs/` HTML pages to include Deno and Cloudflare Workers links.
+- `README.md` — added ESM, Deno, and Cloudflare to the Features list; updated Requirements section; added `@pompelmi/cloudflare` to the Framework Integrations table; updated "Works with" line; marked Cloudflare Workers roadmap item as complete.
+
+---
+
 ## [1.16.0] - 2026-05-07
 
 ### Added

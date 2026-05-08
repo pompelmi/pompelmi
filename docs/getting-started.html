@@ -56,6 +56,8 @@
   <a href="dashboard.html">Dashboard</a>
   <a href="demo.html">Demo</a>
   <a href="comparison.html">Comparison</a>
+  <a href="deno.html">Deno</a>
+  <a href="cloudflare.html">Cloudflare Workers</a>
   <a href="about.html">About</a>
   <a href="blog.html">Blog</a>
   <a href="contacts.html">Contacts</a>
@@ -149,8 +151,22 @@
       <p>
         pompelmi has zero runtime dependencies. The package ships CommonJS and ESM
         entry points and bundled TypeScript declarations.
-        <strong>Works with Node.js and Bun.</strong>
+        <strong>Works with Node.js, Bun, Deno, and Cloudflare Workers.</strong>
       </p>
+
+      <h3>ESM Import (Node.js &ge; 12 / Bun / Deno)</h3>
+<pre>// ESM — import syntax
+import { scan, scanBuffer, Verdict } from 'pompelmi';
+
+// CommonJS — require syntax (default)
+const { scan, scanBuffer, Verdict } = require('pompelmi');</pre>
+
+      <p>For Deno, use the <code>npm:</code> specifier:</p>
+<pre>import { scan, Verdict } from 'npm:pompelmi';</pre>
+
+      <p>For Cloudflare Workers, use the dedicated adapter:</p>
+<pre>import { scanBuffer } from '@pompelmi/cloudflare';</pre>
+      <p>See the <a href="deno.html">Deno guide</a> and <a href="cloudflare.html">Cloudflare Workers guide</a> for full details.</p>
     </div>
 
     <div class="section" id="quickstart">

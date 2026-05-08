@@ -1,0 +1,5 @@
+{
+  "name": "@pompelmi/pompelmi",
+  "version": "1.17.0",
+  "exports": "./src/index.js"
+}

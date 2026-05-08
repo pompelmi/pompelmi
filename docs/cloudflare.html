@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/cloudflare.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloudflare Workers — pompelmi</title>
+<meta name="description" content="Scan file uploads for malware inside Cloudflare Workers using @pompelmi/cloudflare. Connects to a remote clamd instance using Web APIs only.">
+<meta property="og:title" content="Cloudflare Workers — pompelmi">
+<meta property="og:description" content="Scan file uploads for malware inside Cloudflare Workers using @pompelmi/cloudflare. Connects to a remote clamd instance using Web APIs only.">
+<meta property="og:url" content="https://pompelmi.app/cloudflare.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cloudflare Workers — pompelmi">
+<meta name="twitter:description" content="Scan file uploads for malware inside Cloudflare Workers using @pompelmi/cloudflare. Connects to a remote clamd instance using Web APIs only.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="quickstart.html">Quickstart</a>
+  <a href="api.html">API Reference</a>
+  <a href="docker.html">Docker</a>
+  <a href="github-action.html">GitHub Action</a>
+  <a href="github-app.html">GitHub App</a>
+  <a href="s3.html">S3 Integration</a>
+  <a href="cli.html">CLI</a>
+  <a href="dashboard.html">Dashboard</a>
+  <a href="demo.html">Demo</a>
+  <a href="comparison.html">Comparison</a>
+  <a href="deno.html">Deno</a>
+  <a href="cloudflare.html" class="active">Cloudflare Workers</a>
+  <a href="about.html">About</a>
+  <a href="blog.html">Blog</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Cloudflare Workers</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#requirements">Requirements</a></li>
+      <li><a href="#install">Installation</a></li>
+      <li><a href="#basic-usage">Basic Usage</a></li>
+      <li><a href="#scan-request">scanRequest helper</a></li>
+      <li><a href="#wrangler">Wrangler config</a></li>
+      <li><a href="#api">API Reference</a></li>
+      <li><a href="#clamd-setup">Remote clamd setup</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Cloudflare Workers</h2>
+      <p>
+        <strong><a href="https://www.npmjs.com/package/@pompelmi/cloudflare" rel="noopener" target="_blank">@pompelmi/cloudflare</a></strong>
+        is the official pompelmi adapter for Cloudflare Workers. It scans file uploads
+        for malware by streaming them to a remote <a href="https://www.clamav.net/" rel="noopener" target="_blank">ClamAV</a>
+        (clamd) instance using the INSTREAM protocol.
+      </p>
+      <p>
+        The package uses <strong>Web APIs only</strong> — <code>fetch</code>, <code>FormData</code>,
+        <code>ArrayBuffer</code>, and Cloudflare's <code>connect()</code> socket API from
+        <code>cloudflare:sockets</code>. No Node.js built-ins, no native bindings.
+      </p>
+    </div>
+
+    <div class="section" id="requirements">
+      <h2>Requirements</h2>
+      <p>
+        Cloudflare Workers cannot run clamd locally. You need a <strong>publicly reachable</strong>
+        clamd instance. Options:
+      </p>
+      <table>
+        <tr>
+          <th>Option</th>
+          <th>Description</th>
+        </tr>
+        <tr>
+          <td>VPS + open port</td>
+          <td>Run clamd on a virtual machine and expose port 3310. Add firewall rules to restrict access to Cloudflare's egress IPs.</td>
+        </tr>
+        <tr>
+          <td>Cloudflare Tunnel</td>
+          <td>Use <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/" rel="noopener" target="_blank">cloudflared</a> to expose a private clamd instance without opening a port. Most secure option.</td>
+        </tr>
+      </table>
+      <div class="note">
+        <strong>Security note:</strong> Never expose clamd directly to the public internet without access controls.
+        Restrict clamd access using firewall rules or Cloudflare Tunnel.
+      </div>
+    </div>
+
+    <div class="section" id="install">
+      <h2>Installation</h2>
+<pre>npm i @pompelmi/cloudflare</pre>
+    </div>
+
+    <div class="section" id="basic-usage">
+      <h2>Basic Usage</h2>
+      <p>Scan an <code>ArrayBuffer</code> directly from a multipart form upload:</p>
+<pre>import { scanBuffer } from '@pompelmi/cloudflare';
+
+export default {
+  async fetch(request, env) {
+    const formData = await request.formData();
+    const file = formData.get('file');
+    const buffer = await file.arrayBuffer();
+
+    const result = await scanBuffer(buffer, {
+      host: env.CLAMAV_HOST,
+      port: parseInt(env.CLAMAV_PORT),
+    });
+
+    if (result !== 'clean') {
+      return new Response('File rejected', { status: 422 });
+    }
+
+    return new Response('OK');
+  },
+};</pre>
+    </div>
+
+    <div class="section" id="scan-request">
+      <h2>scanRequest helper</h2>
+      <p>
+        <code>scanRequest(request, options)</code> handles the full form-read → scan → response cycle.
+        It returns <code>null</code> for clean files, a <code>Response(422)</code> for malicious files,
+        and a <code>Response(500)</code> on scan errors.
+      </p>
+<pre>import { scanRequest } from '@pompelmi/cloudflare';
+
+export default {
+  async fetch(request, env) {
+    const rejection = await scanRequest(request, {
+      host: env.CLAMAV_HOST,
+      port: parseInt(env.CLAMAV_PORT),
+    });
+    if (rejection) return rejection;
+
+    // File is clean — proceed with your upload logic
+    return new Response('File accepted');
+  },
+};</pre>
+
+      <p>To scan a specific form field other than <code>file</code>:</p>
+<pre>const rejection = await scanRequest(request, {
+  host: env.CLAMAV_HOST,
+  port: parseInt(env.CLAMAV_PORT),
+  field: 'attachment',
+});</pre>
+    </div>
+
+    <div class="section" id="wrangler">
+      <h2>Wrangler Configuration</h2>
+      <p>Copy <code>wrangler.toml.example</code> from the package and fill in your clamd details:</p>
+<pre>name = "my-worker"
+main = "src/worker.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+CLAMAV_HOST = "your-clamd-host.example.com"
+CLAMAV_PORT = "3310"</pre>
+      <p>Use Wrangler secrets for production to avoid committing credentials:</p>
+<pre>wrangler secret put CLAMAV_HOST
+wrangler secret put CLAMAV_PORT</pre>
+    </div>
+
+    <div class="section" id="api">
+      <h2>API Reference</h2>
+
+      <h3>scanBuffer(buffer, options)</h3>
+      <table>
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>buffer</code></td><td>ArrayBuffer</td><td>The file bytes to scan</td></tr>
+        <tr><td><code>options.host</code></td><td>string</td><td>clamd hostname or IP (required)</td></tr>
+        <tr><td><code>options.port</code></td><td>number</td><td>clamd port, typically 3310 (required)</td></tr>
+        <tr><td><code>options.timeout</code></td><td>number</td><td>Read timeout in ms (default: 15000)</td></tr>
+      </table>
+      <p>Returns <code>Promise&lt;'clean' | 'malicious' | 'error'&gt;</code>.</p>
+
+      <h3>scanRequest(request, options)</h3>
+      <table>
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>request</code></td><td>Request</td><td>Cloudflare Workers Request object</td></tr>
+        <tr><td><code>options.host</code></td><td>string</td><td>clamd hostname or IP (required)</td></tr>
+        <tr><td><code>options.port</code></td><td>number</td><td>clamd port (required)</td></tr>
+        <tr><td><code>options.field</code></td><td>string</td><td>Form field name (default: <code>'file'</code>)</td></tr>
+        <tr><td><code>options.timeout</code></td><td>number</td><td>Read timeout in ms (default: 15000)</td></tr>
+      </table>
+      <p>Returns <code>Promise&lt;Response | null&gt;</code> — <code>null</code> if clean, HTTP Response otherwise.</p>
+    </div>
+
+    <div class="section" id="clamd-setup">
+      <h2>Remote clamd Setup</h2>
+      <p>Start a clamd instance accessible over TCP using Docker:</p>
+<pre>docker run -d \
+  --name clamd \
+  -p 3310:3310 \
+  clamav/clamav:latest</pre>
+      <p>
+        For a production deployment, use the
+        <a href="docker.html">Docker guide</a> and restrict clamd to your Cloudflare Worker's
+        outbound IP range.
+      </p>
+      <p>
+        For a zero-port-forwarding setup, use
+        <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/" rel="noopener" target="_blank">Cloudflare Tunnel</a>
+        to securely expose a private clamd instance.
+      </p>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+</body>
+</html>

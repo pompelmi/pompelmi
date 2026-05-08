@@ -89,12 +89,15 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
 - Built-in helpers to install ClamAV and update virus definitions programmatically
+- **Native ESM support** — `import { scan } from 'pompelmi'` works out of the box (dual CJS/ESM build)
+- **Deno support** — `import { scan } from 'npm:pompelmi'` — no install step required
+- **Cloudflare Workers** — via `@pompelmi/cloudflare` — Web APIs only, no Node.js built-ins
 - Works with Express, Fastify, NestJS, Hono, Remix, SvelteKit, and any other Node.js HTTP framework
-- Works with Node.js and Bun — uses `Bun.file()` for faster file reading when available
+- Works with **Node.js • Bun • Deno • Cloudflare Workers**
 - Interactive demo at [pompelmi.app/demo](https://pompelmi.app/demo.html) — try before you install
 - Zero runtime dependencies — ships nothing but source code
 - Tested with EICAR standard antivirus test files
-- CommonJS module; TypeScript type declarations available inline
+- CommonJS + ESM module; TypeScript type declarations available inline
 
 See [how pompelmi compares](./docs/comparison.html) to other Node.js ClamAV integrations.
 
@@ -112,6 +115,7 @@ Official integration packages for popular frameworks:
 | [@pompelmi/remix](./packages/remix/) | Remix | `npm i @pompelmi/remix` |
 | [@pompelmi/sveltekit](./packages/sveltekit/) | SvelteKit | `npm i @pompelmi/sveltekit` |
 | [@pompelmi/testing](./packages/testing/) | Jest/Vitest/Node | `npm i -D @pompelmi/testing` |
+| [@pompelmi/cloudflare](./packages/cloudflare/) | Cloudflare Workers | `npm i @pompelmi/cloudflare` |
 
 ### NestJS
 
@@ -197,6 +201,8 @@ export const actions: Actions = {
 
 - **Node.js** — any LTS release (no native addons, no C++ bindings)
 - **Bun** — fully supported; uses `Bun.file()` for faster file reading
+- **Deno** — import from `npm:pompelmi` — no install step required
+- **Cloudflare Workers** — via `@pompelmi/cloudflare` — connects to a remote clamd over TCP
 - **ClamAV** — must be installed on the host or reachable over TCP
 
 pompelmi does not bundle or automatically download ClamAV. Install it once per machine (see [Installing ClamAV](#installing-clamav)).
@@ -608,8 +614,8 @@ Please read [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before contributing. To r
 
 ## Coming soon
 
-- [ ] Cloudflare Workers support — edge-native scanning via the clamd TCP protocol
-- [ ] NestJS official module — `PompelmiModule.forRoot()` with injectable `PompelmiService`
+- [x] Cloudflare Workers support — `@pompelmi/cloudflare` ships in v1.17.0
+- [x] NestJS official module — `PompelmiModule.forRoot()` with injectable `PompelmiService`
 
 ---
 
