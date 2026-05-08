@@ -51,7 +51,7 @@ Run `pompelmi: Configure` from the Command Palette to open settings.
 Start clamd via the official pompelmi Docker image:
 
 ```bash
-docker run -p 3310:3310 -p 8080:8080 pompelmi/scanner
+docker run -p 3310:3310 -p 8080:8080 justsouichi/pompelmi-scanner
 ```
 
 Then set `pompelmi.host` to `localhost` and `pompelmi.port` to `3310`.

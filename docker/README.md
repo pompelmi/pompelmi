@@ -1,4 +1,4 @@
-# pompelmi/scanner Docker Image
+# justsouichi/pompelmi-scanner Docker Image
 
 Official Docker image for pompelmi — ClamAV antivirus scanning for Node.js.
 
@@ -10,8 +10,8 @@ The image ships with:
 ## Quick start
 
 ```bash
-docker pull pompelmi/scanner
-docker run -p 8080:8080 pompelmi/scanner
+docker pull justsouichi/pompelmi-scanner
+docker run -p 8080:8080 justsouichi/pompelmi-scanner
 ```
 
 ## Scan a file
@@ -41,7 +41,7 @@ For an infected file the verdict is `"malicious"`.
 ```yaml
 services:
   pompelmi:
-    image: pompelmi/scanner
+    image: justsouichi/pompelmi-scanner
     ports:
       - "8080:8080"
     volumes:
@@ -58,5 +58,5 @@ The container exposes two ports:
 ## Building locally
 
 ```bash
-docker build -f docker/Dockerfile -t pompelmi/scanner .
+docker build -f docker/Dockerfile -t justsouichi/pompelmi-scanner .
 ```

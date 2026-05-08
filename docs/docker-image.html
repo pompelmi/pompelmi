@@ -4,16 +4,16 @@
 <link rel="canonical" href="https://pompelmi.app/docker-image.html" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Docker Hub Image — pompelmi/scanner</title>
-<meta name="description" content="Official pompelmi/scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds. Includes health check, stats endpoint, and Docker Compose example.">
-<meta property="og:title" content="Docker Hub Image — pompelmi/scanner">
-<meta property="og:description" content="Official pompelmi/scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.">
+<title>Docker Hub Image — justsouichi/pompelmi-scanner</title>
+<meta name="description" content="Official justsouichi/pompelmi-scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds. Includes health check, stats endpoint, and Docker Compose example.">
+<meta property="og:title" content="Docker Hub Image — justsouichi/pompelmi-scanner">
+<meta property="og:description" content="Official justsouichi/pompelmi-scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.">
 <meta property="og:url" content="https://pompelmi.app/docker-image.html">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://pompelmi.app/grapefruit.png">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Docker Hub Image — pompelmi/scanner">
-<meta name="twitter:description" content="Official pompelmi/scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.">
+<meta name="twitter:title" content="Docker Hub Image — justsouichi/pompelmi-scanner">
+<meta name="twitter:description" content="Official justsouichi/pompelmi-scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.">
 <link rel="icon" type="image/svg+xml" href="./favicon.svg">
 <link rel="icon" type="image/png" href="./favicon.png">
 <link rel="stylesheet" href="style.css">
@@ -21,9 +21,9 @@
 {
   "@context": "https://schema.org",
   "@type": "TechArticle",
-  "headline": "Docker Hub Image — pompelmi/scanner",
+  "headline": "Docker Hub Image — justsouichi/pompelmi-scanner",
   "url": "https://pompelmi.app/docker-image.html",
-  "description": "Official pompelmi/scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.",
+  "description": "Official justsouichi/pompelmi-scanner Docker image: pull, run, and integrate an antivirus scan HTTP API in seconds.",
   "author": { "@type": "Organization", "name": "pompelmi", "url": "https://github.com/pompelmi/pompelmi" },
   "publisher": { "@type": "Organization", "name": "pompelmi", "url": "https://pompelmi.app/" },
   "mainEntityOfPage": "https://pompelmi.app/docker-image.html"
@@ -85,18 +85,18 @@
   <div id="content">
 
     <h1>Docker Hub Image</h1>
-    <p>The official <code>pompelmi/scanner</code> image ships ClamAV, clamd, and a lightweight HTTP scan
+    <p>The official <code>justsouichi/pompelmi-scanner</code> image ships ClamAV, clamd, and a lightweight HTTP scan
        API so you can add antivirus scanning to any stack without installing anything beyond Docker.</p>
 
     <div class="tip">
       <strong>Docker Hub:</strong>
-      <a href="https://hub.docker.com/r/pompelmi/scanner" rel="noopener" target="_blank">hub.docker.com/r/pompelmi/scanner</a>
+      <a href="https://hub.docker.com/r/justsouichi/pompelmi-scanner" rel="noopener" target="_blank">hub.docker.com/r/justsouichi/pompelmi-scanner</a>
     </div>
 
     <h2 id="quickstart">Quick start</h2>
     <pre><code class="language-bash"># Pull and run
-docker pull pompelmi/scanner
-docker run -p 8080:8080 pompelmi/scanner
+docker pull justsouichi/pompelmi-scanner
+docker run -p 8080:8080 justsouichi/pompelmi-scanner
 
 # Scan a file
 curl -F "file=@./document.pdf" http://localhost:8080/scan</code></pre>
@@ -140,7 +140,7 @@ curl -F "file=@./document.pdf" http://localhost:8080/scan</code></pre>
     <h2 id="compose">Docker Compose</h2>
     <pre><code class="language-yaml">services:
   pompelmi:
-    image: pompelmi/scanner
+    image: justsouichi/pompelmi-scanner
     ports:
       - "8080:8080"
     volumes:
@@ -178,7 +178,7 @@ console.log(data.verdict); // "clean" | "malicious" | "error"</code></pre>
     <h2 id="build">Build locally</h2>
     <pre><code class="language-bash">git clone https://github.com/pompelmi/pompelmi.git
 cd pompelmi
-docker build -f docker/Dockerfile -t pompelmi/scanner .</code></pre>
+docker build -f docker/Dockerfile -t justsouichi/pompelmi-scanner .</code></pre>
 
     <p>The Dockerfile and <code>entrypoint.sh</code> live in <code>docker/</code>.
        See <a href="docker.html">Docker &amp; Remote Scanning</a> for connecting pompelmi to an existing clamd instance.</p>

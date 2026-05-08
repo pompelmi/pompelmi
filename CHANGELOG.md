@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.18.0] - 2026-05-08
 
 ### Added
-- **Official Docker image** — `pompelmi/scanner` on Docker Hub. Ships ClamAV + freshclam + clamd + a lightweight HTTP scan API server. Updated on every push to `main` and on every version tag via `.github/workflows/docker.yml`.
+- **Official Docker image** — `justsouichi/pompelmi-scanner` on Docker Hub. Ships ClamAV + freshclam + clamd + a lightweight HTTP scan API server. Updated on every push to `main` and on every version tag via `.github/workflows/docker.yml`.
 - **HTTP scan API** — built into the Docker image: `POST /scan` (multipart file upload → `{ verdict, file, viruses }`), `GET /health`, `GET /stats`.
 - **Security scorecard** — `generateScorecard(config)` in `src/Scorecard.js`. Analyses seven upload security checks and returns `{ grade, score, findings, recommendations }` with a letter grade A–F. Exported from `src/index.js`.
 - **CLI `scorecard` command** — `npx pompelmi scorecard --config ./pompelmi.config.js`. Prints grade, per-check findings, and recommendations.
