@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/cloud.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pompelmi Cloud — Hosted Antivirus Scanning API</title>
+<meta name="description" content="Pompelmi Cloud is a hosted REST API for file scanning. No ClamAV to install, no infrastructure to manage. Pay-per-use pricing, SOC2-ready audit logs.">
+<meta property="og:title" content="Pompelmi Cloud — Hosted Antivirus Scanning API">
+<meta property="og:description" content="Pompelmi Cloud is a hosted REST API for file scanning. No ClamAV to install, no infrastructure to manage. Pay-per-use pricing, SOC2-ready audit logs.">
+<meta property="og:url" content="https://pompelmi.app/cloud.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pompelmi Cloud — Hosted Antivirus Scanning API">
+<meta name="twitter:description" content="Pompelmi Cloud is a hosted REST API for file scanning. No ClamAV to install, no infrastructure to manage. Pay-per-use pricing, SOC2-ready audit logs.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .cloud-hero {
+    border: 1px solid #ccc;
+    background: #fdf5f2;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .cloud-hero h2 {
+    font-size: 20px;
+    color: #a03c1c;
+    border: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 0 !important;
+  }
+  .cloud-hero p {
+    margin-bottom: 10px;
+    font-size: 14px;
+  }
+  .waitlist-form {
+    border: 1px solid #ccc;
+    background: #f9f3f0;
+    padding: 18px 20px;
+    margin-top: 8px;
+  }
+  .waitlist-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #333;
+  }
+  .waitlist-form input[type="email"] {
+    width: 100%;
+    max-width: 360px;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid #bbb;
+    background: #fffaf8;
+    color: #222;
+    margin-bottom: 10px;
+    font-family: Georgia, "Times New Roman", Times, serif;
+  }
+  .waitlist-form button[type="submit"] {
+    padding: 7px 20px;
+    font-size: 13px;
+    background: #a03c1c;
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    font-family: Georgia, "Times New Roman", Times, serif;
+  }
+  .waitlist-form button[type="submit"]:hover {
+    background: #c04a22;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="api.html">API Reference</a>
+  <a href="cloud.html" class="active">Cloud</a>
+  <a href="blog.html">Blog</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="about.html">About</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="cookies.html">Cookie Policy</a>
+  <a href="tos.html">Terms of Service</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#benefits">Key Benefits</a></li>
+      <li><a href="#waitlist">Join Waitlist</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="cloud-hero">
+      <h2>Pompelmi Cloud &mdash; Hosted Antivirus Scanning API</h2>
+      <p>
+        Pompelmi Cloud brings the same reliable antivirus scanning you know from the open-source package,
+        delivered as a fully managed REST API. Upload a file, get a JSON verdict back.
+        No servers to provision, no ClamAV to install, no virus database to keep fresh.
+      </p>
+      <p>
+        Built for teams that need production-grade file scanning without the operational overhead.
+        Pay only for what you scan.
+      </p>
+    </div>
+
+    <div class="section" id="overview">
+      <h2>Overview</h2>
+      <p>
+        Pompelmi Cloud exposes a simple HTTP endpoint. Send a <code>multipart/form-data</code> POST
+        with your file and receive a JSON response containing a verdict, a scan ID, and a timestamp.
+        The same <code>Verdict.Clean</code> / <code>Verdict.Malicious</code> / <code>Verdict.ScanError</code>
+        semantics as the open-source package, available over the wire.
+      </p>
+<pre>POST https://api.pompelmi.app/v1/scan
+Content-Type: multipart/form-data
+
+# Response
+{
+  "scanId": "scn_01HXYZ...",
+  "verdict": "Clean",
+  "scannedAt": "2026-05-12T10:00:00Z"
+}</pre>
+      <p>No SDK required &mdash; any HTTP client works. An official Node.js client library is planned.</p>
+    </div>
+
+    <div class="section" id="benefits">
+      <h2>Key Benefits</h2>
+      <ul>
+        <li><strong>No ClamAV to install</strong> &mdash; the scanning infrastructure runs entirely on our end. Your application stays lean; no native binaries, no system packages.</li>
+        <li><strong>REST API with JSON verdicts</strong> &mdash; a single POST request returns a structured JSON response with a clear verdict. Integrate in minutes from any language or runtime.</li>
+        <li><strong>Scales automatically</strong> &mdash; whether you scan ten files a day or ten thousand, capacity adjusts behind the scenes. No instance sizing, no queue tuning.</li>
+        <li><strong>SOC2-ready audit logs</strong> &mdash; every scan is logged with a unique scan ID, timestamp, verdict, and file hash. Export logs at any time for compliance reviews or incident response.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="waitlist">
+      <h2>Join the Waitlist</h2>
+      <p>
+        Pompelmi Cloud is currently in private development. Leave your email below and we will
+        notify you when early access opens.
+      </p>
+      <div class="waitlist-form">
+        <form action="https://formspree.io/f/xjgllloo" method="POST">
+          <label for="waitlist-email">Your email address</label>
+          <input type="email" id="waitlist-email" name="email" placeholder="you@example.com" required>
+          <button type="submit">Notify me</button>
+        </form>
+      </div>
+      <div class="note" style="margin-top:14px;">
+        No spam &mdash; one email when early access opens, nothing else. You can reach us directly at
+        <a href="mailto:pompelmideveloper@yahoo.com">pompelmideveloper@yahoo.com</a>.
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.2.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+<div id="footer-legal" style="text-align:center;padding:8px 20px;font-size:12px;color:#666;background:#f0e8e3;border-top:1px solid #d4a898;">
+  <a href="privacy.html">Privacy Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="cookies.html">Cookie Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="tos.html">Terms of Service</a>
+</div>
+<div id="cookie-banner" style="position:fixed;bottom:0;left:0;right:0;background:#fffaf8;border-top:2px solid #d4a898;padding:10px 20px;font-size:13px;color:#444;display:flex;align-items:center;justify-content:space-between;z-index:9999;gap:16px;">
+  <span>This site uses essential cookies only. By continuing you accept our <a href="cookies.html" style="color:#a03c1c;">cookie policy</a>.</span>
+  <button onclick="document.getElementById('cookie-banner').style.display='none';localStorage.setItem('pompelmi_cookie_consent','1');" style="background:#a03c1c;color:#fff;border:none;padding:6px 18px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:Georgia,'Times New Roman',Times,serif;">Accept</button>
+</div>
+<script>if(localStorage.getItem('pompelmi_cookie_consent')){document.getElementById('cookie-banner').style.display='none';}</script>
+</body>
+</html>

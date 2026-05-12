@@ -57,6 +57,9 @@
   <a href="../about.html">About</a>
   <a href="../blog.html" class="active">Blog</a>
   <a href="../contacts.html">Contacts</a>
+  <a href="../privacy.html">Privacy Policy</a>
+  <a href="../cookies.html">Cookie Policy</a>
+  <a href="../tos.html">Terms of Service</a>
   <a href="../featured-in.html">Featured In</a>
   <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
   <a href="https://www.npmjs.com/package/pompelmi">npm</a>
@@ -293,5 +296,17 @@ export default async function handler(
   <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
 </div>
 
+<div id="footer-legal" style="text-align:center;padding:8px 20px;font-size:12px;color:#666;background:#f0e8e3;border-top:1px solid #d4a898;">
+  <a href="../privacy.html">Privacy Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="../cookies.html">Cookie Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="../tos.html">Terms of Service</a>
+</div>
+<div id="cookie-banner" style="position:fixed;bottom:0;left:0;right:0;background:#fffaf8;border-top:2px solid #d4a898;padding:10px 20px;font-size:13px;color:#444;display:flex;align-items:center;justify-content:space-between;z-index:9999;gap:16px;">
+  <span>This site uses essential cookies only. By continuing you accept our <a href="../cookies.html" style="color:#a03c1c;">cookie policy</a>.</span>
+  <button onclick="document.getElementById('cookie-banner').style.display='none';localStorage.setItem('pompelmi_cookie_consent','1');" style="background:#a03c1c;color:#fff;border:none;padding:6px 18px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:Georgia,'Times New Roman',Times,serif;">Accept</button>
+</div>
+<script>if(localStorage.getItem('pompelmi_cookie_consent')){document.getElementById('cookie-banner').style.display='none';}</script>
 </body>
 </html>
