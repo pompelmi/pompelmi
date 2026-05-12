@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/policy.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan Policy — pompelmi</title>
+<meta name="description" content="pompelmi scan policy API reference: unified size, MIME type, extension, and virus rules with Express and NestJS integration.">
+<meta property="og:title" content="Scan Policy — pompelmi">
+<meta property="og:description" content="pompelmi scan policy API reference: unified size, MIME type, extension, and virus rules with Express and NestJS integration.">
+<meta property="og:url" content="https://pompelmi.app/policy.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="api.html">API Reference</a>
+  <a href="cache.html">Cache</a>
+  <a href="policy.html" class="active">Policy</a>
+  <a href="multi-engine.html">Multi-Engine</a>
+  <a href="cloud.html">Cloud</a>
+  <a href="blog.html">Blog</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="about.html">About</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="cookies.html">Cookie Policy</a>
+  <a href="tos.html">Terms of Service</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Policy v1.19.0</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#create-policy">createPolicy()</a></li>
+      <li><a href="#rules">Rules reference</a></li>
+      <li><a href="#check">check()</a></li>
+      <li><a href="#result">PolicyResult</a></li>
+      <li><a href="#middleware">middleware()</a></li>
+      <li><a href="#nest-guard">nestGuard()</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Scan Policy</h2>
+      <p>
+        A <em>scan policy</em> combines multiple upload rules into a single reusable object: file
+        size limits, MIME type allowlists, extension allowlists, encrypted archive rejection, and
+        ClamAV virus scanning. Any failing rule immediately returns a structured rejection &mdash;
+        without running the remaining checks.
+      </p>
+      <p>
+        Policies integrate with Express, Fastify, and NestJS via built-in adapter methods.
+      </p>
+    </div>
+
+    <div class="section" id="create-policy">
+      <h2>createPolicy(rules?)</h2>
+<pre>const { createPolicy } = require('pompelmi');
+
+const policy = createPolicy({
+  scan:             { host: 'localhost', port: 3310, timeout: 5000 },
+  maxSize:          10 * 1024 * 1024,   // 10 MB
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
+  allowedExtensions:['.jpg', '.jpeg', '.png', '.gif', '.webp', '.pdf'],
+  rejectEncrypted:  true,
+  onScannerUnavailable: 'reject'
+});</pre>
+      <p>All rules are optional. Omitting <code>scan</code> skips virus scanning entirely.</p>
+    </div>
+
+    <div class="section" id="rules">
+      <h2>Rules reference</h2>
+      <table>
+        <tr><th>Rule</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr>
+          <td><code>scan</code></td>
+          <td><code>ScanOptions</code></td>
+          <td><code>undefined</code></td>
+          <td>ClamAV connection options. When omitted, virus scanning is skipped.</td>
+        </tr>
+        <tr>
+          <td><code>maxSize</code></td>
+          <td><code>number</code></td>
+          <td><code>null</code></td>
+          <td>Maximum file size in bytes. Checked against <code>meta.size</code> or <code>buffer.length</code>.</td>
+        </tr>
+        <tr>
+          <td><code>allowedMimeTypes</code></td>
+          <td><code>string[]</code></td>
+          <td><code>null</code></td>
+          <td>Allowlist of MIME types. Only checked when <code>meta.mimeType</code> is provided.</td>
+        </tr>
+        <tr>
+          <td><code>allowedExtensions</code></td>
+          <td><code>string[]</code></td>
+          <td><code>null</code></td>
+          <td>Allowlist of file extensions (e.g. <code>['.pdf', '.jpg']</code>). Only checked when <code>meta.filename</code> is provided.</td>
+        </tr>
+        <tr>
+          <td><code>rejectEncrypted</code></td>
+          <td><code>boolean</code></td>
+          <td><code>false</code></td>
+          <td>Reject encrypted ZIP archives (detected via magic bytes and the general-purpose bit flag).</td>
+        </tr>
+        <tr>
+          <td><code>onScannerUnavailable</code></td>
+          <td><code>'reject' | 'allow' | 'throw'</code></td>
+          <td><code>'reject'</code></td>
+          <td>
+            What to do when the ClamAV connection fails.
+            <code>'reject'</code> returns <code>allowed: false</code>;
+            <code>'allow'</code> lets the file through;
+            <code>'throw'</code> re-throws the underlying error.
+          </td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="check">
+      <h2>policy.check(buffer, meta?)</h2>
+      <p>Evaluates all rules against a buffer. Checks run in order: size &rarr; MIME &rarr; extension &rarr; encrypted &rarr; virus.</p>
+<pre>const result = await policy.check(buffer, {
+  filename: 'photo.jpg',
+  mimeType: 'image/jpeg',
+  size:     buffer.length
+});</pre>
+      <table>
+        <tr><th>Parameter</th><th>Type</th><th>Description</th></tr>
+        <tr>
+          <td><code>buffer</code></td>
+          <td><code>Buffer</code></td>
+          <td>File content to evaluate.</td>
+        </tr>
+        <tr>
+          <td><code>meta.filename</code></td>
+          <td><code>string | null</code></td>
+          <td>Original filename — used for extension checking.</td>
+        </tr>
+        <tr>
+          <td><code>meta.mimeType</code></td>
+          <td><code>string | null</code></td>
+          <td>Declared MIME type — used for MIME allowlist checking.</td>
+        </tr>
+        <tr>
+          <td><code>meta.size</code></td>
+          <td><code>number</code></td>
+          <td>File size in bytes. Defaults to <code>buffer.length</code>.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="result">
+      <h2>PolicyResult</h2>
+<pre>// Allowed
+{ allowed: true,  reason: null,           verdict: Verdict.Clean,     details: { ... } }
+
+// Rejected
+{ allowed: false, reason: 'file_too_large',    verdict: Verdict.ScanError, details: { ... } }
+{ allowed: false, reason: 'mime_not_allowed',  verdict: Verdict.ScanError, details: { ... } }
+{ allowed: false, reason: 'extension_not_allowed', verdict: Verdict.ScanError, details: { ... } }
+{ allowed: false, reason: 'encrypted_archive', verdict: Verdict.ScanError, details: { ... } }
+{ allowed: false, reason: 'virus_detected',    verdict: Verdict.Malicious, details: { ... } }
+{ allowed: false, reason: 'scanner_unavailable', verdict: Verdict.ScanError, details: { ... } }</pre>
+
+      <p>The <code>details</code> object always includes <code>size</code>, <code>mimeType</code>, <code>extension</code>, and <code>virusName</code>.</p>
+    </div>
+
+    <div class="section" id="middleware">
+      <h2>policy.middleware()</h2>
+      <p>Returns an Express / Fastify middleware. Place it after <code>multer</code> (or any multipart parser) and before your route handler.</p>
+<pre>const express = require('express');
+const multer  = require('multer');
+const { createPolicy } = require('pompelmi');
+
+const policy = createPolicy({
+  maxSize:          5 * 1024 * 1024,
+  allowedMimeTypes: ['image/jpeg', 'image/png'],
+  scan:             { host: 'localhost', port: 3310 },
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+const app    = express();
+
+app.post('/avatar',
+  upload.single('file'),
+  policy.middleware(),   // rejects with HTTP 403 if any rule fails
+  (req, res) => res.json({ ok: true })
+);</pre>
+    </div>
+
+    <div class="section" id="nest-guard">
+      <h2>policy.nestGuard()</h2>
+      <p>Returns a NestJS <code>CanActivate</code>-compatible guard object.</p>
+<pre>import { UseGuards, Controller, Post, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { createPolicy } from 'pompelmi';
+
+const policy = createPolicy({
+  maxSize: 10 * 1024 * 1024,
+  scan:    { host: 'localhost', port: 3310 },
+});
+
+@Controller('upload')
+export class UploadController {
+  @Post()
+  @UseInterceptors(FileInterceptor('file'))
+  @UseGuards(policy.nestGuard())
+  upload() { return { ok: true }; }
+}</pre>
+    </div>
+
+    <div class="section" id="examples">
+      <h2>Examples</h2>
+      <h3>Images only</h3>
+<pre>const policy = createPolicy({
+  maxSize:           2 * 1024 * 1024,
+  allowedMimeTypes:  ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+  allowedExtensions: ['.jpg', '.jpeg', '.png', '.gif', '.webp'],
+  scan:              { host: 'localhost', port: 3310 },
+});</pre>
+
+      <h3>Documents only</h3>
+<pre>const policy = createPolicy({
+  maxSize:           20 * 1024 * 1024,
+  allowedMimeTypes:  ['application/pdf', 'application/msword',
+                      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
+  allowedExtensions: ['.pdf', '.doc', '.docx'],
+  scan:              { host: 'localhost', port: 3310 },
+});</pre>
+
+      <h3>Checking the result manually</h3>
+<pre>const result = await policy.check(req.file.buffer, {
+  filename: req.file.originalname,
+  mimeType: req.file.mimetype,
+});
+
+if (!result.allowed) {
+  return res.status(403).json({ error: result.reason });
+}
+// proceed with upload</pre>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+<pre>import { createPolicy } from 'pompelmi';
+import type { PolicyRules, PolicyResult, ScanPolicy } from 'pompelmi';
+
+const rules: PolicyRules = {
+  maxSize:          5 * 1024 * 1024,
+  allowedMimeTypes: ['image/png'],
+  scan:             { host: 'localhost', port: 3310 },
+};
+const policy: ScanPolicy = createPolicy(rules);
+const result: PolicyResult = await policy.check(buffer, { mimeType: 'image/png' });</pre>
+    </div>
+
+  </div><!-- #content -->
+</div><!-- #page -->
+
+</body>
+</html>

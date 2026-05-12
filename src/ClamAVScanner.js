@@ -137,4 +137,44 @@ async function scanDirectory(dirPath, options = {}) {
     return { clean, malicious, errors };
 }
 
+async function* streamDirectory(dirPath, options = {}) {
+    if (typeof dirPath !== 'string') {
+        throw new Error('dirPath must be a string');
+    }
+    if (!fs.existsSync(dirPath)) {
+        throw new Error(`Directory not found: ${dirPath}`);
+    }
+
+    const entries = fs.readdirSync(dirPath, { recursive: true });
+    const files = entries
+        .map(entry => path.join(dirPath, entry))
+        .filter(fullPath => fs.statSync(fullPath).isFile());
+
+    const total   = files.length;
+    let   scanned = 0;
+    const summary = { clean: [], malicious: [], errors: [] };
+
+    for (const filePath of files) {
+        let verdict;
+        try {
+            verdict = await scan(filePath, options);
+        } catch {
+            verdict = null;
+        }
+
+        scanned++;
+
+        if (verdict === Verdict.Clean)          summary.clean.push(filePath);
+        else if (verdict === Verdict.Malicious) summary.malicious.push(filePath);
+        else                                    summary.errors.push(filePath);
+
+        yield { type: 'progress', scanned, total, file: filePath };
+        yield { type: 'result',   file: filePath, verdict };
+    }
+
+    yield { type: 'complete', summary };
+}
+
+scanDirectory.stream = streamDirectory;
+
 module.exports = { scan, scanBuffer, scanStream, scanDirectory };

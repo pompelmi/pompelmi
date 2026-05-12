@@ -13,7 +13,11 @@ export const {
   createScanner,
   generateDashboard,
   generateShareCard,
+  generateScorecard,
   notify,
   Verdict,
+  createCache,
+  createPolicy,
+  createMultiEngine,
 } = pompelmi;
 export default pompelmi;

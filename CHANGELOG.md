@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] - 2026-05-12
+
+### Added
+- **`src/ScanCache.js`** — SHA256-based scan result cache with configurable TTL, LRU eviction (`maxSize`), and optional file-backed persistence (`storage: 'file'`). Exported as `createCache` from `src/index.js`. File writes are debounced by 500 ms and atomic (write-then-rename). Zero extra dependencies.
+- **`src/Policy.js`** — Unified scan policy combining file size limits, MIME type allowlists, extension allowlists, encrypted archive detection, and ClamAV virus scanning into a single `createPolicy(rules)` factory. Returns a `ScanPolicy` with `.check()`, `.middleware()` (Express/Fastify), and `.nestGuard()` (NestJS). Exported from `src/index.js`.
+- **`src/MultiEngine.js`** — Multi-engine scanning via `createMultiEngine({ engines, consensus })`. Supports ClamAV (local/TCP/socket) and VirusTotal (free public API, 4 req/min). Consensus modes: `'any'` (default), `'all'`, `'majority'`. Returns per-engine verdict breakdown. Uses Node.js built-in `https` — no external dependencies. Exported from `src/index.js`.
+- **`scanDirectory.stream(dirPath, options?)`** — Async generator attached to `scanDirectory` that emits `{ type: 'progress', scanned, total, file }`, `{ type: 'result', file, verdict }`, and `{ type: 'complete', summary }` events, enabling real-time progress UI without polling.
+- **`docs/cache.html`** — SHA256 scan cache API reference: options table, method reference, stats shape, file storage guide, performance guide, TypeScript types.
+- **`docs/policy.html`** — Scan policy API reference: rules table, `check()` parameter reference, `PolicyResult` shape, `middleware()` and `nestGuard()` usage, Express and NestJS examples, TypeScript types.
+- **`docs/multi-engine.html`** — Multi-engine setup guide: engine type tables, consensus mode comparison, result shape, VirusTotal API key setup, error handling, TypeScript types.
+- **43 new unit tests** — ScanCache (10 tests): cache hit/miss, TTL expiry, LRU eviction, clear/delete, hitRate; Policy (14 tests): each rule type, combined rules, `onScannerUnavailable` modes, middleware/nestGuard; MultiEngine (11 tests): consensus modes, engine failure handling, VT key missing; `scanDirectory.stream` (8 tests): async iteration, progress counts, verdict mapping.
+- **Navbar updated** across all `docs/` HTML pages to include Cache, Policy, and Multi-Engine links.
+- **`docs/api.html`** updated — added `createCache()`, `createPolicy()`, and `createMultiEngine()` sections; sidebar links; version bumped to v1.19.0.
+
+### Changed
+- `src/ClamAVScanner.js` — `scanDirectory` now has a `.stream` property (async generator) for streaming progress events. Existing `scanDirectory()` return value is unchanged.
+- `src/index.js` — exports `createCache`, `createPolicy`, `createMultiEngine` alongside existing API.
+- `src/index.mjs` — ESM re-export updated to include new exports.
+- `types/index.d.ts` — added `CacheOptions`, `CacheStats`, `ScanCache`, `PolicyRules`, `FileMeta`, `PolicyDetails`, `PolicyResult`, `ScanPolicy`, `ClamAVEngineConfig`, `VirusTotalEngineConfig`, `EngineConfig`, `EngineResult`, `MultiEngineResult`, `MultiEngineOptions`, `MultiEngine`, `ScanProgressEvent`, `ScanResultEvent`, `ScanCompleteEvent`, `DirectoryScanEvent`; updated `scanDirectory` signature to expose `.stream()`.
+- `README.md` — added SHA256 scan cache, scan policies, multi-engine scanning, and directory streaming to the Features list.
+
+---
+
 ## [1.18.0] - 2026-05-08
 
 ### Added

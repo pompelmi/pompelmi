@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/multi-engine.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Engine Scanning — pompelmi</title>
+<meta name="description" content="pompelmi multi-engine scanning: combine ClamAV and VirusTotal with any/all/majority consensus modes.">
+<meta property="og:title" content="Multi-Engine Scanning — pompelmi">
+<meta property="og:description" content="pompelmi multi-engine scanning: combine ClamAV and VirusTotal with any/all/majority consensus modes.">
+<meta property="og:url" content="https://pompelmi.app/multi-engine.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="api.html">API Reference</a>
+  <a href="cache.html">Cache</a>
+  <a href="policy.html">Policy</a>
+  <a href="multi-engine.html" class="active">Multi-Engine</a>
+  <a href="cloud.html">Cloud</a>
+  <a href="blog.html">Blog</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="about.html">About</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="cookies.html">Cookie Policy</a>
+  <a href="tos.html">Terms of Service</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Multi-Engine v1.19.0</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#create-multi-engine">createMultiEngine()</a></li>
+      <li><a href="#engines">Engine types</a></li>
+      <li><a href="#consensus">Consensus modes</a></li>
+      <li><a href="#result">Result shape</a></li>
+      <li><a href="#virustotal">VirusTotal setup</a></li>
+      <li><a href="#error-handling">Error handling</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>Multi-Engine Scanning</h2>
+      <p>
+        Multi-engine scanning runs a file through several antivirus engines in parallel and
+        combines their verdicts using a configurable <em>consensus mode</em>. Currently supported
+        engines:
+      </p>
+      <ul style="margin-left:1.5em; margin-top:0.5em;">
+        <li><strong>ClamAV</strong> &mdash; local or remote clamd daemon</li>
+        <li><strong>VirusTotal</strong> &mdash; cloud API (free tier: 4 req/min)</li>
+      </ul>
+      <p>
+        No external npm dependencies. The VirusTotal integration uses Node.js built-in
+        <code>https</code> only.
+      </p>
+    </div>
+
+    <div class="section" id="create-multi-engine">
+      <h2>createMultiEngine(options)</h2>
+<pre>const { createMultiEngine } = require('pompelmi');
+
+const scanner = createMultiEngine({
+  engines: [
+    { type: 'clamav', host: 'localhost', port: 3310 },
+    {
+      type:      'virustotal',
+      apiKey:    process.env.VIRUSTOTAL_API_KEY,
+      threshold: 2   // flag if &ge;2 VT engines detect it
+    }
+  ],
+  consensus: 'any'  // 'any' | 'all' | 'majority'
+});
+
+const result = await scanner.scan('/uploads/file.pdf');
+const result = await scanner.scanBuffer(buffer);</pre>
+    </div>
+
+    <div class="section" id="engines">
+      <h2>Engine types</h2>
+
+      <h3>ClamAV</h3>
+      <table>
+        <tr><th>Option</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>type</code></td><td><code>'clamav'</code></td><td>Engine type selector.</td></tr>
+        <tr><td><code>host</code></td><td><code>string</code></td><td>clamd hostname (TCP mode).</td></tr>
+        <tr><td><code>port</code></td><td><code>number</code></td><td>clamd port (default: 3310).</td></tr>
+        <tr><td><code>socket</code></td><td><code>string</code></td><td>UNIX socket path.</td></tr>
+        <tr><td><code>timeout</code></td><td><code>number</code></td><td>Socket timeout in ms.</td></tr>
+      </table>
+
+      <h3>VirusTotal</h3>
+      <table>
+        <tr><th>Option</th><th>Type</th><th>Description</th></tr>
+        <tr><td><code>type</code></td><td><code>'virustotal'</code></td><td>Engine type selector.</td></tr>
+        <tr><td><code>apiKey</code></td><td><code>string</code></td><td>VirusTotal API key. Omitting it returns <code>Verdict.ScanError</code>.</td></tr>
+        <tr><td><code>threshold</code></td><td><code>number</code></td><td>Minimum number of VT detections to flag as malicious (default: 1).</td></tr>
+      </table>
+    </div>
+
+    <div class="section" id="consensus">
+      <h2>Consensus modes</h2>
+      <table>
+        <tr><th>Mode</th><th>Verdict is Malicious when&hellip;</th><th>Best for</th></tr>
+        <tr>
+          <td><code>'any'</code></td>
+          <td>At least one engine flags the file.</td>
+          <td>Highest security (default). Zero false negatives at the cost of more false positives.</td>
+        </tr>
+        <tr>
+          <td><code>'all'</code></td>
+          <td>Every engine flags the file.</td>
+          <td>Lowest false-positive rate. Useful when one engine is noisy.</td>
+        </tr>
+        <tr>
+          <td><code>'majority'</code></td>
+          <td>More than half of all engines flag it.</td>
+          <td>Balanced: good with 3 or more engines.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="result">
+      <h2>Result shape</h2>
+<pre>const result = await scanner.scanBuffer(buffer);
+
+// result:
+// {
+//   verdict:   Verdict.Malicious,   // combined verdict
+//   consensus: 'any',               // mode used
+//   engines: [
+//     { name: 'clamav',      verdict: Verdict.Malicious, virus: 'Win.Malware.Agent' },
+//     { name: 'virustotal',  verdict: Verdict.Clean,     detections: 0 }
+//   ]
+// }
+</pre>
+      <p>
+        The <code>engines</code> array always has one entry per configured engine, in order.
+        Failed engines include an <code>error</code> string and <code>verdict: Verdict.ScanError</code>.
+      </p>
+    </div>
+
+    <div class="section" id="virustotal">
+      <h2>VirusTotal setup</h2>
+      <p>
+        Sign up for a free VirusTotal account at
+        <a href="https://www.virustotal.com" rel="noopener" target="_blank">virustotal.com</a>
+        and copy your API key from the profile page.
+      </p>
+      <p>
+        Free tier limits: <strong>4 requests/minute</strong>, 500 requests/day, and a
+        32 MB file-size cap. For higher throughput, consider a VirusTotal Premium account.
+      </p>
+      <p>
+        The integration uploads the file, then polls the analysis endpoint every 5 seconds
+        for up to 60 seconds. If the analysis does not complete in time,
+        <code>Verdict.ScanError</code> is returned for the VirusTotal engine.
+      </p>
+<pre>// Set via environment variable — never hard-code API keys
+const scanner = createMultiEngine({
+  engines: [
+    { type: 'virustotal', apiKey: process.env.VIRUSTOTAL_API_KEY }
+  ]
+});</pre>
+    </div>
+
+    <div class="section" id="error-handling">
+      <h2>Error handling</h2>
+      <p>
+        Engine errors (connection refused, API timeout, etc.) do not throw &mdash; they return
+        <code>Verdict.ScanError</code> for that engine and include an <code>error</code> string.
+        The consensus is applied to all results, including errored ones.
+      </p>
+<pre>const result = await scanner.scanBuffer(buffer);
+
+for (const engine of result.engines) {
+  if (engine.verdict === Verdict.ScanError) {
+    console.warn(`${engine.name} failed:`, engine.error);
+  }
+}
+
+if (result.verdict === Verdict.Malicious) {
+  // quarantine or reject
+}</pre>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+<pre>import { createMultiEngine } from 'pompelmi';
+import type { MultiEngineOptions, MultiEngineResult, EngineResult } from 'pompelmi';
+
+const options: MultiEngineOptions = {
+  engines:   [{ type: 'clamav', host: 'localhost', port: 3310 }],
+  consensus: 'any',
+};
+const scanner = createMultiEngine(options);
+const result: MultiEngineResult = await scanner.scanBuffer(buffer);
+const engine: EngineResult      = result.engines[0];</pre>
+    </div>
+
+  </div><!-- #content -->
+</div><!-- #page -->
+
+</body>
+</html>

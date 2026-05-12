@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/cache.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SHA256 Scan Cache — pompelmi</title>
+<meta name="description" content="pompelmi SHA256 scan cache API reference: skip rescanning known-clean files, LRU eviction, TTL, file-backed persistence.">
+<meta property="og:title" content="SHA256 Scan Cache — pompelmi">
+<meta property="og:description" content="pompelmi SHA256 scan cache API reference: skip rescanning known-clean files, LRU eviction, TTL, file-backed persistence.">
+<meta property="og:url" content="https://pompelmi.app/cache.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="api.html">API Reference</a>
+  <a href="cache.html" class="active">Cache</a>
+  <a href="policy.html">Policy</a>
+  <a href="multi-engine.html">Multi-Engine</a>
+  <a href="cloud.html">Cloud</a>
+  <a href="blog.html">Blog</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="about.html">About</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="cookies.html">Cookie Policy</a>
+  <a href="tos.html">Terms of Service</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">Scan Cache v1.19.0</span>
+      <li><a href="#overview">Overview</a></li>
+      <li><a href="#create-cache">createCache()</a></li>
+      <li><a href="#options">Options</a></li>
+      <li><a href="#methods">Methods</a></li>
+      <li><a href="#stats">stats()</a></li>
+      <li><a href="#file-storage">File storage</a></li>
+      <li><a href="#performance">Performance guide</a></li>
+      <li><a href="#typescript">TypeScript</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="section" id="overview">
+      <h2>SHA256 Scan Cache</h2>
+      <p>
+        The scan cache avoids rescanning files whose SHA256 hash has already been seen.
+        On a cache hit, the stored verdict is returned immediately &mdash; no clamd call, no disk I/O.
+        The cache uses an in-memory LRU map with configurable TTL and an optional JSON file backend
+        for persistence across restarts.
+      </p>
+      <p>
+        All hashing uses Node.js built-in <code>crypto.createHash('sha256')</code> &mdash; no
+        external dependencies.
+      </p>
+    </div>
+
+    <div class="section" id="create-cache">
+      <h2>createCache(options?)</h2>
+<pre>const { createCache } = require('pompelmi');
+
+const cache = createCache({
+  ttl:     3600000, // 1 hour
+  maxSize: 1000,
+  storage: 'memory'
+});
+
+// Wrap any scan with caching
+const verdict = await cache.scan('/uploads/report.pdf', { host: 'localhost', port: 3310 });
+const verdict = await cache.scanBuffer(buffer, { host: 'localhost', port: 3310 });</pre>
+    </div>
+
+    <div class="section" id="options">
+      <h2>Options</h2>
+      <table>
+        <tr><th>Option</th><th>Type</th><th>Default</th><th>Description</th></tr>
+        <tr>
+          <td><code>ttl</code></td>
+          <td><code>number</code></td>
+          <td><code>3600000</code></td>
+          <td>Time-to-live per entry in milliseconds (1 hour).</td>
+        </tr>
+        <tr>
+          <td><code>maxSize</code></td>
+          <td><code>number</code></td>
+          <td><code>1000</code></td>
+          <td>Maximum number of entries. Oldest entry is evicted (LRU) when the limit is reached.</td>
+        </tr>
+        <tr>
+          <td><code>storage</code></td>
+          <td><code>'memory' | 'file'</code></td>
+          <td><code>'memory'</code></td>
+          <td>Storage backend. Use <code>'file'</code> to persist the cache across restarts.</td>
+        </tr>
+        <tr>
+          <td><code>filePath</code></td>
+          <td><code>string</code></td>
+          <td><code>'./.pompelmi-cache.json'</code></td>
+          <td>Path to the JSON cache file. Only used when <code>storage: 'file'</code>.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="methods">
+      <h2>Methods</h2>
+      <table>
+        <tr><th>Method</th><th>Returns</th><th>Description</th></tr>
+        <tr>
+          <td><code>cache.scan(filePath, options?)</code></td>
+          <td><code>Promise&lt;Verdict&gt;</code></td>
+          <td>
+            Computes SHA256 of the file at <code>filePath</code>, checks the cache, and
+            calls the underlying <code>scan()</code> on a miss.
+          </td>
+        </tr>
+        <tr>
+          <td><code>cache.scanBuffer(buffer, options?)</code></td>
+          <td><code>Promise&lt;Verdict&gt;</code></td>
+          <td>
+            Computes SHA256 of the buffer, checks the cache, and calls the underlying
+            <code>scanBuffer()</code> on a miss.
+          </td>
+        </tr>
+        <tr>
+          <td><code>cache.stats()</code></td>
+          <td><code>CacheStats</code></td>
+          <td>Returns hit/miss/size statistics. See <a href="#stats">stats()</a>.</td>
+        </tr>
+        <tr>
+          <td><code>cache.clear()</code></td>
+          <td><code>void</code></td>
+          <td>Empties the cache and resets all statistics.</td>
+        </tr>
+        <tr>
+          <td><code>cache.delete(sha256)</code></td>
+          <td><code>void</code></td>
+          <td>Removes a single entry by its SHA256 hex string.</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="stats">
+      <h2>stats()</h2>
+      <p>Returns an object with the following properties:</p>
+<pre>const s = cache.stats();
+// {
+//   hits:    42,    // cache hits since last clear()
+//   misses:  8,     // cache misses since last clear()
+//   size:    50,    // current number of entries
+//   hitRate: 0.84   // hits / (hits + misses), 0 if no requests yet
+// }</pre>
+    </div>
+
+    <div class="section" id="file-storage">
+      <h2>File storage</h2>
+      <p>
+        When <code>storage: 'file'</code> is set, the cache is loaded from disk on startup and
+        written back after every mutation. Writes are debounced by 500 ms to avoid excessive I/O
+        during burst scanning. Expired entries are discarded on load.
+      </p>
+<pre>const cache = createCache({
+  storage:  'file',
+  filePath: './.pompelmi-cache.json',
+  ttl:      86400000  // 24 hours
+});
+
+// Cache persists across process restarts.
+// The JSON file is human-readable and can be deleted to clear the cache.</pre>
+      <p>
+        File writes are atomic: the library writes to a <code>.tmp</code> file first, then renames
+        it, so the cache file is never left in a partially-written state.
+      </p>
+    </div>
+
+    <div class="section" id="performance">
+      <h2>Performance guide</h2>
+      <p>
+        The cache is most effective when the same files are uploaded repeatedly (e.g. profile
+        pictures, document templates) or when rescanning is triggered on every request.
+      </p>
+      <ul style="margin-left:1.5em; margin-top:0.5em;">
+        <li>Set <code>ttl</code> to the maximum age you trust a verdict — 1 hour is safe for
+            most deployments.</li>
+        <li>Set <code>maxSize</code> to roughly the number of unique files you serve per hour.</li>
+        <li>Use <code>storage: 'file'</code> when the same file set is used across restarts (e.g.
+            static asset servers).</li>
+        <li>Call <code>cache.clear()</code> after a virus database update to force re-evaluation
+            of all cached clean results.</li>
+      </ul>
+    </div>
+
+    <div class="section" id="typescript">
+      <h2>TypeScript</h2>
+<pre>import { createCache } from 'pompelmi';
+import type { CacheOptions, CacheStats, ScanCache } from 'pompelmi';
+
+const cache: ScanCache = createCache({ ttl: 3600000, maxSize: 500 });
+const verdict = await cache.scanBuffer(buffer);
+const s: CacheStats = cache.stats();</pre>
+    </div>
+
+  </div><!-- #content -->
+</div><!-- #page -->
+
+</body>
+</html>

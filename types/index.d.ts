@@ -73,11 +73,14 @@ export declare function scanStream(stream: Readable, options?: ScanOptions): Pro
 /**
  * Recursively scan every file under dirPath.
  * Per-file errors are caught and collected without aborting the full scan.
+ * Use scanDirectory.stream() for async-iterable progress events.
  */
 export declare function scanDirectory(
   dirPath: string,
   options?: ScanOptions
-): Promise<DirectoryScanResult>;
+): Promise<DirectoryScanResult> & {
+  stream(dirPath: string, options?: ScanOptions): AsyncIterable<DirectoryScanEvent>;
+};
 
 /**
  * Express / Fastify middleware that scans multer-uploaded files
@@ -328,3 +331,190 @@ export interface ScorecardResult {
  * console.log(scorecard.grade); // 'A'
  */
 export declare function generateScorecard(config?: ScorecardConfig): Promise<ScorecardResult>;
+
+// ─── ScanCache ────────────────────────────────────────────────────────────────
+
+/** Options for createCache() */
+export interface CacheOptions {
+  /** Entry TTL in milliseconds (default: 3600000 = 1 hour) */
+  ttl?: number;
+  /** Maximum number of entries before LRU eviction (default: 1000) */
+  maxSize?: number;
+  /** Storage backend: 'memory' or 'file' (default: 'memory') */
+  storage?: 'memory' | 'file';
+  /** Path for file-backed storage (default: './.pompelmi-cache.json') */
+  filePath?: string;
+}
+
+/** Cache hit/miss statistics */
+export interface CacheStats {
+  hits: number;
+  misses: number;
+  size: number;
+  hitRate: number;
+}
+
+/** SHA256-based scan result cache */
+export interface ScanCache {
+  /** Scan a file by path, returning a cached result if available */
+  scan(filePath: string, options?: ScanOptions): Promise<VerdictValue>;
+  /** Scan an in-memory Buffer, returning a cached result if available */
+  scanBuffer(buffer: Buffer, options?: ScanOptions): Promise<VerdictValue>;
+  /** Return cache statistics */
+  stats(): CacheStats;
+  /** Clear all cache entries */
+  clear(): void;
+  /** Remove a specific entry by its SHA256 hash */
+  delete(sha256: string): void;
+}
+
+/**
+ * Create a SHA256-based scan result cache.
+ * Skips rescanning files with known-clean or known-malicious hashes.
+ * Supports LRU eviction and optional file-backed persistence.
+ */
+export declare function createCache(options?: CacheOptions): ScanCache;
+
+// ─── Policy ───────────────────────────────────────────────────────────────────
+
+/** Options for createPolicy() */
+export interface PolicyRules {
+  /** ClamAV connection options for virus scanning */
+  scan?: ScanOptions;
+  /** Maximum allowed file size in bytes */
+  maxSize?: number;
+  /** Allowlist of MIME types (e.g. ['image/jpeg', 'application/pdf']) */
+  allowedMimeTypes?: string[];
+  /** Allowlist of file extensions (e.g. ['.jpg', '.pdf']) */
+  allowedExtensions?: string[];
+  /** Reject encrypted archives (default: false) */
+  rejectEncrypted?: boolean;
+  /** Behaviour when clamd is unavailable: 'reject' | 'allow' | 'throw' (default: 'reject') */
+  onScannerUnavailable?: 'reject' | 'allow' | 'throw';
+}
+
+/** Metadata passed to policy.check() */
+export interface FileMeta {
+  filename?: string | null;
+  mimeType?: string | null;
+  size?: number;
+}
+
+/** Details about the file that was checked */
+export interface PolicyDetails {
+  size: number;
+  mimeType: string | null;
+  extension: string | null;
+  virusName: string | null;
+}
+
+/** Result returned by policy.check() */
+export interface PolicyResult {
+  allowed: boolean;
+  reason:
+    | null
+    | 'file_too_large'
+    | 'mime_not_allowed'
+    | 'extension_not_allowed'
+    | 'encrypted_archive'
+    | 'virus_detected'
+    | 'scanner_unavailable';
+  verdict: VerdictValue;
+  details: PolicyDetails;
+}
+
+/** A compiled scan policy */
+export interface ScanPolicy {
+  /** Apply all policy rules to a buffer */
+  check(buffer: Buffer, meta?: FileMeta): Promise<PolicyResult>;
+  /** Express/Fastify middleware — rejects with HTTP 403 on policy violation */
+  middleware(): RequestHandler;
+  /** NestJS CanActivate guard */
+  nestGuard(): { canActivate(context: unknown): Promise<boolean> };
+}
+
+/**
+ * Create a unified scan policy combining size, MIME, extension, and virus checks.
+ */
+export declare function createPolicy(rules?: PolicyRules): ScanPolicy;
+
+// ─── MultiEngine ─────────────────────────────────────────────────────────────
+
+/** ClamAV engine configuration */
+export interface ClamAVEngineConfig {
+  type: 'clamav';
+  host?: string;
+  port?: number;
+  socket?: string;
+  timeout?: number;
+}
+
+/** VirusTotal engine configuration */
+export interface VirusTotalEngineConfig {
+  type: 'virustotal';
+  apiKey: string;
+  /** Minimum number of engine detections to flag as malicious (default: 1) */
+  threshold?: number;
+}
+
+export type EngineConfig = ClamAVEngineConfig | VirusTotalEngineConfig;
+
+/** Per-engine result */
+export interface EngineResult {
+  name: string;
+  verdict: VerdictValue;
+  detections?: number;
+  virus?: string;
+  error?: string;
+}
+
+/** Result returned by multi-engine scan */
+export interface MultiEngineResult {
+  verdict: VerdictValue;
+  consensus: 'any' | 'all' | 'majority';
+  engines: EngineResult[];
+}
+
+/** Options for createMultiEngine() */
+export interface MultiEngineOptions {
+  engines: EngineConfig[];
+  /** How to combine engine verdicts (default: 'any') */
+  consensus?: 'any' | 'all' | 'majority';
+}
+
+/** Multi-engine scanner */
+export interface MultiEngine {
+  scan(filePath: string): Promise<MultiEngineResult>;
+  scanBuffer(buffer: Buffer): Promise<MultiEngineResult>;
+}
+
+/**
+ * Create a multi-engine scanner combining ClamAV and/or VirusTotal.
+ * The consensus mode controls how engine verdicts are combined.
+ */
+export declare function createMultiEngine(options?: MultiEngineOptions): MultiEngine;
+
+// ─── scanDirectory.stream ─────────────────────────────────────────────────────
+
+/** Progress event emitted by scanDirectory.stream() */
+export interface ScanProgressEvent {
+  type: 'progress';
+  scanned: number;
+  total: number;
+  file: string;
+}
+
+/** Per-file result event emitted by scanDirectory.stream() */
+export interface ScanResultEvent {
+  type: 'result';
+  file: string;
+  verdict: VerdictValue | null;
+}
+
+/** Final summary event emitted by scanDirectory.stream() */
+export interface ScanCompleteEvent {
+  type: 'complete';
+  summary: DirectoryScanResult;
+}
+
+export type DirectoryScanEvent = ScanProgressEvent | ScanResultEvent | ScanCompleteEvent;

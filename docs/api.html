@@ -47,6 +47,9 @@
   <a href="/">Home</a>
   <a href="getting-started.html">Getting Started</a>
   <a href="api.html" class="active">API Reference</a>
+  <a href="cache.html">Cache</a>
+  <a href="policy.html">Policy</a>
+  <a href="multi-engine.html">Multi-Engine</a>
   <a href="cloud.html">Cloud</a>
   <a href="blog.html">Blog</a>
   <a href="featured-in.html">Featured In</a>
@@ -63,7 +66,7 @@
 
   <div id="sidebar">
     <ul>
-      <span class="sidebar-label">API v1.11.0</span>
+      <span class="sidebar-label">API v1.19.0</span>
       <li><a href="#options">Options</a></li>
       <li><a href="#verdicts">Verdicts</a></li>
       <li><a href="#scan">scan()</a></li>
@@ -76,6 +79,9 @@
       <li><a href="#watch">watch()</a></li>
       <li><a href="#notify">notify()</a></li>
       <li><a href="#create-scanner">createScanner()</a></li>
+      <li><a href="#create-cache">createCache()</a></li>
+      <li><a href="#create-policy">createPolicy()</a></li>
+      <li><a href="#create-multi-engine">createMultiEngine()</a></li>
       <li><a href="#errors">Error types</a></li>
       <li><a href="#typescript">TypeScript</a></li>
     </ul>
@@ -862,6 +868,70 @@ scanner.scan('/uploads/report.pdf');
 
 // Scan an entire directory
 scanner.scanDirectory('/var/incoming');</pre>
+    </div>
+
+    <!-- ── createCache ── -->
+    <div class="section" id="create-cache">
+      <h2>createCache(options?)</h2>
+      <p>
+        Creates a SHA256-based scan result cache. Returns a <code>ScanCache</code> object whose
+        <code>.scan()</code> and <code>.scanBuffer()</code> methods wrap the underlying scan
+        functions, returning cached verdicts for previously-seen file hashes.
+        See the full <a href="cache.html">Cache reference</a> for all options and methods.
+      </p>
+<pre>const { createCache } = require('pompelmi');
+
+const cache = createCache({ ttl: 3600000, maxSize: 1000 });
+const verdict = await cache.scanBuffer(buffer, { host: 'localhost', port: 3310 });
+console.log(cache.stats()); // { hits, misses, size, hitRate }</pre>
+    </div>
+
+    <!-- ── createPolicy ── -->
+    <div class="section" id="create-policy">
+      <h2>createPolicy(rules?)</h2>
+      <p>
+        Creates a unified scan policy combining size limits, MIME/extension allowlists, encrypted
+        archive rejection, and virus scanning. Returns a <code>ScanPolicy</code> with
+        <code>.check()</code>, <code>.middleware()</code>, and <code>.nestGuard()</code>.
+        See the full <a href="policy.html">Policy reference</a>.
+      </p>
+<pre>const { createPolicy } = require('pompelmi');
+
+const policy = createPolicy({
+  maxSize:           10 * 1024 * 1024,
+  allowedMimeTypes:  ['image/jpeg', 'image/png', 'application/pdf'],
+  allowedExtensions: ['.jpg', '.jpeg', '.png', '.pdf'],
+  scan:              { host: 'localhost', port: 3310 },
+  onScannerUnavailable: 'reject',
+});
+
+// Use directly
+const result = await policy.check(buffer, { filename: 'doc.pdf', mimeType: 'application/pdf' });
+
+// Or as Express middleware
+app.post('/upload', multer().single('file'), policy.middleware(), handler);</pre>
+    </div>
+
+    <!-- ── createMultiEngine ── -->
+    <div class="section" id="create-multi-engine">
+      <h2>createMultiEngine(options?)</h2>
+      <p>
+        Creates a multi-engine scanner that runs files through ClamAV and/or VirusTotal in
+        parallel, combining verdicts with a configurable consensus mode.
+        See the full <a href="multi-engine.html">Multi-Engine reference</a>.
+      </p>
+<pre>const { createMultiEngine } = require('pompelmi');
+
+const scanner = createMultiEngine({
+  engines: [
+    { type: 'clamav',      host: 'localhost', port: 3310 },
+    { type: 'virustotal',  apiKey: process.env.VIRUSTOTAL_API_KEY, threshold: 2 },
+  ],
+  consensus: 'any',   // 'any' | 'all' | 'majority'
+});
+
+const result = await scanner.scanBuffer(buffer);
+// { verdict: Verdict.Clean, consensus: 'any', engines: [ ... ] }</pre>
     </div>
 
     <!-- ── Error types ── -->

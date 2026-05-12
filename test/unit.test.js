@@ -2084,3 +2084,486 @@ describe('VS Code extension', () => {
         assert.doesNotThrow(() => deactivate());
     });
 });
+
+// ─── ScanCache ────────────────────────────────────────────────────────────────
+
+describe('ScanCache', () => {
+    const { Verdict } = require('../src/verdicts.js');
+
+    function makeCache(overrides = {}) {
+        // Load ScanCache with a mocked ClamAVScanner so no real clamd is required
+        const targetResolved = require.resolve('../src/ScanCache.js');
+        delete require.cache[targetResolved];
+
+        const scannerResolved = require.resolve('../src/ClamAVScanner.js');
+        const orig = require.cache[scannerResolved] && require.cache[scannerResolved].exports;
+        if (require.cache[scannerResolved]) {
+            require.cache[scannerResolved].exports = {
+                scan:       overrides.scan       || (() => Promise.resolve(Verdict.Clean)),
+                scanBuffer: overrides.scanBuffer || (() => Promise.resolve(Verdict.Clean)),
+            };
+        }
+
+        const mod = require('../src/ScanCache.js');
+        delete require.cache[targetResolved];
+
+        if (orig && require.cache[scannerResolved]) {
+            require.cache[scannerResolved].exports = orig;
+        }
+
+        return mod;
+    }
+
+    it('exports createCache function', () => {
+        const { createCache } = makeCache();
+        assert.equal(typeof createCache, 'function');
+    });
+
+    it('returns cache object with expected methods', () => {
+        const { createCache } = makeCache();
+        const cache = createCache();
+        assert.equal(typeof cache.scan,        'function');
+        assert.equal(typeof cache.scanBuffer,  'function');
+        assert.equal(typeof cache.stats,       'function');
+        assert.equal(typeof cache.clear,       'function');
+        assert.equal(typeof cache.delete,      'function');
+    });
+
+    it('initial stats are all zeroes', () => {
+        const { createCache } = makeCache();
+        const cache = createCache();
+        const s = cache.stats();
+        assert.equal(s.hits,    0);
+        assert.equal(s.misses,  0);
+        assert.equal(s.size,    0);
+        assert.equal(s.hitRate, 0);
+    });
+
+    it('records a miss on first scanBuffer call', async () => {
+        let calls = 0;
+        const { createCache } = makeCache({ scanBuffer: () => { calls++; return Promise.resolve(Verdict.Clean); } });
+        const cache = createCache();
+        await cache.scanBuffer(Buffer.from('hello'));
+        assert.equal(cache.stats().misses, 1);
+        assert.equal(cache.stats().hits,   0);
+        assert.equal(calls, 1);
+    });
+
+    it('returns cached result on second call (cache hit)', async () => {
+        let calls = 0;
+        const { createCache } = makeCache({ scanBuffer: () => { calls++; return Promise.resolve(Verdict.Clean); } });
+        const cache = createCache();
+        const buf = Buffer.from('hello');
+        await cache.scanBuffer(buf);
+        const result = await cache.scanBuffer(buf);
+        assert.equal(result, Verdict.Clean);
+        assert.equal(calls, 1);   // underlying scan called only once
+        assert.equal(cache.stats().hits, 1);
+    });
+
+    it('does not return expired entries', async () => {
+        let calls = 0;
+        const { createCache } = makeCache({ scanBuffer: () => { calls++; return Promise.resolve(Verdict.Clean); } });
+        const cache = createCache({ ttl: 1 }); // 1 ms TTL
+        const buf = Buffer.from('test');
+        await cache.scanBuffer(buf);
+        await new Promise(r => setTimeout(r, 10)); // wait for TTL to expire
+        await cache.scanBuffer(buf);
+        assert.equal(calls, 2); // scanned twice because entry expired
+    });
+
+    it('LRU eviction keeps cache within maxSize', async () => {
+        const { createCache } = makeCache({ scanBuffer: (b) => Promise.resolve(Verdict.Clean) });
+        const cache = createCache({ maxSize: 3 });
+        for (let i = 0; i < 5; i++) {
+            await cache.scanBuffer(Buffer.from(`file${i}`));
+        }
+        assert.ok(cache.stats().size <= 3);
+    });
+
+    it('clear() empties the cache and resets stats', async () => {
+        const { createCache } = makeCache({ scanBuffer: () => Promise.resolve(Verdict.Clean) });
+        const cache = createCache();
+        await cache.scanBuffer(Buffer.from('data'));
+        cache.clear();
+        assert.equal(cache.stats().size,   0);
+        assert.equal(cache.stats().hits,   0);
+        assert.equal(cache.stats().misses, 0);
+    });
+
+    it('delete() removes a specific entry', async () => {
+        const crypto = require('crypto');
+        const { createCache } = makeCache({ scanBuffer: () => Promise.resolve(Verdict.Clean) });
+        const cache = createCache();
+        const buf = Buffer.from('specific');
+        await cache.scanBuffer(buf);
+        assert.equal(cache.stats().size, 1);
+        const sha = crypto.createHash('sha256').update(buf).digest('hex');
+        cache.delete(sha);
+        assert.equal(cache.stats().size, 0);
+    });
+
+    it('hitRate is computed correctly', async () => {
+        let calls = 0;
+        const { createCache } = makeCache({ scanBuffer: () => { calls++; return Promise.resolve(Verdict.Clean); } });
+        const cache = createCache();
+        const buf = Buffer.from('rate');
+        await cache.scanBuffer(buf); // miss
+        await cache.scanBuffer(buf); // hit
+        await cache.scanBuffer(buf); // hit
+        const s = cache.stats();
+        assert.equal(s.misses, 1);
+        assert.equal(s.hits,   2);
+        assert.ok(Math.abs(s.hitRate - 2/3) < 0.001);
+    });
+});
+
+// ─── Policy ───────────────────────────────────────────────────────────────────
+
+describe('Policy', () => {
+    const { Verdict } = require('../src/verdicts.js');
+
+    function loadPolicy(scanBufferImpl) {
+        const targetResolved  = require.resolve('../src/Policy.js');
+        delete require.cache[targetResolved];
+        const scannerResolved = require.resolve('../src/ClamAVScanner.js');
+        const orig = require.cache[scannerResolved] && require.cache[scannerResolved].exports;
+        if (require.cache[scannerResolved]) {
+            require.cache[scannerResolved].exports = {
+                scan:       () => Promise.resolve(Verdict.Clean),
+                scanBuffer: scanBufferImpl || (() => Promise.resolve(Verdict.Clean)),
+            };
+        }
+        const mod = require('../src/Policy.js');
+        delete require.cache[targetResolved];
+        if (orig && require.cache[scannerResolved]) require.cache[scannerResolved].exports = orig;
+        return mod;
+    }
+
+    it('exports createPolicy function', () => {
+        const { createPolicy } = loadPolicy();
+        assert.equal(typeof createPolicy, 'function');
+    });
+
+    it('allows a clean file with no rules', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy();
+        const result = await policy.check(Buffer.from('data'), {});
+        assert.equal(result.allowed, true);
+        assert.equal(result.reason,  null);
+    });
+
+    it('rejects file exceeding maxSize', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy({ maxSize: 10 });
+        const result = await policy.check(Buffer.alloc(20), { size: 20 });
+        assert.equal(result.allowed, false);
+        assert.equal(result.reason,  'file_too_large');
+    });
+
+    it('rejects disallowed MIME type', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy({ allowedMimeTypes: ['image/png'] });
+        const result = await policy.check(Buffer.from('x'), { mimeType: 'application/exe' });
+        assert.equal(result.allowed, false);
+        assert.equal(result.reason,  'mime_not_allowed');
+    });
+
+    it('allows matching MIME type', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy({ allowedMimeTypes: ['image/png'] });
+        const result = await policy.check(Buffer.from('x'), { mimeType: 'image/png' });
+        assert.equal(result.allowed, true);
+    });
+
+    it('rejects disallowed extension', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy({ allowedExtensions: ['.pdf', '.jpg'] });
+        const result = await policy.check(Buffer.from('x'), { filename: 'malware.exe' });
+        assert.equal(result.allowed, false);
+        assert.equal(result.reason,  'extension_not_allowed');
+    });
+
+    it('allows matching extension', async () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy({ allowedExtensions: ['.pdf'] });
+        const result = await policy.check(Buffer.from('x'), { filename: 'doc.pdf' });
+        assert.equal(result.allowed, true);
+    });
+
+    it('rejects virus-infected buffer when scan option provided', async () => {
+        const { createPolicy } = loadPolicy(() => Promise.resolve(Verdict.Malicious));
+        const policy = createPolicy({ scan: { host: 'localhost' } });
+        const result = await policy.check(Buffer.from('virus'));
+        assert.equal(result.allowed, false);
+        assert.equal(result.reason,  'virus_detected');
+    });
+
+    it('allows clean buffer when scan option provided', async () => {
+        const { createPolicy } = loadPolicy(() => Promise.resolve(Verdict.Clean));
+        const policy = createPolicy({ scan: { host: 'localhost' } });
+        const result = await policy.check(Buffer.from('clean'));
+        assert.equal(result.allowed, true);
+        assert.equal(result.reason,  null);
+    });
+
+    it('onScannerUnavailable:reject returns not-allowed when scan throws', async () => {
+        const { createPolicy } = loadPolicy(() => Promise.reject(new Error('clamd down')));
+        const policy = createPolicy({ scan: { host: 'localhost' }, onScannerUnavailable: 'reject' });
+        const result = await policy.check(Buffer.from('x'));
+        assert.equal(result.allowed, false);
+        assert.equal(result.reason,  'scanner_unavailable');
+    });
+
+    it('onScannerUnavailable:allow returns allowed when scan throws', async () => {
+        const { createPolicy } = loadPolicy(() => Promise.reject(new Error('clamd down')));
+        const policy = createPolicy({ scan: { host: 'localhost' }, onScannerUnavailable: 'allow' });
+        const result = await policy.check(Buffer.from('x'));
+        assert.equal(result.allowed, true);
+    });
+
+    it('onScannerUnavailable:throw re-throws when scan throws', async () => {
+        const { createPolicy } = loadPolicy(() => Promise.reject(new Error('clamd down')));
+        const policy = createPolicy({ scan: { host: 'localhost' }, onScannerUnavailable: 'throw' });
+        await assert.rejects(() => policy.check(Buffer.from('x')), /clamd down/);
+    });
+
+    it('returns middleware function', () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy();
+        assert.equal(typeof policy.middleware, 'function');
+        assert.equal(typeof policy.middleware(), 'function');
+    });
+
+    it('returns nestGuard object', () => {
+        const { createPolicy } = loadPolicy();
+        const policy = createPolicy();
+        const guard = policy.nestGuard();
+        assert.equal(typeof guard.canActivate, 'function');
+    });
+});
+
+// ─── MultiEngine ─────────────────────────────────────────────────────────────
+
+describe('MultiEngine', () => {
+    const { Verdict } = require('../src/verdicts.js');
+
+    function loadMultiEngine(overrides = {}) {
+        const targetResolved  = require.resolve('../src/MultiEngine.js');
+        delete require.cache[targetResolved];
+        const scannerResolved = require.resolve('../src/ClamAVScanner.js');
+        const orig = require.cache[scannerResolved] && require.cache[scannerResolved].exports;
+        if (require.cache[scannerResolved]) {
+            require.cache[scannerResolved].exports = {
+                scan:       overrides.scan       || (() => Promise.resolve(Verdict.Clean)),
+                scanBuffer: overrides.scanBuffer || (() => Promise.resolve(Verdict.Clean)),
+            };
+        }
+        const mod = require('../src/MultiEngine.js');
+        delete require.cache[targetResolved];
+        if (orig && require.cache[scannerResolved]) require.cache[scannerResolved].exports = orig;
+        return mod;
+    }
+
+    it('exports createMultiEngine function', () => {
+        const { createMultiEngine } = loadMultiEngine();
+        assert.equal(typeof createMultiEngine, 'function');
+    });
+
+    it('returns scan and scanBuffer methods', () => {
+        const { createMultiEngine } = loadMultiEngine();
+        const scanner = createMultiEngine({ engines: [] });
+        assert.equal(typeof scanner.scan,       'function');
+        assert.equal(typeof scanner.scanBuffer, 'function');
+    });
+
+    it('consensus:any — Malicious if any engine flags it', async () => {
+        const { createMultiEngine } = loadMultiEngine({ scanBuffer: () => Promise.resolve(Verdict.Malicious) });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }],
+            consensus: 'any',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.verdict, Verdict.Malicious);
+        assert.equal(result.consensus, 'any');
+    });
+
+    it('consensus:any — Clean if no engine flags it', async () => {
+        const { createMultiEngine } = loadMultiEngine({ scanBuffer: () => Promise.resolve(Verdict.Clean) });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }],
+            consensus: 'any',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.verdict, Verdict.Clean);
+    });
+
+    it('consensus:all — Clean if only one of two flags it', async () => {
+        let call = 0;
+        const { createMultiEngine } = loadMultiEngine({
+            scanBuffer: () => {
+                call++;
+                return Promise.resolve(call === 1 ? Verdict.Malicious : Verdict.Clean);
+            },
+        });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }, { type: 'clamav' }],
+            consensus: 'all',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.verdict, Verdict.Clean);
+    });
+
+    it('consensus:all — Malicious if all engines flag it', async () => {
+        const { createMultiEngine } = loadMultiEngine({ scanBuffer: () => Promise.resolve(Verdict.Malicious) });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }, { type: 'clamav' }],
+            consensus: 'all',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.verdict, Verdict.Malicious);
+    });
+
+    it('consensus:majority — Malicious when majority flag it', async () => {
+        let call = 0;
+        const { createMultiEngine } = loadMultiEngine({
+            scanBuffer: () => {
+                call++;
+                return Promise.resolve(call <= 2 ? Verdict.Malicious : Verdict.Clean);
+            },
+        });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }, { type: 'clamav' }, { type: 'clamav' }],
+            consensus: 'majority',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.verdict, Verdict.Malicious);
+    });
+
+    it('engine failure returns ScanError in per-engine results', async () => {
+        const { createMultiEngine } = loadMultiEngine({
+            scanBuffer: () => Promise.reject(new Error('clamd down')),
+        });
+        const scanner = createMultiEngine({
+            engines: [{ type: 'clamav' }],
+            consensus: 'any',
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.engines[0].verdict, Verdict.ScanError);
+    });
+
+    it('includes per-engine breakdown in result', async () => {
+        const { createMultiEngine } = loadMultiEngine({ scanBuffer: () => Promise.resolve(Verdict.Clean) });
+        const scanner = createMultiEngine({ engines: [{ type: 'clamav' }] });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.ok(Array.isArray(result.engines));
+        assert.equal(result.engines.length, 1);
+        assert.equal(result.engines[0].name, 'clamav');
+    });
+
+    it('virustotal engine without apiKey returns ScanError', async () => {
+        const { createMultiEngine } = loadMultiEngine();
+        const scanner = createMultiEngine({
+            engines: [{ type: 'virustotal' }], // no apiKey
+        });
+        const result = await scanner.scanBuffer(Buffer.from('x'));
+        assert.equal(result.engines[0].verdict, Verdict.ScanError);
+        assert.match(result.engines[0].error, /no apiKey/);
+    });
+
+    it('rejects if buffer is not a Buffer', async () => {
+        const { createMultiEngine } = loadMultiEngine();
+        const scanner = createMultiEngine({ engines: [] });
+        await assert.rejects(() => scanner.scanBuffer('not-a-buffer'), /buffer must be a Buffer/);
+    });
+});
+
+// ─── scanDirectory.stream ─────────────────────────────────────────────────────
+
+describe('scanDirectory.stream', () => {
+    const fs = require('fs');
+
+    function dirScanner(spawnMock) {
+        return load('../src/ClamAVScanner.js', { '../src/spawn.js': { nativeSpawn: spawnMock } });
+    }
+
+    it('scanDirectory.stream is a function', () => {
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        assert.equal(typeof scanDirectory.stream, 'function');
+    });
+
+    it('throws if dirPath is not a string', async () => {
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        const gen = scanDirectory.stream(42);
+        await assert.rejects(() => gen.next(), /dirPath must be a string/);
+    });
+
+    it('throws if directory does not exist', async (t) => {
+        t.mock.method(fs, 'existsSync', () => false);
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        const gen = scanDirectory.stream('/no-such-dir');
+        await assert.rejects(() => gen.next(), /Directory not found/);
+    });
+
+    it('emits progress, result, and complete events', async (t) => {
+        t.mock.method(fs, 'existsSync',  () => true);
+        t.mock.method(fs, 'readdirSync', () => ['a.txt', 'b.txt']);
+        t.mock.method(fs, 'statSync',    () => ({ isFile: () => true }));
+
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        const events = [];
+        for await (const event of scanDirectory.stream('/fake-dir')) {
+            events.push(event);
+        }
+
+        const types = events.map(e => e.type);
+        assert.ok(types.includes('progress'));
+        assert.ok(types.includes('result'));
+        assert.ok(types.includes('complete'));
+
+        const complete = events.find(e => e.type === 'complete');
+        assert.ok(complete && complete.summary);
+        assert.ok(Array.isArray(complete.summary.clean));
+    });
+
+    it('progress events have correct scanned/total counts', async (t) => {
+        t.mock.method(fs, 'existsSync',  () => true);
+        t.mock.method(fs, 'readdirSync', () => ['a.txt', 'b.txt', 'c.txt']);
+        t.mock.method(fs, 'statSync',    () => ({ isFile: () => true }));
+
+        const { scanDirectory } = dirScanner(spawnClose(0));
+        const progressEvents = [];
+        for await (const event of scanDirectory.stream('/fake-dir')) {
+            if (event.type === 'progress') progressEvents.push(event);
+        }
+
+        assert.equal(progressEvents.length, 3);
+        assert.equal(progressEvents[0].scanned, 1);
+        assert.equal(progressEvents[0].total,   3);
+        assert.equal(progressEvents[2].scanned, 3);
+    });
+
+    it('result events carry correct verdicts', async (t) => {
+        let call = 0;
+        const codes = [0, 1];
+        const spawnSeq = () => {
+            const code = codes[call++ % codes.length];
+            const child = new EventEmitter();
+            process.nextTick(() => child.emit('close', code, null));
+            return child;
+        };
+
+        t.mock.method(fs, 'existsSync',  () => true);
+        t.mock.method(fs, 'readdirSync', () => ['clean.txt', 'virus.txt']);
+        t.mock.method(fs, 'statSync',    () => ({ isFile: () => true }));
+
+        const { scanDirectory, Verdict: V } = dirScanner(spawnSeq);
+        const resultEvents = [];
+        for await (const event of scanDirectory.stream('/fake-dir')) {
+            if (event.type === 'result') resultEvents.push(event);
+        }
+
+        assert.equal(resultEvents[0].verdict, Verdict.Clean);
+        assert.equal(resultEvents[1].verdict, Verdict.Malicious);
+    });
+});

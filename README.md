@@ -90,6 +90,10 @@ Most integrations require parsing ClamAV's stdout with regex, managing a clamd d
 - `watch(dirPath, [options], callbacks)` — watch a directory and auto-scan new/modified files (300 ms debounce)
 - `notify(webhookUrl, scanResult, [options])` — send a POST webhook notification when a virus is detected; optional HMAC-SHA256 signing via `X-Pompelmi-Signature`; zero extra dependencies
 - `createScanner([options])` — EventEmitter-based scanner; call `.scan(filePath)` or `.scanDirectory(dirPath)` and listen to `'clean'`, `'malicious'`, `'scanError'`, and `'error'` events
+- **SHA256 scan cache** — `createCache([options])` — skip rescanning known-clean files; LRU eviction, configurable TTL, optional file-backed persistence; zero extra dependencies ([docs](./docs/cache.html))
+- **Scan policies** — `createPolicy(rules)` — unified size, MIME type, extension, and virus rules in one object; Express middleware and NestJS guard included ([docs](./docs/policy.html))
+- **Multi-engine scanning** — `createMultiEngine(options)` — combine ClamAV and VirusTotal with `any`/`all`/`majority` consensus; per-engine verdict breakdown; zero extra dependencies ([docs](./docs/multi-engine.html))
+- **Directory streaming** — `scanDirectory.stream(dirPath)` — async-iterable progress events (`progress` / `result` / `complete`) for real-time UI feedback
 - Auto-retry on connection error — `retries` and `retryDelay` options on every scan function
 - Symbol-based verdicts (`Verdict.Clean` / `Verdict.Malicious` / `Verdict.ScanError`) — typo-proof comparisons
 - Full clamd support via the INSTREAM protocol — TCP (`host`/`port`) or UNIX socket (`socket`) with configurable timeout
@@ -621,6 +625,8 @@ Please read [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) before contributing. To r
 
 - [x] Cloudflare Workers support — `@pompelmi/cloudflare` ships in v1.17.0
 - [x] NestJS official module — `PompelmiModule.forRoot()` with injectable `PompelmiService`
+
+**Pompelmi Cloud** is on the horizon — a hosted REST API for file scanning with zero infrastructure to manage. Drop-in HTTP endpoint, no ClamAV to maintain, no daemon to run. [Join the waitlist](https://pompelmi.app/cloud.html) to be notified when it launches.
 
 ---
 

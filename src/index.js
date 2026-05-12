@@ -9,5 +9,8 @@ const { createScanner }                               = require('./ScanEmitter.j
 const { generateDashboard }                           = require('./Dashboard.js');
 const { generateShareCard }                           = require('./ShareCard.js');
 const { generateScorecard }                           = require('./Scorecard.js');
+const { createCache }                                 = require('./ScanCache.js');
+const { createPolicy }                                = require('./Policy.js');
+const { createMultiEngine }                           = require('./MultiEngine.js');
 
-module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch, notify, createScanner, generateDashboard, generateShareCard, generateScorecard };
+module.exports = { scan, scanBuffer, scanStream, scanDirectory, Verdict, middleware, scanS3, createPool, watch, notify, createScanner, generateDashboard, generateShareCard, generateScorecard, createCache, createPolicy, createMultiEngine };
