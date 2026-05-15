@@ -48,7 +48,8 @@
   },
   "scripts": {
     "test": "node --test test/unit.test.js && node --test test/esm.test.mjs && node --test packages/nestjs/test/index.test.js && node --test packages/fastify/test/index.test.js && node --test packages/nextjs/test/index.test.js && node --test packages/hono/test/index.test.js && node --test packages/testing/test/index.test.js && node --test packages/remix/test/index.test.js && node --test packages/sveltekit/test/index.test.js && node --test packages/cloudflare/test/index.test.mjs && node test/scan.test.js",
-    "lint": "eslint src/"
+    "lint": "eslint src/",
+    "postinstall": "node scripts/postinstall.js"
   },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"

@@ -1,3 +1,20 @@
+try {
+  if (process.stderr.isTTY && !process.env.CI) {
+    const os = require('os');
+    const fs = require('fs');
+    const path = require('path');
+    const markerDir = path.join(os.homedir(), '.pompelmi');
+    const markerFile = path.join(markerDir, '.starred');
+    if (!fs.existsSync(markerFile)) {
+      process.stderr.write('⭐ Enjoying pompelmi? Star it → https://github.com/pompelmi/pompelmi\n');
+      fs.mkdirSync(markerDir, { recursive: true });
+      fs.writeFileSync(markerFile, '');
+    }
+  }
+} catch (e) {
+  // silently fail — never break existing functionality
+}
+
 const { scan, scanBuffer, scanStream, scanDirectory } = require('./ClamAVScanner.js');
 const { Verdict }                                     = require('./verdicts.js');
 const { middleware }                                  = require('./middleware.js');
