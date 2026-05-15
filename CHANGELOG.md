@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] - 2026-05-15
+
+### Added
+- Star prompt printed to stderr on first import (skipped in CI and non-TTY environments), with a `~/.pompelmi/.starred` marker so it shows only once.
+- `scripts/postinstall.js` — prints a GitHub star nudge to stdout after `npm install` in interactive terminals.
+
+### Changed
+- `package.json` — added `postinstall` script pointing to `scripts/postinstall.js`; bumped version to 1.20.0.
+
+---
+
 ## [1.19.0] - 2026-05-12
 
 ### Added
