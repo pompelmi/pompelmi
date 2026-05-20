@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="canonical" href="https://pompelmi.app/pro.html" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pompelmi Pro — Audit Logs, Priority Support &amp; Enterprise Features</title>
+<meta name="description" content="Pompelmi Pro adds audit logs, priority support, custom signature rules, and a multi-tenant dashboard to the open-source scanning engine. Contact for pricing.">
+<meta property="og:title" content="Pompelmi Pro — Enterprise Features">
+<meta property="og:description" content="Audit logs, priority support, custom signature rules, and a multi-tenant dashboard for teams running pompelmi in production.">
+<meta property="og:url" content="https://pompelmi.app/pro.html">
+<meta property="og:type" content="website">
+<meta property="og:image" content="https://pompelmi.app/grapefruit.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pompelmi Pro — Enterprise Features">
+<meta name="twitter:description" content="Audit logs, priority support, custom signature rules, and a multi-tenant dashboard for teams running pompelmi in production.">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg">
+<link rel="icon" type="image/png" href="./favicon.png">
+<link rel="stylesheet" href="style.css">
+<style>
+  .tier-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 24px;
+    font-size: 14px;
+  }
+  .tier-table th {
+    background: #f0e8e3;
+    padding: 10px 14px;
+    text-align: left;
+    border: 1px solid #d4a898;
+    font-size: 13px;
+  }
+  .tier-table td {
+    padding: 9px 14px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+  }
+  .tier-table tr:nth-child(even) td {
+    background: #fffaf8;
+  }
+  .check { color: #2a7a2a; font-weight: bold; }
+  .cross { color: #aaa; }
+  .pro-badge {
+    display: inline-block;
+    background: #d97706;
+    color: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 7px;
+    border-radius: 3px;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-family: Georgia, "Times New Roman", Times, serif;
+  }
+  .pro-hero {
+    border: 1px solid #d97706;
+    background: #fffbf2;
+    padding: 18px 20px;
+    margin-bottom: 20px;
+  }
+  .pro-hero h2 {
+    font-size: 20px;
+    color: #92400e;
+    border: none !important;
+    margin-top: 0 !important;
+    margin-bottom: 8px !important;
+    padding-bottom: 0 !important;
+  }
+  .contact-box {
+    border: 1px solid #d4a898;
+    background: #f9f3f0;
+    padding: 18px 20px;
+    margin-top: 20px;
+  }
+  .contact-box p {
+    margin: 0 0 10px;
+    font-size: 14px;
+  }
+  .contact-box a.cta {
+    display: inline-block;
+    background: #a03c1c;
+    color: #fff;
+    padding: 8px 22px;
+    font-size: 13px;
+    text-decoration: none;
+    font-family: Georgia, "Times New Roman", Times, serif;
+  }
+  .contact-box a.cta:hover {
+    background: #c04a22;
+  }
+  .feature-section h3 {
+    font-size: 16px;
+    margin-bottom: 4px;
+  }
+  .feature-section p {
+    margin-top: 4px;
+    font-size: 13px;
+    color: #444;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <a href="/">
+    <img src="./grapefruit.png" alt="pompelmi logo">
+  </a>
+  <div id="header-text">
+    <a href="/"><h1>pomp<span>elmi</span></h1></a>
+    <p>Node.js antivirus scanning via ClamAV &mdash; simple, cross-platform, zero config</p>
+  </div>
+  <div id="header-clear"></div>
+</div>
+
+<div id="navbar">
+  <a href="/">Home</a>
+  <a href="getting-started.html">Getting Started</a>
+  <a href="api.html">API Reference</a>
+  <a href="cache.html">Cache</a>
+  <a href="policy.html">Policy</a>
+  <a href="multi-engine.html">Multi-Engine</a>
+  <a href="pro.html" class="active" style="color:#d97706;font-weight:600;">Pro</a>
+  <a href="blog.html">Blog</a>
+  <a href="featured-in.html">Featured In</a>
+  <a href="about.html">About</a>
+  <a href="contacts.html">Contacts</a>
+  <a href="privacy.html">Privacy Policy</a>
+  <a href="cookies.html">Cookie Policy</a>
+  <a href="tos.html">Terms of Service</a>
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">GitHub</a>
+  <a href="https://www.npmjs.com/package/pompelmi">npm</a>
+</div>
+
+<div id="page">
+
+  <div id="sidebar">
+    <ul>
+      <span class="sidebar-label">On this page</span>
+      <li><a href="#open-source">Open Source</a></li>
+      <li><a href="#pro-features">Pro Features</a></li>
+      <li><a href="#comparison">Comparison</a></li>
+      <li><a href="#contact">Get in Touch</a></li>
+    </ul>
+  </div>
+
+  <div id="content">
+
+    <div class="pro-hero">
+      <h2>Pompelmi Pro <span class="pro-badge">coming soon</span></h2>
+      <p>
+        The same in-process antivirus scanning engine you already run in production,
+        extended with audit trails, compliance tooling, and dedicated support.
+        No SaaS lock-in &mdash; your files never leave your infrastructure.
+      </p>
+    </div>
+
+    <div class="section" id="open-source">
+      <h2>Open Source <span style="font-size:13px;font-weight:normal;color:#666;">(free forever, MIT)</span></h2>
+      <ul>
+        <li><code>scan()</code>, <code>scanBuffer()</code>, <code>scanStream()</code>, <code>scanDirectory()</code></li>
+        <li>All framework plugins &mdash; Express, Fastify, NestJS, Next.js, Hono, Koa, Remix, SvelteKit, Nuxt</li>
+        <li>Multi-engine support &mdash; ClamAV, YARA, heuristics, zip-bomb guard</li>
+        <li>GitHub Action for CI/CD pipeline scanning</li>
+        <li>CLI tool &mdash; <code>npx pompelmi scan &lt;path&gt;</code></li>
+        <li>Policy packs &mdash; <code>STRICT_PUBLIC_UPLOAD</code>, <code>DOCUMENTS_ONLY</code>, <code>IMAGES_ONLY</code></li>
+        <li>Scan result caching with configurable TTL</li>
+        <li>Full TypeScript types included</li>
+        <li>Docker image &mdash; <code>justsouichi/pompelmi-scanner</code></li>
+      </ul>
+    </div>
+
+    <div class="section" id="pro-features">
+      <h2>Pro Features <span class="pro-badge">contact for pricing</span></h2>
+
+      <div class="feature-section">
+        <h3>Audit Log</h3>
+        <p>
+          Every scan recorded with timestamp, file hash, verdict, and IP address.
+          Exportable as JSON or CSV on demand. Required for SOC2, ISO 27001, and HIPAA compliance reviews.
+        </p>
+      </div>
+
+      <div class="feature-section">
+        <h3>Priority Support</h3>
+        <p>
+          Dedicated response within 24 hours via email. Architecture review included at no extra charge.
+          Ideal for teams integrating pompelmi into critical upload pipelines where downtime is unacceptable.
+        </p>
+      </div>
+
+      <div class="feature-section">
+        <h3>Custom Signature Rules</h3>
+        <p>
+          Define custom ClamAV signature rules tailored to your specific threat model.
+          Deploy and manage rules without touching ClamAV internals or restarting the daemon.
+        </p>
+      </div>
+
+      <div class="feature-section">
+        <h3>Multi-tenant Dashboard</h3>
+        <p>
+          Hosted scan dashboard for teams. Per-user scan history, infected file alerts, and weekly
+          digest email. No self-hosting required &mdash; we run it, you use it.
+        </p>
+      </div>
+
+      <div class="feature-section">
+        <h3>SLA on Signature Updates</h3>
+        <p>
+          Virus definitions updated within 1 hour of each ClamAV release.
+          Monitored uptime with incident notifications so you are never running stale definitions.
+        </p>
+      </div>
+    </div>
+
+    <div class="section" id="comparison">
+      <h2>Comparison</h2>
+      <table class="tier-table">
+        <tr>
+          <th>Feature</th>
+          <th>Open Source</th>
+          <th>Pro</th>
+        </tr>
+        <tr>
+          <td>Core scanning API</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Framework plugins</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>CLI &amp; GitHub Action</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Multi-engine (YARA, heuristics)</td>
+          <td class="check">&#10003;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Audit log (JSON/CSV export)</td>
+          <td class="cross">&mdash;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Priority email support (24h SLA)</td>
+          <td class="cross">&mdash;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Custom ClamAV signature rules</td>
+          <td class="cross">&mdash;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Multi-tenant dashboard</td>
+          <td class="cross">&mdash;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+        <tr>
+          <td>Signature update SLA (&lt;1h)</td>
+          <td class="cross">&mdash;</td>
+          <td class="check">&#10003;</td>
+        </tr>
+      </table>
+    </div>
+
+    <div class="section" id="contact">
+      <h2>Get in Touch</h2>
+      <p>
+        Pompelmi Pro is currently in development. Pricing is set per team based on scan volume and
+        the features you need. To discuss requirements or get a quote:
+      </p>
+      <div class="contact-box">
+        <p>
+          Email us with a brief description of your use case &mdash; framework, approximate scan volume,
+          and which Pro features matter most. We will respond within one business day.
+        </p>
+        <a class="cta" href="mailto:pro@pompelmi.app">Contact Pro Sales &rarr;</a>
+        <p style="margin-top:12px;font-size:12px;color:#666;">
+          Or reach the maintainer directly: <a href="mailto:pompelmideveloper@yahoo.com">pompelmideveloper@yahoo.com</a>
+        </p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div id="footer">
+  pompelmi v1.20.0 &nbsp;&mdash;&nbsp;
+  License: ISC &nbsp;&mdash;&nbsp;
+  <a href="https://github.com/pompelmi/pompelmi" rel="noopener" target="_blank">github.com/pompelmi/pompelmi</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="https://www.npmjs.com/package/pompelmi">npmjs.com/package/pompelmi</a>
+</div>
+
+<div id="footer-legal" style="text-align:center;padding:8px 20px;font-size:12px;color:#666;background:#f0e8e3;border-top:1px solid #d4a898;">
+  <a href="privacy.html">Privacy Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="cookies.html">Cookie Policy</a>
+  &nbsp;&mdash;&nbsp;
+  <a href="tos.html">Terms of Service</a>
+</div>
+<div id="cookie-banner" style="position:fixed;bottom:0;left:0;right:0;background:#fffaf8;border-top:2px solid #d4a898;padding:10px 20px;font-size:13px;color:#444;display:flex;align-items:center;justify-content:space-between;z-index:9999;gap:16px;">
+  <span>This site uses essential cookies only. By continuing you accept our <a href="cookies.html" style="color:#a03c1c;">cookie policy</a>.</span>
+  <button onclick="document.getElementById('cookie-banner').style.display='none';localStorage.setItem('pompelmi_cookie_consent','1');" style="background:#a03c1c;color:#fff;border:none;padding:6px 18px;font-size:13px;cursor:pointer;white-space:nowrap;font-family:Georgia,'Times New Roman',Times,serif;">Accept</button>
+</div>
+<script>if(localStorage.getItem('pompelmi_cookie_consent')){document.getElementById('cookie-banner').style.display='none';}</script>
+</body>
+</html>
