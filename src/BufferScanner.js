@@ -10,7 +10,7 @@ const CLAMD_INSTREAM = Buffer.from('zINSTREAM\0');
 const CHUNK_SIZE     = 64 * 1024;
 
 function parseClamdResponse(raw) {
-    const text = raw.toString('utf8').trim();
+    const text = raw.toString('utf8').replace(/\0/g, '').trim();
     if (text === 'stream: OK')   return Verdict.Clean;
     if (text.endsWith(' FOUND')) return Verdict.Malicious;
     return Verdict.ScanError;

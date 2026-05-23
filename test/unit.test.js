@@ -776,6 +776,68 @@ describe('scanStream', () => {
     });
 });
 
+// ─── parseClamdResponse (null-byte stripping — fix #189) ─────────────────────
+
+describe('parseClamdResponse (null-byte stripping)', () => {
+    // parseClamdResponse is not exported, so we test it indirectly via the net
+    // socket path.  We drive scanStreamViaClamd with a mock socket whose response
+    // contains (or lacks) a trailing null byte and assert the returned Verdict.
+
+    const net = require('net');
+    const { Readable } = require('stream');
+
+    function makeSocketWithResponse(response) {
+        const sock     = new EventEmitter();
+        sock.destroyed = false;
+        sock.written   = [];
+        sock.setTimeout = () => {};
+        sock.write      = (buf) => { sock.written.push(buf); };
+        sock.destroy    = () => { sock.destroyed = true; };
+        sock.end        = () => {
+            process.nextTick(() => {
+                sock.emit('data', Buffer.from(response));
+                sock.emit('end');
+            });
+        };
+        process.nextTick(() => sock.emit('connect'));
+        return sock;
+    }
+
+    function makeStream() {
+        const s = new Readable({ read() {} });
+        process.nextTick(() => { s.push(Buffer.from('x')); s.push(null); });
+        return s;
+    }
+
+    it('"stream: OK\\0"  → Verdict.Clean (null-terminated response)', async (t) => {
+        const { scanStreamViaClamd } = require('../src/StreamScanner.js');
+        t.mock.method(net, 'createConnection', () => makeSocketWithResponse('stream: OK\0'));
+        assert.equal(await scanStreamViaClamd(makeStream()), Verdict.Clean);
+    });
+
+    it('"stream: OK"     → Verdict.Clean (no null byte, no regression)', async (t) => {
+        const { scanStreamViaClamd } = require('../src/StreamScanner.js');
+        t.mock.method(net, 'createConnection', () => makeSocketWithResponse('stream: OK'));
+        assert.equal(await scanStreamViaClamd(makeStream()), Verdict.Clean);
+    });
+
+    it('"stream: Win.Test.EICAR_HDB-1 FOUND\\0" → Verdict.Malicious (null-terminated)', async (t) => {
+        const { scanStreamViaClamd } = require('../src/StreamScanner.js');
+        t.mock.method(net, 'createConnection', () =>
+            makeSocketWithResponse('stream: Win.Test.EICAR_HDB-1 FOUND\0')
+        );
+        assert.equal(await scanStreamViaClamd(makeStream()), Verdict.Malicious);
+    });
+
+    it('"stream: Win.Test.EICAR_HDB-1 FOUND"   → Verdict.Malicious (no regression)', async (t) => {
+        const { scanStreamViaClamd } = require('../src/StreamScanner.js');
+        t.mock.method(net, 'createConnection', () =>
+            makeSocketWithResponse('stream: Win.Test.EICAR_HDB-1 FOUND')
+        );
+        assert.equal(await scanStreamViaClamd(makeStream()), Verdict.Malicious);
+    });
+});
+
 // ─── scanDirectory ───────────────────────────────────────────────────────────
 
 describe('scanDirectory', () => {
