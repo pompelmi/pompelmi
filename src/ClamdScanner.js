@@ -15,7 +15,13 @@ const CLAMD_INSTREAM = Buffer.from('zINSTREAM\0');
 const CHUNK_SIZE     = 64 * 1024;  // 64 KB — well within clamd's default StreamMaxLength
 
 function parseClamdResponse(raw) {
-    const text = raw.toString('utf8').trim();
+    // Strip null bytes (\0) before trimming: the INSTREAM protocol uses
+    // 'zINSTREAM\0' which makes clamd null-terminate its reply
+    // (e.g. "stream: OK\0"). String.prototype.trim() only removes ASCII
+    // whitespace, so a trailing \0 would survive and the equality check
+    // below would always fail, sending every TCP / UNIX-socket scan down
+    // the ScanError path. Closes the gap left by #189 in ClamdScanner.
+    const text = raw.toString('utf8').replace(/\0/g, '').trim();
     if (text === 'stream: OK')    return Verdict.Clean;
     if (text.endsWith(' FOUND'))  return Verdict.Malicious;
     return Verdict.ScanError;

@@ -475,6 +475,34 @@ describe('ClamdScanner', () => {
         // [3] four zero bytes — terminating chunk
         assert.deepEqual(w[3], Buffer.alloc(4));
     });
+
+    // ── Null-byte stripping on TCP / UNIX-socket replies (closes #189 gap) ──
+
+    it('"stream: OK\\0"           → Verdict.Clean (null-terminated response)', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: OK\0' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE), Verdict.Clean);
+    });
+
+    it('"stream: ... FOUND\\0"    → Verdict.Malicious (null-terminated response)', async (t) => {
+        t.mock.method(net, 'createConnection', () =>
+            makeClamdSocket({ response: 'stream: EICAR-Test-Signature FOUND\0' })
+        );
+        t.mock.method(fs, 'existsSync',       () => true);
+        t.mock.method(fs, 'createReadStream', () => makeMockStream());
+        assert.equal(await scanViaClamd(EXISTING_FILE), Verdict.Malicious);
+    });
+
+    it('"stream: OK\\0" on UNIX socket → Verdict.Clean', async (t) => {
+        t.mock.method(net, 'createConnection', () => makeClamdSocket({ response: 'stream: OK\0' }));
+        t.mock.method(fs,  'existsSync',       () => true);
+        t.mock.method(fs,  'createReadStream', () => makeMockStream());
+        assert.equal(
+            await scanViaClamd(EXISTING_FILE, { socket: '/run/clamav/clamd.sock' }),
+            Verdict.Clean
+        );
+    });
 });
 
 // ─── ClamAVScanner — TCP routing ──────────────────────────────────────────────
